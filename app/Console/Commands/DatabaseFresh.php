@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
+use DB;
 use Illuminate\Console\Command;
 
-class DatabaseFresh extends Command
+final class DatabaseFresh extends Command
 {
     /**
      * The name and signature of the console command.
@@ -29,7 +32,7 @@ class DatabaseFresh extends Command
         $this->call('migrate:fresh', [
             '--seed' => true,
         ]);
-        \DB::statement('DROP DATABASE IF EXISTS tenantclinic2');
+        DB::statement('DROP DATABASE IF EXISTS tenantclinic2');
         $this->info('Database fresh and tenantclinic2 dropped successfully.');
         $this->call('app:create-tenant');
         $this->info('Tenant clinic2 created successfully.');

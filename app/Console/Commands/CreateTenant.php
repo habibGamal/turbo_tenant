@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
+use DB;
 use Illuminate\Console\Command;
 
-class CreateTenant extends Command
+final class CreateTenant extends Command
 {
     /**
      * The name and signature of the console command.
@@ -30,7 +33,7 @@ class CreateTenant extends Command
 
         // If tenant DB already exists, avoid triggering the TenantCreated pipeline
         $databaseName = 'tenant'.$tenantId;
-        $dbExists = \DB::selectOne('SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?', [$databaseName]);
+        $dbExists = DB::selectOne('SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?', [$databaseName]);
 
         if ($dbExists) {
             $tenant = \App\Models\Tenant::withoutEvents(function () use ($tenantId) {
