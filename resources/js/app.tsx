@@ -1,5 +1,6 @@
 import '../css/app.css';
 import './bootstrap';
+import './i18n';
 
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
@@ -7,6 +8,11 @@ import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { getTheme } from '@/lib/theme-registry';
 import { getThemeName, resolveThemedPage } from '@/lib/theme-resolver';
+import i18n from './i18n';
+
+// Set initial document direction to RTL for Arabic
+document.documentElement.dir = 'rtl';
+document.documentElement.lang = 'ar';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -14,6 +20,8 @@ createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: async (name) => {
         // Try to resolve from theme first, fallback to default Pages
+        console.log("resolving page: " + name);
+        console.log(await resolveThemedPage(name))
         try {
             return await resolveThemedPage(name);
         } catch {

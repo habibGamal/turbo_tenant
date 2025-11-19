@@ -10,12 +10,14 @@ return new class() extends Migration
 {
     public function up(): void
     {
-        Schema::create('addresses', function (Blueprint $table) {
+        Schema::create('carts', function (Blueprint $table) {
             $table->id();
-            $table->string('area');
-            $table->string('full_address');
-            $table->unsignedBigInteger('profile_id')->nullable();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->text('note')->nullable();
+            $table->timestamp('last_activity_at')->useCurrent();
             $table->timestamps();
+
+            $table->index('user_id', 'idx_carts_user');
         });
     }
 };

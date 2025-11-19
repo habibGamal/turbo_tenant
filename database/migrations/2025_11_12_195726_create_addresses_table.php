@@ -10,11 +10,11 @@ return new class() extends Migration
 {
     public function up(): void
     {
-        Schema::create('branches', function (Blueprint $table) {
+        Schema::create('addresses', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->text('link');
-            $table->boolean('is_active')->default(true);
+            $table->string('area');
+            $table->string('full_address');
+            // $table->foreignId('profile_id')->nullable()->constrained('profiles')->cascadeOnDelete();
             $table->timestamps();
         });
     }

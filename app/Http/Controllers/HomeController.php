@@ -17,7 +17,7 @@ final class HomeController extends Controller
         // Get categories with their products
         $categories = Category::query()
             ->orderBy('name')
-            ->get(['id', 'name', 'slug', 'description']);
+            ->get(['id', 'name',  'description']);
 
         // Get featured products (using active products with discounts as featured)
         $featuredProducts = Product::query()

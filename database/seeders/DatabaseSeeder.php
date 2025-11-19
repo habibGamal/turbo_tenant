@@ -17,5 +17,13 @@ final class DatabaseSeeder extends Seeder
             'email' => config('app.default_user.email'),
             'password' => bcrypt(config('app.default_user.password')),
         ]);
+
+        // Seed restaurant data
+        $this->call([
+            CategorySeeder::class,
+            SectionSeeder::class,
+            ProductSeeder::class,
+            PackageSeeder::class,
+        ]);
     }
 }

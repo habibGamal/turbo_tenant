@@ -11,6 +11,7 @@ final class OrderItemExtra extends Model
 {
     protected $fillable = [
         'order_item_id',
+        'extra_option_item_id',
         'extra_name',
         'extra_price',
     ];
@@ -18,6 +19,11 @@ final class OrderItemExtra extends Model
     public function orderItem(): BelongsTo
     {
         return $this->belongsTo(OrderItem::class);
+    }
+
+    public function extraOptionItem(): BelongsTo
+    {
+        return $this->belongsTo(ExtraOptionItem::class);
     }
 
     protected function casts(): array
