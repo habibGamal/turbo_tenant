@@ -45,7 +45,7 @@ final class CartService
 
     public function updateItem(
         ?User $user,
-        int $itemId,
+        string|int $itemId,
         string $quantity
     ): array {
         if ($user) {
@@ -55,10 +55,10 @@ final class CartService
         return $this->updateItemInCookie($itemId, $quantity);
     }
 
-    public function removeItem(?User $user, int $itemId): array
+    public function removeItem(?User $user, string|int $itemId): array
     {
         if ($user) {
-            return $this->removeItemFromDatabase($itemId);
+            return $this->removeItemFromDatabase((int) $itemId);
         }
 
         return $this->removeItemFromCookie($itemId);
@@ -203,6 +203,7 @@ final class CartService
                     'image' => $product->image,
                     'base_price' => $product->base_price,
                     'price_after_discount' => $product->price_after_discount,
+                    'sell_by_weight' => $product->sell_by_weight,
                 ],
                 'variant' => $variant ? [
                     'id' => $variant->id,
@@ -308,20 +309,19 @@ final class CartService
         ];
     }
 
-    private function updateItemInDatabase(int $itemId, string $quantity): array
+    private function updateItemInDatabase(string|int $itemId, string $quantity): array
     {
-        $cartItem = CartItem::findOrFail($itemId);
+        $cartItem = CartItem::findOrFail((int) $itemId);
         $cartItem->update(['quantity' => $quantity]);
         $cartItem->cart->update(['last_activity_at' => now()]);
 
         return $this->getCartFromDatabase($cartItem->cart->user);
     }
 
-    private function updateItemInCookie(int $itemId, string $quantity): array
+    private function updateItemInCookie(string|int $itemId, string $quantity): array
     {
         $cart = $this->getCartFromCookie();
         $items = $cart['items'];
-
         foreach ($items as &$item) {
             if ($item['id'] === $itemId) {
                 $item['quantity'] = $quantity;
@@ -330,6 +330,7 @@ final class CartService
         }
 
         $cartData = ['items' => $items];
+
         Cookie::queue(self::COOKIE_NAME, json_encode($cartData), self::COOKIE_LIFETIME);
 
         return [
@@ -338,16 +339,16 @@ final class CartService
         ];
     }
 
-    private function removeItemFromDatabase(int $itemId): array
+    private function removeItemFromDatabase(string|int $itemId): array
     {
-        $cartItem = CartItem::findOrFail($itemId);
+        $cartItem = CartItem::findOrFail((int) $itemId);
         $user = $cartItem->cart->user;
         $cartItem->delete();
 
         return $this->getCartFromDatabase($user);
     }
 
-    private function removeItemFromCookie(int $itemId): array
+    private function removeItemFromCookie(string|int $itemId): array
     {
         $cart = $this->getCartFromCookie();
         $items = array_filter($cart['items'], fn ($item) => $item['id'] !== $itemId);
@@ -398,6 +399,7 @@ final class CartService
                 'image' => $item->product->image,
                 'base_price' => $item->product->base_price,
                 'price_after_discount' => $item->product->price_after_discount,
+                'sell_by_weight' => $item->product->sell_by_weight,
             ],
             'variant' => $item->variant ? [
                 'id' => $item->variant->id,

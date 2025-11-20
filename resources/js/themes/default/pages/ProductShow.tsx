@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Product, Review, ExtraOptionItem, ProductVariant } from "@/types";
+import { addToCart } from "@/utils/cartUtils";
 
 interface RelatedProduct {
     id: number;
@@ -65,7 +66,9 @@ export default function ProductShow({
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === "ar";
 
-    const [quantity, setQuantity] = useState(1);
+    // For weight-based products, allow 0.1 kg increments, otherwise use 1
+    const quantityStep = product.sell_by_weight ? 0.1 : 1;
+    const [quantity, setQuantity] = useState(quantityStep);
     const [selectedVariant, setSelectedVariant] = useState<number | null>(
         product.variants?.[0]?.id || null
     );
@@ -106,7 +109,10 @@ export default function ProductShow({
     };
 
     const handleQuantityChange = (delta: number) => {
-        setQuantity(Math.max(1, quantity + delta));
+        const step = product.sell_by_weight ? 0.1 : 1;
+        const minQty = product.sell_by_weight ? 0.1 : 1;
+        const newQty = quantity + (delta * step);
+        setQuantity(Math.max(minQty, Math.round(newQty * 10) / 10));
     };
 
     const handleExtraToggle = (extraId: number) => {
@@ -119,11 +125,10 @@ export default function ProductShow({
 
     const [isAddingToCart, setIsAddingToCart] = useState(false);
 
-    const handleAddToCart = () => {
+    const handleAddToCart = async () => {
         setIsAddingToCart(true);
 
-        router.post(
-            route("cart.store"),
+        await addToCart(
             {
                 product_id: product.id,
                 variant_id: selectedVariant,
@@ -131,17 +136,16 @@ export default function ProductShow({
                 extras: selectedExtras,
             },
             {
-                preserveScroll: true,
                 onSuccess: () => {
                     // Reset form to default state
-                    setQuantity(1);
+                    setQuantity(product.sell_by_weight ? 0.1 : 1);
                     setSelectedExtras(
                         product.extraOption?.items
                             .filter((item) => item.is_default)
                             .map((item) => item.id) || []
                     );
                 },
-                onFinish: () => {
+                onFinally: () => {
                     setIsAddingToCart(false);
                 },
             }
@@ -268,9 +272,16 @@ export default function ProductShow({
 
                             {/* Price */}
                             <div className="flex items-center gap-4">
-                                <div className="text-4xl font-bold">
-                                    {calculateTotalPrice().toFixed(2)}{" "}
-                                    {t("currency")}
+                                <div>
+                                    <div className="text-4xl font-bold">
+                                        {calculateTotalPrice().toFixed(2)}{" "}
+                                        {t("currency")}
+                                    </div>
+                                    {product.sell_by_weight && (
+                                        <div className="text-sm text-muted-foreground mt-1">
+                                            {(product.price_after_discount ?? product.base_price).toFixed(2)} {t("currency")} {t("perKg")}
+                                        </div>
+                                    )}
                                 </div>
                                 {hasDiscount && (
                                     <div className="text-2xl text-muted-foreground line-through">
@@ -429,13 +440,20 @@ export default function ProductShow({
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => handleQuantityChange(-1)}
-                                        disabled={quantity <= 1}
+                                        disabled={quantity <= quantityStep}
                                     >
                                         <Minus className="h-4 w-4" />
                                     </Button>
-                                    <span className="px-6 py-2 text-lg font-semibold min-w-[60px] text-center">
-                                        {quantity}
-                                    </span>
+                                    <div className="px-4 py-2 text-center">
+                                        <div className="text-lg font-semibold min-w-[80px]">
+                                            {quantity.toFixed(product.sell_by_weight ? 1 : 0)}
+                                            {product.sell_by_weight && (
+                                                <span className="text-sm text-muted-foreground ltr:ml-1 rtl:mr-1">
+                                                    {t("kg")}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
                                     <Button
                                         variant="ghost"
                                         size="icon"
@@ -693,13 +711,12 @@ function ProductCard({ product }: { product: RelatedProduct }) {
         product.price_after_discount &&
         product.price_after_discount < product.base_price;
 
-    const handleAddToCart = (e: React.MouseEvent) => {
+    const handleAddToCart = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         setIsAddingToCart(true);
 
-        router.post(
-            route("cart.store"),
+        await addToCart(
             {
                 product_id: product.id,
                 variant_id: null,
@@ -707,8 +724,7 @@ function ProductCard({ product }: { product: RelatedProduct }) {
                 extras: [],
             },
             {
-                preserveScroll: true,
-                onFinish: () => {
+                onFinally: () => {
                     setIsAddingToCart(false);
                 },
             }

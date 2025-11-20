@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link, router } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
+import { addToCart } from '@/utils/cartUtils';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,14 +43,13 @@ export default function ProductsSection({ sections }: ProductsSectionProps) {
     const { t, i18n } = useTranslation();
     const [addingToCart, setAddingToCart] = useState<{ [key: number]: boolean }>({});
 
-    const handleAddToCart = (e: React.MouseEvent, productId: number) => {
+    const handleAddToCart = async (e: React.MouseEvent, productId: number) => {
         e.preventDefault();
         e.stopPropagation();
 
         setAddingToCart(prev => ({ ...prev, [productId]: true }));
 
-        router.post(
-            route('cart.store'),
+        await addToCart(
             {
                 product_id: productId,
                 variant_id: null,
@@ -57,8 +57,7 @@ export default function ProductsSection({ sections }: ProductsSectionProps) {
                 extras: [],
             },
             {
-                preserveScroll: true,
-                onFinish: () => {
+                onFinally: () => {
                     setAddingToCart(prev => ({ ...prev, [productId]: false }));
                 },
             }

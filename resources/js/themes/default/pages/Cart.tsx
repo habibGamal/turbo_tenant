@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Cart as CartType, PageProps } from "@/types";
+import { updateCartItem, removeCartItem, clearCart as clearCartUtil } from "@/utils/cartUtils";
 
 interface CartPageProps extends PageProps {
     cart: CartType;
@@ -46,24 +47,21 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
         return `${amount.toFixed(2)} ${t("currency")}`;
     };
 
-    const updateQuantity = (itemId: number | string, newQuantity: string) => {
+    const updateQuantity = async (itemId: number | string, newQuantity: string) => {
         if (parseFloat(newQuantity) < 0.001) return;
 
         setUpdatingItems((prev) => new Set(prev).add(itemId));
 
-        router.patch(
-            route("cart.update", { itemId: itemId.toString() }),
+        await updateCartItem(
+            itemId,
             { quantity: newQuantity },
             {
-                preserveScroll: true,
-                preserveState: true,
-                onSuccess: (page) => {
-                    const response = page.props as any;
-                    if (response.cart) {
-                        setCart(response.cart);
+                onSuccess: (data) => {
+                    if (data.cart) {
+                        setCart(data.cart);
                     }
                 },
-                onFinish: () => {
+                onFinally: () => {
                     setUpdatingItems((prev) => {
                         const newSet = new Set(prev);
                         newSet.delete(itemId);
@@ -74,19 +72,16 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
         );
     };
 
-    const removeItem = (itemId: number | string) => {
+    const removeItem = async (itemId: number | string) => {
         setUpdatingItems((prev) => new Set(prev).add(itemId));
 
-        router.delete(route("cart.destroy", { itemId: itemId.toString() }), {
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: (page) => {
-                const response = page.props as any;
-                if (response.cart) {
-                    setCart(response.cart);
+        await removeCartItem(itemId, {
+            onSuccess: (data) => {
+                if (data.cart) {
+                    setCart(data.cart);
                 }
             },
-            onFinish: () => {
+            onFinally: () => {
                 setUpdatingItems((prev) => {
                     const newSet = new Set(prev);
                     newSet.delete(itemId);
@@ -96,28 +91,29 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
         });
     };
 
-    const clearCart = () => {
-        router.delete(route("cart.clear"), {
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: (page) => {
-                const response = page.props as any;
-                if (response.cart) {
-                    setCart(response.cart);
+    const handleClearCart = async () => {
+        await clearCartUtil({
+            onSuccess: (data) => {
+                if (data.cart) {
+                    setCart(data.cart);
                 }
             },
         });
     };
 
-    const incrementQuantity = (itemId: number | string, currentQuantity: string) => {
-        const newQuantity = (parseFloat(currentQuantity) + 1).toString();
+    const incrementQuantity = (itemId: number | string, currentQuantity: string, sellByWeight: boolean = false) => {
+        const step = sellByWeight ? 0.1 : 1;
+        const current = parseFloat(currentQuantity);
+        const newQuantity = (Math.round((current + step) * 10) / 10).toString();
         updateQuantity(itemId, newQuantity);
     };
 
-    const decrementQuantity = (itemId: number | string, currentQuantity: string) => {
+    const decrementQuantity = (itemId: number | string, currentQuantity: string, sellByWeight: boolean = false) => {
+        const step = sellByWeight ? 0.1 : 1;
+        const minQty = sellByWeight ? 0.1 : 1;
         const current = parseFloat(currentQuantity);
-        if (current > 1) {
-            const newQuantity = (current - 1).toString();
+        if (current > minQty) {
+            const newQuantity = (Math.round((current - step) * 10) / 10).toString();
             updateQuantity(itemId, newQuantity);
         }
     };
@@ -186,7 +182,7 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={clearCart}
+                                            onClick={handleClearCart}
                                             className="text-destructive hover:text-destructive"
                                         >
                                             <Trash2 className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
@@ -215,7 +211,7 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                                                     alt={
                                                                         item.product
                                                                             .name ||
-                                                                        "Product"
+                                                                        t("product")
                                                                     }
                                                                     className="w-full h-full object-cover"
                                                                 />
@@ -315,7 +311,8 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                                                     onClick={() =>
                                                                         decrementQuantity(
                                                                             item.id,
-                                                                            item.quantity
+                                                                            item.quantity,
+                                                                            item.product?.sell_by_weight
                                                                         )
                                                                     }
                                                                     disabled={
@@ -324,14 +321,17 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                                                         ) ||
                                                                         parseFloat(
                                                                             item.quantity
-                                                                        ) <= 1
+                                                                        ) <= (item.product?.sell_by_weight ? 0.1 : 1)
                                                                     }
                                                                 >
                                                                     <Minus className="h-3 w-3" />
                                                                 </Button>
-                                                                <div className="w-16 text-center font-medium">
-                                                                    {parseFloat(
-                                                                        item.quantity
+                                                                <div className="w-20 text-center font-medium">
+                                                                    {parseFloat(item.quantity).toFixed(item.product?.sell_by_weight ? 1 : 0)}
+                                                                    {item.product?.sell_by_weight && (
+                                                                        <span className="text-xs text-muted-foreground ltr:ml-1 rtl:mr-1">
+                                                                            {t("kg")}
+                                                                        </span>
                                                                     )}
                                                                 </div>
                                                                 <Button
@@ -341,7 +341,8 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                                                     onClick={() =>
                                                                         incrementQuantity(
                                                                             item.id,
-                                                                            item.quantity
+                                                                            item.quantity,
+                                                                            item.product?.sell_by_weight
                                                                         )
                                                                     }
                                                                     disabled={updatingItems.has(

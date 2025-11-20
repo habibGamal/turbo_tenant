@@ -80,6 +80,7 @@ export interface CartItem {
         image?: string;
         base_price: number;
         price_after_discount?: number;
+        sell_by_weight?: boolean;
     };
     variant?: {
         id: number;

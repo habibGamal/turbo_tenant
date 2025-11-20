@@ -30,18 +30,25 @@ final class ProductSeeder extends Seeder
             $productCount = rand(5, 10);
 
             for ($i = 0; $i < $productCount; $i++) {
-                $basePrice = fake()->randomFloat(2, 8, 45);
+                // 20% chance to be sold by weight
+                $sellByWeight = fake()->boolean(20);
+
+                // Weight-based products typically have price per kg/lb
+                $basePrice = $sellByWeight
+                    ? fake()->randomFloat(2, 15, 80)  // Higher price per kg
+                    : fake()->randomFloat(2, 8, 45);   // Regular unit price
+
                 $hasDiscount = fake()->boolean(30);
 
                 $product = Product::create([
-                    'name' => $this->getProductName($category->name),
+                    'name' => $this->getProductName($category->name, $sellByWeight),
                     'description' => fake()->sentence(rand(8, 15)),
                     'image' => 'https://placehold.co/600x400/png?text='.urlencode($category->name),
                     'base_price' => $basePrice,
                     'price_after_discount' => $hasDiscount ? $basePrice * 0.85 : null,
                     'category_id' => $category->id,
                     'is_active' => fake()->boolean(95),
-                    'sell_by_weight' => false,
+                    'sell_by_weight' => $sellByWeight,
                 ]);
 
                 // Attach to random sections
@@ -57,8 +64,19 @@ final class ProductSeeder extends Seeder
         }
     }
 
-    private function getProductName(string $categoryName): string
+    private function getProductName(string $categoryName, bool $sellByWeight = false): string
     {
+        $weightBasedNames = [
+            'Salads' => ['Fresh Mixed Greens', 'Organic Baby Spinach', 'Arugula Mix'],
+            'Soups' => ['Homemade Soup', 'Daily Special Soup'],
+            'Desserts' => ['Assorted Cookies', 'Chocolate Truffles', 'Candy Mix'],
+            'Pasta' => ['Fresh Pasta Dough', 'Stuffed Ravioli'],
+        ];
+
+        if ($sellByWeight && isset($weightBasedNames[$categoryName])) {
+            return fake()->randomElement($weightBasedNames[$categoryName]);
+        }
+
         $names = [
             'Pizza' => [
                 'Margherita Pizza', 'Pepperoni Pizza', 'BBQ Chicken Pizza',

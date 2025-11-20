@@ -43,38 +43,40 @@ final class CartController extends Controller
         ]);
     }
 
-    public function update(UpdateCartItemRequest $request, string $itemId): Response
+    public function update(UpdateCartItemRequest $request, string $itemId): JsonResponse
     {
         $validated = $request->validated();
-
         $cart = $this->cartService->updateItem(
             $request->user(),
-            (int) $itemId,
+            $itemId,
             $validated['quantity']
         );
 
-        return Inertia::render('Cart', [
+        return response()->json([
+            'message' => 'Cart item updated successfully',
             'cart' => $cart,
         ]);
     }
 
-    public function destroy(Request $request, string $itemId): Response
+    public function destroy(Request $request, string $itemId): JsonResponse
     {
         $cart = $this->cartService->removeItem(
             $request->user(),
-            (int) $itemId
+            $itemId
         );
 
-        return Inertia::render('Cart', [
+        return response()->json([
+            'message' => 'Item removed from cart successfully',
             'cart' => $cart,
         ]);
     }
 
-    public function clear(Request $request): Response
+    public function clear(Request $request): JsonResponse
     {
         $cart = $this->cartService->clearCart($request->user());
 
-        return Inertia::render('Cart', [
+        return response()->json([
+            'message' => 'Cart cleared successfully',
             'cart' => $cart,
         ]);
     }
