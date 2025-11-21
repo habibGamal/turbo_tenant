@@ -40,6 +40,13 @@ it('can add item to cart as guest', function () {
             'total',
         ],
     ]);
+
+    // Verify cart was created with session_id
+    $this->assertDatabaseHas('carts', [
+        'user_id' => null,
+    ]);
+
+    expect(Cart::whereNotNull('session_id')->count())->toBe(1);
 });
 
 it('can add item to cart as authenticated user', function () {
@@ -186,6 +193,10 @@ it('syncs guest cart to user cart on login', function () {
         'quantity' => '2',
     ]);
 
+    // Verify guest cart was created
+    $guestCart = Cart::whereNotNull('session_id')->first();
+    expect($guestCart)->not->toBeNull();
+
     // Create and login as user
     $user = User::factory()->create();
 
@@ -195,7 +206,7 @@ it('syncs guest cart to user cart on login', function () {
 
     $response->assertSuccessful();
 
-    // Verify cart was synced to database
+    // Verify cart was synced to user
     $this->assertDatabaseHas('carts', [
         'user_id' => $user->id,
     ]);
@@ -205,6 +216,11 @@ it('syncs guest cart to user cart on login', function () {
     $this->assertDatabaseHas('cart_items', [
         'cart_id' => $cart->id,
         'product_id' => $product->id,
+    ]);
+
+    // Verify guest cart was deleted
+    $this->assertDatabaseMissing('carts', [
+        'id' => $guestCart->id,
     ]);
 });
 
@@ -311,4 +327,102 @@ it('increments quantity when adding same item again', function () {
         ->first();
 
     expect($cartItem->quantity)->toBe('5.000');
+});
+
+it('can update cart item weight_multiplier', function () {
+    $user = User::factory()->create();
+    $product = Product::factory()->create(['sell_by_weight' => true]);
+    $cart = Cart::factory()->create(['user_id' => $user->id]);
+    $cartItem = CartItem::factory()->create([
+        'cart_id' => $cart->id,
+        'product_id' => $product->id,
+        'quantity' => '1.000',
+        'weight_multiplier' => 1,
+    ]);
+
+    $response = $this->actingAs($user)
+        ->patchJson(route('cart.update', $cartItem->id), [
+            'weight_multiplier' => 3,
+        ]);
+
+    $response->assertSuccessful();
+
+    $this->assertDatabaseHas('cart_items', [
+        'id' => $cartItem->id,
+        'weight_multiplier' => 3,
+    ]);
+});
+
+it('can update cart item weight_option_value_id', function () {
+    $user = User::factory()->create();
+    $product = Product::factory()->create(['sell_by_weight' => true]);
+    $weightOption = App\Models\WeightOption::factory()->create();
+    $weightValue1 = App\Models\WeightOptionValue::factory()->create([
+        'weight_option_id' => $weightOption->id,
+        'value' => '0.5',
+    ]);
+    $weightValue2 = App\Models\WeightOptionValue::factory()->create([
+        'weight_option_id' => $weightOption->id,
+        'value' => '1.0',
+    ]);
+
+    $cart = Cart::factory()->create(['user_id' => $user->id]);
+    $cartItem = CartItem::factory()->create([
+        'cart_id' => $cart->id,
+        'product_id' => $product->id,
+        'quantity' => '1.000',
+        'weight_option_value_id' => $weightValue1->id,
+        'weight_multiplier' => 1,
+    ]);
+
+    $response = $this->actingAs($user)
+        ->patchJson(route('cart.update', $cartItem->id), [
+            'weight_option_value_id' => $weightValue2->id,
+        ]);
+
+    $response->assertSuccessful();
+
+    $this->assertDatabaseHas('cart_items', [
+        'id' => $cartItem->id,
+        'weight_option_value_id' => $weightValue2->id,
+    ]);
+});
+
+it('can update multiple cart item properties at once', function () {
+    $user = User::factory()->create();
+    $product = Product::factory()->create(['sell_by_weight' => true]);
+    $weightOption = App\Models\WeightOption::factory()->create();
+    $weightValue1 = App\Models\WeightOptionValue::factory()->create([
+        'weight_option_id' => $weightOption->id,
+        'value' => '0.5',
+    ]);
+    $weightValue2 = App\Models\WeightOptionValue::factory()->create([
+        'weight_option_id' => $weightOption->id,
+        'value' => '1.0',
+    ]);
+
+    $cart = Cart::factory()->create(['user_id' => $user->id]);
+    $cartItem = CartItem::factory()->create([
+        'cart_id' => $cart->id,
+        'product_id' => $product->id,
+        'quantity' => '1.000',
+        'weight_option_value_id' => $weightValue1->id,
+        'weight_multiplier' => 1,
+    ]);
+
+    $response = $this->actingAs($user)
+        ->patchJson(route('cart.update', $cartItem->id), [
+            'quantity' => '2.000',
+            'weight_multiplier' => 3,
+            'weight_option_value_id' => $weightValue2->id,
+        ]);
+
+    $response->assertSuccessful();
+
+    $this->assertDatabaseHas('cart_items', [
+        'id' => $cartItem->id,
+        'quantity' => '2.000',
+        'weight_multiplier' => 3,
+        'weight_option_value_id' => $weightValue2->id,
+    ]);
 });

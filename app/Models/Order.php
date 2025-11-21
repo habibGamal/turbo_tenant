@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,8 +14,14 @@ final class Order extends Model
 {
     protected $fillable = [
         'order_number',
+        'merchant_order_id',
+        'transaction_id',
+        'paymob_order_id',
         'shift_id',
         'status',
+        'payment_status',
+        'payment_method',
+        'payment_data',
         'type',
         'sub_total',
         'tax',
@@ -62,6 +70,8 @@ final class Order extends Model
             'delivery_fee' => 'double',
             'discount' => 'double',
             'total' => 'double',
+            'payment_status' => PaymentStatus::class,
+            'payment_method' => PaymentMethod::class,
         ];
     }
 }

@@ -19,7 +19,9 @@ final class UpdateCartItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'quantity' => ['required', 'numeric', 'min:0.001', 'max:9999.999'],
+            'quantity' => ['nullable', 'numeric', 'min:0.001', 'max:9999.999'],
+            'weight_multiplier' => ['nullable', 'integer', 'min:1', 'max:99'],
+            'weight_option_value_id' => ['nullable', 'integer', 'exists:weight_option_values,id'],
         ];
     }
 
@@ -29,9 +31,11 @@ final class UpdateCartItemRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'quantity.required' => 'Quantity is required.',
             'quantity.min' => 'Quantity must be at least 0.001.',
             'quantity.max' => 'Quantity cannot exceed 9999.999.',
+            'weight_multiplier.min' => 'Weight multiplier must be at least 1.',
+            'weight_multiplier.max' => 'Weight multiplier cannot exceed 99.',
+            'weight_option_value_id.exists' => 'Selected weight option does not exist.',
         ];
     }
 }

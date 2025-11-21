@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -52,6 +52,13 @@ export default function Navigation({ categories = [], cartItemsCount = 0 }: Navi
             // Handle search navigation
             window.location.href = `/menu?search=${encodeURIComponent(searchQuery)}`;
         }
+    };
+
+    const handleAutoLogin = () => {
+        router.post('/login', {
+            email: 'admin@example.com',
+            password: 'password',
+        });
     };
 
     return (
@@ -189,12 +196,10 @@ export default function Navigation({ categories = [], cartItemsCount = 0 }: Navi
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             ) : (
-                                <Link href="/login">
-                                    <Button variant="default" size="sm" className="gap-2">
-                                        <User className="h-4 w-4" />
-                                        <span className="hidden sm:inline">{t('login')}</span>
-                                    </Button>
-                                </Link>
+                                <Button variant="default" size="sm" className="gap-2" onClick={handleAutoLogin}>
+                                    <User className="h-4 w-4" />
+                                    <span className="hidden sm:inline">{t('login')}</span>
+                                </Button>
                             )}
 
                             {/* Mobile Menu Toggle */}
@@ -290,12 +295,19 @@ export default function Navigation({ categories = [], cartItemsCount = 0 }: Navi
                             <span className="text-xs">{t('cart')}</span>
                         </Button>
                     </Link>
-                    <Link href={auth?.user ? "/profile" : "/login"}>
-                        <Button variant="ghost" className="flex-col h-auto py-2 w-full gap-1">
+                    {auth?.user ? (
+                        <Link href="/profile">
+                            <Button variant="ghost" className="flex-col h-auto py-2 w-full gap-1">
+                                <User className="h-5 w-5" />
+                                <span className="text-xs">{t('profile')}</span>
+                            </Button>
+                        </Link>
+                    ) : (
+                        <Button variant="ghost" className="flex-col h-auto py-2 w-full gap-1" onClick={handleAutoLogin}>
                             <User className="h-5 w-5" />
-                            <span className="text-xs">{auth?.user ? t('profile') : t('login')}</span>
+                            <span className="text-xs">{t('login')}</span>
                         </Button>
-                    </Link>
+                    )}
                 </div>
             </nav>
         </>

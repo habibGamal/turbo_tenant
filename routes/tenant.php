@@ -33,4 +33,14 @@ Route::middleware([
     Route::delete('/cart/items/{itemId}', [App\Http\Controllers\CartController::class, 'destroy'])->name('cart.destroy');
     Route::delete('/cart', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
     Route::post('/cart/sync', [App\Http\Controllers\CartController::class, 'sync'])->name('cart.sync');
+
+    // Order routes (authenticated)
+    Route::middleware('auth')->group(function () {
+        Route::post('/orders', [App\Http\Controllers\OrderController::class, 'placeOrder'])->name('orders.place');
+        Route::get('/orders', [App\Http\Controllers\OrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/{orderId}', [App\Http\Controllers\OrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders/{orderId}/payment/callback', [App\Http\Controllers\OrderController::class, 'paymentCallback'])->name('orders.payment.callback');
+    });
+
+    // Paymob webhook (no auth required)
 });

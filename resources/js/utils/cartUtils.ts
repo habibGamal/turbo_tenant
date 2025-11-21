@@ -1,14 +1,23 @@
 import axios from 'axios';
 
+export interface ExtraWithQuantity {
+    id: number;
+    quantity?: number;
+}
+
 export interface AddToCartParams {
     product_id: number;
     variant_id?: number | null;
+    weight_option_value_id?: number | null;
     quantity?: string;
-    extras?: number[];
+    weight_multiplier?: number;
+    extras?: ExtraWithQuantity[];
 }
 
 export interface UpdateCartItemParams {
-    quantity: string;
+    quantity?: string;
+    weight_multiplier?: number;
+    weight_option_value_id?: number;
 }
 
 export interface CartOperationCallbacks {
@@ -28,7 +37,9 @@ export const addToCart = async (
         const response = await axios.post(route('cart.store'), {
             product_id: params.product_id,
             variant_id: params.variant_id ?? null,
+            weight_option_value_id: params.weight_option_value_id ?? null,
             quantity: params.quantity ?? '1',
+            weight_multiplier: params.weight_multiplier ?? 1,
             extras: params.extras ?? [],
         });
 
@@ -55,6 +66,8 @@ export const updateCartItem = async (
             route('cart.update', { itemId: itemId.toString() }),
             {
                 quantity: params.quantity,
+                weight_multiplier: params.weight_multiplier,
+                weight_option_value_id: params.weight_option_value_id,
             }
         );
 

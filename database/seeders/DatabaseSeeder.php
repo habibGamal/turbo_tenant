@@ -13,17 +13,21 @@ final class DatabaseSeeder extends Seeder
     public function run(): void
     {
         User::factory()->create([
-            'name' => config('app.default_user.name'),
+            'name' => config(key: 'app.default_user.name'),
             'email' => config('app.default_user.email'),
             'password' => bcrypt(config('app.default_user.password')),
         ]);
 
         // Seed restaurant data
         $this->call([
-            CategorySeeder::class,
-            SectionSeeder::class,
-            ProductSeeder::class,
-            PackageSeeder::class,
+            GovernorateSeeder::class,
+            BranchSeeder::class,
+            AreaSeeder::class,
+            // CategorySeeder::class,
+            // SectionSeeder::class,
+            // WeightOptionSeeder::class,
+            // ProductSeeder::class,
+            // PackageSeeder::class,
         ]);
     }
 }

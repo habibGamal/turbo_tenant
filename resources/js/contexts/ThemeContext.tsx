@@ -10,7 +10,7 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ theme, children, defaultMode = 'light' }: ThemeProviderProps) {
-    const [currentMode, setCurrentMode] = useState<'light' | 'dark'>(defaultMode);
+    const [currentMode, setCurrentMode] = useState<'light' | 'dark'>('light');
 
     useEffect(() => {
         const root = document.documentElement;

@@ -27,8 +27,8 @@ import {
     Clock,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Product, Review, ExtraOptionItem, ProductVariant } from "@/types";
-import { addToCart } from "@/utils/cartUtils";
+import { Product, Review, ExtraOptionItem, ProductVariant, WeightOptionValue } from "@/types";
+import { addToCart, ExtraWithQuantity } from "@/utils/cartUtils";
 
 interface RelatedProduct {
     id: number;
@@ -66,16 +66,23 @@ export default function ProductShow({
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === "ar";
 
-    // For weight-based products, allow 0.1 kg increments, otherwise use 1
-    const quantityStep = product.sell_by_weight ? 0.1 : 1;
-    const [quantity, setQuantity] = useState(quantityStep);
+    // For weight-based products, use first weight option value or default, otherwise use 1
+    const defaultQuantity = product.sell_by_weight && product.weight_option?.values?.[0]
+        ? parseFloat(product.weight_option.values[0].value)
+        : 1;
+    const [quantity, setQuantity] = useState(defaultQuantity);
+    const [selectedWeightValue, setSelectedWeightValue] = useState<number | null>(
+        product.weight_option?.values?.[0]?.id || null
+    );
     const [selectedVariant, setSelectedVariant] = useState<number | null>(
         product.variants?.[0]?.id || null
     );
-    const [selectedExtras, setSelectedExtras] = useState<number[]>(
-        product.extraOption?.items
-            .filter((item) => item.is_default)
-            .map((item) => item.id) || []
+    const [selectedExtras, setSelectedExtras] = useState<Map<number, number>>(
+        new Map(
+            product.extraOption?.items
+                .filter((item) => item.is_default)
+                .map((item) => [item.id, 1]) || []
+        )
     );
     const [isFavorite, setIsFavorite] = useState(false);
 
@@ -95,12 +102,12 @@ export default function ProductShow({
 
         // Add extras prices
         if (product.extraOption?.items) {
-            selectedExtras.forEach((extraId) => {
+            selectedExtras.forEach((qty, extraId) => {
                 const extra = product.extraOption!.items.find(
                     (item) => item.id === extraId
                 );
                 if (extra) {
-                    total += extra.price;
+                    total += extra.price * qty;
                 }
             });
         }
@@ -109,18 +116,57 @@ export default function ProductShow({
     };
 
     const handleQuantityChange = (delta: number) => {
-        const step = product.sell_by_weight ? 0.1 : 1;
-        const minQty = product.sell_by_weight ? 0.1 : 1;
-        const newQty = quantity + (delta * step);
-        setQuantity(Math.max(minQty, Math.round(newQty * 10) / 10));
+        if (product.sell_by_weight && product.weight_option?.values) {
+            // For weight-based products with discrete values
+            const currentIndex = product.weight_option.values.findIndex(
+                (v) => v.id === selectedWeightValue
+            );
+            const newIndex = currentIndex + delta;
+            if (newIndex >= 0 && newIndex < product.weight_option.values.length) {
+                const newValue = product.weight_option.values[newIndex];
+                setSelectedWeightValue(newValue.id);
+                setQuantity(parseFloat(newValue.value));
+            }
+        } else {
+            // For regular products, increment/decrement by 1
+            const newQty = quantity + delta;
+            setQuantity(Math.max(1, newQty));
+        }
     };
 
     const handleExtraToggle = (extraId: number) => {
-        setSelectedExtras((prev) =>
-            prev.includes(extraId)
-                ? prev.filter((id) => id !== extraId)
-                : [...prev, extraId]
-        );
+        if (!product.extraOption) return;
+
+        const newExtras = new Map(selectedExtras);
+
+        if (newExtras.has(extraId)) {
+            newExtras.delete(extraId);
+        } else {
+            // Check if max selections is reached
+            if (product.extraOption.max_selections && newExtras.size >= product.extraOption.max_selections) {
+                // If not allow_multiple, replace the existing selection
+                if (!product.extraOption.allow_multiple) {
+                    newExtras.clear();
+                    newExtras.set(extraId, 1);
+                }
+                return;
+            }
+            newExtras.set(extraId, 1);
+        }
+
+        setSelectedExtras(newExtras);
+    };
+
+    const handleExtraQuantityChange = (extraId: number, delta: number) => {
+        const extraItem = product.extraOption?.items.find(item => item.id === extraId);
+        if (!extraItem || !extraItem.allow_quantity) return;
+
+        const newExtras = new Map(selectedExtras);
+        const currentQty = newExtras.get(extraId) || 0;
+        const newQty = Math.max(1, currentQty + delta);
+
+        newExtras.set(extraId, newQty);
+        setSelectedExtras(newExtras);
     };
 
     const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -128,21 +174,32 @@ export default function ProductShow({
     const handleAddToCart = async () => {
         setIsAddingToCart(true);
 
+        const extrasArray: ExtraWithQuantity[] = Array.from(selectedExtras.entries()).map(
+            ([id, quantity]) => ({ id, quantity })
+        );
+
         await addToCart(
             {
                 product_id: product.id,
                 variant_id: selectedVariant,
+                weight_option_value_id: selectedWeightValue,
                 quantity: quantity.toString(),
-                extras: selectedExtras,
+                extras: extrasArray,
             },
             {
                 onSuccess: () => {
                     // Reset form to default state
-                    setQuantity(product.sell_by_weight ? 0.1 : 1);
+                    const defaultQty = product.sell_by_weight && product.weight_option?.values?.[0]
+                        ? parseFloat(product.weight_option.values[0].value)
+                        : 1;
+                    setQuantity(defaultQty);
+                    setSelectedWeightValue(product.weight_option?.values?.[0]?.id || null);
                     setSelectedExtras(
-                        product.extraOption?.items
-                            .filter((item) => item.is_default)
-                            .map((item) => item.id) || []
+                        new Map(
+                            product.extraOption?.items
+                                .filter((item) => item.is_default)
+                                .map((item) => [item.id, 1]) || []
+                        )
                     );
                 },
                 onFinally: () => {
@@ -363,69 +420,93 @@ export default function ProductShow({
                                 product.extraOption.items.length > 0 && (
                                     <>
                                         <div className="space-y-3">
-                                            <label className="text-lg font-semibold">
-                                                {product.extraOption.name}
-                                            </label>
-                                            {product.extraOption
-                                                .description && (
-                                                <p className="text-sm text-muted-foreground">
-                                                    {
-                                                        product.extraOption
-                                                            .description
-                                                    }
-                                                </p>
-                                            )}
+                                            <div>
+                                                <label className="text-lg font-semibold">
+                                                    {product.extraOption.name}
+                                                </label>
+                                                {product.extraOption.description && (
+                                                    <p className="text-sm text-muted-foreground mt-1">
+                                                        {product.extraOption.description}
+                                                    </p>
+                                                )}
+                                                {(product.extraOption.min_selections > 0 || product.extraOption.max_selections) && (
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        {product.extraOption.min_selections > 0 && product.extraOption.max_selections
+                                                            ? t("selectBetween", {
+                                                                  min: product.extraOption.min_selections,
+                                                                  max: product.extraOption.max_selections,
+                                                              })
+                                                            : product.extraOption.min_selections > 0
+                                                            ? t("selectAtLeast", { min: product.extraOption.min_selections })
+                                                            : t("selectUpTo", { max: product.extraOption.max_selections })}
+                                                    </p>
+                                                )}
+                                            </div>
                                             <div className="space-y-2">
-                                                {product.extraOption.items.map(
-                                                    (item) => (
-                                                        <label
+                                                {product.extraOption.items.map((item) => {
+                                                    const isSelected = selectedExtras.has(item.id);
+                                                    const qty = selectedExtras.get(item.id) || 1;
+
+                                                    return (
+                                                        <div
                                                             key={item.id}
-                                                            className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                                                                selectedExtras.includes(
-                                                                    item.id
-                                                                )
+                                                            className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all ${
+                                                                isSelected
                                                                     ? "border-primary bg-primary/5"
-                                                                    : "border-border hover:border-primary/50"
+                                                                    : "border-border"
                                                             }`}
                                                         >
-                                                            <div className="flex items-center gap-3">
+                                                            <label className="flex items-center gap-3 flex-1 cursor-pointer">
                                                                 <input
                                                                     type="checkbox"
-                                                                    checked={selectedExtras.includes(
-                                                                        item.id
-                                                                    )}
-                                                                    onChange={() =>
-                                                                        handleExtraToggle(
-                                                                            item.id
-                                                                        )
-                                                                    }
+                                                                    checked={isSelected}
+                                                                    onChange={() => handleExtraToggle(item.id)}
                                                                     className="w-5 h-5 rounded accent-primary"
                                                                 />
-                                                                <div>
+                                                                <div className="flex-1">
                                                                     <div className="font-medium">
-                                                                        {
-                                                                            item.name
-                                                                        }
+                                                                        {item.name}
                                                                     </div>
                                                                     <div className="text-sm text-muted-foreground">
-                                                                        +
-                                                                        {item.price.toFixed(
-                                                                            2
-                                                                        )}{" "}
-                                                                        {t(
-                                                                            "currency"
+                                                                        +{item.price.toFixed(2)} {t("currency")}
+                                                                        {item.allow_quantity && isSelected && (
+                                                                            <span className="ltr:ml-2 rtl:mr-2">
+                                                                                × {qty}
+                                                                            </span>
                                                                         )}
                                                                     </div>
                                                                 </div>
-                                                            </div>
-                                                            {selectedExtras.includes(
-                                                                item.id
-                                                            ) && (
+                                                            </label>
+                                                            {isSelected && item.allow_quantity && (
+                                                                <div className="flex items-center gap-2">
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="outline"
+                                                                        size="icon"
+                                                                        className="h-8 w-8"
+                                                                        onClick={() => handleExtraQuantityChange(item.id, -1)}
+                                                                        disabled={qty <= 1}
+                                                                    >
+                                                                        <Minus className="h-3 w-3" />
+                                                                    </Button>
+                                                                    <span className="w-8 text-center font-medium">{qty}</span>
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="outline"
+                                                                        size="icon"
+                                                                        className="h-8 w-8"
+                                                                        onClick={() => handleExtraQuantityChange(item.id, 1)}
+                                                                    >
+                                                                        <Plus className="h-3 w-3" />
+                                                                    </Button>
+                                                                </div>
+                                                            )}
+                                                            {isSelected && !item.allow_quantity && (
                                                                 <Check className="h-5 w-5 text-primary" />
                                                             )}
-                                                        </label>
-                                                    )
-                                                )}
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                         <Separator />
@@ -435,33 +516,68 @@ export default function ProductShow({
                             {/* Quantity & Add to Cart */}
                             <div className="flex flex-col sm:flex-row gap-4">
                                 {/* Quantity Selector */}
-                                <div className="flex items-center shadow px-2 rounded-lg">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => handleQuantityChange(-1)}
-                                        disabled={quantity <= quantityStep}
+                                {product.sell_by_weight && product.weight_option?.values ? (
+                                    /* Weight Options Selector */
+                                    <RadioGroup
+                                        value={selectedWeightValue?.toString()}
+                                        onValueChange={(value) => {
+                                            const valueId = parseInt(value);
+                                            const weightValue = product.weight_option!.values.find(
+                                                (v) => v.id === valueId
+                                            );
+                                            if (weightValue) {
+                                                setSelectedWeightValue(valueId);
+                                                setQuantity(parseFloat(weightValue.value));
+                                            }
+                                        }}
+                                        className="flex flex-wrap gap-2"
                                     >
-                                        <Minus className="h-4 w-4" />
-                                    </Button>
-                                    <div className="px-4 py-2 text-center">
-                                        <div className="text-lg font-semibold min-w-[80px]">
-                                            {quantity.toFixed(product.sell_by_weight ? 1 : 0)}
-                                            {product.sell_by_weight && (
-                                                <span className="text-sm text-muted-foreground ltr:ml-1 rtl:mr-1">
-                                                    {t("kg")}
+                                        {product.weight_option.values.map((value) => (
+                                            <label
+                                                key={value.id}
+                                                htmlFor={`weight-${value.id}`}
+                                                className={`flex items-center justify-center px-4 py-2 rounded-lg border-2 cursor-pointer transition-all ${
+                                                    selectedWeightValue === value.id
+                                                        ? "border-primary bg-primary/10 font-semibold"
+                                                        : "border-border hover:border-primary/50"
+                                                }`}
+                                            >
+                                                <RadioGroupItem
+                                                    value={value.id.toString()}
+                                                    id={`weight-${value.id}`}
+                                                    className="sr-only"
+                                                />
+                                                <span>
+                                                    {value.label || `${value.value} ${product.weight_option!.unit}`}
                                                 </span>
-                                            )}
+                                            </label>
+                                        ))}
+                                    </RadioGroup>
+                                ) : (
+                                    /* Regular Quantity Selector */
+                                    <div className="flex items-center shadow px-2 rounded-lg">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => handleQuantityChange(-1)}
+                                            disabled={quantity <= 1}
+                                        >
+                                            <Minus className="h-4 w-4" />
+                                        </Button>
+                                        <div className="px-4 py-2 text-center">
+                                            <div className="text-lg font-semibold min-w-[80px]">
+                                                {quantity}
+                                            </div>
                                         </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => handleQuantityChange(1)}
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
                                     </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => handleQuantityChange(1)}
-                                    >
-                                        <Plus className="h-4 w-4" />
-                                    </Button>
-                                </div>
+                                )}
 
                                 {/* Add to Cart Button */}
                                 <Button

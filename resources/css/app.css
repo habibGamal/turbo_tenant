@@ -31,6 +31,8 @@
   --radius-sm: calc(0.5rem - 4px);
 }
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
   --radius: 0.65rem;

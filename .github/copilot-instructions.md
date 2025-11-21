@@ -9,7 +9,8 @@
 - always use const { t, i18n } = useTranslation(); for translations t("key")
 - support dark mode using tailwind dark: directive
 - also consider the arrow left/right icons directions
-
+- we are in development phase so you can modify the migration files directly
+- it is VERY IMPORTANT : when implementing any thing in filament note that we use v4 and you should always use #search-docs tool to gets info from its docs
 <laravel-boost-guidelines>
 === foundation rules ===
 

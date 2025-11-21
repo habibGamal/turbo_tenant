@@ -38,7 +38,6 @@ final class ProductForm
                             ->image()
                             ->imageEditor()
                             ->directory('products')
-                            ->required()
                             ->columnSpanFull(),
                     ])
                     ->columns(2)
@@ -79,37 +78,9 @@ final class ProductForm
                             ->searchable()
                             ->preload()
                             ->visible(fn ($get) => $get('sell_by_weight')),
-                        TextInput::make('single_pos_ref')
-                            ->label('POS Reference')
-                            ->maxLength(255),
                     ])
                     ->columns(2)
                     ->columnSpan(2),
-
-                Section::make('Product Variants')
-                    ->schema([
-                        Repeater::make('variants')
-                            ->relationship()
-                            ->schema([
-                                TextInput::make('name')
-                                    ->required()
-                                    ->maxLength(255),
-                                TextInput::make('price')
-                                    ->numeric()
-                                    ->required()
-                                    ->prefix('$'),
-                                Toggle::make('is_available')
-                                    ->default(true),
-                                TextInput::make('sort_order')
-                                    ->numeric()
-                                    ->default(0),
-                            ])
-                            ->columns(4)
-                            ->orderColumn('sort_order')
-                            ->defaultItems(0)
-                            ->collapsible(),
-                    ])
-                    ->columnSpanFull(),
 
                 Section::make('POS Mappings')
                     ->schema([
@@ -123,18 +94,25 @@ final class ProductForm
                                 Select::make('variant_id')
                                     ->relationship('variant', 'name')
                                     ->searchable()
-                                    ->preload(),
+                                    ->preload()
+                                    ->label('Product Variant (Optional)'),
+                                Select::make('extra_option_item_id')
+                                    ->relationship('extraOptionItem', 'name')
+                                    ->searchable()
+                                    ->preload()
+                                    ->label('Extra Option Item (Optional)'),
                                 TextInput::make('pos_item_id')
                                     ->required()
-                                    ->maxLength(255),
-                                TextInput::make('pos_category')
-                                    ->maxLength(255),
+                                    ->maxLength(255)
+                                    ->label('POS Item ID'),
                             ])
                             ->columns(4)
                             ->defaultItems(0)
-                            ->collapsible(),
+                            ->collapsible()
+                            ->addActionLabel('Add POS Mapping'),
                     ])
-                    ->columnSpanFull(),
+                    ->columnSpanFull()
+                    ->description('Map products to POS system items by branch, variant, and extra options'),
             ]);
     }
 }

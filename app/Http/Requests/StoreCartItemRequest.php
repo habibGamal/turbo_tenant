@@ -21,9 +21,12 @@ final class StoreCartItemRequest extends FormRequest
         return [
             'product_id' => ['required', 'integer', 'exists:products,id'],
             'variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
+            'weight_option_value_id' => ['nullable', 'integer', 'exists:weight_option_values,id'],
             'quantity' => ['required', 'numeric', 'min:0.001', 'max:9999.999'],
+            'weight_multiplier' => ['nullable', 'integer', 'min:1', 'max:99'],
             'extras' => ['nullable', 'array'],
-            'extras.*' => ['integer', 'exists:extra_option_items,id'],
+            'extras.*.id' => ['required', 'integer', 'exists:extra_option_items,id'],
+            'extras.*.quantity' => ['nullable', 'integer', 'min:1', 'max:999'],
         ];
     }
 
@@ -39,7 +42,12 @@ final class StoreCartItemRequest extends FormRequest
             'quantity.required' => 'Quantity is required.',
             'quantity.min' => 'Quantity must be at least 0.001.',
             'quantity.max' => 'Quantity cannot exceed 9999.999.',
-            'extras.*.exists' => 'One or more selected extras do not exist.',
+            'weight_multiplier.min' => 'Weight multiplier must be at least 1.',
+            'weight_multiplier.max' => 'Weight multiplier cannot exceed 99.',
+            'extras.*.id.required' => 'Extra item ID is required.',
+            'extras.*.id.exists' => 'One or more selected extras do not exist.',
+            'extras.*.quantity.min' => 'Extra quantity must be at least 1.',
+            'extras.*.quantity.max' => 'Extra quantity cannot exceed 999.',
         ];
     }
 }

@@ -23,10 +23,23 @@ import {
     ArrowLeft,
     Trash2,
     Package,
+    Copy,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Cart as CartType, PageProps } from "@/types";
-import { updateCartItem, removeCartItem, clearCart as clearCartUtil } from "@/utils/cartUtils";
+import {
+    updateCartItem,
+    removeCartItem,
+    clearCart as clearCartUtil,
+    addToCart,
+} from "@/utils/cartUtils";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface CartPageProps extends PageProps {
     cart: CartType;
@@ -43,11 +56,15 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
     const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
     const BackArrowIcon = isRTL ? ArrowRight : ArrowLeft;
 
-    const formatCurrency = (amount: number) => {
-        return `${amount.toFixed(2)} ${t("currency")}`;
+    const formatCurrency = (amount: number | undefined) => {
+        const safeAmount = amount ?? 0;
+        return `${safeAmount.toFixed(2)} ${t("currency")}`;
     };
 
-    const updateQuantity = async (itemId: number | string, newQuantity: string) => {
+    const updateQuantity = async (
+        itemId: number | string,
+        newQuantity: string
+    ) => {
         if (parseFloat(newQuantity) < 0.001) return;
 
         setUpdatingItems((prev) => new Set(prev).add(itemId));
@@ -101,22 +118,98 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
         });
     };
 
-    const incrementQuantity = (itemId: number | string, currentQuantity: string, sellByWeight: boolean = false) => {
-        const step = sellByWeight ? 0.1 : 1;
-        const current = parseFloat(currentQuantity);
-        const newQuantity = (Math.round((current + step) * 10) / 10).toString();
-        updateQuantity(itemId, newQuantity);
-    };
-
-    const decrementQuantity = (itemId: number | string, currentQuantity: string, sellByWeight: boolean = false) => {
-        const step = sellByWeight ? 0.1 : 1;
-        const minQty = sellByWeight ? 0.1 : 1;
-        const current = parseFloat(currentQuantity);
-        if (current > minQty) {
-            const newQuantity = (Math.round((current - step) * 10) / 10).toString();
+    const incrementQuantity = (
+        itemId: number | string,
+        currentQuantity: string,
+        sellByWeight: boolean = false,
+        currentMultiplier: number = 1
+    ) => {
+        if (sellByWeight) {
+            // For weight-based items, increment the multiplier
+            updateWeightMultiplier(itemId, currentMultiplier + 1);
+        } else {
+            // For regular items, increment quantity directly
+            const current = parseFloat(currentQuantity);
+            const newQuantity = (current + 1).toString();
             updateQuantity(itemId, newQuantity);
         }
     };
+
+    const decrementQuantity = (
+        itemId: number | string,
+        currentQuantity: string,
+        sellByWeight: boolean = false,
+        currentMultiplier: number = 1
+    ) => {
+        if (sellByWeight) {
+            // For weight-based items, decrement the multiplier
+            if (currentMultiplier > 1) {
+                updateWeightMultiplier(itemId, currentMultiplier - 1);
+            }
+        } else {
+            // For regular items, decrement quantity directly
+            const current = parseFloat(currentQuantity);
+            if (current > 1) {
+                const newQuantity = (current - 1).toString();
+                updateQuantity(itemId, newQuantity);
+            }
+        }
+    };
+
+    const updateWeightMultiplier = async (
+        itemId: number | string,
+        newMultiplier: number
+    ) => {
+        setUpdatingItems((prev) => new Set(prev).add(itemId));
+
+        await updateCartItem(
+            itemId,
+            { weight_multiplier: newMultiplier },
+            {
+                onSuccess: (data) => {
+                    if (data.cart) {
+                        console.log("Updating cart after weight multiplier change:", data.cart);
+                        setCart(data.cart);
+                    }
+                },
+                onFinally: () => {
+                    setUpdatingItems((prev) => {
+                        const newSet = new Set(prev);
+                        newSet.delete(itemId);
+                        return newSet;
+                    });
+                },
+            }
+        );
+    };
+
+    const handleWeightChange = async (
+        itemId: number | string,
+        newWeightValueId: string
+    ) => {
+        setUpdatingItems((prev) => new Set(prev).add(itemId));
+
+        await updateCartItem(
+            itemId,
+            { weight_option_value_id: parseInt(newWeightValueId) },
+            {
+                onSuccess: (data) => {
+                    if (data.cart) {
+                        setCart(data.cart);
+                    }
+                },
+                onFinally: () => {
+                    setUpdatingItems((prev) => {
+                        const newSet = new Set(prev);
+                        newSet.delete(itemId);
+                        return newSet;
+                    });
+                },
+            }
+        );
+    };
+    console.log("Rendering Cart with items:", cart.items);
+
 
     return (
         <>
@@ -177,7 +270,8 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                 <Card>
                                     <CardHeader className="flex flex-row items-center justify-between">
                                         <CardTitle>
-                                            {t("yourItems")} ({cart.items.length})
+                                            {t("yourItems")} (
+                                            {cart.items.length})
                                         </CardTitle>
                                         <Button
                                             variant="ghost"
@@ -202,16 +296,21 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                                         className="shrink-0"
                                                     >
                                                         <div className="w-24 h-24 rounded-lg bg-gradient-to-br from-primary/5 to-secondary/5 relative overflow-hidden">
-                                                            {item.product?.image ? (
+                                                            {item.product
+                                                                ?.image ? (
                                                                 <img
                                                                     src={
-                                                                        item.product
+                                                                        item
+                                                                            .product
                                                                             .image
                                                                     }
                                                                     alt={
-                                                                        item.product
+                                                                        item
+                                                                            .product
                                                                             .name ||
-                                                                        t("product")
+                                                                        t(
+                                                                            "product"
+                                                                        )
                                                                     }
                                                                     className="w-full h-full object-cover"
                                                                 />
@@ -234,7 +333,8 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                                                     )}
                                                                 >
                                                                     <h3 className="font-semibold text-lg leading-tight truncate hover:text-primary transition-colors">
-                                                                        {item.product
+                                                                        {item
+                                                                            .product
                                                                             ?.name ||
                                                                             t(
                                                                                 "unknownProduct"
@@ -272,7 +372,8 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                                         </div>
 
                                                         {/* Extras */}
-                                                        {item.extras.length > 0 && (
+                                                        {item.extras.length >
+                                                            0 && (
                                                             <div className="text-sm text-muted-foreground mb-2 space-y-1">
                                                                 {item.extras.map(
                                                                     (extra) => (
@@ -289,10 +390,15 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                                                                 {
                                                                                     extra.name
                                                                                 }
+                                                                                {extra.quantity > 1 && (
+                                                                                    <span className="ltr:ml-1 rtl:mr-1">
+                                                                                        × {extra.quantity}
+                                                                                    </span>
+                                                                                )}
                                                                             </span>
                                                                             <span className="ltr:ml-auto rtl:mr-auto">
                                                                                 {formatCurrency(
-                                                                                    extra.price
+                                                                                    extra.price * extra.quantity
                                                                                 )}
                                                                             </span>
                                                                         </div>
@@ -300,6 +406,69 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                                                 )}
                                                             </div>
                                                         )}
+
+                                                        {/* Weight Selection (for weight-based products) */}
+                                                        {item.product
+                                                            ?.sell_by_weight &&
+                                                            item.product
+                                                                .weight_option && (
+                                                                <div className="mb-2">
+                                                                    <Label className="text-xs text-muted-foreground mb-1 block">
+                                                                        {t(
+                                                                            "weight"
+                                                                        )}
+                                                                    </Label>
+                                                                    <Select
+                                                                        value={
+                                                                            item.weight_option_value_id?.toString() ||
+                                                                            ""
+                                                                        }
+                                                                        onValueChange={(
+                                                                            value
+                                                                        ) =>
+                                                                            handleWeightChange(
+                                                                                item.id,
+                                                                                value
+                                                                            )
+                                                                        }
+                                                                        disabled={updatingItems.has(
+                                                                            item.id
+                                                                        )}
+                                                                    >
+                                                                        <SelectTrigger className="w-full">
+                                                                            <SelectValue
+                                                                                placeholder={t(
+                                                                                    "selectWeight"
+                                                                                )}
+                                                                            />
+                                                                        </SelectTrigger>
+                                                                        <SelectContent>
+                                                                            {item.product.weight_option.values.map(
+                                                                                (
+                                                                                    weightValue
+                                                                                ) => (
+                                                                                    <SelectItem
+                                                                                        key={
+                                                                                            weightValue.id
+                                                                                        }
+                                                                                        value={weightValue.id.toString()}
+                                                                                    >
+                                                                                        {weightValue.label ||
+                                                                                            `${
+                                                                                                weightValue.value
+                                                                                            } ${
+                                                                                                item
+                                                                                                    .product
+                                                                                                    .weight_option!
+                                                                                                    .unit
+                                                                                            }`}
+                                                                                    </SelectItem>
+                                                                                )
+                                                                            )}
+                                                                        </SelectContent>
+                                                                    </Select>
+                                                                </div>
+                                                            )}
 
                                                         {/* Quantity and Price */}
                                                         <div className="flex items-center justify-between gap-4">
@@ -312,26 +481,32 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                                                         decrementQuantity(
                                                                             item.id,
                                                                             item.quantity,
-                                                                            item.product?.sell_by_weight
+                                                                            item
+                                                                                .product
+                                                                                ?.sell_by_weight ?? false,
+                                                                            item.weight_multiplier
                                                                         )
                                                                     }
                                                                     disabled={
                                                                         updatingItems.has(
                                                                             item.id
                                                                         ) ||
-                                                                        parseFloat(
-                                                                            item.quantity
-                                                                        ) <= (item.product?.sell_by_weight ? 0.1 : 1)
+                                                                        (item.product?.sell_by_weight
+                                                                            ? item.weight_multiplier <= 1
+                                                                            : parseFloat(item.quantity) <= 1
+                                                                        )
                                                                     }
                                                                 >
                                                                     <Minus className="h-3 w-3" />
                                                                 </Button>
                                                                 <div className="w-20 text-center font-medium">
-                                                                    {parseFloat(item.quantity).toFixed(item.product?.sell_by_weight ? 1 : 0)}
-                                                                    {item.product?.sell_by_weight && (
-                                                                        <span className="text-xs text-muted-foreground ltr:ml-1 rtl:mr-1">
-                                                                            {t("kg")}
-                                                                        </span>
+                                                                    {item.product?.sell_by_weight ? (
+                                                                        <>
+                                                                            <span className="text-xs text-muted-foreground">×</span>
+                                                                            {item.weight_multiplier}
+                                                                        </>
+                                                                    ) : (
+                                                                        parseFloat(item.quantity).toFixed(0)
                                                                     )}
                                                                 </div>
                                                                 <Button
@@ -342,7 +517,10 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                                                         incrementQuantity(
                                                                             item.id,
                                                                             item.quantity,
-                                                                            item.product?.sell_by_weight
+                                                                            item
+                                                                                .product
+                                                                                ?.sell_by_weight ?? false,
+                                                                            item.weight_multiplier
                                                                         )
                                                                     }
                                                                     disabled={updatingItems.has(
@@ -359,14 +537,22 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                                                     )}
                                                                 </div>
                                                                 <div className="text-xs text-muted-foreground">
-                                                                    {formatCurrency(
-                                                                        item.price +
-                                                                            item.extras_total
-                                                                    )}{" "}
-                                                                    {t("each")}
+                                                                    {item.product?.sell_by_weight && item.weight_option_value && (
+                                                                        <div>
+                                                                            {parseFloat(item.quantity).toFixed(2)} {item.product.weight_option?.unit}
+                                                                        </div>
+                                                                    )}
+                                                                    <div>
+                                                                        {formatCurrency(
+                                                                            item.price +
+                                                                                item.extras_total
+                                                                        )}{" "}
+                                                                        {t("each")}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
+
                                                     </div>
                                                 </div>
                                                 <Separator className="mt-4" />
@@ -380,7 +566,9 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                             <div className="lg:col-span-1">
                                 <Card className="sticky top-4">
                                     <CardHeader>
-                                        <CardTitle>{t("orderSummary")}</CardTitle>
+                                        <CardTitle>
+                                            {t("orderSummary")}
+                                        </CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <div className="space-y-3">
@@ -430,13 +618,20 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                         </div>
                                     </CardContent>
                                     <CardFooter className="flex-col gap-3">
-                                        <Button className="w-full gap-2" size="lg">
-                                            {t("proceedToCheckout")}
-                                            <ArrowIcon className="h-4 w-4" />
-                                        </Button>
+                                        <Link href={route("checkout")} className="w-full">
+                                            <Button
+                                                className="w-full gap-2"
+                                                size="lg"
+                                            >
+                                                {t("proceedToCheckout")}
+                                                <ArrowIcon className="h-4 w-4" />
+                                            </Button>
+                                        </Link>
                                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                             <Package className="h-4 w-4" />
-                                            <span>{t("freeDeliveryMessage")}</span>
+                                            <span>
+                                                {t("freeDeliveryMessage")}
+                                            </span>
                                         </div>
                                     </CardFooter>
                                 </Card>

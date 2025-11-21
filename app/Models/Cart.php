@@ -15,6 +15,7 @@ final class Cart extends Model
 
     protected $fillable = [
         'user_id',
+        'session_id',
         'note',
         'last_activity_at',
     ];

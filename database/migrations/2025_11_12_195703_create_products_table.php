@@ -22,7 +22,6 @@ return new class() extends Migration
             $table->boolean('is_active')->default(true);
             $table->boolean('sell_by_weight')->default(false);
             $table->foreignId('weight_options_id')->nullable()->constrained('weight_options')->nullOnDelete();
-            $table->string('single_pos_ref')->nullable();
             $table->timestamps();
 
             $table->index('category_id', 'idx_products_category');

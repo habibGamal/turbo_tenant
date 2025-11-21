@@ -14,7 +14,7 @@ return new class() extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->string('name');
-            $table->double('price');
+            $table->double('price')->nullable();
             $table->boolean('is_available')->default(true);
             $table->integer('sort_order')->default(0);
             $table->timestamps();

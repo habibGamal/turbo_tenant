@@ -16,6 +16,9 @@ final class ExtraOption extends Model
         'name',
         'description',
         'is_active',
+        'min_selections',
+        'max_selections',
+        'allow_multiple',
     ];
 
     public function items(): HasMany
@@ -32,6 +35,9 @@ final class ExtraOption extends Model
     {
         return [
             'is_active' => 'boolean',
+            'min_selections' => 'integer',
+            'max_selections' => 'integer',
+            'allow_multiple' => 'boolean',
         ];
     }
 }

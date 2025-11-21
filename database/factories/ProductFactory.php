@@ -34,7 +34,6 @@ final class ProductFactory extends Factory
             'is_active' => fake()->boolean(90),
             'sell_by_weight' => fake()->boolean(20),
             'weight_options_id' => fake()->boolean(20) ? WeightOption::factory() : null,
-            'single_pos_ref' => fake()->boolean(70) ? fake()->uuid() : null,
         ];
     }
 }

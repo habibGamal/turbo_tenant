@@ -18,6 +18,7 @@ return [
      */
     'central_domains' => [
         'localhost',
+        'moda-1.turbospace.click',
     ],
 
     /**

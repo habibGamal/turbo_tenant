@@ -15,6 +15,7 @@ final class CartItemExtra extends Model
     protected $fillable = [
         'cart_item_id',
         'extra_option_item_id',
+        'quantity',
     ];
 
     public function cartItem(): BelongsTo
@@ -25,5 +26,12 @@ final class CartItemExtra extends Model
     public function extraOptionItem(): BelongsTo
     {
         return $this->belongsTo(ExtraOptionItem::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'quantity' => 'integer',
+        ];
     }
 }

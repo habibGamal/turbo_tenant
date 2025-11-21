@@ -20,9 +20,6 @@ final class WeightOptionFactory extends Factory
     {
         return [
             'name' => fake()->words(2, true),
-            'min_weight' => 0.5,
-            'max_weight' => 5.0,
-            'step' => 0.5,
             'unit' => fake()->randomElement(['kg', 'g', 'lb']),
         ];
     }

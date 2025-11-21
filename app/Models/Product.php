@@ -25,7 +25,6 @@ final class Product extends Model
         'is_active',
         'sell_by_weight',
         'weight_options_id',
-        'single_pos_ref',
     ];
 
     public function category(): BelongsTo

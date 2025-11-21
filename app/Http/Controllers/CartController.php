@@ -34,7 +34,9 @@ final class CartController extends Controller
             $validated['product_id'],
             $validated['variant_id'] ?? null,
             $validated['quantity'],
-            $validated['extras'] ?? []
+            $validated['extras'] ?? [],
+            $validated['weight_option_value_id'] ?? null,
+            $validated['weight_multiplier'] ?? 1
         );
 
         return response()->json([
@@ -49,7 +51,9 @@ final class CartController extends Controller
         $cart = $this->cartService->updateItem(
             $request->user(),
             $itemId,
-            $validated['quantity']
+            $validated['quantity'] ?? null,
+            $validated['weight_multiplier'] ?? null,
+            $validated['weight_option_value_id'] ?? null
         );
 
         return response()->json([

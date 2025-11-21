@@ -14,6 +14,8 @@ final class OrderItem extends Model
         'order_id',
         'product_id',
         'variant_id',
+        'weight_option_value_id',
+        'weight_multiplier',
         'product_name',
         'variant_name',
         'notes',
@@ -37,6 +39,11 @@ final class OrderItem extends Model
         return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
 
+    public function weightOptionValue(): BelongsTo
+    {
+        return $this->belongsTo(WeightOptionValue::class, 'weight_option_value_id');
+    }
+
     public function extras(): HasMany
     {
         return $this->hasMany(OrderItemExtra::class);
@@ -48,6 +55,7 @@ final class OrderItem extends Model
             'quantity' => 'decimal:3',
             'unit_price' => 'double',
             'total' => 'double',
+            'weight_multiplier' => 'integer',
         ];
     }
 }

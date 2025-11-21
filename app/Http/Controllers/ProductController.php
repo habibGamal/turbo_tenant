@@ -21,6 +21,9 @@ final class ProductController extends Controller
             'extraOption.items' => function ($query) {
                 $query->orderBy('sort_order');
             },
+            'weightOption.values' => function ($query) {
+                $query->orderBy('sort_order');
+            },
         ]);
 
         // Get related products from the same category
@@ -112,7 +115,16 @@ final class ProductController extends Controller
                 'id' => $product->extraOption->id,
                 'name' => $product->extraOption->name,
                 'description' => $product->extraOption->description,
+                'min_selections' => $product->extraOption->min_selections,
+                'max_selections' => $product->extraOption->max_selections,
+                'allow_multiple' => $product->extraOption->allow_multiple,
                 'items' => $product->extraOption->items,
+            ] : null,
+            'weight_option' => $product->weightOption ? [
+                'id' => $product->weightOption->id,
+                'name' => $product->weightOption->name,
+                'unit' => $product->weightOption->unit,
+                'values' => $product->weightOption->values,
             ] : null,
             'rating' => 4.7,
             'reviewsCount' => count($reviews),

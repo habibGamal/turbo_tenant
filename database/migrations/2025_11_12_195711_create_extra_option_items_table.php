@@ -17,7 +17,6 @@ return new class() extends Migration
             $table->double('price')->default(0);
             $table->boolean('is_default')->default(false);
             $table->integer('sort_order')->default(0);
-            $table->string('pos_item_id')->nullable();
             $table->timestamps();
 
             $table->index('extra_option_id', 'idx_extra_items');

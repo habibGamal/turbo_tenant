@@ -11,6 +11,7 @@ use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -65,6 +66,11 @@ final class User extends Authenticatable implements FilamentUser, HasAppAuthenti
         /** @phpstan-ignore-next-line  */
         $this->app_authentication_recovery_codes = $codes;
         $this->save();
+    }
+
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(Address::class);
     }
 
     /**

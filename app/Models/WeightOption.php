@@ -14,11 +14,13 @@ final class WeightOption extends Model
 
     protected $fillable = [
         'name',
-        'min_weight',
-        'max_weight',
-        'step',
         'unit',
     ];
+
+    public function values(): HasMany
+    {
+        return $this->hasMany(WeightOptionValue::class)->orderBy('sort_order');
+    }
 
     public function products(): HasMany
     {
@@ -27,10 +29,6 @@ final class WeightOption extends Model
 
     protected function casts(): array
     {
-        return [
-            'min_weight' => 'decimal:3',
-            'max_weight' => 'decimal:3',
-            'step' => 'decimal:3',
-        ];
+        return [];
     }
 }

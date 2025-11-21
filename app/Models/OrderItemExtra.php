@@ -14,6 +14,7 @@ final class OrderItemExtra extends Model
         'extra_option_item_id',
         'extra_name',
         'extra_price',
+        'quantity',
     ];
 
     public function orderItem(): BelongsTo
@@ -30,6 +31,7 @@ final class OrderItemExtra extends Model
     {
         return [
             'extra_price' => 'double',
+            'quantity' => 'integer',
         ];
     }
 }
