@@ -113,10 +113,14 @@ final class OrderPOSService
         $url = $this->getBranchUrl($branch, '/api/web-orders/place-order');
 
         try {
+            logger()->info('Url', ['url' => $url,'payload' => $payload]);
             $response = Http::withOptions([
                 'verify' => false, // Handle self-signed certificates
+            ])->withHeaders([
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
             ])->timeout(30)->post($url, $payload);
-
+            logger()->info('POS Order Payload', ['response' => $response]);
             if (! $response->successful()) {
                 $data = $response->json();
 
@@ -165,7 +169,7 @@ final class OrderPOSService
         // Build user data
         $userData = [
             'name' => $user->name,
-            'phone' => $user->phone,
+            'phone' => $address->phone_number,
             'area' => $address?->area?->name ?? 'N/A',
             'address' => $address ? $this->formatAddress($address) : 'N/A',
         ];
@@ -236,7 +240,7 @@ final class OrderPOSService
         $productMapping = ProductPosMapping::query()
             ->where('product_id', $item->product_id)
             ->whereNull('variant_id')
-            ->whereNull('extra_option_item_id')
+            ->whereNull(columns: 'extra_option_item_id')
             ->where(function ($query) use ($item) {
                 $query->where('branch_id', $item->order->branch_id)
                     ->orWhereNull('branch_id');
@@ -246,7 +250,7 @@ final class OrderPOSService
         if ($productMapping) {
             $posRefs[] = [
                 'productRef' => $productMapping->pos_item_id,
-                'quantity' => (int) $item->quantity,
+                'quantity' => 1,
             ];
         }
 
@@ -264,7 +268,7 @@ final class OrderPOSService
             if ($variantMapping) {
                 $posRefs[] = [
                     'productRef' => $variantMapping->pos_item_id,
-                    'quantity' => (int) $item->quantity,
+                    'quantity' => 1,
                 ];
             }
         }
