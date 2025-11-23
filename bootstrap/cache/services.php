@@ -46,19 +46,20 @@
     42 => 'Laravel\\Roster\\RosterServiceProvider',
     43 => 'Laravel\\Sail\\SailServiceProvider',
     44 => 'Laravel\\Sanctum\\SanctumServiceProvider',
-    45 => 'Laravel\\Tinker\\TinkerServiceProvider',
-    46 => 'Livewire\\LivewireServiceProvider',
-    47 => 'Carbon\\Laravel\\ServiceProvider',
-    48 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
-    49 => 'NunoMaduro\\Essentials\\EssentialsServiceProvider',
-    50 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    51 => 'Pest\\Laravel\\PestServiceProvider',
-    52 => 'RyanChandler\\BladeCaptureDirective\\BladeCaptureDirectiveServiceProvider',
-    53 => 'Stancl\\Tenancy\\TenancyServiceProvider',
-    54 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
-    55 => 'App\\Providers\\AppServiceProvider',
-    56 => 'App\\Providers\\Filament\\AdminPanelProvider',
-    57 => 'App\\Providers\\TenancyServiceProvider',
+    45 => 'Laravel\\Socialite\\SocialiteServiceProvider',
+    46 => 'Laravel\\Tinker\\TinkerServiceProvider',
+    47 => 'Livewire\\LivewireServiceProvider',
+    48 => 'Carbon\\Laravel\\ServiceProvider',
+    49 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
+    50 => 'NunoMaduro\\Essentials\\EssentialsServiceProvider',
+    51 => 'Termwind\\Laravel\\TermwindServiceProvider',
+    52 => 'Pest\\Laravel\\PestServiceProvider',
+    53 => 'RyanChandler\\BladeCaptureDirective\\BladeCaptureDirectiveServiceProvider',
+    54 => 'Stancl\\Tenancy\\TenancyServiceProvider',
+    55 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
+    56 => 'App\\Providers\\AppServiceProvider',
+    57 => 'App\\Providers\\Filament\\AdminPanelProvider',
+    58 => 'App\\Providers\\TenancyServiceProvider',
   ),
   'eager' => 
   array (
@@ -261,6 +262,7 @@
     'Laravel\\Breeze\\Console\\InstallCommand' => 'Laravel\\Breeze\\BreezeServiceProvider',
     'Laravel\\Sail\\Console\\InstallCommand' => 'Laravel\\Sail\\SailServiceProvider',
     'Laravel\\Sail\\Console\\PublishCommand' => 'Laravel\\Sail\\SailServiceProvider',
+    'Laravel\\Socialite\\Contracts\\Factory' => 'Laravel\\Socialite\\SocialiteServiceProvider',
     'command.tinker' => 'Laravel\\Tinker\\TinkerServiceProvider',
   ),
   'when' => 
@@ -308,6 +310,9 @@
     array (
     ),
     'Laravel\\Sail\\SailServiceProvider' => 
+    array (
+    ),
+    'Laravel\\Socialite\\SocialiteServiceProvider' => 
     array (
     ),
     'Laravel\\Tinker\\TinkerServiceProvider' => 

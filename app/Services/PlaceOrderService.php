@@ -21,7 +21,8 @@ final class PlaceOrderService
 {
     public function __construct(
         private readonly CartService $cartService,
-        private readonly PaymobService $paymobService
+        private readonly PaymobService $paymobService,
+        private readonly CouponService $couponService
     ) {
     }
 
@@ -51,8 +52,46 @@ final class PlaceOrderService
         try {
             DB::beginTransaction();
 
+            // Validate and get coupon if provided
+            $coupon = null;
+            if ($couponId) {
+                $coupon = Coupon::find($couponId);
+                if (!$coupon) {
+                    return [
+                        'success' => false,
+                        'error' => 'Invalid coupon',
+                    ];
+                }
+
+                // Get address details for validation
+                $address = $addressId ? Address::with('area.governorate')->find($addressId) : null;
+                $areaId = $address?->area_id;
+                $governorateId = $address?->area?->governorate_id;
+
+                // Calculate subtotal for validation
+                $subTotal = array_reduce($cart['items'], fn($total, $item) => $total + ($item['subtotal'] ?? 0), 0);
+
+                // Validate coupon
+                $validation = $this->couponService->validateCoupon(
+                    $coupon,
+                    $user,
+                    $cart['items'],
+                    $subTotal,
+                    $addressId,
+                    $areaId,
+                    $governorateId
+                );
+
+                if (!$validation['valid']) {
+                    return [
+                        'success' => false,
+                        'error' => $validation['message'],
+                    ];
+                }
+            }
+
             // Calculate order totals
-            $totals = $this->calculateOrderTotals($cart['items'], $couponId, $addressId, $type);
+            $totals = $this->calculateOrderTotals($cart['items'], $coupon, $addressId, $type);
 
             // Create order
             $order = $this->createOrder(
@@ -68,6 +107,11 @@ final class PlaceOrderService
 
             // Create order items
             $this->createOrderItems($order, $cart['items']);
+
+            // Apply coupon usage tracking
+            if ($coupon && $totals['discount'] > 0) {
+                $this->couponService->applyCoupon($coupon, $totals['discount']);
+            }
 
             // Clear cart after order is created
             // $this->cartService->clearCart($user);
@@ -295,21 +339,29 @@ final class PlaceOrderService
     /**
      * Calculate order totals
      */
-    private function calculateOrderTotals(array $items, ?int $couponId, ?int $addressId, string $type): array
+    private function calculateOrderTotals(array $items, ?Coupon $coupon, ?int $addressId, string $type): array
     {
         $subTotal = array_reduce($items, fn($total, $item) => $total + ($item['subtotal'] ?? 0), 0);
 
+        // Calculate discount using CouponService
         $discount = 0;
-        if ($couponId) {
-            $coupon = Coupon::find($couponId);
-            if ($coupon) {
-                $discount = $this->calculateDiscount($coupon, $subTotal);
-            }
+        if ($coupon) {
+            $discount = $this->couponService->calculateDiscount($coupon, $items, $subTotal);
         }
 
         $tax = $this->calculateTax($subTotal - $discount);
         $service = $this->calculateService($subTotal - $discount);
-        $deliveryFee = $this->calculateDeliveryFee($addressId, $type);
+
+        // Calculate base delivery fee
+        $baseDeliveryFee = $this->calculateDeliveryFee($addressId, $type);
+
+        // Apply coupon to shipping fee if applicable
+        $deliveryFee = $this->couponService->calculateShippingFee(
+            $coupon,
+            $baseDeliveryFee,
+            $subTotal,
+            $discount
+        );
 
         $total = $subTotal - $discount + $tax + $service + $deliveryFee;
 
@@ -321,16 +373,6 @@ final class PlaceOrderService
             'delivery_fee' => $deliveryFee,
             'total' => $total,
         ];
-    }
-
-    /**
-     * Calculate discount based on coupon
-     */
-    private function calculateDiscount(Coupon $coupon, float $subTotal): float
-    {
-        // TODO: Implement coupon validation and discount calculation
-        // This is a placeholder implementation
-        return 0;
     }
 
     /**

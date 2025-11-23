@@ -17,10 +17,10 @@ export function ThemeProvider({ theme, children, defaultMode = 'light' }: ThemeP
         const colors = theme.colors[currentMode];
 
         // Apply theme colors as CSS variables
-        Object.entries(colors).forEach(([key, value]) => {
-            const cssVarName = `--${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
-            root.style.setProperty(cssVarName, value);
-        });
+        // Object.entries(colors).forEach(([key, value]) => {
+        //     const cssVarName = `--${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+        //     root.style.setProperty(cssVarName, value);
+        // });
 
         // Apply fonts
         root.style.setProperty('--font-heading', theme.fonts.heading);
@@ -37,11 +37,11 @@ export function ThemeProvider({ theme, children, defaultMode = 'light' }: ThemeP
         root.style.setProperty('--radius', radiusMap[theme.radius]);
 
         // Update dark mode class
-        if (currentMode === 'dark') {
-            root.classList.add('dark');
-        } else {
-            root.classList.remove('dark');
-        }
+        // if (currentMode === 'dark') {
+        //     root.classList.add('dark');
+        // } else {
+        //     root.classList.remove('dark');
+        // }
     }, [theme, currentMode]);
 
     const value: ThemeContextType = {

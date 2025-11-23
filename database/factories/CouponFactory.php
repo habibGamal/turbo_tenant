@@ -22,6 +22,8 @@ final class CouponFactory extends Factory
 
         return [
             'code' => fake()->unique()->lexify('COUPON????'),
+            'name' => fake()->words(3, true),
+            'description' => fake()->optional()->sentence(),
             'type' => $type,
             'value' => $type === 'percentage' ? fake()->numberBetween(5, 50) : fake()->randomFloat(2, 5, 100),
             'expiry_date' => fake()->dateTimeBetween('now', '+1 year'),
@@ -29,6 +31,7 @@ final class CouponFactory extends Factory
             'max_usage' => fake()->boolean(50) ? fake()->numberBetween(10, 1000) : null,
             'usage_count' => 0,
             'total_consumed' => 0,
+            'conditions' => null,
         ];
     }
 }

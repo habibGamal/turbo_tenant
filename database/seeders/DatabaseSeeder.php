@@ -23,11 +23,11 @@ final class DatabaseSeeder extends Seeder
             GovernorateSeeder::class,
             BranchSeeder::class,
             AreaSeeder::class,
-            // CategorySeeder::class,
-            // SectionSeeder::class,
-            // WeightOptionSeeder::class,
-            // ProductSeeder::class,
-            // PackageSeeder::class,
+            CategorySeeder::class,
+            SectionSeeder::class,
+            WeightOptionSeeder::class,
+            ProductSeeder::class,
+            PackageSeeder::class,
         ]);
     }
 }
