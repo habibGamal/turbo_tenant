@@ -1,0 +1,10 @@
+[
+    {
+        "quantity": 0,
+        "notes": null,
+        "posRefObj": [
+            { "productRef": "P000001", "quantity": 1 },
+            { "productRef": "P000019", "quantity": 2 }
+        ]
+    }
+]

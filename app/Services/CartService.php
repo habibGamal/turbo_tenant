@@ -385,6 +385,13 @@ final class CartService
             $finalQuantity = $item->weight_multiplier * (float) $item->weightOptionValue->value;
         }
 
+        // Calculate subtotal based on product type
+        // For weight-based products: (price * finalQuantity) + (extrasTotal * weight_multiplier)
+        // For regular products: (price + extrasTotal) * finalQuantity
+        $subtotal = $item->product->sell_by_weight
+            ? ($price * $finalQuantity) + ($extrasTotal * $item->weight_multiplier)
+            : ($price + $extrasTotal) * $finalQuantity;
+
         return [
             'id' => $item->id,
             'product_id' => $item->product_id,
@@ -429,7 +436,7 @@ final class CartService
             ])->toArray(),
             'price' => $price,
             'extras_total' => $extrasTotal,
-            'subtotal' => ($price + $extrasTotal) * $finalQuantity,
+            'subtotal' => $subtotal,
         ];
     }
 

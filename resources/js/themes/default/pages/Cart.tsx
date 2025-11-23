@@ -530,25 +530,33 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                                                     <Plus className="h-3 w-3" />
                                                                 </Button>
                                                             </div>
-                                                            <div className="text-right">
+                                                            <div className="text-right ">
                                                                 <div className="font-bold text-lg">
                                                                     {formatCurrency(
                                                                         item.subtotal
                                                                     )}
                                                                 </div>
-                                                                <div className="text-xs text-muted-foreground">
-                                                                    {item.product?.sell_by_weight && item.weight_option_value && (
-                                                                        <div>
-                                                                            {parseFloat(item.quantity).toFixed(2)} {item.product.weight_option?.unit}
+                                                                <div className="text-xs text-muted-foreground space-y-0.5">
+                                                                    {item.product?.sell_by_weight && item.weight_option_value ? (
+                                                                        <>
+                                                                            <div className="ltr">
+                                                                                {parseFloat(item.quantity).toFixed(2)} {item.product.weight_option?.unit} × {formatCurrency(item.price)}
+                                                                            </div>
+                                                                            {item.extras_total > 0 && (
+                                                                                <div>
+                                                                                    + {t("extras")}: {formatCurrency(item.extras_total)} × {item.weight_multiplier}
+                                                                                </div>
+                                                                            )}
+                                                                        </>
+                                                                    ) : (
+                                                                        <div className="ltr">
+                                                                            {formatCurrency(
+                                                                                item.price +
+                                                                                    item.extras_total
+                                                                            )}{" "}
+                                                                            × {parseFloat(item.quantity).toFixed(0)}
                                                                         </div>
                                                                     )}
-                                                                    <div>
-                                                                        {formatCurrency(
-                                                                            item.price +
-                                                                                item.extras_total
-                                                                        )}{" "}
-                                                                        {t("each")}
-                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>

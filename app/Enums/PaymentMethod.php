@@ -30,4 +30,15 @@ enum PaymentMethod: string
             self::COD => false,
         };
     }
+
+    public function posMapping(): string
+    {
+        return match ($this) {
+            self::CARD => 'card',
+            self::COD => 'cash',
+            self::WALLET => 'POS-WALLET',
+            self::KIOSK => 'POS-KIOSK',
+            self::BANK_TRANSFER => 'POS-BANK-TRANSFER',
+        };
+    }
 }

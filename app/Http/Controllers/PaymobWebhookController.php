@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Services\OrderPOSService;
 use App\Services\PlaceOrderService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -14,7 +15,8 @@ final class PaymobWebhookController extends Controller
 {
     public function __construct(
         private readonly PlaceOrderService $placeOrderService
-    ) {}
+    ) {
+    }
 
     /**
      * Handle Paymob webhook notification
@@ -25,7 +27,7 @@ final class PaymobWebhookController extends Controller
             $webhookData = $request->all();
             $hmac = $request->query('hmac') ?? $webhookData['hmac'] ?? null;
             logger()->info('Paymob webhook data', ['data' => $webhookData]);
-            if (! $hmac) {
+            if (!$hmac) {
                 Log::warning('Paymob webhook received without HMAC', [
                     'data' => $webhookData,
                 ]);
@@ -43,7 +45,7 @@ final class PaymobWebhookController extends Controller
 
             $result = $this->placeOrderService->handleWebhook($webhookData, $hmac);
 
-            if (! $result['success']) {
+            if (!$result['success']) {
                 Log::error('Paymob webhook processing failed', [
                     'error' => $result['error'] ?? 'Unknown error',
                     'data' => $webhookData,

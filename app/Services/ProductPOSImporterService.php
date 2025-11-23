@@ -68,7 +68,7 @@ final class ProductPOSImporterService
         $baseUrl = $this->getMasterRepoUrl();
 
         if (empty($baseUrl)) {
-            throw new Exception('لا يمكن الاتصال بالنقطة الرئيسية');
+            throw new Exception(message: 'لا يمكن الاتصال بالنقطة الرئيسية');
         }
 
         $url = $baseUrl.'/api/all-products-refs-master';

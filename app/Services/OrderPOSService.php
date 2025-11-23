@@ -15,7 +15,8 @@ final class OrderPOSService
 {
     public function __construct(
         private readonly ProductPOSImporterService $productImporter
-    ) {}
+    ) {
+    }
 
     /**
      * Get the current shift ID from the POS system
@@ -31,7 +32,7 @@ final class OrderPOSService
                 'verify' => false, // Handle self-signed certificates
             ])->timeout(30)->get($url);
 
-            if (! $response->successful()) {
+            if (!$response->successful()) {
                 throw new Exception('حدث خطاء اثناء الاستعلام عن رقم الوردية');
             }
 
@@ -63,7 +64,7 @@ final class OrderPOSService
                 'verify' => false, // Handle self-signed certificates
             ])->timeout(30)->get($url);
 
-            if (! $response->successful()) {
+            if (!$response->successful()) {
                 throw new Exception('حدث خطاء اثناء الاستعلام عن قبول الطلبات', 'branch_not_accepting_orders');
             }
 
@@ -102,9 +103,11 @@ final class OrderPOSService
 
         $branch = $order->branch;
 
-        if (! $branch) {
+        if (!$branch) {
             throw new Exception('Order does not have a branch assigned');
         }
+
+        $order->shift_id = $this->getShiftId($branch);
 
         // Build the order payload
         $payload = $this->buildOrderPayload($order);
@@ -113,15 +116,15 @@ final class OrderPOSService
         $url = $this->getBranchUrl($branch, '/api/web-orders/place-order');
 
         try {
-            logger()->info('Url', ['url' => $url,'payload' => $payload]);
+            logger()->info('Url', ['url' => $url, 'payload' => $payload]);
             $response = Http::withOptions([
                 'verify' => false, // Handle self-signed certificates
             ])->withHeaders([
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-            ])->timeout(30)->post($url, $payload);
-            logger()->info('POS Order Payload', ['response' => $response]);
-            if (! $response->successful()) {
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                    ])->timeout(30)->post($url, $payload);
+            logger()->info('POS Order Payload', ['response' => $response->json()]);
+            if (!$response->successful()) {
                 $data = $response->json();
 
                 // Check for product not found error
@@ -133,7 +136,7 @@ final class OrderPOSService
 
                     return [
                         'success' => false,
-                        'message' => 'المنتجات التالية غير موجودة بهذا الفرع: '.implode(', ', $productNames),
+                        'message' => 'المنتجات التالية غير موجودة بهذا الفرع: ' . implode(', ', $productNames),
                         'notFoundProducts' => $notFoundProducts,
                     ];
                 }
@@ -178,13 +181,92 @@ final class OrderPOSService
         $orderItems = [];
 
         foreach ($order->items as $item) {
-            $posRefs = $this->buildPosReferences($item);
+            // Build notes for the main item including extras info
+            $itemNotes = $item->notes ?? '';
 
-            $orderItems[] = [
-                'quantity' => (int) $item->quantity,
-                'notes' => $item->notes,
-                'posRefObj' => $posRefs,
-            ];
+            // Add weight details if it's a weighted item
+            if ($item->weight_option_value_id && $item->weight_multiplier) {
+                $weightNote = 'الوزن: ' . $item->weight_multiplier . ' * ' . ($item->weightOptionValue->value);
+                $itemNotes = $itemNotes ? $itemNotes . "\n" . $weightNote : $weightNote;
+            }
+
+            if ($item->extras->isNotEmpty()) {
+                $extraNames = $item->extras->map(function ($extra) {
+                    return $extra->extraOptionItem->name . ' (*' . $extra->quantity . ')';
+                })->join(', ');
+
+                $extrasNote = 'إضافات: ' . $extraNames;
+                $itemNotes = $itemNotes ? $itemNotes . "\n" . $extrasNote : $extrasNote;
+            }
+
+            // Add the main product as an order item
+            $mainProductMapping = ProductPosMapping::query()
+                ->where('product_id', $item->product_id)
+                ->whereNull('variant_id')
+                ->whereNull('extra_option_item_id')
+                ->where(function ($query) use ($item) {
+                    $query->where('branch_id', $item->order->branch_id)
+                        ->orWhereNull('branch_id');
+                })
+                ->first();
+
+            if ($mainProductMapping) {
+                $posRefs = [
+                    [
+                        'productRef' => $mainProductMapping->pos_item_id,
+                        'quantity' => 1,
+                    ],
+                ];
+
+                // Add variant if exists
+                if ($item->variant_id) {
+                    $variantMapping = ProductPosMapping::query()
+                        ->where('product_id', $item->product_id)
+                        ->where('variant_id', $item->variant_id)
+                        ->where(function ($query) use ($item) {
+                            $query->where('branch_id', $item->order->branch_id)
+                                ->orWhereNull('branch_id');
+                        })
+                        ->first();
+
+                    if ($variantMapping) {
+                        $posRefs[] = [
+                            'productRef' => $variantMapping->pos_item_id,
+                            'quantity' => 1,
+                        ];
+                    }
+                }
+
+                $orderItems[] = [
+                    'quantity' => $item->quantity,
+                    'notes' => $itemNotes,
+                    'posRefObj' => $posRefs,
+                ];
+            }
+
+            // Add each extra as a separate order item
+            foreach ($item->extras as $extra) {
+                $extraMapping = ProductPosMapping::query()
+                    ->where('extra_option_item_id', $extra->extra_option_item_id)
+                    ->where(function ($query) use ($item) {
+                        $query->where('branch_id', $item->order->branch_id)
+                            ->orWhereNull('branch_id');
+                    })
+                    ->first();
+                $quantity = $item->weight_option_value_id ? $extra->quantity * $item->weight_multiplier : $extra->quantity * $item->quantity;
+                if ($extraMapping) {
+                    $orderItems[] = [
+                        'quantity' => $quantity,
+                        'notes' => null,
+                        'posRefObj' => [
+                            [
+                                'productRef' => $extraMapping->pos_item_id,
+                                'quantity' => 1,
+                            ],
+                        ],
+                    ];
+                }
+            }
         }
 
         // Build web preferences (payment info)
@@ -192,7 +274,7 @@ final class OrderPOSService
 
         if ($order->payment_method) {
             $webPreferences = [
-                'payment_method' => $order->payment_method->value,
+                'payment_method' => $order->payment_method->posMapping(),
             ];
 
             if ($order->transaction_id) {
@@ -207,7 +289,7 @@ final class OrderPOSService
             'orderNumber' => $order->order_number,
             'subTotal' => $order->sub_total,
             'tax' => $order->tax,
-            'service' => $order->service,
+            'service' => $order->address ? $order->address->area->shipping_cost : 0,
             'discount' => $order->discount,
             'total' => $order->total,
             'items' => $orderItems,
@@ -228,73 +310,6 @@ final class OrderPOSService
     }
 
     /**
-     * Build POS references for an order item
-     *
-     * @return array<array{productRef: string, quantity: int}>
-     */
-    private function buildPosReferences($item): array
-    {
-        $posRefs = [];
-
-        // Get the main product POS reference
-        $productMapping = ProductPosMapping::query()
-            ->where('product_id', $item->product_id)
-            ->whereNull('variant_id')
-            ->whereNull(columns: 'extra_option_item_id')
-            ->where(function ($query) use ($item) {
-                $query->where('branch_id', $item->order->branch_id)
-                    ->orWhereNull('branch_id');
-            })
-            ->first();
-
-        if ($productMapping) {
-            $posRefs[] = [
-                'productRef' => $productMapping->pos_item_id,
-                'quantity' => 1,
-            ];
-        }
-
-        // Get variant POS reference if exists
-        if ($item->variant_id) {
-            $variantMapping = ProductPosMapping::query()
-                ->where('product_id', $item->product_id)
-                ->where('variant_id', $item->variant_id)
-                ->where(function ($query) use ($item) {
-                    $query->where('branch_id', $item->order->branch_id)
-                        ->orWhereNull('branch_id');
-                })
-                ->first();
-
-            if ($variantMapping) {
-                $posRefs[] = [
-                    'productRef' => $variantMapping->pos_item_id,
-                    'quantity' => 1,
-                ];
-            }
-        }
-
-        // Get extras POS references
-        foreach ($item->extras as $extra) {
-            $extraMapping = ProductPosMapping::query()
-                ->where('extra_option_item_id', $extra->extra_option_item_id)
-                ->where(function ($query) use ($item) {
-                    $query->where('branch_id', $item->order->branch_id)
-                        ->orWhereNull('branch_id');
-                })
-                ->first();
-
-            if ($extraMapping) {
-                $posRefs[] = [
-                    'productRef' => $extraMapping->pos_item_id,
-                    'quantity' => $extra->quantity,
-                ];
-            }
-        }
-
-        return $posRefs;
-    }
-
-    /**
      * Format address for display
      */
     private function formatAddress($address): string
@@ -306,11 +321,11 @@ final class OrderPOSService
         }
 
         if ($address->building) {
-            $parts[] = 'Building '.$address->building;
+            $parts[] = 'Building ' . $address->building;
         }
 
         if ($address->apartment) {
-            $parts[] = 'Apartment '.$address->apartment;
+            $parts[] = 'Apartment ' . $address->apartment;
         }
 
         if ($address->area) {
@@ -353,6 +368,6 @@ final class OrderPOSService
     {
         $baseUrl = mb_rtrim($branch->link, '/');
 
-        return $baseUrl.$endpoint;
+        return $baseUrl . $endpoint;
     }
 }

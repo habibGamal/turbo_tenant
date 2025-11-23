@@ -16,12 +16,13 @@ final class WeightOptionForm
     {
         return $schema
             ->components([
-                Section::make('Weight Option Details')
+                Section::make('Basic Information')
                     ->schema([
                         TextInput::make('name')
                             ->required()
                             ->maxLength(255)
-                            ->helperText('e.g., "Standard Weight", "Small Portions"'),
+                            ->helperText('e.g., "Standard Weight", "Small Portions"')
+                            ->columnSpan(2),
                         Select::make('unit')
                             ->options([
                                 'kg' => 'Kilogram (kg)',
@@ -31,7 +32,7 @@ final class WeightOptionForm
                             ->default('kg')
                             ->required(),
                     ])
-                    ->columns(2)
+                    ->columns(3)
                     ->columnSpanFull(),
 
                 Section::make('Weight Values')
@@ -44,25 +45,39 @@ final class WeightOptionForm
                                     ->numeric()
                                     ->minValue(0.001)
                                     ->step(0.001)
-                                    ->helperText('The weight value (e.g., 0.25, 0.5, 1.0)'),
+                                    ->suffix(fn (callable $get) => $get('../../unit') ?? 'kg')
+                                    ->helperText('The weight value (e.g., 0.25, 0.5, 1.0)')
+                                    ->columnSpan(1),
                                 TextInput::make('label')
                                     ->maxLength(255)
-                                    ->helperText('Optional display label (e.g., "Quarter kg", "Half kg")'),
+                                    ->placeholder('Optional label')
+                                    ->helperText('e.g., "Quarter kg", "Half kg", "1 kg"')
+                                    ->columnSpan(1),
                                 TextInput::make('sort_order')
                                     ->numeric()
                                     ->default(0)
                                     ->required()
-                                    ->helperText('Lower numbers appear first'),
+                                    ->label('Sort Order')
+                                    ->helperText('Lower numbers appear first')
+                                    ->columnSpan(1),
                             ])
                             ->columns(3)
                             ->orderColumn('sort_order')
                             ->defaultItems(1)
                             ->collapsible()
-                            ->itemLabel(fn (array $state): ?string => $state['label'] ?? ($state['value'] ?? null) ? "{$state['value']}" : null
+                            ->itemLabel(fn (array $state): ?string =>
+                                $state['label'] ??
+                                (isset($state['value']) ? "{$state['value']}" : null)
+                            )
+                            ->addActionLabel('Add Weight Value')
+                            ->reorderable()
+                            ->reorderableWithButtons()
+                            ->deleteAction(
+                                fn ($action) => $action->requiresConfirmation()
                             ),
                     ])
                     ->columnSpanFull()
-                    ->description('Define specific weight values that customers can choose from. For example: 0.25 kg, 0.5 kg, 1 kg (without 0.75 kg).'),
+                    ->description('Define specific weight values that customers can choose from. For example: 0.25 kg, 0.5 kg, 1 kg.'),
             ]);
     }
 }

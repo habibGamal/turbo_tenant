@@ -19,17 +19,25 @@ final class WeightOptionsTable
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('min_weight')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('max_weight')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('step')
-                    ->numeric(),
                 TextColumn::make('unit')
-                    ->badge(),
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'kg' => 'Kilogram (kg)',
+                        'g' => 'Gram (g)',
+                        'lb' => 'Pound (lb)',
+                        default => $state,
+                    }),
+                TextColumn::make('values_count')
+                    ->counts('values')
+                    ->label('Values'),
+                TextColumn::make('products_count')
+                    ->counts('products')
+                    ->label('Products'),
                 TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

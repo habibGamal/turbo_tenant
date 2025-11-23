@@ -22,7 +22,8 @@ final class PlaceOrderService
     public function __construct(
         private readonly CartService $cartService,
         private readonly PaymobService $paymobService
-    ) {}
+    ) {
+    }
 
     /**
      * Place an order from cart
@@ -74,12 +75,13 @@ final class PlaceOrderService
             DB::commit();
 
             // For COD or Credit, no online payment required
-            if (! $paymentMethod->requiresOnlinePayment()) {
+            if (!$paymentMethod->requiresOnlinePayment()) {
                 $order->update([
                     'payment_status' => PaymentStatus::PENDING,
                     'status' => 'confirmed',
                 ]);
 
+                app(OrderPOSService::class)->placeOrder($order);
                 return [
                     'success' => true,
                     'order' => $order->fresh(['items.extras', 'user', 'branch', 'address']),
@@ -93,8 +95,8 @@ final class PlaceOrderService
 
             // Create payment intention
             // $redirectionUrl = config('app.url') . '/orders/' . $order->id . '/payment/callback';
-            $redirectionUrl = url('/orders/'.$order->id.'/payment/callback');
-            $notificationUrl = config('app.url').'/api/webhooks/paymob';
+            $redirectionUrl = url('/orders/' . $order->id . '/payment/callback');
+            $notificationUrl = config('app.url') . '/api/webhooks/paymob';
 
             logger()->info('Creating payment intention', [
                 'order_id' => $order->id,
@@ -108,7 +110,7 @@ final class PlaceOrderService
                 $notificationUrl
             );
 
-            if (! $paymentResult['success']) {
+            if (!$paymentResult['success']) {
                 // Rollback order if payment creation fails
                 DB::transaction(function () use ($order) {
                     $order->update([
@@ -127,10 +129,10 @@ final class PlaceOrderService
                 'order_id' => $order->id,
                 'paymentResult' => $paymentResult,
             ]);
-
+            $order->fresh(['items.extras', 'user', 'branch', 'address']);
             return [
                 'success' => true,
-                'order' => $order->fresh(['items.extras', 'user', 'branch', 'address']),
+                'order' => $order,
                 'requires_payment' => true,
                 'checkout_url' => $paymentResult['checkout_url'],
                 'payment_data' => $paymentResult['data'],
@@ -140,7 +142,7 @@ final class PlaceOrderService
 
             return [
                 'success' => false,
-                'error' => 'Failed to place order: '.$e->getMessage(),
+                'error' => 'Failed to place order: ' . $e->getMessage(),
             ];
         }
     }
@@ -168,7 +170,7 @@ final class PlaceOrderService
         $dataMessage = $paymentData['data_message'] ?? null;
 
         // Validate HMAC if provided (use callback-specific validation)
-        if ($hmac && ! $this->paymobService->validateCallbackHmac($paymentData, $hmac)) {
+        if ($hmac && !$this->paymobService->validateCallbackHmac($paymentData, $hmac)) {
             return [
                 'success' => false,
                 'error' => 'Invalid payment signature',
@@ -177,7 +179,7 @@ final class PlaceOrderService
         }
 
         // Update order based on payment status
-        if ($success && ! $pending) {
+        if ($success && !$pending) {
             $order->update([
                 'payment_status' => 'completed',
                 'status' => 'confirmed',
@@ -247,7 +249,7 @@ final class PlaceOrderService
     public function handleWebhook(array $webhookData, string $hmac): array
     {
         // Validate HMAC
-        if (! $this->paymobService->validateHmac($webhookData['obj'] ?? [], $hmac)) {
+        if (!$this->paymobService->validateHmac($webhookData['obj'] ?? [], $hmac)) {
             return [
                 'success' => false,
                 'error' => 'Invalid webhook signature',
@@ -260,7 +262,7 @@ final class PlaceOrderService
         // Find order by merchant_order_id
         $order = Order::where('merchant_order_id', $processedData['merchant_order_id'])->first();
 
-        if (! $order) {
+        if (!$order) {
             return [
                 'success' => false,
                 'error' => 'Order not found',
@@ -282,6 +284,7 @@ final class PlaceOrderService
             $order->update(['status' => 'cancelled']);
         }
 
+
         return [
             'success' => true,
             'order' => $order,
@@ -294,7 +297,7 @@ final class PlaceOrderService
      */
     private function calculateOrderTotals(array $items, ?int $couponId, ?int $addressId, string $type): array
     {
-        $subTotal = array_reduce($items, fn ($total, $item) => $total + ($item['subtotal'] ?? 0), 0);
+        $subTotal = array_reduce($items, fn($total, $item) => $total + ($item['subtotal'] ?? 0), 0);
 
         $discount = 0;
         if ($couponId) {
@@ -335,7 +338,7 @@ final class PlaceOrderService
      */
     private function calculateTax(float $amount): float
     {
-        $taxRate = config('app.tax_rate', 0.14);
+        $taxRate = config('app.tax_rate', 0.0);
 
         return $amount * $taxRate;
     }
@@ -361,14 +364,14 @@ final class PlaceOrderService
         }
 
         // No delivery fee if no address provided
-        if (! $addressId) {
+        if (!$addressId) {
             return 0;
         }
 
         // Get the address with area relationship
         $address = Address::with('area')->find($addressId);
 
-        if (! $address || ! $address->area) {
+        if (!$address || !$address->area) {
             return 0;
         }
 
@@ -433,7 +436,7 @@ final class PlaceOrderService
             ]);
 
             // Create order item extras with quantities
-            if (! empty($cartItem['extras'])) {
+            if (!empty($cartItem['extras'])) {
                 foreach ($cartItem['extras'] as $extra) {
                     OrderItemExtra::create([
                         'order_item_id' => $orderItem->id,
@@ -453,7 +456,7 @@ final class PlaceOrderService
     private function generateOrderNumber(): string
     {
         do {
-            $orderNumber = 'ORD-'.mb_strtoupper(Str::random(8));
+            $orderNumber = 'ORD-' . mb_strtoupper(Str::random(8));
         } while (Order::where('order_number', $orderNumber)->exists());
 
         return $orderNumber;

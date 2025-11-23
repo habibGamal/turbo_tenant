@@ -102,6 +102,7 @@ final class CreateTestOrder extends Command
                 ]
             );
             app(OrderPOSService::class)->placeOrder($order);
+
             return self::SUCCESS;
         } catch (Exception $e) {
             DB::rollBack();
@@ -236,7 +237,7 @@ final class CreateTestOrder extends Command
                 ],
                 [
                     'extra_option_item_id' => $extraItem->id,
-                    'pos_item_id' => 'POS-EXTRA-' . strtoupper(str_replace(' ', '-', $item['name'])) . '-' . $extraItem->id,
+                    'pos_item_id' => 'P000012',
                 ]
             );
         }
@@ -303,7 +304,7 @@ final class CreateTestOrder extends Command
         // Create POS mapping for pizza
         ProductPosMapping::query()->create([
             'product_id' => $pizza->id,
-            'pos_item_id' => 'POS-PIZZA-' . $pizza->id,
+            'pos_item_id' => 'P000003',
         ]);
 
         // Create variants for pizza
@@ -319,7 +320,7 @@ final class CreateTestOrder extends Command
         ProductPosMapping::query()->create([
             'product_id' => $pizza->id,
             'variant_id' => $smallVariant->id,
-            'pos_item_id' => 'POS-PIZZA-SMALL-' . $smallVariant->id,
+            'pos_item_id' => 'P000004',
         ]);
 
         $largeVariant = ProductVariant::query()->create([
@@ -334,7 +335,7 @@ final class CreateTestOrder extends Command
         ProductPosMapping::query()->create([
             'product_id' => $pizza->id,
             'variant_id' => $largeVariant->id,
-            'pos_item_id' => 'POS-PIZZA-LARGE-' . $largeVariant->id,
+            'pos_item_id' => 'P000005',
         ]);
 
         $products[] = $pizza;
@@ -354,7 +355,7 @@ final class CreateTestOrder extends Command
         // Create POS mapping for burger
         ProductPosMapping::query()->create([
             'product_id' => $burger->id,
-            'pos_item_id' => 'POS-BURGER-' . $burger->id,
+            'pos_item_id' => 'P000006',
         ]);
 
         $products[] = $burger;
@@ -374,7 +375,7 @@ final class CreateTestOrder extends Command
         // Create POS mapping for chicken
         ProductPosMapping::query()->create([
             'product_id' => $chicken->id,
-            'pos_item_id' => 'POS-CHICKEN-' . $chicken->id,
+            'pos_item_id' => 'P000007',
         ]);
 
         $products[] = $chicken;

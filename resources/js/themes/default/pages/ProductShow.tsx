@@ -88,7 +88,7 @@ export default function ProductShow({
 
     // Calculate total price
     const calculateTotalPrice = () => {
-        let total = product.price_after_discount ?? product.base_price;
+        let basePrice = product.price_after_discount ?? product.base_price;
 
         // Add variant price if selected
         if (selectedVariant && product.variants) {
@@ -96,23 +96,30 @@ export default function ProductShow({
                 (v) => v.id === selectedVariant
             );
             if (variant) {
-                total = variant.price;
+                basePrice = variant.price;
             }
         }
 
-        // Add extras prices
+        // Calculate extras total
+        let extrasTotal = 0;
         if (product.extraOption?.items) {
             selectedExtras.forEach((qty, extraId) => {
                 const extra = product.extraOption!.items.find(
                     (item) => item.id === extraId
                 );
                 if (extra) {
-                    total += extra.price * qty;
+                    extrasTotal += extra.price * qty;
                 }
             });
         }
 
-        return total * quantity;
+        // For weight-based products: (price * quantity) + (extrasTotal * 1)
+        // For regular products: (price + extrasTotal) * quantity
+        if (product.sell_by_weight) {
+            return (basePrice * quantity) + extrasTotal;
+        } else {
+            return (basePrice + extrasTotal) * quantity;
+        }
     };
 
     const handleQuantityChange = (delta: number) => {

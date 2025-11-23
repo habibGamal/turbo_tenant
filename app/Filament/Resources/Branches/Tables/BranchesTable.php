@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources\ExtraOptions\Tables;
+namespace App\Filament\Resources\Branches\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -10,10 +10,9 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-final class ExtraOptionsTable
+final class BranchesTable
 {
     public static function configure(Table $table): Table
     {
@@ -22,12 +21,9 @@ final class ExtraOptionsTable
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('description')
+                TextColumn::make('link')
                     ->limit(50)
                     ->searchable(),
-                TextColumn::make('items_count')
-                    ->counts('items')
-                    ->label('Items'),
                 IconColumn::make('is_active')
                     ->boolean()
                     ->sortable(),
@@ -51,6 +47,7 @@ final class ExtraOptionsTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('name');
     }
 }

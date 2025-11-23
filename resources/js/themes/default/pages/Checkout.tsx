@@ -96,7 +96,7 @@ export default function Checkout({
     };
 
     const calculateTax = (amount: number) => {
-        return amount * 0.14; // 14% VAT
+        return amount * 0.0; // 14% VAT
     };
 
     const calculateService = (amount: number) => {

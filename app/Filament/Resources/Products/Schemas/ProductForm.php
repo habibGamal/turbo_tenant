@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Products\Schemas;
 
+use App\Filament\Forms\Components\PosItemSelect;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -101,10 +102,7 @@ final class ProductForm
                                     ->searchable()
                                     ->preload()
                                     ->label('Extra Option Item (Optional)'),
-                                TextInput::make('pos_item_id')
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->label('POS Item ID'),
+                                PosItemSelect::make('pos_item_id'),
                             ])
                             ->columns(4)
                             ->defaultItems(0)

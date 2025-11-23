@@ -15,7 +15,7 @@ final class AddressController extends Controller
     /**
      * Store a new address
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
             'area_id' => 'required|integer|exists:areas,id',
@@ -31,10 +31,7 @@ final class AddressController extends Controller
         $user = Auth::user();
 
         if (! $user) {
-            return response()->json([
-                'success' => false,
-                'error' => 'User not authenticated',
-            ], 401);
+            return back()->withErrors('يجب تسجيل الدخول لإضافة عنوان.');
         }
 
         // If this is set as default, unset other defaults
@@ -47,10 +44,7 @@ final class AddressController extends Controller
         // Load relationships
         $address->load('area.governorate');
 
-        return response()->json([
-            'success' => true,
-            'address' => $address,
-        ]);
+        return back()->with('success', 'تم إضافة العنوان بنجاح.');
     }
 
     /**
