@@ -31,7 +31,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 
 interface NavigationProps {
-    categories?: Array<{ id: number; name: string; slug: string }>;
+    categories?: Array<{ id: number; name: string }>;
     cartItemsCount?: number;
 }
 
@@ -52,10 +52,8 @@ export default function Navigation({
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         if (searchQuery.trim()) {
-            // Handle search navigation
-            window.location.href = `/menu?search=${encodeURIComponent(
-                searchQuery
-            )}`;
+            router.get("/menu", { search: searchQuery });
+            setSearchOpen(false);
         }
     };
 
@@ -305,7 +303,7 @@ export default function Navigation({
                                                     .map((category) => (
                                                         <Link
                                                             key={category.id}
-                                                            href={`/menu/${category.slug}`}
+                                                            href={`/menu?category=${encodeURIComponent(category.name)}`}
                                                             className="ltr:pl-4 rtl:pr-4 text-sm hover:text-primary transition-colors"
                                                         >
                                                             {category.name}

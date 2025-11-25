@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Model;
@@ -70,6 +71,7 @@ final class Order extends Model
             'delivery_fee' => 'double',
             'discount' => 'double',
             'total' => 'double',
+            'status' => OrderStatus::class,
             'payment_status' => PaymentStatus::class,
             'payment_method' => PaymentMethod::class,
         ];

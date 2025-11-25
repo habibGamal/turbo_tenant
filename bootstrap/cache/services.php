@@ -58,8 +58,8 @@
     54 => 'Stancl\\Tenancy\\TenancyServiceProvider',
     55 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
     56 => 'App\\Providers\\AppServiceProvider',
-    57 => 'App\\Providers\\Filament\\AdminPanelProvider',
-    58 => 'App\\Providers\\TenancyServiceProvider',
+    57 => 'App\\Providers\\TenancyServiceProvider',
+    58 => 'App\\Providers\\Filament\\AdminPanelProvider',
   ),
   'eager' => 
   array (
@@ -103,8 +103,8 @@
     37 => 'Stancl\\Tenancy\\TenancyServiceProvider',
     38 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
     39 => 'App\\Providers\\AppServiceProvider',
-    40 => 'App\\Providers\\Filament\\AdminPanelProvider',
-    41 => 'App\\Providers\\TenancyServiceProvider',
+    40 => 'App\\Providers\\TenancyServiceProvider',
+    41 => 'App\\Providers\\Filament\\AdminPanelProvider',
   ),
   'deferred' => 
   array (

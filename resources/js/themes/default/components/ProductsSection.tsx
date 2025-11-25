@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from '@inertiajs/react';
 import { addToCart } from '@/utils/cartUtils';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import ProductCard from '@/themes/default/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Heart, ShoppingCart, TrendingUp, Flame } from 'lucide-react';
+import { Star, TrendingUp, Flame } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface Product {
@@ -147,10 +147,6 @@ export default function ProductsSection({ sections }: ProductsSectionProps) {
         }
     };
 
-    const getText = (text: string, textAr?: string) => {
-        return i18n.language === 'ar' && textAr ? textAr : text;
-    };
-
     return (
         <>
             {sectionsToUse.map((section, sectionIndex) => (
@@ -169,12 +165,12 @@ export default function ProductsSection({ sections }: ProductsSectionProps) {
                                         </div>
                                     </div>
                                     <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                                        {getText(section.title, section.titleAr)}
+                                        {i18n.language === 'ar' && section.titleAr ? section.titleAr : section.title}
                                     </h2>
                                 </div>
                                 {section.subtitle && (
                                     <p className="text-lg text-muted-foreground ltr:md:ml-12 rtl:md:mr-12">
-                                        {getText(section.subtitle, section.subtitleAr)}
+                                        {i18n.language === 'ar' && section.subtitleAr ? section.subtitleAr : section.subtitle}
                                     </p>
                                 )}
                             </div>
@@ -189,99 +185,13 @@ export default function ProductsSection({ sections }: ProductsSectionProps) {
                         {/* Products Grid */}
                         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             {section.products.map((product) => (
-                                <Link key={product.id} href={`/products/${product.id}`}>
-                                    <Card
-                                        className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-                                    >
-                                    {/* Product Image */}
-                                    <div className="aspect-square bg-gradient-to-br from-primary/5 to-secondary/5 relative overflow-hidden">
-                                        {/* Placeholder for image - replace with actual image */}
-                                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
-                                            <div className="text-6xl">🍽️</div>
-                                        </div>
-
-                                        {/* Badges */}
-                                        <div className="absolute top-2 ltr:left-2 rtl:right-2 flex flex-col gap-2">
-                                            {product.badge && (
-                                                <Badge className="backdrop-blur-sm bg-primary/90 shadow-lg">
-                                                    {getText(product.badge, product.badgeAr)}
-                                                </Badge>
-                                            )}
-                                            {product.isNew && (
-                                                <Badge variant="secondary" className="backdrop-blur-sm shadow-lg">
-                                                    {t('new')}
-                                                </Badge>
-                                            )}
-                                        </div>
-
-                                        {/* Favorite Button */}
-                                        <Button
-                                            size="icon"
-                                            variant="secondary"
-                                            className="absolute top-2 ltr:right-2 rtl:left-2 opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm shadow-lg"
-                                        >
-                                            <Heart className="h-4 w-4" />
-                                        </Button>
-
-                                        {/* Trending Indicator */}
-                                        {product.isTrending && (
-                                            <div className="absolute bottom-2 ltr:right-2 rtl:left-2">
-                                                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-orange-500/90 text-white text-xs font-semibold backdrop-blur-sm shadow-lg">
-                                                    <Flame className="h-3 w-3" />
-                                                    {t('hot')}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Product Info */}
-                                    <CardHeader className="pb-3">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="space-y-1 flex-1">
-                                                <h3 className="font-semibold text-lg leading-tight line-clamp-1">
-                                                    {getText(product.name, product.nameAr)}
-                                                </h3>
-                                                {product.category && (
-                                                    <Badge variant="outline" className="text-xs">
-                                                        {getText(product.category, product.categoryAr)}
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <p className="text-sm text-muted-foreground line-clamp-2">
-                                            {getText(product.description, product.descriptionAr)}
-                                        </p>
-                                    </CardHeader>
-
-                                    {/* Product Footer */}
-                                    <CardFooter className="flex items-center justify-between pt-0">
-                                        <div className="space-y-1">
-                                            <div className="text-2xl font-bold">
-                                                ${product.price.toFixed(2)}
-                                            </div>
-                                            {product.rating && (
-                                                <div className="flex items-center gap-1 text-sm">
-                                                    <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                                                    <span className="font-medium">{product.rating}</span>
-                                                    {product.reviewsCount && (
-                                                        <span className="text-muted-foreground">
-                                                            ({product.reviewsCount})
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <Button
-                                            size="icon"
-                                            className="shrink-0 shadow-lg"
-                                            onClick={(e) => handleAddToCart(e, product.id)}
-                                            disabled={addingToCart[product.id]}
-                                        >
-                                            <ShoppingCart className="h-4 w-4" />
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
-                                </Link>
+                                <ProductCard
+                                    key={product.id}
+                                    product={product}
+                                    onAddToCart={handleAddToCart}
+                                    addingToCart={addingToCart[product.id]}
+                                    showFavorite={true}
+                                />
                             ))}
                         </div>
                     </div>

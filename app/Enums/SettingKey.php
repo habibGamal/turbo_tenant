@@ -21,6 +21,13 @@ enum SettingKey: string
     case GOOGLE_CLIENT_ID = 'google_client_id';
     case GOOGLE_CLIENT_SECRET = 'google_client_secret';
     case GOOGLE_REDIRECT_URL = 'google_redirect_url';
+    case PAYMOB_BASE_URL = 'paymob_base_url';
+    case PAYMOB_SECRET_KEY = 'paymob_secret_key';
+    case PAYMOB_PUBLIC_KEY = 'paymob_public_key';
+    case PAYMOB_INTEGRATION_IDS = 'paymob_integration_ids';
+    case PAYMOB_HMAC_SECRET = 'paymob_hmac_secret';
+    case PAYMOB_CURRENCY = 'paymob_currency';
+    case PAYMOB_MODE = 'paymob_mode';
 
     public function label(): string
     {
@@ -40,6 +47,13 @@ enum SettingKey: string
             self::GOOGLE_CLIENT_ID => 'Google Client ID',
             self::GOOGLE_CLIENT_SECRET => 'Google Client Secret',
             self::GOOGLE_REDIRECT_URL => 'Google Redirect URL',
+            self::PAYMOB_BASE_URL => 'Paymob Base URL',
+            self::PAYMOB_SECRET_KEY => 'Paymob Secret Key',
+            self::PAYMOB_PUBLIC_KEY => 'Paymob Public Key',
+            self::PAYMOB_INTEGRATION_IDS => 'Paymob Integration IDs',
+            self::PAYMOB_HMAC_SECRET => 'Paymob HMAC Secret',
+            self::PAYMOB_CURRENCY => 'Paymob Currency',
+            self::PAYMOB_MODE => 'Paymob Mode',
         };
     }
 
@@ -54,6 +68,9 @@ enum SettingKey: string
             self::MIN_ORDER_AMOUNT => '0',
             self::MAINTENANCE_MODE => 'false',
             self::PRODUCTS_REPO_LINK => null,
+            self::PAYMOB_BASE_URL => 'https://accept.paymob.com',
+            self::PAYMOB_CURRENCY => 'EGP',
+            self::PAYMOB_MODE => 'test',
             default => null,
         };
     }
@@ -66,7 +83,10 @@ enum SettingKey: string
             self::TAX_RATE, self::DELIVERY_FEE, self::MIN_ORDER_AMOUNT => 'numeric',
             self::MAINTENANCE_MODE => 'boolean',
             self::PRODUCTS_REPO_LINK, self::GOOGLE_CLIENT_ID,
-            self::GOOGLE_CLIENT_SECRET, self::GOOGLE_REDIRECT_URL => 'text',
+            self::GOOGLE_CLIENT_SECRET, self::GOOGLE_REDIRECT_URL,
+            self::PAYMOB_BASE_URL, self::PAYMOB_SECRET_KEY, self::PAYMOB_PUBLIC_KEY,
+            self::PAYMOB_INTEGRATION_IDS, self::PAYMOB_HMAC_SECRET,
+            self::PAYMOB_CURRENCY, self::PAYMOB_MODE => 'text',
         };
     }
 }

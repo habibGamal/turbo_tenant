@@ -28,8 +28,8 @@ final class CreateTenant extends Command
      */
     public function handle()
     {
-        $tenantId = $this->option('id') ?: 'clinic2';
-        $domain = $this->option('domain') ?: 'clinic2.localhost';
+        $tenantId = $this->option('id') ?: 'resturant';
+        $domain = $this->option('domain') ?: 'resturant.localhost';
 
         // If tenant DB already exists, avoid triggering the TenantCreated pipeline
         $databaseName = 'tenant'.$tenantId;
@@ -41,6 +41,21 @@ final class CreateTenant extends Command
             });
         } else {
             $tenant = \App\Models\Tenant::create(['id' => $tenantId]);
+        }
+
+        $tenantStorage = storage_path('tenant' .  $tenantId);
+
+        $paths = [
+            $tenantStorage,
+            $tenantStorage . '/framework',
+            $tenantStorage . '/framework/cache',
+            $tenantStorage . '/logs',
+        ];
+
+        foreach ($paths as $path) {
+            if (!is_dir($path)) {
+                mkdir($path, 0777, true);
+            }
         }
 
         $tenant->domains()->firstOrCreate(['domain' => $domain]);

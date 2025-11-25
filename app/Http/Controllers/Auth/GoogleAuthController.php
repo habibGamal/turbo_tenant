@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\CartService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -20,7 +21,7 @@ final class GoogleAuthController extends Controller
         return Socialite::driver('google')->redirect();
     }
 
-    public function callback(): RedirectResponse
+    public function callback(CartService $cartService): RedirectResponse
     {
         try {
             $googleUser = Socialite::driver('google')->user();
@@ -48,6 +49,9 @@ final class GoogleAuthController extends Controller
             }
 
             Auth::login($user, true);
+
+            // Sync guest cart to authenticated user
+            $cartService->syncGuestCartToUser($user);
 
             return redirect()->intended(route('dashboard', absolute: false));
         } catch (Throwable $e) {

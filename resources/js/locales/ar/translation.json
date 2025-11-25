@@ -237,5 +237,21 @@
   "passwordStrengthTitle": "يجب أن تحتوي كلمة المرور على:",
   "passwordStrength1": "8 أحرف على الأقل",
   "passwordStrength2": "مزيج من الأحرف والأرقام",
-  "passwordStrength3": "حرف خاص واحد على الأقل (موصى به)"
+  "passwordStrength3": "حرف خاص واحد على الأقل (موصى به)",
+  "searchProducts": "ابحث عن المنتجات...",
+  "allCategories": "كل الفئات",
+  "priceRange": "نطاق السعر",
+  "sortBy": "ترتيب حسب",
+  "price": "السعر",
+  "newest": "الأحدث",
+  "ascending": "تصاعدي",
+  "descending": "تنازلي",
+  "applyFilters": "تطبيق الفلاتر",
+  "reset": "إعادة تعيين",
+  "browseOurDeliciousMenu": "تصفح قائمتنا اللذيذة",
+  "filters": "الفلاتر",
+  "noProductsFound": "لم يتم العثور على منتجات",
+  "sale": "تخفيض",
+  "noMoreProducts": "لا توجد منتجات إضافية للتحميل",
+  "categories": "الفئات"
 }

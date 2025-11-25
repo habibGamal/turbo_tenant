@@ -29,12 +29,10 @@ final class DatabaseFresh extends Command
     public function handle()
     {
         // Ensure tenancy is ended before starting
-        $this->call('migrate:fresh', [
-            '--seed' => true,
-        ]);
-        DB::statement('DROP DATABASE IF EXISTS tenantclinic2');
-        $this->info('Database fresh and tenantclinic2 dropped successfully.');
+        $this->call('migrate:fresh');
+        DB::statement('DROP DATABASE IF EXISTS tenantresturant');
+        $this->info('Database fresh and tenantresturant dropped successfully.');
         $this->call('app:create-tenant');
-        $this->info('Tenant clinic2 created successfully.');
+        $this->info('Tenant resturant created successfully.');
     }
 }

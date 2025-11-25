@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\Login;
+use App\Models\Tenant;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -23,6 +24,8 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
+use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 final class AdminPanelProvider extends PanelProvider
 {
@@ -33,14 +36,15 @@ final class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login(Login::class)
-            ->spa()
-            ->profile()
-            ->multiFactorAuthentication(
-                AppAuthentication::make()
-                    ->recoverable(),
-            )
+            // ->login()
+            // ->spa()
+            // ->profile()
+            // ->multiFactorAuthentication(
+            //     AppAuthentication::make()
+            //         ->recoverable(),
+            // )
             ->sidebarCollapsibleOnDesktop()
-//            ->topNavigation()
+            //            ->topNavigation()
             ->colors([
                 'primary' => Color::Blue,
             ])
@@ -55,20 +59,27 @@ final class AdminPanelProvider extends PanelProvider
                 AccountWidget::class,
                 FilamentInfoWidget::class,
             ])
+            // ->tenant(Tenant::class)
+            // ->tenantDomain('{tenant:slug}.example.com')
+            ->middleware([
+                'universal',
+                InitializeTenancyByDomain::class,
+                PreventAccessFromCentralDomains::class,
+            ],true)
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
-                VerifyCsrfToken::class,
+                // VerifyCsrfToken::class,
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])->globalSearchFieldSuffix(fn (): ?string => match (Platform::detect()) {
+            ])->globalSearchFieldSuffix(fn(): ?string => match (Platform::detect()) {
                 Platform::Windows, Platform::Linux => 'CTRL + K',
                 Platform::Mac => '⌘ + K',
                 default => null,

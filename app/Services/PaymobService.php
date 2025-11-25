@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\SettingKey;
 use App\Models\Order;
 use Exception;
 use Illuminate\Support\Facades\Http;
@@ -21,13 +22,21 @@ final class PaymobService
 
     private string $hmacSecret;
 
-    public function __construct()
-    {
-        $this->baseUrl = config('paymob.base_url', 'https://accept.paymob.com');
-        $this->secretKey = config('paymob.secret_key');
-        $this->publicKey = config('paymob.public_key');
-        $this->integrationIds = config('paymob.integration_ids', []);
-        $this->hmacSecret = config('paymob.hmac_secret');
+    public function __construct(
+        private readonly SettingService $settingService
+    ) {
+        $this->baseUrl = $this->settingService->get(SettingKey::PAYMOB_BASE_URL, 'https://accept.paymob.com');
+        $this->secretKey = $this->settingService->get(SettingKey::PAYMOB_SECRET_KEY, '');
+        $this->publicKey = $this->settingService->get(SettingKey::PAYMOB_PUBLIC_KEY, '');
+
+        // Parse integration IDs from comma-separated string
+        $integrationIdsString = $this->settingService->get(SettingKey::PAYMOB_INTEGRATION_IDS, '');
+        $this->integrationIds = array_map(
+            fn ($id) => (int) $id,
+            array_filter(explode(',', $integrationIdsString))
+        );
+
+        $this->hmacSecret = $this->settingService->get(SettingKey::PAYMOB_HMAC_SECRET, '');
     }
 
     /**
@@ -39,7 +48,7 @@ final class PaymobService
         logger()->info('$this->integrationIds', ['integration_ids' => $this->integrationIds]);
         $payload = [
             'amount' => $this->convertToSmallestUnit($order->total),
-            'currency' => config('paymob.currency', 'EGP'),
+            'currency' => $this->settingService->get(SettingKey::PAYMOB_CURRENCY, 'EGP'),
             'payment_methods' => $this->integrationIds,
             // 'payment_methods' => [4874920],
             'items' => [],

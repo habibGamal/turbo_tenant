@@ -16,8 +16,8 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Get;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 final class CouponForm
@@ -32,7 +32,6 @@ final class CouponForm
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
-                            ->uppercase()
                             ->columnSpan(1),
                         TextInput::make('name')
                             ->maxLength(255)

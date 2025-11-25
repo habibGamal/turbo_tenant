@@ -237,5 +237,21 @@
   "passwordStrengthTitle": "Password should contain:",
   "passwordStrength1": "At least 8 characters",
   "passwordStrength2": "Mix of letters and numbers",
-  "passwordStrength3": "At least one special character (recommended)"
+  "passwordStrength3": "At least one special character (recommended)",
+  "searchProducts": "Search for products...",
+  "allCategories": "All Categories",
+  "priceRange": "Price Range",
+  "sortBy": "Sort By",
+  "price": "Price",
+  "newest": "Newest",
+  "ascending": "Ascending",
+  "descending": "Descending",
+  "applyFilters": "Apply Filters",
+  "reset": "Reset",
+  "browseOurDeliciousMenu": "Browse our delicious menu",
+  "filters": "Filters",
+  "noProductsFound": "No products found",
+  "sale": "Sale",
+  "noMoreProducts": "No more products to load",
+  "categories": "Categories"
 }

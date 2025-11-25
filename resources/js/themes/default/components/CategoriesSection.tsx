@@ -87,7 +87,7 @@ export default function CategoriesSection({
                 {/* Categories Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
                     {categoriesToUse.map((category) => (
-                        <Link key={category.id} href={`/menu/${category.slug}`}>
+                        <Link key={category.id} href={`/menu?category[]=${category.name}`}>
                             <Card className="group cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 hover:border-primary/50">
                                 <CardContent className="p-6 md:p-8 flex flex-col items-center text-center space-y-3">
                                     {/* Icon Container */}
