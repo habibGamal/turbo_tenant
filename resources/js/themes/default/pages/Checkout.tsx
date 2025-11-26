@@ -14,6 +14,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageWithFallback } from "@/components/ui/image";
 import { Separator } from "@/components/ui/separator";
 import {
     Dialog,
@@ -550,24 +551,18 @@ export default function Checkout({
                                             >
                                                 {/* Item Image */}
                                                 <div className="w-12 h-12 rounded-md bg-gradient-to-br from-primary/5 to-secondary/5 relative overflow-hidden shrink-0">
-                                                    {item.product?.image ? (
-                                                        <img
-                                                            src={
-                                                                item.product
-                                                                    .image
-                                                            }
-                                                            alt={
-                                                                item.product
-                                                                    .name ||
-                                                                t("product")
-                                                            }
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="absolute inset-0 flex items-center justify-center text-xl">
-                                                            {t("foodEmoji")}
-                                                        </div>
-                                                    )}
+                                                    <ImageWithFallback
+                                                        src={
+                                                            item.product
+                                                                ?.image
+                                                        }
+                                                        alt={
+                                                            item.product
+                                                                ?.name ||
+                                                            t("product")
+                                                        }
+                                                        className="w-full h-full object-cover"
+                                                    />
                                                 </div>
 
                                                 {/* Item Details */}

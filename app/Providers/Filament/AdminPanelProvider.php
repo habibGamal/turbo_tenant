@@ -60,12 +60,12 @@ final class AdminPanelProvider extends PanelProvider
                 FilamentInfoWidget::class,
             ])
             // ->tenant(Tenant::class)
-            // ->tenantDomain('{tenant:slug}.example.com')
+            // ->tenantDomain('{tenant:id}.localhost')
             ->middleware([
                 'universal',
                 InitializeTenancyByDomain::class,
                 PreventAccessFromCentralDomains::class,
-            ],true)
+            ], true)
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -79,7 +79,7 @@ final class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])->globalSearchFieldSuffix(fn(): ?string => match (Platform::detect()) {
+            ])->globalSearchFieldSuffix(fn (): ?string => match (Platform::detect()) {
                 Platform::Windows, Platform::Linux => 'CTRL + K',
                 Platform::Mac => '⌘ + K',
                 default => null,

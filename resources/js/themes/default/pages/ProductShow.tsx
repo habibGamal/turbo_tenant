@@ -10,6 +10,7 @@ import {
     CardHeader,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ImageWithFallback } from "@/components/ui/image";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -267,17 +268,11 @@ export default function ProductShow({
                         {/* Product Image */}
                         <div className="space-y-4">
                             <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-primary/5 to-secondary/5 relative">
-                                {product.image ? (
-                                    <img
-                                        src={product.image}
-                                        alt={product.name}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="text-9xl">🍽️</div>
-                                    </div>
-                                )}
+                                <ImageWithFallback
+                                    src={product.image}
+                                    alt={product.name}
+                                    className="w-full h-full object-cover"
+                                />
 
                                 {/* Discount Badge */}
                                 {hasDiscount && (
@@ -858,17 +853,11 @@ function ProductCard({ product }: { product: RelatedProduct }) {
         <Link href={`/products/${product.id}`}>
             <Card className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
                 <div className="aspect-square bg-gradient-to-br from-primary/5 to-secondary/5 relative overflow-hidden">
-                    {product.image ? (
-                        <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="text-6xl">🍽️</div>
-                        </div>
-                    )}
+                    <ImageWithFallback
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                    />
                     {hasDiscount && (
                         <Badge className="absolute top-2 ltr:left-2 rtl:right-2">
                             {Math.round(

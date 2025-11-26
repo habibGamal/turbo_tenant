@@ -18,6 +18,29 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 |
 */
 
+Route::get('/storage/{path}', function ($path) {
+    // dd($path,tenant()->id);
+    $file = Storage::path($path);
+    // dd($file);
+    $mimeType = mime_content_type($file);
+    // dd(Storage::disk('public')->path($url), mime_content_type(Storage::disk('public')->path($url)), filesize(Storage::disk('public')->path($url)));
+    if (ob_get_length()) {
+        ob_end_clean();
+    }
+    $response = response()->file(
+        $file,
+        [
+            'Content-Type' => $mimeType,
+            'Content-Length' => filesize($file),
+            'Accept-Ranges' => 'bytes',
+        ]
+    );
+
+    return $response;
+})->where('path', '.*')->middleware([
+    InitializeTenancyByDomain::class,
+    PreventAccessFromCentralDomains::class,
+]);
 Route::middleware([
     'web',
     InitializeTenancyByDomain::class,
@@ -51,7 +74,7 @@ Route::middleware([
     Route::post('/api/order-status', [App\Http\Controllers\Api\OrderStatusController::class, 'update'])->name('api.order-status.update')->withoutMiddleware([VerifyCsrfToken::class]);
     Route::post('/api/webhooks/paymob', [App\Http\Controllers\PaymobWebhookController::class, 'handle'])->name('webhooks.paymob')->withoutMiddleware([VerifyCsrfToken::class]);
 
-    require __DIR__ . '/auth.php';
+    require __DIR__.'/auth.php';
 
     // Paymob webhook (no auth required)
 });

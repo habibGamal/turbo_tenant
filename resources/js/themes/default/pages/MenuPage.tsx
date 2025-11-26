@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ImageWithFallback } from "@/components/ui/image";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Filter, X, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -409,17 +410,15 @@ export default function MenuPage({
                                                             );
                                                         }}
                                                     >
-                                                        {product.image && (
-                                                            <img
-                                                                src={
-                                                                    product.image
-                                                                }
-                                                                alt={
-                                                                    product.name
-                                                                }
-                                                                className="w-12 h-12 object-cover rounded"
-                                                            />
-                                                        )}
+                                                        <ImageWithFallback
+                                                            src={
+                                                                product.image
+                                                            }
+                                                            alt={
+                                                                product.name
+                                                            }
+                                                            className="w-12 h-12 object-cover rounded shrink-0"
+                                                        />
                                                         <div className="flex-1 min-w-0">
                                                             <p className="font-medium truncate">
                                                                 {product.name}

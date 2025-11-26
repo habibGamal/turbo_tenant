@@ -25,7 +25,6 @@ final class ProductController extends Controller
                 $query->orderBy('sort_order');
             },
         ]);
-
         // Get related products from the same category
         $relatedProducts = Product::query()
             ->with('category:id,name')

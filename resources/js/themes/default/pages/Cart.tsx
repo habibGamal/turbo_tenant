@@ -11,6 +11,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ImageWithFallback } from "@/components/ui/image";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -296,29 +297,22 @@ export default function Cart({ cart: initialCart, auth }: CartPageProps) {
                                                         className="shrink-0"
                                                     >
                                                         <div className="w-24 h-24 rounded-lg bg-gradient-to-br from-primary/5 to-secondary/5 relative overflow-hidden">
-                                                            {item.product
-                                                                ?.image ? (
-                                                                <img
-                                                                    src={
-                                                                        item
-                                                                            .product
-                                                                            .image
-                                                                    }
-                                                                    alt={
-                                                                        item
-                                                                            .product
-                                                                            .name ||
-                                                                        t(
-                                                                            "product"
-                                                                        )
-                                                                    }
-                                                                    className="w-full h-full object-cover"
-                                                                />
-                                                            ) : (
-                                                                <div className="absolute inset-0 flex items-center justify-center text-4xl">
-                                                                    🍽️
-                                                                </div>
-                                                            )}
+                                                            <ImageWithFallback
+                                                                src={
+                                                                    item
+                                                                        .product
+                                                                        ?.image
+                                                                }
+                                                                alt={
+                                                                    item
+                                                                        .product
+                                                                        ?.name ||
+                                                                    t(
+                                                                        "product"
+                                                                    )
+                                                                }
+                                                                className="w-full h-full object-cover"
+                                                            />
                                                         </div>
                                                     </Link>
 

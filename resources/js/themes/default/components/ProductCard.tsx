@@ -3,6 +3,7 @@ import { router } from '@inertiajs/react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ImageWithFallback } from '@/components/ui/image';
 import { ShoppingCart, Star, Heart, Flame } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -93,17 +94,11 @@ export default function ProductCard({
         >
             {/* Product Image */}
             <div className="relative aspect-square overflow-hidden rounded-t-lg">
-                {product.image ? (
-                    <img
-                        src={product.image}
-                        alt={getText(product.name, product.nameAr)}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary/10 via-primary/5 to-transparent flex items-center justify-center">
-                        <div className="text-6xl">🍽️</div>
-                    </div>
-                )}
+                <ImageWithFallback
+                    src={product.image}
+                    alt={getText(product.name, product.nameAr)}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
 
                 {/* Badges */}
                 <div className="absolute top-2 ltr:left-2 rtl:right-2 flex flex-col gap-2">
