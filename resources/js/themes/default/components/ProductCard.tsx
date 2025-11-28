@@ -174,7 +174,7 @@ export default function ProductCard({
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
                                 <span className="text-xl font-bold text-primary">
-                                    {formatPrice(displayPrice)}
+                                    {formatPrice(displayPrice as number)}
                                 </span>
                                 {hasDiscount && (
                                     <span className="text-sm text-muted-foreground line-through">
