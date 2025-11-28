@@ -7,6 +7,7 @@ namespace App\Listeners;
 use App\Enums\SettingKey;
 use App\Services\SettingService;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Schema;
 use Stancl\Tenancy\Events\TenancyInitialized;
 
 final class ConfigureTenantMail
@@ -14,7 +15,10 @@ final class ConfigureTenantMail
     public function handle(TenancyInitialized $event): void
     {
         $settingService = app(SettingService::class);
-
+        if (!Schema::hasTable('settings')) {
+            \Log::warning('Settings table does not exist for tenant.');
+            return;
+        }
         $mailer = $settingService->get(SettingKey::MAIL_MAILER);
         $host = $settingService->get(SettingKey::MAIL_HOST);
         $port = $settingService->get(SettingKey::MAIL_PORT);

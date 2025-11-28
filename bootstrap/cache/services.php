@@ -60,6 +60,7 @@
     56 => 'App\\Providers\\AppServiceProvider',
     57 => 'App\\Providers\\TenancyServiceProvider',
     58 => 'App\\Providers\\Filament\\AdminPanelProvider',
+    59 => 'App\\Providers\\Filament\\CentralPanelProvider',
   ),
   'eager' => 
   array (
@@ -105,6 +106,7 @@
     39 => 'App\\Providers\\AppServiceProvider',
     40 => 'App\\Providers\\TenancyServiceProvider',
     41 => 'App\\Providers\\Filament\\AdminPanelProvider',
+    42 => 'App\\Providers\\Filament\\CentralPanelProvider',
   ),
   'deferred' => 
   array (

@@ -130,7 +130,7 @@ final class PlaceOrderService
             }
 
             // Clear cart after order is created
-            // $this->cartService->clearCart($user);
+            $this->cartService->clearCart($user);
 
             DB::commit();
 

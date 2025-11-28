@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Models\Order;
+use App\Observers\OrderObserver;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Features\SupportFileUploads\FilePreviewController;
 use Livewire\Livewire;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
-use App\Models\Order;
-use App\Observers\OrderObserver;
 
 final class AppServiceProvider extends ServiceProvider
 {
@@ -29,14 +29,27 @@ final class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
-        Livewire::setUpdateRoute(function ($handle) {
-            return Route::post('/livewire/update', $handle)
-                ->middleware(['web', InitializeTenancyByDomain::class]);
-        });
-        FilePreviewController::$middleware = ['web', 'universal', InitializeTenancyByDomain::class];
 
-        Order::observe(OrderObserver::class);
+        // Only configure tenant-specific Livewire routes if not on central domain
+        if (!$this->isCentralDomain()) {
+            Livewire::setUpdateRoute(function ($handle) {
+                return Route::post('/livewire/update', $handle)
+                    ->middleware(['web', InitializeTenancyByDomain::class]);
+            });
+            FilePreviewController::$middleware = ['web', 'universal', InitializeTenancyByDomain::class];
 
+            Order::observe(OrderObserver::class);
+        }
+    }
 
+    /**
+     * Check if the current request is on a central domain.
+     */
+    private function isCentralDomain(): bool
+    {
+        $centralDomains = config('tenancy.central_domains', []);
+        $host = request()->getHost();
+
+        return in_array($host, $centralDomains, true);
     }
 }
