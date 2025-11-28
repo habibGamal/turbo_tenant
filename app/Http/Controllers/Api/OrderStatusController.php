@@ -28,6 +28,7 @@ final class OrderStatusController extends Controller
                 'message' => 'تم تحديث حالة الطلب',
             ]);
         } catch (\Exception $e) {
+            logger()->error($e->getMessage());
             return response()->json([
                 'message' => 'حدث خطأ ما',
             ], 400);

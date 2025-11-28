@@ -72,6 +72,11 @@ final class Product extends Model
             ->withTimestamps();
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
     protected function casts(): array
     {
         return [

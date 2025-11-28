@@ -260,7 +260,7 @@ final class CouponServiceTest extends TestCase
         $user = User::factory()->create();
         Order::factory()->create([
             'user_id' => $user->id,
-            'status' => 'confirmed',
+            'status' => 'processing',
         ]);
 
         $coupon = Coupon::factory()->create([

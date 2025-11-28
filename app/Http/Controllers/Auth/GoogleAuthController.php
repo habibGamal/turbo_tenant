@@ -30,7 +30,7 @@ final class GoogleAuthController extends Controller
 
             if ($user) {
                 // Update existing user with Google ID if not set
-                if (! $user->google_id) {
+                if (!$user->google_id) {
                     $user->update([
                         'google_id' => $googleUser->getId(),
                         'avatar' => $googleUser->getAvatar(),
@@ -53,7 +53,7 @@ final class GoogleAuthController extends Controller
             // Sync guest cart to authenticated user
             $cartService->syncGuestCartToUser($user);
 
-            return redirect()->intended(route('dashboard', absolute: false));
+            return redirect()->intended(route('home', absolute: false));
         } catch (Throwable $e) {
             return redirect()->route('login')->with('error', 'Unable to login with Google. Please try again.');
         }

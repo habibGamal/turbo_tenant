@@ -32,6 +32,7 @@ final class User extends Authenticatable implements FilamentUser, HasAppAuthenti
         'google_id',
         'avatar',
         'email_verified_at',
+        'is_admin',
     ];
 
     /**
@@ -48,8 +49,7 @@ final class User extends Authenticatable implements FilamentUser, HasAppAuthenti
 
     public function canAccessPanel(Panel $panel): bool
     {
-        /* TODO: Please implement your own logic here. */
-        return true; // str_ends_with($this->email, '@larament.test');
+        return $this->is_admin;
     }
 
     public function getAppAuthenticationSecret(): ?string
@@ -99,6 +99,7 @@ final class User extends Authenticatable implements FilamentUser, HasAppAuthenti
             'password' => 'hashed',
             'app_authentication_secret' => 'encrypted',
             'app_authentication_recovery_codes' => 'encrypted:array',
+            'is_admin' => 'boolean',
         ];
     }
 }

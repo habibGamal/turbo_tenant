@@ -22,25 +22,36 @@ final class OrderInfolist
                             ->copyable(),
                         TextEntry::make('status')
                             ->badge()
-                            ->color(fn (string $state): string => match ($state) {
+                            ->color(fn(string|\App\Enums\OrderStatus $state): string => match ($state instanceof \App\Enums\OrderStatus ? $state->value : $state) {
                                 'pending' => 'gray',
-                                'confirmed' => 'info',
-                                'preparing' => 'warning',
-                                'ready' => 'success',
+                                'processing' => 'warning',
                                 'out_for_delivery' => 'primary',
-                                'delivered' => 'success',
+                                'completed' => 'success',
                                 'cancelled' => 'danger',
                                 default => 'gray',
                             }),
                         TextEntry::make('type')
                             ->badge()
-                            ->color(fn (string $state): string => match ($state) {
+                            ->color(fn(string $state): string => match ($state) {
                                 'web_delivery' => 'success',
                                 'web_takeaway' => 'info',
                                 'pos' => 'warning',
                                 default => 'gray',
                             }),
                         TextEntry::make('shift_id'),
+                        TextEntry::make('pos_status')
+                            ->badge()
+                            ->color(fn(\App\Enums\OrderPosStatus $state): string => match ($state) {
+                                \App\Enums\OrderPosStatus::NOT_READY => 'gray',
+                                \App\Enums\OrderPosStatus::READY => 'info',
+                                \App\Enums\OrderPosStatus::SENDING => 'warning',
+                                \App\Enums\OrderPosStatus::SENT => 'success',
+                                \App\Enums\OrderPosStatus::FAILED => 'danger',
+                            }),
+                        TextEntry::make('pos_failure_reason')
+                            ->visible(fn($record) => $record->pos_status === \App\Enums\OrderPosStatus::FAILED)
+                            ->columnSpanFull()
+                            ->color('danger'),
                     ])
                     ->columns(2)
                     ->columnSpan(2),
@@ -50,9 +61,9 @@ final class OrderInfolist
                         TextEntry::make('user.name'),
                         TextEntry::make('user.email'),
                         TextEntry::make('address.full_address')
-                            ->visible(fn ($record) => $record->address_id),
+                            ->visible(fn($record) => $record->address_id),
                         TextEntry::make('address.area')
-                            ->visible(fn ($record) => $record->address_id),
+                            ->visible(fn($record) => $record->address_id),
                     ])
                     ->columnSpan(1),
 
@@ -61,10 +72,10 @@ final class OrderInfolist
                         TextEntry::make('branch.name')
                             ->label('Branch'),
                         TextEntry::make('coupon.code')
-                            ->visible(fn ($record) => $record->coupon_id),
+                            ->visible(fn($record) => $record->coupon_id),
                         TextEntry::make('note')
                             ->columnSpanFull()
-                            ->visible(fn ($record) => $record->note),
+                            ->visible(fn($record) => $record->note),
                     ])
                     ->columns(2)
                     ->columnSpanFull(),

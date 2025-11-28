@@ -4,11 +4,21 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Enums\SettingKey;
+use App\Services\CartService;
+use App\Services\SettingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
 
 final class HandleInertiaRequests extends Middleware
 {
+    public function __construct(
+        private readonly SettingService $settingService,
+        private readonly CartService $cartService,
+    ) {
+    }
+
     /**
      * The root template that is loaded on the first page visit.
      *
@@ -35,6 +45,23 @@ final class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
+            ],
+            'cartItemsCount' => $this->cartService->getCartCount($request->user()),
+            'settings' => [
+                'site_name' => $this->settingService->get(SettingKey::SITE_NAME),
+                'site_description' => $this->settingService->get(SettingKey::SITE_DESCRIPTION),
+                'site_logo' => $this->settingService->get(SettingKey::SITE_LOGO) ? Storage::url($this->settingService->get(SettingKey::SITE_LOGO)) : null,
+                'image_placeholder' => $this->settingService->get(SettingKey::IMAGE_PLACEHOLDER),
+                'contact_email' => $this->settingService->get(SettingKey::CONTACT_EMAIL),
+                'contact_phone' => $this->settingService->get(SettingKey::CONTACT_PHONE),
+                'contact_address' => $this->settingService->get(SettingKey::CONTACT_ADDRESS),
+                'social_facebook' => $this->settingService->get(SettingKey::SOCIAL_FACEBOOK),
+                'social_instagram' => $this->settingService->get(SettingKey::SOCIAL_INSTAGRAM),
+                'social_twitter' => $this->settingService->get(SettingKey::SOCIAL_TWITTER),
+                'cod_fee' => (float) $this->settingService->get(SettingKey::COD_FEE, 0),
+                'facebook_app_id' => $this->settingService->get(SettingKey::FACEBOOK_APP_ID),
+                'product_show_cards' => json_decode($this->settingService->get(SettingKey::PRODUCT_SHOW_CARDS, '[]'), true),
+                'pages' => \App\Models\Page::where('is_active', true)->select('title', 'title_ar', 'slug')->get(),
             ],
         ];
     }

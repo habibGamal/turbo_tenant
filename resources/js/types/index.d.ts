@@ -8,6 +8,7 @@ export interface User {
 export interface Category {
     id: number;
     name: string;
+    nameAr?: string;
     description?: string;
     image?: string;
 }
@@ -16,7 +17,7 @@ export interface ProductVariant {
     id: number;
     product_id: number;
     name: string;
-    price: number;
+    price: number | null;
     is_available: boolean;
     sort_order: number;
 }
@@ -61,19 +62,27 @@ export interface WeightOption {
 export interface Product {
     id: number;
     name: string;
+    nameAr?: string;
     description: string;
+    descriptionAr?: string;
     image?: string;
-    base_price: number;
+    price: number;
+    base_price?: number;
     price_after_discount?: number;
-    category_id: number;
-    is_active: boolean;
-    sell_by_weight: boolean;
+    category_id?: number;
+    is_active?: boolean;
+    sell_by_weight?: boolean;
     weight_option?: WeightOption;
-    category?: Category;
+    category?: Category | string;
+    categoryAr?: string;
     variants?: ProductVariant[];
     extraOption?: ExtraOption;
     rating?: number;
     reviewsCount?: number;
+    badge?: string;
+    badgeAr?: string;
+    isNew?: boolean;
+    isTrending?: boolean;
 }
 
 export interface Review {
@@ -81,6 +90,7 @@ export interface Review {
     user_name: string;
     rating: number;
     comment: string;
+    images?: string[];
     created_at: string;
 }
 
@@ -110,7 +120,7 @@ export interface CartItem {
     variant?: {
         id: number;
         name: string;
-        price: number;
+        price: number | null;
     } | null;
     weight_option_value?: {
         id: number;
@@ -202,6 +212,17 @@ export interface OrderItem {
     unit_price: number;
     total: number;
     extras: OrderItemExtra[];
+    product?: {
+        id: number;
+        name: string;
+        sell_by_weight?: boolean;
+        weight_option?: WeightOption;
+    };
+    weight_option_value?: {
+        id: number;
+        value: string;
+        label?: string;
+    };
 }
 
 export interface Order {
@@ -232,11 +253,43 @@ export interface Order {
     items: OrderItem[];
 }
 
+export interface ProductShowCard {
+    title: string;
+    description: string;
+    icon: string;
+}
+
 export type PageProps<
     T extends Record<string, unknown> = Record<string, unknown>,
 > = T & {
     auth: {
         user: User;
     };
+    settings: {
+        image_placeholder: string;
+        product_show_cards: ProductShowCard[];
+        cod_fee: number;
+    };
 };
 
+
+export interface Filters {
+    search: string;
+    category: string | string[];
+    min_price?: number;
+    max_price?: number;
+    sort_by: string;
+    sort_order: string;
+}
+
+export interface PaginatedProducts {
+    data: Product[];
+}
+
+export interface MenuPageProps extends PageProps {
+    products: PaginatedProducts;
+    categories: Category[];
+    filters: Filters;
+    cartItemsCount?: number;
+    searchSuggestions?: Product[];
+}

@@ -35,7 +35,7 @@ final class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -52,6 +52,6 @@ final class RegisteredUserController extends Controller
         // Sync guest cart to newly registered user
         $cartService->syncGuestCartToUser($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('home', absolute: false));
     }
 }

@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\OrderPosStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Order extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'order_number',
         'merchant_order_id',
@@ -35,6 +39,8 @@ final class Order extends Model
         'coupon_id',
         'branch_id',
         'address_id',
+        'pos_status',
+        'pos_failure_reason',
     ];
 
     public function user(): BelongsTo
@@ -74,6 +80,7 @@ final class Order extends Model
             'status' => OrderStatus::class,
             'payment_status' => PaymentStatus::class,
             'payment_method' => PaymentMethod::class,
+            'pos_status' => OrderPosStatus::class,
         ];
     }
 }

@@ -6,8 +6,10 @@ namespace App\Filament\Pages;
 
 use App\Services\ManifestService;
 use BackedEnum;
+use UnitEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -35,7 +37,7 @@ final class ManifestSettings extends Page
 
     protected static ?string $title = 'PWA Manifest Settings';
 
-    protected static ?string $navigationGroup = 'Settings';
+    protected static string|UnitEnum|null $navigationGroup = 'Settings';
 
     protected string $view = 'filament.pages.settings';
 
@@ -123,11 +125,11 @@ final class ManifestSettings extends Page
                         ->schema([
                             Repeater::make('icons')
                                 ->schema([
-                                    TextInput::make('src')
+                                    FileUpload::make('src')
                                         ->label('Icon Source')
-                                        ->required()
-                                        ->maxLength(255)
-                                        ->placeholder('android-chrome-192x192.png'),
+                                        ->image()
+                                        ->directory('pwa-icons')
+                                        ->required(),
                                     TextInput::make('sizes')
                                         ->label('Sizes')
                                         ->required()

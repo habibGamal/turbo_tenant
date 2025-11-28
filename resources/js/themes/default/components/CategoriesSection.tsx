@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link } from '@inertiajs/react';
 import { Card, CardContent } from '@/components/ui/card';
-import { UtensilsCrossed, Pizza, Coffee, Salad, IceCream, Soup } from 'lucide-react';
+import { ScrollText, Pizza, Coffee, Salad, IceCream, Soup } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { ImageWithFallback } from '@/components/ui/image';
 
 interface Category {
     id: number;
@@ -34,12 +35,12 @@ export default function CategoriesSection({
     const { t, i18n } = useTranslation();
 
     const defaultCategories: Category[] = [
-        { id: 1, name: t('categoryPizza'), nameAr: t('categoryPizza'), slug: 'pizza', icon: 'pizza', productsCount: 24 },
-        { id: 2, name: t('categoryBurgers'), nameAr: t('categoryBurgers'), slug: 'burgers', icon: 'utensils', productsCount: 18 },
-        { id: 3, name: t('categorySalads'), nameAr: t('categorySalads'), slug: 'salads', icon: 'salad', productsCount: 15 },
-        { id: 4, name: t('categoryDesserts'), nameAr: t('categoryDesserts'), slug: 'desserts', icon: 'icecream', productsCount: 22 },
-        { id: 5, name: t('categoryDrinks'), nameAr: t('categoryDrinks'), slug: 'drinks', icon: 'coffee', productsCount: 30 },
-        { id: 6, name: t('categorySoups'), nameAr: t('categorySoups'), slug: 'soups', icon: 'soup', productsCount: 12 },
+        { id: 1, name: t('categoryPizza'), nameAr: t('categoryPizza'), slug: 'pizza', icon: 'pizza', productsCount: 24, image: '/images/categories/pizza.jpg' },
+        { id: 2, name: t('categoryBurgers'), nameAr: t('categoryBurgers'), slug: 'burgers', icon: 'utensils', productsCount: 18, image: '/images/categories/burger.jpg' },
+        { id: 3, name: t('categorySalads'), nameAr: t('categorySalads'), slug: 'salads', icon: 'salad', productsCount: 15, image: '/images/categories/salad.jpg' },
+        { id: 4, name: t('categoryDesserts'), nameAr: t('categoryDesserts'), slug: 'desserts', icon: 'icecream', productsCount: 22, image: '/images/categories/dessert.jpg' },
+        { id: 5, name: t('categoryDrinks'), nameAr: t('categoryDrinks'), slug: 'drinks', icon: 'coffee', productsCount: 30, image: '/images/categories/drink.jpg' },
+        { id: 6, name: t('categorySoups'), nameAr: t('categorySoups'), slug: 'soups', icon: 'soup', productsCount: 12, image: '/images/categories/soup.jpg' },
     ];
 
     const categoriesToUse = categories || defaultCategories;
@@ -47,25 +48,6 @@ export default function CategoriesSection({
     const titleArToUse = titleAr || t('browseCategories');
     const subtitleToUse = subtitle || t('exploreDiverseMenu');
     const subtitleArToUse = subtitleAr || t('exploreDiverseMenu');
-
-    const getIcon = (iconName?: string) => {
-        const iconClass = "h-8 w-8 md:h-10 md:w-10";
-        switch (iconName) {
-            case 'pizza':
-                return <Pizza className={iconClass} />;
-            case 'salad':
-                return <Salad className={iconClass} />;
-            case 'icecream':
-                return <IceCream className={iconClass} />;
-            case 'coffee':
-                return <Coffee className={iconClass} />;
-            case 'soup':
-                return <Soup className={iconClass} />;
-            case 'utensils':
-            default:
-                return <UtensilsCrossed className={iconClass} />;
-        }
-    };
 
     const getText = (text: string, textAr?: string) => {
         return i18n.language === 'ar' && textAr ? textAr : text;
@@ -85,32 +67,36 @@ export default function CategoriesSection({
                 </div>
 
                 {/* Categories Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                     {categoriesToUse.map((category) => (
-                        <Link key={category.id} href={`/menu?category[]=${category.name}`}>
-                            <Card className="group cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 hover:border-primary/50">
-                                <CardContent className="p-6 md:p-8 flex flex-col items-center text-center space-y-3">
-                                    {/* Icon Container */}
-                                    <div className="relative">
-                                        <div className="p-4 md:p-5 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 group-hover:from-primary/20 group-hover:to-primary/10 transition-all duration-300 group-hover:scale-110">
-                                            <div className="text-primary">
-                                                {getIcon(category.icon)}
-                                            </div>
-                                        </div>
-                                        {category.productsCount && (
-                                            <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center shadow-lg">
+                        <Link key={category.id} href={`/menu?category[]=${category.name}`} className="group block h-full">
+                            <Card className="h-full overflow-hidden border-0 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-card">
+                                <CardContent className="p-0 h-full flex flex-col">
+                                    {/* Image Container */}
+                                    <div className="relative aspect-square overflow-hidden">
+                                        <ImageWithFallback
+                                            src={category.image}
+                                            alt={getText(category.name, category.nameAr)}
+                                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                        />
+                                        {/* Overlay Gradient */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-300" />
+
+                                        {/* Products Count Badge */}
+                                        {category.productsCount !== undefined && (
+                                            <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-foreground text-xs font-bold px-2 py-1 rounded-full shadow-sm">
                                                 {category.productsCount}
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Category Name */}
-                                    <div className="space-y-1">
-                                        <h3 className="font-semibold text-base md:text-lg group-hover:text-primary transition-colors">
+                                    {/* Category Info */}
+                                    <div className="p-4 text-center flex-grow flex flex-col justify-center bg-card z-10 relative">
+                                        <h3 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-1">
                                             {getText(category.name, category.nameAr)}
                                         </h3>
                                         {category.description && (
-                                            <p className="text-xs text-muted-foreground line-clamp-2 hidden md:block">
+                                            <p className="text-xs text-muted-foreground line-clamp-2 mt-1 hidden md:block">
                                                 {getText(category.description, category.descriptionAr)}
                                             </p>
                                         )}
@@ -122,11 +108,10 @@ export default function CategoriesSection({
                 </div>
 
                 {/* View All Link */}
-                <div className="text-center mt-10">
+                <div className="text-center mt-12">
                     <Link href="/menu">
-                        <span className="text-primary hover:text-primary/80 font-semibold inline-flex items-center gap-2 group">
-                            {t('View All')}
-                            <span className="group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform">→</span>
+                        <span className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+                            {t('viewAll')}
                         </span>
                     </Link>
                 </div>

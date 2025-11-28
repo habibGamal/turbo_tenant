@@ -10,6 +10,8 @@ use Illuminate\Support\ServiceProvider;
 use Livewire\Features\SupportFileUploads\FilePreviewController;
 use Livewire\Livewire;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
+use App\Models\Order;
+use App\Observers\OrderObserver;
 
 final class AppServiceProvider extends ServiceProvider
 {
@@ -32,6 +34,8 @@ final class AppServiceProvider extends ServiceProvider
                 ->middleware(['web', InitializeTenancyByDomain::class]);
         });
         FilePreviewController::$middleware = ['web', 'universal', InitializeTenancyByDomain::class];
+
+        Order::observe(OrderObserver::class);
 
 
     }

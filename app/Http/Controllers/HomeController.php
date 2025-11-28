@@ -17,49 +17,35 @@ final class HomeController extends Controller
         // Get categories with their products
         $categories = Category::query()
             ->orderBy('name')
-            ->get(['id', 'name',  'description']);
+            ->get(['id', 'name', 'description']);
 
-        // Get featured products (using active products with discounts as featured)
-        $featuredProducts = Product::query()
-            ->with('category:id,name')
+        $sections = \App\Models\Section::query()
+            ->with([
+                'products' => function ($query) {
+                    $query->where('is_active', true)
+                        ->with('category:id,name');
+                }
+            ])
             ->where('is_active', true)
-            ->whereNotNull('price_after_discount')
-            ->limit(8)
-            ->get()
-            ->map(function ($product) {
-                return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'description' => $product->description,
-                    'price' => $product->price_after_discount ?? $product->base_price,
-                    'category' => $product->category?->name ?? 'Uncategorized',
-                    'rating' => 4.5, // You can add actual rating logic
-                ];
-            });
+            ->orderBy('sort_order')
+            ->get();
 
-        // Get popular products (active products)
-        $popularProducts = Product::query()
-            ->with('category:id,name')
+        // Transform sections to match frontend expectations if needed,
+        // or just pass them as is and handle in frontend.
+        // The Section model has 'products' relation.
+
+        $heroSlides = \App\Models\HeroSlider::query()
             ->where('is_active', true)
-            ->limit(6)
-            ->get()
-            ->map(function ($product) {
-                return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'description' => $product->description,
-                    'price' => $product->price_after_discount ?? $product->base_price,
-                    'category' => $product->category?->name ?? 'Uncategorized',
-                ];
-            });
+            ->orderBy('sort_order')
+            ->get();
 
         return Inertia::render('HomePage', [
             'categories' => $categories,
-            'featuredProducts' => $featuredProducts,
-            'popularProducts' => $popularProducts,
+            'sections' => $sections,
+            'heroSlides' => $heroSlides,
             'tenant' => [
                 'name' => tenant('id'),
-                'theme' => 'default', // You can store this in tenant data
+                'theme' => 'default',
             ],
         ]);
     }

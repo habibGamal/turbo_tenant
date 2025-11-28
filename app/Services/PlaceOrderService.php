@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\OrderPosStatus;
+use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Enums\SettingKey;
 use App\Models\Address;
 use App\Models\Cart;
 use App\Models\Coupon;
@@ -22,7 +25,8 @@ final class PlaceOrderService
     public function __construct(
         private readonly CartService $cartService,
         private readonly PaymobService $paymobService,
-        private readonly CouponService $couponService
+        private readonly CouponService $couponService,
+        private readonly SettingService $settingService
     ) {
     }
 
@@ -47,6 +51,18 @@ final class PlaceOrderService
                 'success' => false,
                 'error' => 'Cart is empty',
             ];
+        }
+
+        // Check work times
+        if (!$this->isStoreOpen()) {
+            $acceptOrdersAfterWorkTimes = filter_var($this->settingService->get(SettingKey::ACCEPT_ORDERS_AFTER_WORK_TIMES, 'true'), FILTER_VALIDATE_BOOLEAN);
+
+            if (!$acceptOrdersAfterWorkTimes) {
+                return [
+                    'success' => false,
+                    'error' => 'We are currently closed. Please try again during our work hours.',
+                ];
+            }
         }
 
         try {
@@ -91,7 +107,7 @@ final class PlaceOrderService
             }
 
             // Calculate order totals
-            $totals = $this->calculateOrderTotals($cart['items'], $coupon, $addressId, $type);
+            $totals = $this->calculateOrderTotals($cart['items'], $coupon, $addressId, $type, $paymentMethod);
 
             // Create order
             $order = $this->createOrder(
@@ -122,10 +138,11 @@ final class PlaceOrderService
             if (!$paymentMethod->requiresOnlinePayment()) {
                 $order->update([
                     'payment_status' => PaymentStatus::PENDING,
-                    'status' => 'confirmed',
+                    'status' => OrderStatus::PENDING,
+                    'pos_status' => OrderPosStatus::READY,
                 ]);
 
-                app(OrderPOSService::class)->placeOrder($order);
+                //app(OrderPOSService::class)->placeOrder($order);
                 return [
                     'success' => true,
                     'order' => $order->fresh(['items.extras', 'user', 'branch', 'address']),
@@ -140,7 +157,7 @@ final class PlaceOrderService
             // Create payment intention
             // $redirectionUrl = config('app.url') . '/orders/' . $order->id . '/payment/callback';
             $redirectionUrl = url('/orders/' . $order->id . '/payment/callback');
-            $notificationUrl = config('app.url') . '/api/webhooks/paymob';
+            $notificationUrl = url('/api/webhooks/paymob');
 
             logger()->info('Creating payment intention', [
                 'order_id' => $order->id,
@@ -226,8 +243,8 @@ final class PlaceOrderService
         if ($success && !$pending) {
             $order->update([
                 'payment_status' => 'completed',
-                'status' => 'confirmed',
                 'transaction_id' => $transactionId,
+                'pos_status' => OrderPosStatus::READY,
                 'payment_data' => json_encode([
                     'transaction_id' => $transactionId,
                     'amount_cents' => $amountCents,
@@ -323,9 +340,9 @@ final class PlaceOrderService
 
         // Update order status based on payment status
         if ($processedData['payment_status'] === 'completed') {
-            $order->update(['status' => 'confirmed']);
+            $order->update(['pos_status' => OrderPosStatus::READY]);
         } elseif ($processedData['payment_status'] === 'failed') {
-            $order->update(['status' => 'cancelled']);
+            // $order->update(['status' => 'cancelled']);
         }
 
 
@@ -339,7 +356,7 @@ final class PlaceOrderService
     /**
      * Calculate order totals
      */
-    private function calculateOrderTotals(array $items, ?Coupon $coupon, ?int $addressId, string $type): array
+    private function calculateOrderTotals(array $items, ?Coupon $coupon, ?int $addressId, string $type, PaymentMethod $paymentMethod): array
     {
         $subTotal = array_reduce($items, fn($total, $item) => $total + ($item['subtotal'] ?? 0), 0);
 
@@ -351,6 +368,12 @@ final class PlaceOrderService
 
         $tax = $this->calculateTax($subTotal - $discount);
         $service = $this->calculateService($subTotal - $discount);
+
+        // Apply COD fee if applicable
+        if ($paymentMethod === PaymentMethod::COD) {
+            $codFee = (float) $this->settingService->get(SettingKey::COD_FEE, 0);
+            $service += $codFee;
+        }
 
         // Calculate base delivery fee
         $baseDeliveryFee = $this->calculateDeliveryFee($addressId, $type);
@@ -524,5 +547,37 @@ final class PlaceOrderService
             'country' => $billingData['country'] ?? 'EG',
             'postal_code' => $billingData['postal_code'] ?? 'NA',
         ];
+    }
+
+    /**
+     * Check if store is currently open
+     */
+    private function isStoreOpen(): bool
+    {
+        $workTimesJson = $this->settingService->get(SettingKey::WORK_TIMES, '[]');
+        $workTimes = json_decode($workTimesJson, true) ?? [];
+
+        if (empty($workTimes)) {
+            return true; // Assume open if no times defined
+        }
+
+        $now = now();
+        $currentDay = $now->format('l'); // Sunday, Monday, etc.
+        $currentTime = $now->format('H:i');
+
+        foreach ($workTimes as $daySchedule) {
+            if (($daySchedule['day'] ?? '') === $currentDay) {
+                if (!empty($daySchedule['closed'])) {
+                    return false;
+                }
+
+                $from = $daySchedule['from'] ?? '00:00';
+                $to = $daySchedule['to'] ?? '23:59';
+
+                return $currentTime >= $from && $currentTime <= $to;
+            }
+        }
+
+        return true; // Assume open if day not found in schedule
     }
 }

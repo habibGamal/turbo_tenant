@@ -6,8 +6,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table): void {
@@ -15,6 +14,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+            $table->boolean('is_admin')->default(false);
             $table->string('password');
             $table->text('app_authentication_secret')->nullable();
             $table->text('app_authentication_recovery_codes')->nullable();

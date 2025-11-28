@@ -8,6 +8,8 @@ use App\Enums\SettingKey;
 use App\Services\SettingService;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
@@ -41,7 +43,17 @@ final class Settings extends Page
     public function mount(): void
     {
         $settingService = app(SettingService::class);
-        $this->form->fill($settingService->getAllAsArray());
+        $data = $settingService->getAllAsArray();
+
+        if (isset($data[SettingKey::PRODUCT_SHOW_CARDS->value])) {
+            $data[SettingKey::PRODUCT_SHOW_CARDS->value] = json_decode($data[SettingKey::PRODUCT_SHOW_CARDS->value], true) ?? [];
+        }
+
+        if (isset($data[SettingKey::WORK_TIMES->value])) {
+            $data[SettingKey::WORK_TIMES->value] = json_decode($data[SettingKey::WORK_TIMES->value], true) ?? [];
+        }
+
+        $this->form->fill($data);
     }
 
     public function form(Schema $schema): Schema
@@ -55,6 +67,10 @@ final class Settings extends Page
                                 ->label(SettingKey::SITE_NAME->label())
                                 ->required()
                                 ->maxLength(255),
+                            FileUpload::make(SettingKey::SITE_LOGO->value)
+                                ->label(SettingKey::SITE_LOGO->label())
+                                ->image()
+                                ->directory('site-images'),
                             TextInput::make(SettingKey::SITE_DESCRIPTION->value)
                                 ->label(SettingKey::SITE_DESCRIPTION->label())
                                 ->maxLength(500),
@@ -66,6 +82,36 @@ final class Settings extends Page
                                 ->label(SettingKey::CONTACT_PHONE->label())
                                 ->tel()
                                 ->maxLength(20),
+                            TextInput::make(SettingKey::CONTACT_ADDRESS->value)
+                                ->label(SettingKey::CONTACT_ADDRESS->label())
+                                ->maxLength(255),
+                            TextInput::make(SettingKey::SOCIAL_FACEBOOK->value)
+                                ->label(SettingKey::SOCIAL_FACEBOOK->label())
+                                ->url()
+                                ->maxLength(255),
+                            TextInput::make(SettingKey::SOCIAL_INSTAGRAM->value)
+                                ->label(SettingKey::SOCIAL_INSTAGRAM->label())
+                                ->url()
+                                ->maxLength(255),
+                            TextInput::make(SettingKey::SOCIAL_TWITTER->value)
+                                ->label(SettingKey::SOCIAL_TWITTER->label())
+                                ->url()
+                                ->maxLength(255),
+                            FileUpload::make(SettingKey::SITE_FAVICON->value)
+                                ->label(SettingKey::SITE_FAVICON->label())
+                                ->image()
+                                ->directory('site-images'),
+                            FileUpload::make(SettingKey::IMAGE_PLACEHOLDER->value)
+                                ->label(SettingKey::IMAGE_PLACEHOLDER->label())
+                                ->image()
+                                ->directory('site-images'),
+                            FileUpload::make(SettingKey::SVG_LOGO->value)
+                                ->label(SettingKey::SVG_LOGO->label())
+                                ->image()
+                                ->directory('site-images'),
+                            TextInput::make(SettingKey::FACEBOOK_APP_ID->value)
+                                ->label(SettingKey::FACEBOOK_APP_ID->label())
+                                ->maxLength(255),
                         ])
                         ->columns(2),
 
@@ -83,8 +129,8 @@ final class Settings extends Page
                                 ->minValue(0)
                                 ->maxValue(100)
                                 ->default(0),
-                            TextInput::make(SettingKey::DELIVERY_FEE->value)
-                                ->label(SettingKey::DELIVERY_FEE->label())
+                            TextInput::make(SettingKey::COD_FEE->value)
+                                ->label(SettingKey::COD_FEE->label())
                                 ->numeric()
                                 ->minValue(0)
                                 ->default(0)
@@ -110,6 +156,159 @@ final class Settings extends Page
                                 ->helperText('Enable maintenance mode to prevent customers from accessing the website')
                                 ->default(false),
                         ]),
+
+                    Section::make('Google Integration')
+                        ->schema([
+                            TextInput::make(SettingKey::GOOGLE_CLIENT_ID->value)
+                                ->label(SettingKey::GOOGLE_CLIENT_ID->label())
+                                ->password()
+                                ->revealable()
+                                ->maxLength(255),
+                            TextInput::make(SettingKey::GOOGLE_CLIENT_SECRET->value)
+                                ->label(SettingKey::GOOGLE_CLIENT_SECRET->label())
+                                ->password()
+                                ->revealable()
+                                ->maxLength(255),
+                            TextInput::make(SettingKey::GOOGLE_REDIRECT_URL->value)
+                                ->label(SettingKey::GOOGLE_REDIRECT_URL->label())
+                                ->url()
+                                ->maxLength(255),
+                        ])
+                        ->columns(2),
+
+                    Section::make('Payment Gateway (Paymob)')
+                        ->schema([
+                            TextInput::make(SettingKey::PAYMOB_BASE_URL->value)
+                                ->label(SettingKey::PAYMOB_BASE_URL->label())
+                                ->url()
+                                ->required()
+                                ->maxLength(255)
+                                ->default('https://accept.paymob.com'),
+                            TextInput::make(SettingKey::PAYMOB_PUBLIC_KEY->value)
+                                ->label(SettingKey::PAYMOB_PUBLIC_KEY->label())
+                                ->required()
+                                ->maxLength(255),
+                            TextInput::make(SettingKey::PAYMOB_SECRET_KEY->value)
+                                ->label(SettingKey::PAYMOB_SECRET_KEY->label())
+                                ->password()
+                                ->revealable()
+                                ->required()
+                                ->maxLength(255),
+                            TextInput::make(SettingKey::PAYMOB_INTEGRATION_IDS->value)
+                                ->label(SettingKey::PAYMOB_INTEGRATION_IDS->label())
+                                ->helperText('Comma separated IDs')
+                                ->required()
+                                ->maxLength(255),
+                            TextInput::make(SettingKey::PAYMOB_HMAC_SECRET->value)
+                                ->label(SettingKey::PAYMOB_HMAC_SECRET->label())
+                                ->password()
+                                ->revealable()
+                                ->required()
+                                ->maxLength(255),
+                            TextInput::make(SettingKey::PAYMOB_CURRENCY->value)
+                                ->label(SettingKey::PAYMOB_CURRENCY->label())
+                                ->required()
+                                ->maxLength(10)
+                                ->default('EGP'),
+                            TextInput::make(SettingKey::PAYMOB_MODE->value)
+                                ->label(SettingKey::PAYMOB_MODE->label())
+                                ->required()
+                                ->maxLength(255)
+                                ->default('test'),
+                        ])
+                        ->columns(2),
+
+                    Section::make('Mail Settings')
+                        ->schema([
+                            TextInput::make(SettingKey::MAIL_MAILER->value)
+                                ->label(SettingKey::MAIL_MAILER->label())
+                                ->required()
+                                ->maxLength(255)
+                                ->default('smtp'),
+                            TextInput::make(SettingKey::MAIL_HOST->value)
+                                ->label(SettingKey::MAIL_HOST->label())
+                                ->required()
+                                ->maxLength(255),
+                            TextInput::make(SettingKey::MAIL_PORT->value)
+                                ->label(SettingKey::MAIL_PORT->label())
+                                ->numeric()
+                                ->required()
+                                ->maxLength(255),
+                            TextInput::make(SettingKey::MAIL_USERNAME->value)
+                                ->label(SettingKey::MAIL_USERNAME->label())
+                                ->maxLength(255),
+                            TextInput::make(SettingKey::MAIL_PASSWORD->value)
+                                ->label(SettingKey::MAIL_PASSWORD->label())
+                                ->password()
+                                ->revealable()
+                                ->maxLength(255),
+                            TextInput::make(SettingKey::MAIL_ENCRYPTION->value)
+                                ->label(SettingKey::MAIL_ENCRYPTION->label())
+                                ->maxLength(255)
+                                ->default('tls'),
+                            TextInput::make(SettingKey::MAIL_FROM_ADDRESS->value)
+                                ->label(SettingKey::MAIL_FROM_ADDRESS->label())
+                                ->email()
+                                ->required()
+                                ->maxLength(255),
+                            TextInput::make(SettingKey::MAIL_FROM_NAME->value)
+                                ->label(SettingKey::MAIL_FROM_NAME->label())
+                                ->required()
+                                ->maxLength(255),
+                        ])
+                        ->columns(2),
+
+                    Section::make('Product Page Settings')
+                        ->schema([
+                            Repeater::make(SettingKey::PRODUCT_SHOW_CARDS->value)
+                                ->label(SettingKey::PRODUCT_SHOW_CARDS->label())
+                                ->schema([
+                                    TextInput::make('title')
+                                        ->required()
+                                        ->maxLength(255),
+                                    TextInput::make('description')
+                                        ->required()
+                                        ->maxLength(255),
+                                    FileUpload::make('icon')
+                                        ->image()
+                                        ->directory('product-cards')
+                                        ->required(),
+                                ])
+                                ->columns(3)
+                                ->defaultItems(0)
+                                ->addActionLabel('Add Card'),
+                        ]),
+
+                    Section::make('Work Times')
+                        ->schema([
+                            Toggle::make(SettingKey::ACCEPT_ORDERS_AFTER_WORK_TIMES->value)
+                                ->label(SettingKey::ACCEPT_ORDERS_AFTER_WORK_TIMES->label())
+                                ->default(true),
+                            Repeater::make(SettingKey::WORK_TIMES->value)
+                                ->label(SettingKey::WORK_TIMES->label())
+                                ->schema([
+                                    \Filament\Forms\Components\Select::make('day')
+                                        ->options([
+                                            'Sunday' => 'Sunday',
+                                            'Monday' => 'Monday',
+                                            'Tuesday' => 'Tuesday',
+                                            'Wednesday' => 'Wednesday',
+                                            'Thursday' => 'Thursday',
+                                            'Friday' => 'Friday',
+                                            'Saturday' => 'Saturday',
+                                        ])
+                                        ->required(),
+                                    \Filament\Forms\Components\TimePicker::make('from')
+                                        ->required(),
+                                    \Filament\Forms\Components\TimePicker::make('to')
+                                        ->required(),
+                                    Toggle::make('closed')
+                                        ->default(false),
+                                ])
+                                ->columns(4)
+                                ->defaultItems(7)
+                                ->addActionLabel('Add Day'),
+                        ]),
                 ])
                     ->livewireSubmitHandler('save')
                     ->footer([
@@ -133,6 +332,18 @@ final class Settings extends Page
         // Convert boolean values to strings for maintenance mode
         if (isset($data[SettingKey::MAINTENANCE_MODE->value])) {
             $data[SettingKey::MAINTENANCE_MODE->value] = $data[SettingKey::MAINTENANCE_MODE->value] ? 'true' : 'false';
+        }
+
+        if (isset($data[SettingKey::ACCEPT_ORDERS_AFTER_WORK_TIMES->value])) {
+            $data[SettingKey::ACCEPT_ORDERS_AFTER_WORK_TIMES->value] = $data[SettingKey::ACCEPT_ORDERS_AFTER_WORK_TIMES->value] ? 'true' : 'false';
+        }
+
+        if (isset($data[SettingKey::PRODUCT_SHOW_CARDS->value])) {
+            $data[SettingKey::PRODUCT_SHOW_CARDS->value] = json_encode($data[SettingKey::PRODUCT_SHOW_CARDS->value]);
+        }
+
+        if (isset($data[SettingKey::WORK_TIMES->value])) {
+            $data[SettingKey::WORK_TIMES->value] = json_encode($data[SettingKey::WORK_TIMES->value]);
         }
 
         $settingService->setMultiple($data);

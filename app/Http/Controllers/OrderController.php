@@ -21,7 +21,8 @@ final class OrderController extends Controller
     public function __construct(
         private readonly PlaceOrderService $placeOrderService,
         private readonly CartService $cartService
-    ) {}
+    ) {
+    }
 
     /**
      * Place a new order
@@ -58,7 +59,7 @@ final class OrderController extends Controller
 
         $user = Auth::user();
 
-        if (! $user) {
+        if (!$user) {
             return response()->json([
                 'success' => false,
                 'errors' => ['auth' => ['User not authenticated']],
@@ -79,7 +80,7 @@ final class OrderController extends Controller
                 billingData: $request->input('billing_data', [])
             );
 
-            if (! $result['success']) {
+            if (!$result['success']) {
                 return response()->json([
                     'success' => false,
                     'errors' => ['order' => [$result['error']]],
@@ -163,7 +164,7 @@ final class OrderController extends Controller
     {
         $user = Auth::user();
 
-        if (! $user) {
+        if (!$user) {
             return Inertia::render('Checkout', [
                 'error' => 'User not authenticated',
             ]);
@@ -179,9 +180,11 @@ final class OrderController extends Controller
         $branches = \App\Models\Branch::where('is_active', true)->get();
 
         // Get governorates with areas for address form
-        $governorates = \App\Models\Governorate::with(['areas' => function ($query) {
-            $query->where('is_active', true)->orderBy('sort_order');
-        }])
+        $governorates = \App\Models\Governorate::with([
+            'areas' => function ($query) {
+                $query->where('is_active', true)->orderBy('sort_order');
+            }
+        ])
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->get();
@@ -201,11 +204,11 @@ final class OrderController extends Controller
     {
         $user = Auth::user();
 
-        if (! $user) {
+        if (!$user) {
             abort(401, 'User not authenticated');
         }
 
-        $order = \App\Models\Order::with(['items.extras', 'user', 'branch', 'address.area'])
+        $order = \App\Models\Order::with(['items.extras', 'items.product.weightOption', 'items.weightOptionValue', 'user', 'branch', 'address.area'])
             ->where('id', $orderId)
             ->where('user_id', $user->id)
             ->firstOrFail();
@@ -222,11 +225,11 @@ final class OrderController extends Controller
     {
         $user = Auth::user();
 
-        if (! $user) {
+        if (!$user) {
             abort(401, 'User not authenticated');
         }
 
-        $orders = \App\Models\Order::with(['items', 'branch', 'address'])
+        $orders = \App\Models\Order::with(['items.product.weightOption', 'items.weightOptionValue', 'branch', 'address'])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);

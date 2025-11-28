@@ -13,6 +13,15 @@ use Illuminate\Support\Facades\Session;
 
 final class CartService
 {
+    public function getCartCount(?User $user): int
+    {
+        if ($user) {
+            return $this->getCartCountFromDatabase($user);
+        }
+
+        return $this->getCartCountFromSession();
+    }
+
     public function getCart(?User $user): array
     {
         if ($user) {
@@ -75,7 +84,7 @@ final class CartService
         $guestCartIdentifier = $this->getGuestCartIdentifier();
         $guestCart = Cart::where('session_id', $guestCartIdentifier)->first();
 
-        if (! $guestCart || $guestCart->items->isEmpty()) {
+        if (!$guestCart || $guestCart->items->isEmpty()) {
             return;
         }
 
@@ -118,8 +127,8 @@ final class CartService
 
     private function getGuestCartIdentifier(): string
     {
-        if (! Session::has('guest_cart_id')) {
-            Session::put('guest_cart_id', 'guest_'.uniqid());
+        if (!Session::has('guest_cart_id')) {
+            Session::put('guest_cart_id', 'guest_' . uniqid());
         }
 
         return Session::get('guest_cart_id');
@@ -136,7 +145,7 @@ final class CartService
             'items.extras.extraOptionItem',
         ])->where('user_id', $user->id)->first();
 
-        if (! $cart) {
+        if (!$cart) {
             return ['items' => [], 'total' => 0];
         }
 
@@ -148,6 +157,29 @@ final class CartService
             'items' => $items,
             'total' => $this->calculateTotal($items),
         ];
+    }
+
+    private function getCartCountFromSession(): int
+    {
+        $guestCartIdentifier = $this->getGuestCartIdentifier();
+        $cart = Cart::where('session_id', $guestCartIdentifier)->first();
+
+        if (!$cart) {
+            return 0;
+        }
+
+        return (int) $cart->items()->count();
+    }
+
+    private function getCartCountFromDatabase(User $user): int
+    {
+        $cart = Cart::where('user_id', $user->id)->first();
+
+        if (!$cart) {
+            return 0;
+        }
+
+        return (int) $cart->items()->count();
     }
 
     private function getCartFromSession(): array
@@ -163,7 +195,7 @@ final class CartService
             'items.extras.extraOptionItem',
         ])->where('session_id', $guestCartIdentifier)->first();
 
-        if (! $cart) {
+        if (!$cart) {
             return ['items' => [], 'total' => 0];
         }
 
@@ -203,7 +235,7 @@ final class CartService
             ]);
 
             // Add extras
-            if (! empty($extras)) {
+            if (!empty($extras)) {
                 foreach ($extras as $extra) {
                     $extraId = is_array($extra) ? $extra['id'] : $extra;
                     $extraQuantity = is_array($extra) && isset($extra['quantity']) ? $extra['quantity'] : 1;
@@ -249,7 +281,7 @@ final class CartService
             ]);
 
             // Add extras
-            if (! empty($extras)) {
+            if (!empty($extras)) {
                 foreach ($extras as $extra) {
                     $extraId = is_array($extra) ? $extra['id'] : $extra;
                     $extraQuantity = is_array($extra) && isset($extra['quantity']) ? $extra['quantity'] : 1;
@@ -290,7 +322,7 @@ final class CartService
             $updateData['weight_option_value_id'] = $weightOptionValueId;
         }
 
-        if (! empty($updateData)) {
+        if (!empty($updateData)) {
             $cartItem->update($updateData);
             $cartItem->cart->update(['last_activity_at' => now()]);
         }
@@ -320,7 +352,7 @@ final class CartService
             $updateData['weight_option_value_id'] = $weightOptionValueId;
         }
 
-        if (! empty($updateData)) {
+        if (!empty($updateData)) {
             $cartItem->update($updateData);
             $cartItem->cart->update(['last_activity_at' => now()]);
         }
@@ -374,9 +406,10 @@ final class CartService
 
     private function formatCartItem(CartItem $item): array
     {
-        $price = $item->variant ? $item->variant->price : $item->product->base_price;
+        $productPrice = $item->product->price_after_discount ?? $item->product->base_price;
+        $price = ($item->variant && $item->variant->price !== null) ? $item->variant->price : $productPrice;
 
-        $extrasTotal = $item->extras->sum(fn ($extra) => $extra->extraOptionItem->price * $extra->quantity);
+        $extrasTotal = $item->extras->sum(fn($extra) => $extra->extraOptionItem->price * $extra->quantity);
 
         // For weight-based products: quantity = weight_multiplier * weight_value
         // For regular products: quantity = stored quantity
@@ -410,7 +443,7 @@ final class CartService
                     'id' => $item->product->weightOption->id,
                     'name' => $item->product->weightOption->name,
                     'unit' => $item->product->weightOption->unit,
-                    'values' => $item->product->weightOption->values->map(fn ($val) => [
+                    'values' => $item->product->weightOption->values->map(fn($val) => [
                         'id' => $val->id,
                         'value' => $val->value,
                         'label' => $val->label,
@@ -428,7 +461,7 @@ final class CartService
                 'value' => $item->weightOptionValue->value,
                 'label' => $item->weightOptionValue->label,
             ] : null,
-            'extras' => $item->extras->map(fn ($extra) => [
+            'extras' => $item->extras->map(fn($extra) => [
                 'id' => $extra->extraOptionItem->id,
                 'name' => $extra->extraOptionItem->name,
                 'price' => $extra->extraOptionItem->price,
@@ -442,6 +475,6 @@ final class CartService
 
     private function calculateTotal(array $items): float
     {
-        return array_reduce($items, fn ($total, $item) => $total + ($item['subtotal'] ?? 0), 0);
+        return array_reduce($items, fn($total, $item) => $total + ($item['subtotal'] ?? 0), 0);
     }
 }

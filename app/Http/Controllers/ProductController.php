@@ -69,30 +69,20 @@ final class ProductController extends Controller
                 ];
             });
 
-        // Mock reviews data - TODO: Implement actual reviews model
-        $reviews = [
-            [
-                'id' => 1,
-                'user_name' => 'John Doe',
-                'rating' => 5,
-                'comment' => 'Absolutely delicious! Best I\'ve ever had.',
-                'created_at' => now()->subDays(2)->toISOString(),
-            ],
-            [
-                'id' => 2,
-                'user_name' => 'Jane Smith',
-                'rating' => 4,
-                'comment' => 'Very good, will order again.',
-                'created_at' => now()->subDays(5)->toISOString(),
-            ],
-            [
-                'id' => 3,
-                'user_name' => 'Ahmed Ali',
-                'rating' => 5,
-                'comment' => 'Perfect taste and presentation!',
-                'created_at' => now()->subDays(7)->toISOString(),
-            ],
-        ];
+        $reviews = $product->reviews()
+            ->with('user:id,name')
+            ->latest()
+            ->get()
+            ->map(function ($review) {
+                return [
+                    'id' => $review->id,
+                    'user_name' => $review->user->name,
+                    'rating' => $review->rating,
+                    'comment' => $review->comment,
+                    'images' => $review->images,
+                    'created_at' => $review->created_at->toISOString(),
+                ];
+            });
 
         $productData = [
             'id' => $product->id,
@@ -125,9 +115,18 @@ final class ProductController extends Controller
                 'unit' => $product->weightOption->unit,
                 'values' => $product->weightOption->values,
             ] : null,
-            'rating' => 4.7,
-            'reviewsCount' => count($reviews),
+            'rating' => $reviews->avg('rating') ?? 0,
+            'reviewsCount' => $reviews->count(),
         ];
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'product' => $productData,
+                'reviews' => $reviews,
+                'relatedProducts' => $relatedProducts,
+                'promotionalProducts' => $promotionalProducts,
+            ]);
+        }
 
         return Inertia::render('ProductShow', [
             'product' => $productData,

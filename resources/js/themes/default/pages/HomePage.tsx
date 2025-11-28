@@ -1,11 +1,12 @@
 import React from 'react';
-import Navigation from '@/themes/default/components/Navigation';
+import MainLayout from '@/themes/default/layouts/MainLayout';
 import HeroSlider from '@/themes/default/components/HeroSlider';
 import CategoriesSection from '@/themes/default/components/CategoriesSection';
 import PromotionalSection from '@/themes/default/components/PromotionalSection';
 import ProductsSection from '@/themes/default/components/ProductsSection';
-import Footer from '@/themes/default/components/Footer';
 import { Separator } from '@/components/ui/separator';
+
+
 
 interface Product {
     id: number;
@@ -16,6 +17,9 @@ interface Product {
     category: string;
     rating?: number;
     is_featured?: boolean;
+    // Add other fields as needed
+    base_price?: number;
+    price_after_discount?: number;
 }
 
 interface Category {
@@ -26,51 +30,29 @@ interface Category {
     image?: string;
 }
 
+interface Section {
+    id: number;
+    title: string;
+    products: Product[];
+    // Add other fields from Section model
+}
+
+
+
 interface HomePageProps {
     categories?: Category[];
-    featuredProducts?: Product[];
-    popularProducts?: Product[];
+    sections: Section[];
     cartItemsCount?: number;
+    heroSlides?: any[]; // TODO: Define strict type
 }
 
 export default function HomePage({
     categories = [],
-    featuredProducts = [],
-    popularProducts = [],
-    cartItemsCount = 0
+    sections,
+    cartItemsCount = 0,
+    heroSlides = []
 }: HomePageProps) {
-    // Transform products for ProductsSection
-    const productSections = [
-        {
-            id: 'featured',
-            title: 'Featured Dishes',
-            titleAr: 'أطباق مميزة',
-            subtitle: "Chef's special recommendations",
-            subtitleAr: 'توصيات الشيف الخاصة',
-            icon: 'star' as const,
-            products: featuredProducts.map(p => ({
-                ...p,
-                nameAr: p.name, // TODO: Add actual Arabic translations
-                descriptionAr: p.description,
-                categoryAr: p.category,
-            })),
-        },
-        {
-            id: 'popular',
-            title: 'Customer Favorites',
-            titleAr: 'المفضلة لدى العملاء',
-            subtitle: 'Most loved dishes by our customers',
-            subtitleAr: 'الأطباق الأكثر حباً من عملائنا',
-            icon: 'trending' as const,
-            products: popularProducts.map(p => ({
-                ...p,
-                nameAr: p.name, // TODO: Add actual Arabic translations
-                descriptionAr: p.description,
-                categoryAr: p.category,
-                isTrending: true,
-            })),
-        },
-    ].filter(section => section.products.length > 0);
+
 
     // Transform categories
     const transformedCategories = categories.map(cat => ({
@@ -80,34 +62,40 @@ export default function HomePage({
     }));
 
     return (
-        <div className="min-h-screen bg-background">
-            {/* Navigation */}
-            <Navigation categories={categories} cartItemsCount={cartItemsCount} />
+        <MainLayout categories={categories} cartItemsCount={cartItemsCount}>
+            {/* Hero Section with Slider */}
+            <HeroSlider slides={heroSlides} />
 
-            {/* Main Content */}
-            <main className="pb-0 md:pb-0">
-                {/* Hero Section with Slider */}
-                <HeroSlider />
+            {/* Categories Section */}
+            {transformedCategories.length > 0 && (
+                <CategoriesSection categories={transformedCategories} />
+            )}
 
-                {/* Categories Section */}
-                {transformedCategories.length > 0 && (
-                    <CategoriesSection categories={transformedCategories} />
-                )}
+            {/* Promotional Section */}
+            {/* <PromotionalSection /> */}
 
-                {/* Promotional Section */}
-                <PromotionalSection />
+            <Separator />
 
-                <Separator />
+            {/* Products Sections */}
+            {sections.length > 0 && (
+                <ProductsSection sections={sections.map(s => ({
+                    id: s.id.toString(),
+                    title: s.title,
+                    products: s.products.map(p => ({
+                        ...p,
+                        nameAr: p.name, // TODO: Add actual Arabic translations
+                        descriptionAr: p.description,
+                        // Map product fields if necessary to match ProductsSection expectations
+                        // For now assuming they match or are compatible
+                        category: typeof p.category === 'string' ? p.category : (p.category as any)?.name,
+                        categoryAr: typeof p.category === 'string' ? p.category : (p.category as any)?.name,
+                    })),
+                    icon: 'star' // Default icon, or map based on title
+                }))} />
+            )}
 
-                {/* Products Sections */}
-                {productSections.length > 0 && (
-                    <ProductsSection sections={productSections} />
-                )}
-            </main>
 
-            {/* Footer */}
-            <Footer />
-        </div>
+        </MainLayout>
     );
 }
 

@@ -107,6 +107,7 @@
     * {
         @apply border-border ring-ring ring-offset-background;
     }
+
     body {
         @apply bg-background text-foreground;
     }
@@ -119,9 +120,44 @@
     .ltr {
         direction: ltr !important;
     }
+
     /* Softer borders globally */
     /* .border,
   [class*="border-"] {
     border-radius: 0.75rem;
   } */
+}
+
+
+
+.section-loaded {
+    animation: fadeInMove 300ms;
+}
+
+.section-go-away {
+    animation: fadeOutMove 300ms forwards;
+}
+
+@keyframes fadeOutMove {
+    0% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateX(5rem);
+    }
+}
+
+@keyframes fadeInMove {
+    0% {
+        opacity: 0;
+        transform: translateX(5rem);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }

@@ -296,7 +296,7 @@ final class CouponService
         // Check if coupon is for first order only
         if (isset($restrictions['first_order_only']) && $restrictions['first_order_only']) {
             $orderCount = Order::where('user_id', $user->id)
-                ->whereIn('status', ['confirmed', 'completed', 'delivered'])
+                ->whereIn('status', ['processing', 'completed', 'out_for_delivery'])
                 ->count();
 
             if ($orderCount > 0) {

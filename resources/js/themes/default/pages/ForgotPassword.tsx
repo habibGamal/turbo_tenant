@@ -1,4 +1,5 @@
 import React, { FormEvent } from "react";
+import MainLayout from '@/themes/default/layouts/MainLayout';
 import { Head, Link, useForm } from "@inertiajs/react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -32,16 +33,16 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
     };
 
     return (
-        <>
+        <MainLayout>
             <Head title={t("forgotPassword")} />
             <div
-                className="min-h-screen flex items-center justify-center bg-linear-to-br from-orange-50 via-white to-orange-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 px-4 py-12"
+                className="flex items-center justify-center bg-background px-4 py-12"
                 dir={isRTL ? "rtl" : "ltr"}
             >
                 <div className="w-full max-w-md">
                     {/* Logo/Brand */}
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-br from-orange-500 to-orange-600 rounded-2xl mb-4 shadow-lg">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-lg">
                             <KeyRound className="w-8 h-8 text-white" />
                         </div>
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -80,9 +81,8 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
                                     </Label>
                                     <div className="relative">
                                         <Mail
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
-                                                isRTL ? "right-3" : "left-3"
-                                            }`}
+                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${isRTL ? "right-3" : "left-3"
+                                                }`}
                                         />
                                         <Input
                                             id="email"
@@ -117,7 +117,7 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
                                 <Button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full bg-linear-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium py-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
                                 >
                                     {processing ? (
                                         <span className="flex items-center gap-2">
@@ -150,23 +150,8 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
                             </CardFooter>
                         </form>
                     </Card>
-
-                    {/* Back to Home */}
-                    <div className="text-center mt-6">
-                        <Link
-                            href="/"
-                            className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors inline-flex items-center gap-2"
-                        >
-                            <span>{t("backToHome")}</span>
-                            {isRTL ? (
-                                <span>←</span>
-                            ) : (
-                                <span>→</span>
-                            )}
-                        </Link>
-                    </div>
                 </div>
             </div>
-        </>
+        </MainLayout>
     );
 }

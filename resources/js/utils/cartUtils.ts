@@ -27,6 +27,14 @@ export interface CartOperationCallbacks {
 }
 
 /**
+ * Helper to dispatch cart updated event
+ */
+const dispatchCartUpdated = (cart: any) => {
+    const count = cart.items.length;
+    window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count } }));
+};
+
+/**
  * Add an item to the cart
  */
 export const addToCart = async (
@@ -43,6 +51,7 @@ export const addToCart = async (
             extras: params.extras ?? [],
         });
 
+        dispatchCartUpdated(response.data.cart);
         callbacks?.onSuccess?.(response.data);
         return response.data;
     } catch (error) {
@@ -71,6 +80,7 @@ export const updateCartItem = async (
             }
         );
 
+        dispatchCartUpdated(response.data.cart);
         callbacks?.onSuccess?.(response.data);
         return response.data;
     } catch (error) {
@@ -93,6 +103,7 @@ export const removeCartItem = async (
             route('cart.destroy', { itemId: itemId.toString() })
         );
 
+        dispatchCartUpdated(response.data.cart);
         callbacks?.onSuccess?.(response.data);
         return response.data;
     } catch (error) {
@@ -110,6 +121,7 @@ export const clearCart = async (callbacks?: CartOperationCallbacks) => {
     try {
         const response = await axios.delete(route('cart.clear'));
 
+        dispatchCartUpdated(response.data.cart);
         callbacks?.onSuccess?.(response.data);
         return response.data;
     } catch (error) {

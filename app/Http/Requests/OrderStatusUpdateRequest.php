@@ -42,7 +42,7 @@ final class OrderStatusUpdateRequest extends FormRequest
             'orderNumber.required' => 'رقم الطلب مطلوب',
             'orderNumber.exists' => 'رقم الطلب غير موجود',
             'status.required' => 'حالة الطلب مطلوبة',
-            'status.enum' => 'حالة الطلب يجب أن تكون واحدة من: pending, confirmed, preparing, ready, out_for_delivery, delivered, cancelled',
+            'status.enum' => 'حالة الطلب يجب أن تكون واحدة من: pending, processing, out_for_delivery, completed, cancelled',
         ];
     }
 }

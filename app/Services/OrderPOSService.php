@@ -172,7 +172,7 @@ final class OrderPOSService
         // Build user data
         $userData = [
             'name' => $user->name,
-            'phone' => $address->phone_number,
+            'phone' => $address?->phone_number ?? 'N/A',
             'area' => $address?->area?->name ?? 'N/A',
             'address' => $address ? $this->formatAddress($address) : 'N/A',
         ];
@@ -181,22 +181,24 @@ final class OrderPOSService
         $orderItems = [];
 
         foreach ($order->items as $item) {
+            $notesData = [];
+
             // Build notes for the main item including extras info
-            $itemNotes = $item->notes ?? '';
+            if ($item->notes) {
+                $notesData['ملاحظات'] = $item->notes;
+            }
 
             // Add weight details if it's a weighted item
             if ($item->weight_option_value_id && $item->weight_multiplier) {
-                $weightNote = 'الوزن: ' . $item->weight_multiplier . ' * ' . ($item->weightOptionValue->value);
-                $itemNotes = $itemNotes ? $itemNotes . "\n" . $weightNote : $weightNote;
+                $notesData['الوزن'] = '(' . $item->weight_multiplier . ' x )' . ($item->weightOptionValue->value);
             }
 
             if ($item->extras->isNotEmpty()) {
                 $extraNames = $item->extras->map(function ($extra) {
-                    return $extra->extraOptionItem->name . ' (*' . $extra->quantity . ')';
+                    return $extra->extraOptionItem->name . ' (x' . $extra->quantity . ')';
                 })->join(', ');
 
-                $extrasNote = 'إضافات: ' . $extraNames;
-                $itemNotes = $itemNotes ? $itemNotes . "\n" . $extrasNote : $extrasNote;
+                $notesData['اضافات'] = $extraNames;
             }
 
             // Add the main product as an order item
@@ -230,16 +232,20 @@ final class OrderPOSService
                         ->first();
 
                     if ($variantMapping) {
-                        $posRefs[] = [
-                            'productRef' => $variantMapping->pos_item_id,
-                            'quantity' => 1,
+                        $posRefs = [
+                            [
+                                'productRef' => $mainProductMapping->pos_item_id,
+                                'quantity' => 1,
+                            ],
                         ];
+                    } else {
+                        $notesData['النوع'] = $item->variant->name;
                     }
                 }
 
                 $orderItems[] = [
                     'quantity' => $item->quantity,
-                    'notes' => $itemNotes,
+                    'notes' => $this->formatItemNotes($notesData),
                     'posRefObj' => $posRefs,
                 ];
             }
@@ -284,7 +290,7 @@ final class OrderPOSService
 
         // Build order data
         $orderData = [
-            'type' => $order->type === 'delivery' ? 'web_delivery' : 'web_takeaway',
+            'type' => $order->type,
             'shiftId' => $order->shift_id,
             'orderNumber' => $order->order_number,
             'subTotal' => $order->sub_total,
@@ -302,7 +308,7 @@ final class OrderPOSService
         if ($webPreferences) {
             $orderData['webPreferences'] = $webPreferences;
         }
-
+        logger()->info('Order Data', ['orderData' => $orderData]);
         return [
             'user' => $userData,
             'order' => $orderData,
@@ -359,6 +365,21 @@ final class OrderPOSService
 
             return $posRefs; // Return the refs if we can't get the names
         }
+    }
+
+    /**
+     * Format item notes structure
+     *
+     * @param array $notes
+     * @return string
+     */
+    private function formatItemNotes(array $notes): string
+    {
+        if (empty($notes)) {
+            return '';
+        }
+
+        return 'json::' . json_encode($notes, JSON_UNESCAPED_UNICODE);
     }
 
     /**

@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, usePage, router } from "@inertiajs/react";
+import axios from "axios";
+import { Product } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,19 +14,27 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { ImageWithFallback } from "@/components/ui/image";
 import {
     Search,
     ShoppingCart,
     User,
-    Moon,
     Sun,
     Menu,
     Home,
-    UtensilsCrossed,
+    ScrollText,
     X,
     LogOut,
     Settings,
     Package,
+    Facebook,
+    Instagram,
+    Twitter,
+    MapPin,
+    Phone,
+    Mail,
+    Heart,
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -35,15 +45,48 @@ interface NavigationProps {
     cartItemsCount?: number;
 }
 
+interface FooterLink {
+    label: string;
+    labelAr?: string;
+    href: string;
+}
+
+interface FooterSection {
+    title: string;
+    titleAr?: string;
+    links: FooterLink[];
+}
+
 export default function Navigation({
     categories = [],
     cartItemsCount = 0,
 }: NavigationProps) {
-    const { auth } = usePage().props as any;
+    const { auth, settings, cartItemsCount: initialCartCount } = usePage().props as any;
     const { currentMode, setMode } = useTheme();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [suggestions, setSuggestions] = useState<Product[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [cartCount, setCartCount] = useState(initialCartCount || 0);
+    const [isBumped, setIsBumped] = useState(false);
+
+    useEffect(() => {
+        setCartCount(initialCartCount || 0);
+    }, [initialCartCount]);
+
+    useEffect(() => {
+        const handleCartUpdate = (event: CustomEvent) => {
+            setCartCount(event.detail.count);
+            setIsBumped(true);
+            setTimeout(() => setIsBumped(false), 300);
+        };
+
+        window.addEventListener('cart-updated', handleCartUpdate as EventListener);
+        return () => {
+            window.removeEventListener('cart-updated', handleCartUpdate as EventListener);
+        };
+    }, []);
 
     const toggleTheme = () => {
         setMode(currentMode === "light" ? "dark" : "light");
@@ -54,7 +97,32 @@ export default function Navigation({
         if (searchQuery.trim()) {
             router.get("/menu", { search: searchQuery });
             setSearchOpen(false);
+            setShowSuggestions(false);
         }
+    };
+
+    const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const query = e.target.value;
+        setSearchQuery(query);
+
+        if (query.length >= 2) {
+            try {
+                const response = await axios.get("/api/search/suggestions", {
+                    params: { query },
+                });
+                setSuggestions(response.data);
+                setShowSuggestions(true);
+            } catch (error) {
+                console.error("Failed to fetch suggestions:", error);
+            }
+        } else {
+            setSuggestions([]);
+            setShowSuggestions(false);
+        }
+    };
+
+    const formatPrice = (price: number) => {
+        return `${Number(price).toFixed(2)} ${t("currency")}`;
     };
 
     const handleAutoLogin = () => {
@@ -62,6 +130,43 @@ export default function Navigation({
             email: "admin@example.com",
             password: "password",
         });
+    };
+
+    const pages = settings?.pages || [];
+
+    const footerSections: FooterSection[] = [
+        {
+            title: t('quickLinks'),
+            titleAr: t('quickLinks'),
+            links: [
+                { label: t('home'), labelAr: t('home'), href: '/' },
+                { label: t('menu'), labelAr: t('menu'), href: '/menu' },
+                { label: t('about'), labelAr: t('about'), href: '/pages/about-us' },
+                { label: t('contact'), labelAr: t('contact'), href: '/pages/contact-us' },
+            ],
+        },
+        {
+            title: t('support'),
+            titleAr: t('support'),
+            links: [
+                { label: t('deliveryInfo'), labelAr: t('deliveryInfo'), href: '/pages/delivery-policy' },
+                { label: t('trackOrder'), labelAr: t('trackOrder'), href: '/orders' },
+                { label: t('returns'), labelAr: t('returns'), href: '/pages/return-policy' },
+            ],
+        },
+        {
+            title: t('legal'),
+            titleAr: t('legal'),
+            links: pages.map((page: any) => ({
+                label: page.title,
+                labelAr: page.title_ar || page.title,
+                href: `/pages/${page.slug}`,
+            })),
+        },
+    ];
+
+    const getText = (text: string, textAr?: string) => {
+        return i18n.language === 'ar' && textAr ? textAr : text;
     };
 
     return (
@@ -75,11 +180,19 @@ export default function Navigation({
                             href="/"
                             className="flex items-center gap-2 shrink-0"
                         >
-                            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-                                <UtensilsCrossed className="h-6 w-6 text-primary-foreground" />
-                            </div>
+                            {settings?.site_logo ? (
+                                <img
+                                    src={settings.site_logo}
+                                    alt={settings?.site_name || t("home")}
+                                    className="h-10 w-auto object-contain"
+                                />
+                            ) : (
+                                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+                                    <ScrollText className="h-6 w-6 text-primary-foreground" />
+                                </div>
+                            )}
                             <span className="text-xl font-bold hidden sm:inline">
-                                {t("home")}
+                                {settings?.site_name || t("home")}
                             </span>
                         </Link>
 
@@ -93,29 +206,67 @@ export default function Navigation({
                             </Link>
                             <Link href="/menu">
                                 <Button variant="ghost" className="gap-2">
-                                    <UtensilsCrossed className="h-4 w-4" />
+                                    <ScrollText className="h-4 w-4" />
                                     {t("menu")}
                                 </Button>
                             </Link>
                         </nav>
 
                         {/* Search Bar - Desktop */}
-                        <div className="hidden lg:flex flex-1 max-w-md">
+                        <div className="hidden lg:flex flex-1 max-w-md relative group">
                             <form
                                 onSubmit={handleSearch}
                                 className="relative w-full"
                             >
-                                <Search className="absolute ltr:left-3 rtl:right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Search className="absolute ltr:left-3 rtl:right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                                 <Input
                                     type="search"
                                     placeholder={t("search")}
-                                    className="ltr:pl-10 rtl:pr-10 w-full"
+                                    className="ltr:pl-10 rtl:pr-10 w-full transition-all focus-visible:ring-primary/20"
                                     value={searchQuery}
-                                    onChange={(e) =>
-                                        setSearchQuery(e.target.value)
-                                    }
+                                    onChange={handleSearchChange}
+                                    onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                                 />
                             </form>
+                            {showSuggestions && suggestions.length > 0 && (
+                                <Card className="absolute top-full left-0 right-0 mt-2 z-50 shadow-lg animate-in fade-in zoom-in-95 duration-200">
+                                    <CardContent className="p-2">
+                                        {suggestions.map((product) => (
+                                            <div
+                                                key={product.id}
+                                                className="flex items-center gap-3 p-2 hover:bg-accent rounded-md cursor-pointer transition-colors"
+                                                onClick={() => {
+                                                    setSearchQuery(product.name);
+                                                    setShowSuggestions(false);
+                                                    router.visit(`/products/${product.id}`);
+                                                }}
+                                            >
+                                                <ImageWithFallback
+                                                    src={product.image}
+                                                    alt={product.name}
+                                                    className="w-10 h-10 object-cover rounded shrink-0"
+                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium truncate">
+                                                        {product.name}
+                                                    </p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {formatPrice(product.price_after_discount ?? product.base_price ?? product.price)}
+                                                        </p>
+                                                        {product.category && typeof product.category === 'object' && (
+                                                            <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
+                                                                {product.category.name}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </CardContent>
+                                </Card>
+                            )}
                         </div>
 
                         {/* Actions */}
@@ -130,18 +281,6 @@ export default function Navigation({
                                 <Search className="h-5 w-5" />
                             </Button>
 
-                            {/* Theme Toggle */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={toggleTheme}
-                            >
-                                {currentMode === "light" ? (
-                                    <Moon className="h-5 w-5" />
-                                ) : (
-                                    <Sun className="h-5 w-5" />
-                                )}
-                            </Button>
 
                             {/* Language Switcher */}
                             <LanguageSwitcher />
@@ -151,14 +290,14 @@ export default function Navigation({
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="relative"
+                                    className={`relative transition-transform duration-300 ${isBumped ? 'scale-125' : 'scale-100'}`}
                                 >
                                     <ShoppingCart className="h-5 w-5" />
-                                    {cartItemsCount > 0 && (
-                                        <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                                            {cartItemsCount > 9
+                                    {cartCount > 0 && (
+                                        <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs animate-in zoom-in duration-300">
+                                            {cartCount > 9
                                                 ? "9+"
-                                                : cartItemsCount}
+                                                : cartCount}
                                         </Badge>
                                     )}
                                 </Button>
@@ -212,11 +351,20 @@ export default function Navigation({
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem asChild>
                                             <Link
-                                                href="/profile"
+                                                href={route("profile.edit")}
                                                 className="cursor-pointer"
                                             >
                                                 <User className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                                                 {t("profile")}
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link
+                                                href={route("favorites.index")}
+                                                className="cursor-pointer"
+                                            >
+                                                <Heart className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                                                {t("myFavorites")}
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
@@ -226,15 +374,6 @@ export default function Navigation({
                                             >
                                                 <Package className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                                                 {t("myOrders")}
-                                            </Link>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem asChild>
-                                            <Link
-                                                href="/settings"
-                                                className="cursor-pointer"
-                                            >
-                                                <Settings className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
-                                                {t("settings")}
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
@@ -274,7 +413,7 @@ export default function Navigation({
                                 </SheetTrigger>
                                 <SheetContent
                                     side="right"
-                                    className="w-[300px]"
+                                    className="w-[300px] overflow-y-auto"
                                 >
                                     <nav className="flex flex-col gap-4 mt-8">
                                         <Link
@@ -288,8 +427,8 @@ export default function Navigation({
                                             href="/menu"
                                             className="flex items-center gap-2 text-lg font-medium hover:text-primary transition-colors"
                                         >
-                                            <UtensilsCrossed className="h-5 w-5" />
-                                            Menu
+                                            <ScrollText className="h-5 w-5" />
+                                            {t("menu")}
                                         </Link>
 
                                         {categories.length > 0 && (
@@ -312,6 +451,92 @@ export default function Navigation({
                                             </>
                                         )}
                                     </nav>
+
+                                    <div className="my-4 border-t" />
+
+                                    {/* Footer Content in Mobile Menu */}
+                                    <div className="space-y-6 pb-8 px-1">
+                                        {footerSections.map((section, index) => (
+                                            <div key={index}>
+                                                <h4 className="font-semibold text-sm mb-2 text-foreground">
+                                                    {getText(section.title, section.titleAr)}
+                                                </h4>
+                                                <ul className="space-y-2">
+                                                    {section.links.map((link, linkIndex) => (
+                                                        <li key={linkIndex}>
+                                                            <Link
+                                                                href={link.href}
+                                                                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                                                            >
+                                                                {getText(link.label, link.labelAr)}
+                                                            </Link>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        ))}
+
+                                        {/* Contact Info */}
+                                        <div>
+                                            <h4 className="font-semibold text-sm mb-2 text-foreground">
+                                                {t('contactUs')}
+                                            </h4>
+                                            <ul className="space-y-2 text-sm text-muted-foreground">
+                                                {settings?.contact_address && (
+                                                    <li className="flex items-start gap-2">
+                                                        <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
+                                                        <span>{settings.contact_address}</span>
+                                                    </li>
+                                                )}
+                                                {settings?.contact_phone && (
+                                                    <li className="flex items-center gap-2">
+                                                        <Phone className="h-4 w-4 shrink-0" />
+                                                        <a href={`tel:${settings.contact_phone}`} className="hover:text-foreground">
+                                                            {settings.contact_phone}
+                                                        </a>
+                                                    </li>
+                                                )}
+                                                {settings?.contact_email && (
+                                                    <li className="flex items-center gap-2">
+                                                        <Mail className="h-4 w-4 shrink-0" />
+                                                        <a href={`mailto:${settings.contact_email}`} className="hover:text-foreground">
+                                                            {settings.contact_email}
+                                                        </a>
+                                                    </li>
+                                                )}
+                                            </ul>
+                                        </div>
+
+                                        {/* Social Links */}
+                                        <div className="flex gap-2">
+                                            {settings?.social_facebook && (
+                                                <Button variant="outline" size="icon" className="h-8 w-8" asChild>
+                                                    <a href={settings.social_facebook} target="_blank" rel="noopener noreferrer">
+                                                        <Facebook className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                            )}
+                                            {settings?.social_instagram && (
+                                                <Button variant="outline" size="icon" className="h-8 w-8" asChild>
+                                                    <a href={settings.social_instagram} target="_blank" rel="noopener noreferrer">
+                                                        <Instagram className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                            )}
+                                            {settings?.social_twitter && (
+                                                <Button variant="outline" size="icon" className="h-8 w-8" asChild>
+                                                    <a href={settings.social_twitter} target="_blank" rel="noopener noreferrer">
+                                                        <Twitter className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                            )}
+                                        </div>
+
+                                        {/* Copyright */}
+                                        <p className="text-xs text-muted-foreground">
+                                            © {new Date().getFullYear()} {settings?.site_name || t('home')}. {t('allRightsReserved')}.
+                                        </p>
+                                    </div>
                                 </SheetContent>
                             </Sheet>
                         </div>
@@ -327,11 +552,50 @@ export default function Navigation({
                                     placeholder={t("search")}
                                     className="ltr:pl-10 rtl:pr-10 ltr:pr-10 rtl:pl-10"
                                     value={searchQuery}
-                                    onChange={(e) =>
-                                        setSearchQuery(e.target.value)
-                                    }
+                                    onChange={handleSearchChange}
+                                    onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                                     autoFocus
                                 />
+                                {showSuggestions && suggestions.length > 0 && (
+                                    <Card className="absolute top-full left-0 right-0 mt-2 z-50 shadow-lg animate-in fade-in zoom-in-95 duration-200">
+                                        <CardContent className="p-2">
+                                            {suggestions.map((product) => (
+                                                <div
+                                                    key={product.id}
+                                                    className="flex items-center gap-3 p-2 hover:bg-accent rounded-md cursor-pointer transition-colors"
+                                                    onClick={() => {
+                                                        setSearchQuery(product.name);
+                                                        setShowSuggestions(false);
+                                                        setSearchOpen(false);
+                                                        router.visit(`/products/${product.id}`);
+                                                    }}
+                                                >
+                                                    <ImageWithFallback
+                                                        src={product.image}
+                                                        alt={product.name}
+                                                        className="w-10 h-10 object-cover rounded shrink-0"
+                                                    />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium truncate">
+                                                            {product.name}
+                                                        </p>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {formatPrice(product.price_after_discount ?? product.base_price ?? product.price)}
+                                                            </p>
+                                                            {product.category && typeof product.category === 'object' && (
+                                                                <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
+                                                                    {product.category.name}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </CardContent>
+                                    </Card>
+                                )}
                                 <Button
                                     type="button"
                                     variant="ghost"
@@ -364,7 +628,7 @@ export default function Navigation({
                             variant="ghost"
                             className="flex-col h-auto py-2 w-full gap-1"
                         >
-                            <UtensilsCrossed className="h-5 w-5" />
+                            <ScrollText className="h-5 w-5" />
                             <span className="text-xs">{t("menu")}</span>
                         </Button>
                     </Link>

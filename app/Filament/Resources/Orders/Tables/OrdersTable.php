@@ -24,7 +24,7 @@ final class OrdersTable
                     ->sortable(),
                 TextColumn::make('type')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'web_delivery' => 'success',
                         'web_takeaway' => 'info',
                         'pos' => 'warning',
@@ -32,13 +32,11 @@ final class OrdersTable
                     ->sortable(),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string|\App\Enums\OrderStatus $state): string => match ($state instanceof \App\Enums\OrderStatus ? $state->value : $state) {
                         'pending' => 'gray',
-                        'confirmed' => 'info',
-                        'preparing' => 'warning',
-                        'ready' => 'success',
+                        'processing' => 'warning',
                         'out_for_delivery' => 'primary',
-                        'delivered' => 'success',
+                        'completed' => 'success',
                         'cancelled' => 'danger',
                     })
                     ->sortable(),
@@ -57,11 +55,9 @@ final class OrdersTable
                 SelectFilter::make('status')
                     ->options([
                         'pending' => 'Pending',
-                        'confirmed' => 'Confirmed',
-                        'preparing' => 'Preparing',
-                        'ready' => 'Ready',
+                        'processing' => 'Processing',
                         'out_for_delivery' => 'Out for Delivery',
-                        'delivered' => 'Delivered',
+                        'completed' => 'Completed',
                         'cancelled' => 'Cancelled',
                     ])
                     ->multiple(),

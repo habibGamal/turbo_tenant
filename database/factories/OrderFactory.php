@@ -32,7 +32,7 @@ final class OrderFactory extends Factory
         return [
             'order_number' => fake()->unique()->numerify('ORD-########'),
             'shift_id' => fake()->numberBetween(1, 100),
-            'status' => fake()->randomElement(['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled']),
+            'status' => fake()->randomElement(['pending', 'processing', 'out_for_delivery', 'completed', 'cancelled']),
             'type' => fake()->randomElement(['web_delivery', 'web_takeaway', 'pos']),
             'sub_total' => $subTotal,
             'tax' => $tax,

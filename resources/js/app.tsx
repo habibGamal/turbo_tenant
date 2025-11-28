@@ -8,6 +8,7 @@ import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { getTheme } from '@/lib/theme-registry';
 import { getThemeName, resolveThemedPage } from '@/lib/theme-resolver';
+import InitPixel from '@/components/InitPixel';
 import i18n from './i18n';
 
 // Set initial document direction to RTL for Arabic
@@ -21,10 +22,14 @@ createInertiaApp({
     resolve: async (name) => {
         // Try to resolve from theme first, fallback to default Pages
         console.log("resolving page: " + name);
-        console.log(await resolveThemedPage(name))
+        return resolvePageComponent(
+            `./themes/default/pages/${name}.tsx`,
+            import.meta.glob('./themes/default/pages/**/*.tsx'),
+        );
         try {
-            return await resolveThemedPage(name);
-        } catch {
+            // return resolveThemedPage(name);
+        } catch (e) {
+            console.log(e)
             // If theme resolver fails, use default Laravel resolution
             return resolvePageComponent(
                 `./Pages/${name}.tsx`,
@@ -38,10 +43,12 @@ createInertiaApp({
         // Get theme configuration based on tenant or default
         const themeName = getThemeName(props.initialPage.props);
         const themeConfig = getTheme(themeName);
-
+        console.log(props);
         root.render(
             <ThemeProvider theme={themeConfig}>
-                <App {...props} />
+                <InitPixel fbID={(props.initialPage.props.settings as any)?.facebook_app_id}>
+                    <App {...props} />
+                </InitPixel>
             </ThemeProvider>
         );
     },

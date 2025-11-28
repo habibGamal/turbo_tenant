@@ -7,23 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Star, TrendingUp, Flame } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-interface Product {
-    id: number;
-    name: string;
-    nameAr?: string;
-    description: string;
-    descriptionAr?: string;
-    price: number;
-    image?: string;
-    rating?: number;
-    reviewsCount?: number;
-    category?: string;
-    categoryAr?: string;
-    badge?: string;
-    badgeAr?: string;
-    isNew?: boolean;
-    isTrending?: boolean;
-}
+import { Product } from '@/types';
 
 interface ProductSection {
     id: string;
@@ -80,6 +64,10 @@ export default function ProductsSection({ sections }: ProductsSectionProps) {
                     description: 'Fresh mozzarella, tomatoes, basil',
                     descriptionAr: 'موزاريلا طازجة، طماطم، ريحان',
                     price: 12.99,
+                    base_price: 12.99,
+                    category_id: 1,
+                    is_active: true,
+                    sell_by_weight: false,
                     rating: 4.8,
                     reviewsCount: 124,
                     category: 'Pizza',
@@ -95,6 +83,10 @@ export default function ProductsSection({ sections }: ProductsSectionProps) {
                     description: 'Angus beef, lettuce, tomato, special sauce',
                     descriptionAr: 'لحم أنجوس، خس، طماطم، صلصة خاصة',
                     price: 9.99,
+                    base_price: 9.99,
+                    category_id: 2,
+                    is_active: true,
+                    sell_by_weight: false,
                     rating: 4.6,
                     reviewsCount: 89,
                     category: 'Burgers',
@@ -108,6 +100,10 @@ export default function ProductsSection({ sections }: ProductsSectionProps) {
                     description: 'Crisp romaine, parmesan, croutons',
                     descriptionAr: 'خس روماني مقرمش، بارميزان، خبز محمص',
                     price: 8.99,
+                    base_price: 8.99,
+                    category_id: 3,
+                    is_active: true,
+                    sell_by_weight: false,
                     rating: 4.5,
                     reviewsCount: 56,
                     category: 'Salads',
@@ -120,6 +116,10 @@ export default function ProductsSection({ sections }: ProductsSectionProps) {
                     description: 'Warm chocolate cake with vanilla ice cream',
                     descriptionAr: 'كعكة شوكولاتة دافئة مع آيس كريم الفانيليا',
                     price: 6.99,
+                    base_price: 6.99,
+                    category_id: 4,
+                    is_active: true,
+                    sell_by_weight: false,
                     rating: 4.9,
                     reviewsCount: 142,
                     category: 'Desserts',
@@ -156,7 +156,7 @@ export default function ProductsSection({ sections }: ProductsSectionProps) {
                 >
                     <div className="container mx-auto px-4">
                         {/* Section Header */}
-                        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-10 md:mb-14 gap-4">
+                        <div className="flex flex-row items-end justify-between mb-10 md:mb-14 gap-4">
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2">
                                     <div className="p-2 rounded-lg bg-primary/10">
@@ -174,10 +174,9 @@ export default function ProductsSection({ sections }: ProductsSectionProps) {
                                     </p>
                                 )}
                             </div>
-                            <Link href="/menu">
+                            <Link href={route('sections.show', section.id)}>
                                 <Button variant="outline" className="gap-2">
                                     {t('View All')}
-                                    <span>→</span>
                                 </Button>
                             </Link>
                         </div>

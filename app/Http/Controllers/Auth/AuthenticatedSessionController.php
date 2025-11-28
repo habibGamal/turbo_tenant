@@ -39,7 +39,7 @@ final class AuthenticatedSessionController extends Controller
         // Sync guest cart to authenticated user
         $cartService->syncGuestCartToUser($request->user());
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route('home', absolute: false));
     }
 
     /**

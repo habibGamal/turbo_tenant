@@ -6,7 +6,7 @@ namespace App\Services;
 
 final class ManifestService
 {
-    private const MANIFEST_FILE = 'manifest.json';
+    private const MANIFEST_FILE = 'app/manifest.json';
 
     public function getManifestPath(): string
     {
@@ -17,7 +17,7 @@ final class ManifestService
     {
         $path = $this->getManifestPath();
 
-        if (! file_exists($path)) {
+        if (!file_exists($path)) {
             return $this->getDefaultManifest();
         }
 
