@@ -22,7 +22,7 @@
         <meta name="description" content="{{ $siteDescription }}">
     @endif
     @if($favicon)
-        <link rel="icon" type="image/x-icon" href="{{ $favicon }}">
+        <link rel="icon" type="image/x-icon" href="{{ '/storage/'.$favicon }}">
     @endif
 
     <!-- Fonts -->
