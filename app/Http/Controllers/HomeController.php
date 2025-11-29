@@ -17,7 +17,7 @@ final class HomeController extends Controller
         // Get categories with their products
         $categories = Category::query()
             ->orderBy('name')
-            ->get(['id', 'name', 'description']);
+            ->get(['id', 'name', 'description','image']);
 
         $sections = \App\Models\Section::query()
             ->with([
