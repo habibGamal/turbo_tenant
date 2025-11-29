@@ -130,11 +130,6 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
                     ))}
                 </CarouselContent>
 
-                {/* Navigation Arrows - Hidden on Mobile */}
-                <div className="hidden md:block">
-                    <CarouselPrevious className="ltr:left-4 rtl:right-4" />
-                    <CarouselNext className="ltr:right-4 rtl:left-4" />
-                </div>
             </Carousel>
 
             {/* Dots Indicator */}
