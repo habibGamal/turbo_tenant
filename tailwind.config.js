@@ -15,7 +15,7 @@ export default {
     	extend: {
     		fontFamily: {
     			sans: [
-    				'Figtree',
+    				'Tajawal',
                     ...defaultTheme.fontFamily.sans
                 ]
     		},
