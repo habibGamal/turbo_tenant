@@ -1,6 +1,14 @@
 @php
     use App\Services\SettingService;
     use App\Enums\SettingKey;
+    use Illuminate\Support\Facades\Storage;
+
+    $settingService = app(SettingService::class);
+    $isTenant = tenant() !== null;
+
+    $siteName = $isTenant ? $settingService->get(SettingKey::SITE_NAME, config('app.name', 'Laravel')) : config('app.name', 'Laravel');
+    $siteDescription = $isTenant ? $settingService->get(SettingKey::SITE_DESCRIPTION) : null;
+    $favicon = $isTenant ? $settingService->get(SettingKey::SITE_FAVICON) : null;
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -9,7 +17,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title inertia>{{ config('app.name', 'Laravel') }}</title>
+    <title inertia>{{ $siteName }}</title>
+    @if($siteDescription)
+        <meta name="description" content="{{ $siteDescription }}">
+    @endif
+    @if($favicon)
+        <link rel="icon" type="image/x-icon" href="{{ $favicon }}">
+    @endif
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
