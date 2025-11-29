@@ -211,7 +211,7 @@ export default function Login({ canResetPassword, status }: LoginProps) {
                                     </div>
                                 </div>
 
-                                <Link
+                                <a
                                     href={route("auth.google")}
                                     className="w-full"
                                 >
@@ -243,7 +243,7 @@ export default function Login({ canResetPassword, status }: LoginProps) {
                                         </svg>
                                         {t("continueWithGoogle")}
                                     </Button>
-                                </Link>
+                                </a>
 
                                 <div className="text-center text-sm text-gray-600 dark:text-gray-400">
                                     {t("dontHaveAccount")}{" "}
