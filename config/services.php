@@ -2,9 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\SettingKey;
-use App\Services\SettingService;
-
 return [
 
     /*
@@ -41,9 +38,9 @@ return [
     ],
 
     'google' => [
-        'client_id' => fn () => app(SettingService::class)->get(SettingKey::GOOGLE_CLIENT_ID, env('GOOGLE_CLIENT_ID')),
-        'client_secret' => fn () => app(SettingService::class)->get(SettingKey::GOOGLE_CLIENT_SECRET, env('GOOGLE_CLIENT_SECRET')),
-        'redirect' => fn () => app(SettingService::class)->get(SettingKey::GOOGLE_REDIRECT_URL, env('GOOGLE_REDIRECT_URL')),
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URL'),
     ],
 
 ];

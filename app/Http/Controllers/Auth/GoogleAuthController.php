@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\SettingKey;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\CartService;
+use App\Services\SettingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -16,13 +18,19 @@ use Throwable;
 
 final class GoogleAuthController extends Controller
 {
+    public function __construct(private readonly SettingService $settingService) {}
+
     public function redirect(): RedirectResponse
     {
+        $this->configureSocialite();
+
         return Socialite::driver('google')->redirect();
     }
 
     public function callback(CartService $cartService): RedirectResponse
     {
+        $this->configureSocialite();
+
         try {
             $googleUser = Socialite::driver('google')->user();
 
@@ -30,7 +38,7 @@ final class GoogleAuthController extends Controller
 
             if ($user) {
                 // Update existing user with Google ID if not set
-                if (!$user->google_id) {
+                if (! $user->google_id) {
                     $user->update([
                         'google_id' => $googleUser->getId(),
                         'avatar' => $googleUser->getAvatar(),
@@ -57,5 +65,17 @@ final class GoogleAuthController extends Controller
         } catch (Throwable $e) {
             return redirect()->route('login')->with('error', 'Unable to login with Google. Please try again.');
         }
+    }
+
+    /**
+     * Configure Socialite with tenant-specific Google OAuth credentials.
+     */
+    private function configureSocialite(): void
+    {
+        config([
+            'services.google.client_id' => $this->settingService->get(SettingKey::GOOGLE_CLIENT_ID),
+            'services.google.client_secret' => $this->settingService->get(SettingKey::GOOGLE_CLIENT_SECRET),
+            'services.google.redirect' => $this->settingService->get(SettingKey::GOOGLE_REDIRECT_URL),
+        ]);
     }
 }
