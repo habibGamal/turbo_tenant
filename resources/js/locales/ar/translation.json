@@ -215,6 +215,8 @@
   "forgotPassword": "نسيت كلمة المرور؟",
   "signingIn": "جاري تسجيل الدخول...",
   "dontHaveAccount": "ليس لديك حساب؟",
+  "orContinueWith": "أو المتابعة بـ",
+  "continueWithGoogle": "المتابعة باستخدام جوجل",
   "backToHome": "العودة للرئيسية",
   "createAccount": "إنشاء حساب",
   "joinUsToday": "انضم إلينا اليوم وابدأ الطلب",
@@ -276,5 +278,6 @@
   "paymentStatus": "حالة الدفع",
   "transactionId": "رقم المعاملة",
   "deliveryInformation": "معلومات التوصيل",
-  "pickupInformation": "معلومات الاستلام"
+  "pickupInformation": "معلومات الاستلام",
+  "orderEasily": "اطلب بسهولة"
 }

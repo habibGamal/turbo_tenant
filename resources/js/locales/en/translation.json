@@ -216,6 +216,8 @@
   "forgotPassword": "Forgot password?",
   "signingIn": "Signing in...",
   "dontHaveAccount": "Don't have an account?",
+  "orContinueWith": "Or continue with",
+  "continueWithGoogle": "Continue with Google",
   "backToHome": "Back to Home",
   "createAccount": "Create Account",
   "joinUsToday": "Join us today and start ordering",
@@ -277,5 +279,6 @@
   "paymentStatus": "Payment Status",
   "transactionId": "Transaction ID",
   "deliveryInformation": "Delivery Information",
-  "pickupInformation": "Pickup Information"
+  "pickupInformation": "Pickup Information",
+  "orderEasily": "Order easily"
 }

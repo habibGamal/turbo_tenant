@@ -51,15 +51,6 @@ export default function CartSummary({ cart, formatCurrency }: CartSummaryProps) 
                         </span>
                     </div>
                 </div>
-
-                {/* Coupon Code */}
-                {/* Coupon Code - Moved to Checkout */}
-                <div className="space-y-2 pt-4">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Package className="h-4 w-4" />
-                        <span>{t("orderAnyTime")}</span>
-                    </div>
-                </div>
             </CardContent>
             <CardFooter className="flex-col gap-3">
                 <Button
@@ -84,7 +75,7 @@ export default function CartSummary({ cart, formatCurrency }: CartSummaryProps) 
                 </Button>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Package className="h-4 w-4" />
-                    <span>{t("freeDeliveryMessage")}</span>
+                        <span>{t("orderEasily")}</span>
                 </div>
             </CardFooter>
         </Card>
