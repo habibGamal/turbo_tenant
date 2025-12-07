@@ -27,9 +27,15 @@ export default function Register() {
         email: "",
         password: "",
         password_confirmation: "",
+        expo_token: "",
     });
 
     useEffect(() => {
+        const token = window.localStorage.getItem('expoPushToken') || window.pushToken;
+        if (token) {
+            setData("expo_token", token);
+        }
+
         return () => {
             reset("password", "password_confirmation");
         };
@@ -260,8 +266,8 @@ export default function Register() {
                                     </div>
                                 </div>
 
-                                <Link
-                                    href={route("auth.google")}
+                                <a
+                                    href={`${route("auth.google")}${data.expo_token ? `?expo_token=${data.expo_token}` : ''}`}
                                     className="w-full"
                                 >
                                     <Button
@@ -292,7 +298,7 @@ export default function Register() {
                                         </svg>
                                         {t("continueWithGoogle")}
                                     </Button>
-                                </Link>
+                                </a>
 
                                 <div className="text-center text-sm text-gray-600 dark:text-gray-400">
                                     {t("alreadyHaveAccount")}{" "}

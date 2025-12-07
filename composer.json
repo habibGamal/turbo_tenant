@@ -9,6 +9,7 @@
         "php": "^8.3",
         "filament/filament": "^4.0",
         "inertiajs/inertia-laravel": "^2.0",
+        "laravel-notification-channels/expo": "^2.1",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.23",

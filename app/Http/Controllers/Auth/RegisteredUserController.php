@@ -52,6 +52,16 @@ final class RegisteredUserController extends Controller
         // Sync guest cart to newly registered user
         $cartService->syncGuestCartToUser($user);
 
+        if ($request->filled('expo_token')) {
+            $validator = \Illuminate\Support\Facades\Validator::make($request->only('expo_token'), [
+                'expo_token' => \NotificationChannels\Expo\ExpoPushToken::rule(),
+            ]);
+
+            if ($validator->passes()) {
+                $user->update(['expo_token' => $request->expo_token]);
+            }
+        }
+
         return redirect(route('home', absolute: false));
     }
 }

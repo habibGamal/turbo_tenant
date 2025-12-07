@@ -29,9 +29,15 @@ export default function Login({ canResetPassword, status }: LoginProps) {
         email: "",
         password: "",
         remember: false,
+        expo_token: "",
     });
 
     useEffect(() => {
+        const token = window.localStorage.getItem('expoPushToken') || window.pushToken;
+        if (token) {
+            setData("expo_token", token);
+        }
+
         return () => {
             reset("password");
         };
@@ -212,7 +218,7 @@ export default function Login({ canResetPassword, status }: LoginProps) {
                                 </div>
 
                                 <a
-                                    href={route("auth.google")}
+                                    href={`${route("auth.google")}${data.expo_token ? `?expo_token=${data.expo_token}` : ''}`}
                                     className="w-full"
                                 >
                                     <Button

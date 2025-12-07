@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use NotificationChannels\Expo\ExpoPushToken;
 
 final class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
 {
@@ -33,6 +34,7 @@ final class User extends Authenticatable implements FilamentUser, HasAppAuthenti
         'avatar',
         'email_verified_at',
         'is_admin',
+        'expo_token',
     ];
 
     /**
@@ -103,6 +105,12 @@ final class User extends Authenticatable implements FilamentUser, HasAppAuthenti
             'app_authentication_secret' => 'encrypted',
             'app_authentication_recovery_codes' => 'encrypted:array',
             'is_admin' => 'boolean',
+            'expo_token' => ExpoPushToken::class,
         ];
+    }
+
+    public function routeNotificationForExpo(): ?ExpoPushToken
+    {
+        return $this->expo_token;
     }
 }

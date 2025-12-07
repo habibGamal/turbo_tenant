@@ -115,6 +115,13 @@
       0 => 'Kirschbaum\\PowerJoins\\PowerJoinsServiceProvider',
     ),
   ),
+  'laravel-notification-channels/expo' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'NotificationChannels\\Expo\\ExpoServiceProvider',
+    ),
+  ),
   'laravel/boost' => 
   array (
     'providers' => 

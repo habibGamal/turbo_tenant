@@ -24,6 +24,10 @@ final class GoogleAuthController extends Controller
     {
         $this->configureSocialite();
 
+        if (request()->has('expo_token')) {
+            session(['expo_token' => request('expo_token')]);
+        }
+
         return Socialite::driver('google')->redirect();
     }
 
@@ -60,6 +64,18 @@ final class GoogleAuthController extends Controller
 
             // Sync guest cart to authenticated user
             $cartService->syncGuestCartToUser($user);
+
+            if (session()->has('expo_token')) {
+                $token = session('expo_token');
+                $validator = \Illuminate\Support\Facades\Validator::make(['expo_token' => $token], [
+                    'expo_token' => \NotificationChannels\Expo\ExpoPushToken::rule(),
+                ]);
+
+                if ($validator->passes()) {
+                    $user->update(['expo_token' => $token]);
+                }
+                session()->forget('expo_token');
+            }
 
             return redirect()->intended(route('home', absolute: false));
         } catch (Throwable $e) {
