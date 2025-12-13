@@ -18,7 +18,9 @@ use Throwable;
 
 final class GoogleAuthController extends Controller
 {
-    public function __construct(private readonly SettingService $settingService) {}
+    public function __construct(private readonly SettingService $settingService)
+    {
+    }
 
     public function redirect(): RedirectResponse
     {
@@ -42,7 +44,7 @@ final class GoogleAuthController extends Controller
 
             if ($user) {
                 // Update existing user with Google ID if not set
-                if (! $user->google_id) {
+                if (!$user->google_id) {
                     $user->update([
                         'google_id' => $googleUser->getId(),
                         'avatar' => $googleUser->getAvatar(),
@@ -78,6 +80,76 @@ final class GoogleAuthController extends Controller
             }
 
             return redirect()->intended(route('home', absolute: false));
+        } catch (Throwable $e) {
+            return redirect()->route('login')->with('error', 'Unable to login with Google. Please try again.');
+        }
+    }
+
+    /**
+     * Handle the callback from the native app with an ID token.
+     */
+    /**
+     * Handle the callback from the native app with an Access Token.
+     */
+    public function handleNativeCallback(\Illuminate\Http\Request $request): RedirectResponse
+    {
+        $accessToken = $request->input('access_token');
+
+        if (!$accessToken) {
+            return redirect()->route('login')->with('error', 'No Access token provided.');
+        }
+
+        try {
+            // Configure Socialite before using it
+            $this->configureSocialite();
+
+            // Verify the token and get user details from Google via Socialite
+            /** @var \Laravel\Socialite\Two\User $googleUser */
+            $googleUser = Socialite::driver('google')->userFromToken($accessToken);
+
+            $email = $googleUser->getEmail();
+            $googleId = $googleUser->getId();
+            $name = $googleUser->getName();
+            $avatar = $googleUser->getAvatar();
+
+            $user = User::query()->where('email', $email)->first();
+
+            if ($user) {
+                // Update existing user with Google ID if not set
+                if (!$user->google_id) {
+                    $user->update([
+                        'google_id' => $googleId,
+                        'avatar' => $avatar ?? $user->avatar,
+                    ]);
+                }
+            } else {
+                // Create new user
+                $user = User::query()->create([
+                    'name' => $name,
+                    'email' => $email,
+                    'google_id' => $googleId,
+                    'avatar' => $avatar,
+                    'password' => Hash::make(Str::random(24)),
+                    'email_verified_at' => now(),
+                ]);
+            }
+
+            Auth::login($user, true);
+
+            // Handle Expo Token if present
+            if ($request->has('expo_token')) {
+                $token = $request->input('expo_token');
+                $validator = \Illuminate\Support\Facades\Validator::make(['expo_token' => $token], [
+                    'expo_token' => \NotificationChannels\Expo\ExpoPushToken::rule(),
+                ]);
+
+                if ($validator->passes()) {
+                    $user->update(['expo_token' => $token]);
+                }
+            }
+
+            return redirect()->intended(route('home', absolute: false));
+
         } catch (Throwable $e) {
             return redirect()->route('login')->with('error', 'Unable to login with Google. Please try again.');
         }

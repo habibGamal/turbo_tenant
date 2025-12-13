@@ -20,6 +20,9 @@ Route::middleware('guest')->group(function () {
 
     Route::get('auth/google/callback', [GoogleAuthController::class, 'callback'])
         ->name('auth.google.callback');
+
+    Route::get('auth/google/native-callback', [GoogleAuthController::class, 'handleNativeCallback'])
+        ->name('auth.google.native-callback');
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
 
