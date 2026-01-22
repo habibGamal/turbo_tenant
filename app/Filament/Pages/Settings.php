@@ -176,7 +176,23 @@ final class Settings extends Page
                         ])
                         ->columns(2),
 
+                    Section::make('Payment Gateway Selection')
+                        ->description('Choose which payment gateway to use for online payments')
+                        ->schema([
+                            \Filament\Forms\Components\Select::make(SettingKey::ACTIVE_PAYMENT_GATEWAY->value)
+                                ->label(SettingKey::ACTIVE_PAYMENT_GATEWAY->label())
+                                ->options([
+                                    'paymob' => 'Paymob',
+                                    'kashier' => 'Kashier',
+                                ])
+                                ->default('paymob')
+                                ->required()
+                                ->helperText('Select the payment gateway to use for processing online payments'),
+                        ]),
+
                     Section::make('Payment Gateway (Paymob)')
+                        ->description('Configure Paymob payment gateway credentials')
+                        ->collapsed(fn($get) => $get(SettingKey::ACTIVE_PAYMENT_GATEWAY->value) !== 'paymob')
                         ->schema([
                             TextInput::make(SettingKey::PAYMOB_BASE_URL->value)
                                 ->label(SettingKey::PAYMOB_BASE_URL->label())
@@ -215,6 +231,55 @@ final class Settings extends Page
                                 ->required()
                                 ->maxLength(255)
                                 ->default('test'),
+                        ])
+                        ->columns(2),
+
+                    Section::make('Payment Gateway (Kashier)')
+                        ->description('Configure Kashier payment gateway credentials')
+                        ->collapsed(fn($get) => $get(SettingKey::ACTIVE_PAYMENT_GATEWAY->value) !== 'kashier')
+                        ->schema([
+                            TextInput::make(SettingKey::KASHIER_MERCHANT_ID->value)
+                                ->label(SettingKey::KASHIER_MERCHANT_ID->label())
+                                ->required()
+                                ->maxLength(255)
+                                ->helperText('Your Kashier merchant ID'),
+                            TextInput::make(SettingKey::KASHIER_API_KEY->value)
+                                ->label(SettingKey::KASHIER_API_KEY->label())
+                                ->password()
+                                ->revealable()
+                                ->required()
+                                ->maxLength(255)
+                                ->helperText('Used for hash generation and signature validation'),
+                            TextInput::make(SettingKey::KASHIER_SECRET_KEY->value)
+                                ->label(SettingKey::KASHIER_SECRET_KEY->label())
+                                ->password()
+                                ->revealable()
+                                ->required()
+                                ->maxLength(255)
+                                ->helperText('Used for refund API authorization'),
+                            \Filament\Forms\Components\Select::make(SettingKey::KASHIER_MODE->value)
+                                ->label(SettingKey::KASHIER_MODE->label())
+                                ->options([
+                                    'test' => 'Test Mode',
+                                    'live' => 'Live Mode',
+                                ])
+                                ->default('test')
+                                ->required(),
+                            TextInput::make(SettingKey::KASHIER_CURRENCY->value)
+                                ->label(SettingKey::KASHIER_CURRENCY->label())
+                                ->required()
+                                ->maxLength(10)
+                                ->default('EGP'),
+                            \Filament\Forms\Components\Select::make(SettingKey::KASHIER_ALLOWED_METHODS->value)
+                                ->label(SettingKey::KASHIER_ALLOWED_METHODS->label())
+                                ->options([
+                                    'card' => 'Credit/Debit Card Only',
+                                    'wallet' => 'Mobile Wallet Only',
+                                    'card,wallet' => 'Both Card and Wallet',
+                                ])
+                                ->default('card')
+                                ->required()
+                                ->helperText('Payment methods to show in checkout'),
                         ])
                         ->columns(2),
 

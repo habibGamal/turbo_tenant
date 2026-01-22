@@ -279,5 +279,7 @@
   "transactionId": "رقم المعاملة",
   "deliveryInformation": "معلومات التوصيل",
   "pickupInformation": "معلومات الاستلام",
-  "orderEasily": "اطلب بسهولة"
+  "orderEasily": "اطلب بسهولة",
+  "noReviewsYet": "لا توجد مراجعات بعد. كن أول من يراجع!",
+  "reviewImage": "صورة المراجعة"
 }

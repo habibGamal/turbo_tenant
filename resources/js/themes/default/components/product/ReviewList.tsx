@@ -4,16 +4,18 @@ import { ImageWithFallback } from "@/components/ui/image";
 import { Star, User } from "lucide-react";
 import { Review } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useTranslation } from "react-i18next";
 
 interface ReviewListProps {
     reviews: Review[];
 }
 
 export default function ReviewList({ reviews }: ReviewListProps) {
+    const { t } = useTranslation();
     if (reviews.length === 0) {
         return (
             <div className="text-center py-12 text-muted-foreground">
-                No reviews yet. Be the first to review!
+                {t("noReviewsYet")}
             </div>
         );
     }
@@ -69,7 +71,7 @@ export default function ReviewList({ reviews }: ReviewListProps) {
                                     <div key={index} className="w-24 h-24 rounded-lg overflow-hidden border shrink-0 cursor-pointer hover:opacity-90 transition-opacity">
                                         <ImageWithFallback
                                             src={image}
-                                            alt={`Review image ${index + 1}`}
+                                            alt={`${t("reviewImage")} ${index + 1}`}
                                             className="w-full h-full object-cover"
                                         />
                                     </div>

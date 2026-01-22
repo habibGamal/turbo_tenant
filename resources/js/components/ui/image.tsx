@@ -13,10 +13,10 @@ interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElemen
     fm?: 'jpg' | 'pjpg' | 'png' | 'gif' | 'webp' | 'avif' | 'tiff';
 }
 
-const GENERATED_WIDTHS = [480, 768, 1920, 2560];
+const GENERATED_WIDTHS = [320, 480, 640, 768, 960, 1280, 1920, 2560];
 
 export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFallbackProps>(
-    ({ src, alt, fallback, className, w, h, fit, fm, sizes = '(max-width: 480px) 480px, (max-width: 768px) 768px, (max-width: 1920px) 1920px, 2560px', ...props }, ref) => {
+    ({ src, alt, fallback, className, w, h, fit, fm, sizes = '100vw', ...props }, ref) => {
         const { settings } = usePage().props;
         const defaultFallback = settings.image_placeholder || '/images/placeholder-food.svg';
         const finalFallback = fallback || defaultFallback;

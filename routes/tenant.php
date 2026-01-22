@@ -46,7 +46,7 @@ Route::get('/storage/{path}', function (\Illuminate\Http\Request $request, $path
     $extension = pathinfo($file, PATHINFO_EXTENSION);
     $cacheFilename = $cacheKey . '.' . $extension;
     $cachePath = 'cache/' . $cacheFilename;
-    $fullCachePath = Storage::path($cachePath);
+    $fullCachePath = Storage::path($cachePath) . '.webp';
 
     // Ensure cache directory exists
     if (!Storage::exists('cache')) {
@@ -56,8 +56,7 @@ Route::get('/storage/{path}', function (\Illuminate\Http\Request $request, $path
     // If cached file doesn't exist, create it
     if (!file_exists($fullCachePath)) {
         try {
-            $image = \Spatie\Image\Image::load($file);
-
+            $image = \Spatie\Image\Image::load($file)->optimize();
             if ($request->has('w')) {
                 $image->width((int) $request->input('w'));
             }
@@ -147,14 +146,20 @@ Route::middleware([
     // API routes
     Route::get('/api/products/by-ids', [App\Http\Controllers\Api\ProductController::class, 'getByIds'])->name('api.products.by-ids');
     Route::post('/api/order-status', [App\Http\Controllers\Api\OrderStatusController::class, 'update'])->name('api.order-status.update')->withoutMiddleware([VerifyCsrfToken::class]);
-    Route::post('/api/webhooks/paymob', [App\Http\Controllers\PaymobWebhookController::class, 'handle'])->name('webhooks.paymob')->withoutMiddleware([VerifyCsrfToken::class]);
     Route::get('/api/search/suggestions', [App\Http\Controllers\Api\SearchController::class, 'suggestions'])->name('api.search.suggestions');
     Route::get('/api/products/{product}', [App\Http\Controllers\Api\ProductController::class, 'show'])->name('api.products.show');
     Route::get('/api/products/search', \App\Http\Controllers\Api\ProductSearchController::class)->name('api.products.search');
 
+    // Payment gateway webhooks (no auth, no CSRF)
+    Route::post('/api/webhooks/paymob', [App\Http\Controllers\PaymobWebhookController::class, 'handle'])->name('webhooks.paymob')->withoutMiddleware([VerifyCsrfToken::class]);
+    Route::post('/api/webhooks/kashier', [App\Http\Controllers\KashierWebhookController::class, 'handle'])->name('webhooks.kashier')->withoutMiddleware([VerifyCsrfToken::class]);
+
+    // Kashier payment page (requires auth)
+    Route::middleware('auth')->group(function () {
+        Route::get('/payments/{order}/kashier', [App\Http\Controllers\PaymentController::class, 'showKashierPayment'])->name('payment.kashier');
+    });
+
     Route::get('/pages/{slug}', [\App\Http\Controllers\PageController::class, 'show'])->name('pages.show');
 
     require __DIR__ . '/auth.php';
-
-    // Paymob webhook (no auth required)
 });

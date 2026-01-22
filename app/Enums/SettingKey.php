@@ -49,6 +49,17 @@ enum SettingKey: string
     case MAIL_FROM_ADDRESS = 'mail_from_address';
     case MAIL_FROM_NAME = 'mail_from_name';
 
+    // Payment Gateway Selection
+    case ACTIVE_PAYMENT_GATEWAY = 'active_payment_gateway';
+
+    // Kashier Settings
+    case KASHIER_MERCHANT_ID = 'kashier_merchant_id';
+    case KASHIER_API_KEY = 'kashier_api_key';
+    case KASHIER_SECRET_KEY = 'kashier_secret_key';
+    case KASHIER_MODE = 'kashier_mode';
+    case KASHIER_CURRENCY = 'kashier_currency';
+    case KASHIER_ALLOWED_METHODS = 'kashier_allowed_methods';
+
     public function label(): string
     {
         return match ($this) {
@@ -92,6 +103,13 @@ enum SettingKey: string
             self::MAIL_ENCRYPTION => 'Mail Encryption',
             self::MAIL_FROM_ADDRESS => 'Mail From Address',
             self::MAIL_FROM_NAME => 'Mail From Name',
+            self::ACTIVE_PAYMENT_GATEWAY => 'Active Payment Gateway',
+            self::KASHIER_MERCHANT_ID => 'Kashier Merchant ID',
+            self::KASHIER_API_KEY => 'Kashier API Key',
+            self::KASHIER_SECRET_KEY => 'Kashier Secret Key',
+            self::KASHIER_MODE => 'Kashier Mode',
+            self::KASHIER_CURRENCY => 'Kashier Currency',
+            self::KASHIER_ALLOWED_METHODS => 'Kashier Allowed Methods',
         };
     }
 
@@ -123,6 +141,10 @@ enum SettingKey: string
             self::MAIL_HOST => 'smtp.mailtrap.io',
             self::MAIL_PORT => '2525',
             self::MAIL_ENCRYPTION => 'tls',
+            self::ACTIVE_PAYMENT_GATEWAY => 'paymob',
+            self::KASHIER_MODE => 'test',
+            self::KASHIER_CURRENCY => 'EGP',
+            self::KASHIER_ALLOWED_METHODS => 'card',
             default => null,
         };
     }
@@ -148,6 +170,9 @@ enum SettingKey: string
             self::WORK_TIMES => 'json',
             self::ACCEPT_ORDERS_AFTER_WORK_TIMES => 'boolean',
             self::MAIL_PORT => 'numeric',
+            self::ACTIVE_PAYMENT_GATEWAY, self::KASHIER_MERCHANT_ID, self::KASHIER_API_KEY,
+            self::KASHIER_SECRET_KEY, self::KASHIER_MODE, self::KASHIER_CURRENCY,
+            self::KASHIER_ALLOWED_METHODS => 'text',
         };
     }
 }

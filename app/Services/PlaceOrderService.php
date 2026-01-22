@@ -9,6 +9,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\SettingKey;
+use App\Interfaces\PaymentGatewayInterface;
 use App\Models\Address;
 use App\Models\Cart;
 use App\Models\Coupon;
@@ -22,13 +23,17 @@ use Illuminate\Support\Str;
 
 final class PlaceOrderService
 {
+    private PaymentGatewayInterface $paymentGateway;
+
     public function __construct(
         private readonly CartService $cartService,
-        private readonly PaymobService $paymobService,
+        private readonly PaymentGatewayFactory $gatewayFactory,
         private readonly CouponService $couponService,
         private readonly SettingService $settingService
     ) {
+        $this->paymentGateway = $this->gatewayFactory->getActiveGateway();
     }
+
 
     /**
      * Place an order from cart
@@ -155,16 +160,18 @@ final class PlaceOrderService
             $billingData = $this->prepareBillingData($user, $addressId, $billingData);
 
             // Create payment intention
-            // $redirectionUrl = config('app.url') . '/orders/' . $order->id . '/payment/callback';
+            // Determine webhook URL based on active gateway
+            $gatewayId = $this->paymentGateway->getGatewayId();
             $redirectionUrl = url('/orders/' . $order->id . '/payment/callback');
-            $notificationUrl = url('/api/webhooks/paymob');
+            $notificationUrl = url("/api/webhooks/{$gatewayId}");
 
             logger()->info('Creating payment intention', [
                 'order_id' => $order->id,
+                'gateway' => $gatewayId,
                 'redirection_url' => $redirectionUrl,
                 'notification_url' => $notificationUrl,
             ]);
-            $paymentResult = $this->paymobService->createPaymentIntention(
+            $paymentResult = $this->paymentGateway->createPaymentIntention(
                 $order,
                 $billingData,
                 $redirectionUrl,
@@ -215,9 +222,109 @@ final class PlaceOrderService
     {
         $order = Order::with(['items.extras', 'user', 'branch', 'address'])->findOrFail($orderId);
 
-        // Extract data from the nested 'data' key that Paymob sends
+        // Extract data from the nested 'data' key
         $paymentData = $callbackData['data'] ?? $callbackData;
 
+        // Detect gateway type based on callback data format
+        $isKashier = isset($paymentData['paymentStatus']) || isset($paymentData['merchantOrderId']);
+
+        if ($isKashier) {
+            return $this->handleKashierCallback($order, $paymentData);
+        }
+
+        return $this->handlePaymobCallback($order, $paymentData);
+    }
+
+    /**
+     * Handle Kashier-specific callback format
+     */
+    private function handleKashierCallback(Order $order, array $paymentData): array
+    {
+        $paymentStatus = strtoupper($paymentData['paymentStatus'] ?? 'FAILED');
+        $transactionId = $paymentData['transactionId'] ?? null;
+        $amount = $paymentData['amount'] ?? null;
+        $currency = $paymentData['currency'] ?? null;
+        $signature = $paymentData['signature'] ?? null;
+
+        // Validate signature if provided
+        if ($signature && !$this->paymentGateway->validateCallbackHmac($paymentData, $signature)) {
+            return [
+                'success' => false,
+                'error' => 'Invalid payment signature',
+                'order' => $order,
+            ];
+        }
+
+        // Check payment status
+        if ($paymentStatus === 'SUCCESS') {
+            $order->update([
+                'payment_status' => 'completed',
+                'transaction_id' => $transactionId,
+                'pos_status' => OrderPosStatus::READY,
+                'payment_data' => json_encode([
+                    'transaction_id' => $transactionId,
+                    'amount' => $amount,
+                    'currency' => $currency,
+                    'card_brand' => $paymentData['cardBrand'] ?? null,
+                    'masked_card' => $paymentData['maskedCard'] ?? null,
+                    'order_reference' => $paymentData['orderReference'] ?? null,
+                    'gateway' => 'kashier',
+                ]),
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Payment successful',
+                'order' => $order->fresh(['items.extras', 'user', 'branch', 'address']),
+            ];
+        }
+
+        if ($paymentStatus === 'PENDING') {
+            $order->update([
+                'payment_status' => 'processing',
+                'transaction_id' => $transactionId,
+                'payment_data' => json_encode([
+                    'transaction_id' => $transactionId,
+                    'amount' => $amount,
+                    'currency' => $currency,
+                    'message' => 'Payment pending',
+                    'gateway' => 'kashier',
+                ]),
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Payment is being processed',
+                'order' => $order->fresh(['items.extras', 'user', 'branch', 'address']),
+            ];
+        }
+
+        // Payment failed
+        $order->update([
+            'payment_status' => 'failed',
+            'status' => 'cancelled',
+            'transaction_id' => $transactionId,
+            'payment_data' => json_encode([
+                'transaction_id' => $transactionId,
+                'amount' => $amount,
+                'currency' => $currency,
+                'message' => 'Payment failed',
+                'gateway' => 'kashier',
+            ]),
+        ]);
+
+        return [
+            'success' => false,
+            'error' => 'Payment failed',
+            'order' => $order->fresh(['items.extras', 'user', 'branch', 'address']),
+        ];
+    }
+
+    /**
+     * Handle Paymob-specific callback format
+     */
+    private function handlePaymobCallback(Order $order, array $paymentData): array
+    {
         // Process callback data with correct Paymob field names
         $success = filter_var($paymentData['success'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $pending = filter_var($paymentData['pending'] ?? false, FILTER_VALIDATE_BOOLEAN);
@@ -231,7 +338,7 @@ final class PlaceOrderService
         $dataMessage = $paymentData['data_message'] ?? null;
 
         // Validate HMAC if provided (use callback-specific validation)
-        if ($hmac && !$this->paymobService->validateCallbackHmac($paymentData, $hmac)) {
+        if ($hmac && !$this->paymentGateway->validateCallbackHmac($paymentData, $hmac)) {
             return [
                 'success' => false,
                 'error' => 'Invalid payment signature',
@@ -254,6 +361,7 @@ final class PlaceOrderService
                     'payment_method' => $paymentData['source_data_type'] ?? null,
                     'card_last_digits' => $paymentData['source_data_pan'] ?? null,
                     'card_type' => $paymentData['source_data_sub_type'] ?? null,
+                    'gateway' => 'paymob',
                 ]),
             ]);
 
@@ -273,6 +381,7 @@ final class PlaceOrderService
                     'amount_cents' => $amountCents,
                     'currency' => $currency,
                     'message' => 'Payment pending',
+                    'gateway' => 'paymob',
                 ]),
             ]);
 
@@ -294,6 +403,7 @@ final class PlaceOrderService
                 'currency' => $currency,
                 'response_code' => $responseCode,
                 'message' => $dataMessage ?? 'Payment failed',
+                'gateway' => 'paymob',
             ]),
         ]);
 
@@ -305,12 +415,12 @@ final class PlaceOrderService
     }
 
     /**
-     * Handle webhook notification from Paymob
+     * Handle webhook notification from payment gateway
      */
     public function handleWebhook(array $webhookData, string $hmac): array
     {
         // Validate HMAC
-        if (!$this->paymobService->validateHmac($webhookData['obj'] ?? [], $hmac)) {
+        if (!$this->paymentGateway->validateHmac($webhookData['obj'] ?? $webhookData, $hmac)) {
             return [
                 'success' => false,
                 'error' => 'Invalid webhook signature',
@@ -318,7 +428,7 @@ final class PlaceOrderService
         }
 
         // Process webhook
-        $processedData = $this->paymobService->processWebhook($webhookData);
+        $processedData = $this->paymentGateway->processWebhook($webhookData);
 
         // Find order by merchant_order_id
         $order = Order::where('merchant_order_id', $processedData['merchant_order_id'])->first();
@@ -334,7 +444,6 @@ final class PlaceOrderService
         $order->update([
             'transaction_id' => $processedData['transaction_id'],
             'payment_status' => $processedData['payment_status'],
-            'payment_method' => $processedData['payment_method'],
             'payment_data' => $processedData['payment_data'],
         ]);
 

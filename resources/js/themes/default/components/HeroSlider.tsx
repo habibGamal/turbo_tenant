@@ -13,6 +13,7 @@ import {
 import { ArrowRight, Sparkles, Timer, TrendingUp } from "lucide-react";
 import Autoplay from "embla-carousel-autoplay";
 import { useTranslation } from "react-i18next";
+import { ImageWithFallback } from "@/components/ui/image";
 
 interface HeroSlide {
     id: number;
@@ -104,8 +105,8 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
                                 {slide.image ? (
                                     <>
                                         <div className="absolute inset-0 z-0">
-                                            <img
-                                                src={`/storage/${slide.image}`}
+                                            <ImageWithFallback
+                                                src={slide.image}
                                                 alt={slide.title}
                                                 className="w-full h-full object-cover"
                                             />

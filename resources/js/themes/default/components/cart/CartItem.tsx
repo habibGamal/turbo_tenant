@@ -59,7 +59,7 @@ export default function CartItem({
                     <div className="flex items-start justify-between gap-2 mb-1 sm:mb-2">
                         <div className="flex-1 min-w-0">
                             <Link href={route("products.show", item.product_id)}>
-                                <h3 className="font-semibold text-base sm:text-lg leading-tight truncate hover:text-primary transition-colors">
+                                <h3 className=" font-semibold text-base sm:text-lg leading-tight  hover:text-primary transition-colors">
                                     {item.product?.name || t("unknownProduct")}
                                 </h3>
                             </Link>

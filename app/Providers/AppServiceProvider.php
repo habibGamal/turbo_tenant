@@ -29,6 +29,9 @@ final class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (config('app.env') !== 'local') {
+            URL::forceScheme('https');
+        }
         Vite::prefetch(concurrency: 3);
 
         // Only configure tenant-specific Livewire routes if not on central domain
@@ -41,7 +44,7 @@ final class AppServiceProvider extends ServiceProvider
 
             Order::observe(OrderObserver::class);
         }
-        
+
         if (request()->isSecure() || request()->header('X-Forwarded-Proto') === 'https') {
             URL::forceScheme('https');
         }

@@ -184,7 +184,7 @@ export default function Navigation({
                                 <img
                                     src={settings.site_logo}
                                     alt={settings?.site_name || t("home")}
-                                    className="h-10 w-auto object-contain"
+                                    className="h-12 w-auto object-contain rounded"
                                 />
                             ) : (
                                 <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">

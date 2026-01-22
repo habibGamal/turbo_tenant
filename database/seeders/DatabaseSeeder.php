@@ -19,15 +19,15 @@ final class DatabaseSeeder extends Seeder
         ]);
 
         // Seed restaurant data
-        $this->call([
-            GovernorateSeeder::class,
-            BranchSeeder::class,
-            AreaSeeder::class,
-            CategorySeeder::class,
-            SectionSeeder::class,
-            WeightOptionSeeder::class,
-            ProductSeeder::class,
-            PackageSeeder::class,
-        ]);
+        // $this->call([
+        //     GovernorateSeeder::class,
+        //     BranchSeeder::class,
+        //     AreaSeeder::class,
+        //     CategorySeeder::class,
+        //     SectionSeeder::class,
+        //     WeightOptionSeeder::class,
+        //     ProductSeeder::class,
+        //     PackageSeeder::class,
+        // ]);
     }
 }

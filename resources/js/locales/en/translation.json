@@ -280,5 +280,7 @@
   "transactionId": "Transaction ID",
   "deliveryInformation": "Delivery Information",
   "pickupInformation": "Pickup Information",
-  "orderEasily": "Order easily"
+  "orderEasily": "Order easily",
+  "noReviewsYet": "No reviews yet. Be the first to review!",
+  "reviewImage": "Review image"
 }

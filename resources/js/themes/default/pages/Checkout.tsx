@@ -341,7 +341,7 @@ export default function Checkout({
                         {/* Branch Selection */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>{t("selectBranch")}</CardTitle>
+                                <CardTitle>{t("pleaseSelectBranch")}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <Select
@@ -356,7 +356,7 @@ export default function Checkout({
                                 >
                                     <SelectTrigger>
                                         <SelectValue
-                                            placeholder={t("selectBranch")}
+                                            placeholder={t("pleaseSelectBranch")}
                                         />
                                     </SelectTrigger>
                                     <SelectContent>
