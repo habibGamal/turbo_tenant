@@ -14,14 +14,27 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class SendOrderToPosJob implements ShouldQueue
+final class SendOrderToPosJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    /**
+     * The number of seconds to wait before retrying the job.
+     *
+     * @var int
+     */
+    public $backoff = 3;
+
+    /**
+     * The number of times the job may be attempted.
+     *
+     * @var int
+     */
+    public $tries = 5;
+
     public function __construct(
         public Order $order
-    ) {
-    }
+    ) {}
 
     public function handle(OrderPOSService $orderPOSService): void
     {
@@ -30,10 +43,8 @@ class SendOrderToPosJob implements ShouldQueue
                 'pos_status' => OrderPosStatus::SENDING,
             ]);
 
-            if (!$orderPOSService->canAcceptOrder($this->order->branch)) {
-                $this->release(900); // 15 minutes
-
-                return;
+            if (! $orderPOSService->canAcceptOrder($this->order->branch)) {
+                throw new Exception('POS system is not accepting orders at this time.');
             }
 
             $orderPOSService->placeOrder($this->order);
@@ -48,9 +59,8 @@ class SendOrderToPosJob implements ShouldQueue
                 'pos_failure_reason' => $e->getMessage(),
             ]);
 
-            // Re-throw exception to fail the job if needed, or just log it.
-            // For now, we just track the status as failed.
-            // throw $e; 
+            // Re-throw to allow job retry mechanism
+            throw $e;
         }
     }
 }

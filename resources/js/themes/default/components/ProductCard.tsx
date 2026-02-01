@@ -154,7 +154,7 @@ export default function ProductCard({
                 {/* Product Info */}
                 <CardHeader className="pb-3">
                     <div className="space-y-1">
-                        <h3 className="font-semibold text-lg leading-tight line-clamp-1">
+                        <h3 className="font-semibold text-lg leading-tight ">
                             {getText(product.name, product.nameAr)}
                         </h3>
                         {getCategoryName() && (

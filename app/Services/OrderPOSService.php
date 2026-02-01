@@ -15,8 +15,7 @@ final class OrderPOSService
 {
     public function __construct(
         private readonly ProductPOSImporterService $productImporter
-    ) {
-    }
+    ) {}
 
     /**
      * Get the current shift ID from the POS system
@@ -32,7 +31,7 @@ final class OrderPOSService
                 'verify' => false, // Handle self-signed certificates
             ])->timeout(30)->get($url);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 throw new Exception('حدث خطاء اثناء الاستعلام عن رقم الوردية');
             }
 
@@ -64,8 +63,8 @@ final class OrderPOSService
                 'verify' => false, // Handle self-signed certificates
             ])->timeout(30)->get($url);
 
-            if (!$response->successful()) {
-                throw new Exception('حدث خطاء اثناء الاستعلام عن قبول الطلبات', 'branch_not_accepting_orders');
+            if (! $response->successful()) {
+                throw new Exception('حدث خطاء اثناء الاستعلام عن قبول الطلبات');
             }
 
             $data = $response->json();
@@ -78,7 +77,7 @@ final class OrderPOSService
                 'error' => $e->getMessage(),
             ]);
 
-            throw new Exception('حدث خطاء اثناء الاستعلام عن قبول الطلبات', 'branch_not_accepting_orders');
+            throw new Exception('حدث خطاء اثناء الاستعلام عن قبول الطلبات');
         }
     }
 
@@ -103,7 +102,7 @@ final class OrderPOSService
 
         $branch = $order->branch;
 
-        if (!$branch) {
+        if (! $branch) {
             throw new Exception('Order does not have a branch assigned');
         }
 
@@ -120,11 +119,11 @@ final class OrderPOSService
             $response = Http::withOptions([
                 'verify' => false, // Handle self-signed certificates
             ])->withHeaders([
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                    ])->timeout(30)->post($url, $payload);
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ])->timeout(30)->post($url, $payload);
             logger()->info('POS Order Payload', ['response' => $response->json()]);
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 $data = $response->json();
 
                 // Check for product not found error
@@ -136,7 +135,7 @@ final class OrderPOSService
 
                     return [
                         'success' => false,
-                        'message' => 'المنتجات التالية غير موجودة بهذا الفرع: ' . implode(', ', $productNames),
+                        'message' => 'المنتجات التالية غير موجودة بهذا الفرع: '.implode(', ', $productNames),
                         'notFoundProducts' => $notFoundProducts,
                     ];
                 }
@@ -190,12 +189,12 @@ final class OrderPOSService
 
             // Add weight details if it's a weighted item
             if ($item->weight_option_value_id && $item->weight_multiplier) {
-                $notesData['الوزن'] = '(' . $item->weight_multiplier . ' x )' . ($item->weightOptionValue->value);
+                $notesData['الوزن'] = '('.$item->weight_multiplier.' x )'.($item->weightOptionValue->value);
             }
 
             if ($item->extras->isNotEmpty()) {
                 $extraNames = $item->extras->map(function ($extra) {
-                    return $extra->extraOptionItem->name . ' (x' . $extra->quantity . ')';
+                    return $extra->extraOptionItem->name.' (x'.$extra->quantity.')';
                 })->join(', ');
 
                 $notesData['اضافات'] = $extraNames;
@@ -309,6 +308,7 @@ final class OrderPOSService
             $orderData['webPreferences'] = $webPreferences;
         }
         logger()->info('Order Data', ['orderData' => $orderData]);
+
         return [
             'user' => $userData,
             'order' => $orderData,
@@ -327,11 +327,11 @@ final class OrderPOSService
         }
 
         if ($address->building) {
-            $parts[] = 'Building ' . $address->building;
+            $parts[] = 'Building '.$address->building;
         }
 
         if ($address->apartment) {
-            $parts[] = 'Apartment ' . $address->apartment;
+            $parts[] = 'Apartment '.$address->apartment;
         }
 
         if ($address->area) {
@@ -369,9 +369,6 @@ final class OrderPOSService
 
     /**
      * Format item notes structure
-     *
-     * @param array $notes
-     * @return string
      */
     private function formatItemNotes(array $notes): string
     {
@@ -379,7 +376,7 @@ final class OrderPOSService
             return '';
         }
 
-        return 'json::' . json_encode($notes, JSON_UNESCAPED_UNICODE);
+        return 'json::'.json_encode($notes, JSON_UNESCAPED_UNICODE);
     }
 
     /**
@@ -389,6 +386,6 @@ final class OrderPOSService
     {
         $baseUrl = mb_rtrim($branch->link, '/');
 
-        return $baseUrl . $endpoint;
+        return $baseUrl.$endpoint;
     }
 }

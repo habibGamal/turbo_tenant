@@ -54,6 +54,7 @@ final class User extends Authenticatable implements FilamentUser, HasAppAuthenti
         if ($panel->getId() === 'admin') {
             return $this->is_admin;
         }
+
         return true;
     }
 
@@ -92,6 +93,21 @@ final class User extends Authenticatable implements FilamentUser, HasAppAuthenti
         return $this->hasMany(Address::class);
     }
 
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(UserNotification::class);
+    }
+
+    public function unreadNotifications(): HasMany
+    {
+        return $this->hasMany(UserNotification::class)->where('read', false);
+    }
+
+    public function routeNotificationForExpo(): ?ExpoPushToken
+    {
+        return $this->expo_token;
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -107,10 +123,5 @@ final class User extends Authenticatable implements FilamentUser, HasAppAuthenti
             'is_admin' => 'boolean',
             'expo_token' => ExpoPushToken::class,
         ];
-    }
-
-    public function routeNotificationForExpo(): ?ExpoPushToken
-    {
-        return $this->expo_token;
     }
 }

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,10 +19,10 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 |
 */
 
-Route::get('/storage/{path}', function (\Illuminate\Http\Request $request, $path) {
+Route::get('/storage/{path}', function (Illuminate\Http\Request $request, $path) {
     $file = Storage::path($path);
 
-    if (!file_exists($file)) {
+    if (! file_exists($file)) {
         abort(404);
     }
 
@@ -42,21 +42,21 @@ Route::get('/storage/{path}', function (\Illuminate\Http\Request $request, $path
     }
 
     // Generate a cache key based on the file path and query parameters
-    $cacheKey = md5($path . serialize($request->all()));
+    $cacheKey = md5($path.serialize($request->all()));
     $extension = pathinfo($file, PATHINFO_EXTENSION);
-    $cacheFilename = $cacheKey . '.' . $extension;
-    $cachePath = 'cache/' . $cacheFilename;
-    $fullCachePath = Storage::path($cachePath) . '.webp';
+    $cacheFilename = $cacheKey.'.'.$extension;
+    $cachePath = 'cache/'.$cacheFilename;
+    $fullCachePath = Storage::path($cachePath).'.webp';
 
     // Ensure cache directory exists
-    if (!Storage::exists('cache')) {
+    if (! Storage::exists('cache')) {
         Storage::makeDirectory('cache');
     }
 
     // If cached file doesn't exist, create it
-    if (!file_exists($fullCachePath)) {
+    if (! file_exists($fullCachePath)) {
         try {
-            $image = \Spatie\Image\Image::load($file)->optimize();
+            $image = Spatie\Image\Image::load($file)->optimize();
             if ($request->has('w')) {
                 $image->width((int) $request->input('w'));
             }
@@ -66,12 +66,13 @@ Route::get('/storage/{path}', function (\Illuminate\Http\Request $request, $path
             }
 
             if ($request->has('fit')) {
-                $image->fit(\Spatie\Image\Enums\Fit::tryFrom($request->input('fit')) ?? \Spatie\Image\Enums\Fit::Contain);
+                $image->fit(Spatie\Image\Enums\Fit::tryFrom($request->input('fit')) ?? Spatie\Image\Enums\Fit::Contain);
             }
 
             $image->save($fullCachePath);
-        } catch (\Exception $e) {
-            logger()->error('Image manipulation failed: ' . $e->getMessage());
+        } catch (Exception $e) {
+            logger()->error('Image manipulation failed: '.$e->getMessage());
+
             // Fallback to original file if manipulation fails
             return response()->file($file);
         }
@@ -89,9 +90,9 @@ Route::get('/storage/{path}', function (\Illuminate\Http\Request $request, $path
         'Cache-Control' => 'public, max-age=31536000',
     ]);
 })->where('path', '.*')->middleware([
-            InitializeTenancyByDomain::class,
-            PreventAccessFromCentralDomains::class,
-        ]);
+    InitializeTenancyByDomain::class,
+    PreventAccessFromCentralDomains::class,
+]);
 Route::middleware([
     'web',
     InitializeTenancyByDomain::class,
@@ -107,7 +108,7 @@ Route::middleware([
     });
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/products/{product}', [App\Http\Controllers\ProductController::class, 'show'])->name('products.show');
-    Route::post('/products/{product}/reviews', [\App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store');
+    Route::post('/products/{product}/reviews', [App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store');
     // Cart routes
     Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/items', [App\Http\Controllers\CartController::class, 'store'])->name('cart.store');
@@ -140,7 +141,7 @@ Route::middleware([
 
         // Favorites route
         Route::get('/favorites', function () {
-            return \Inertia\Inertia::render('Favorites');
+            return Inertia\Inertia::render('Favorites');
         })->name('favorites.index');
     });
     // API routes
@@ -148,7 +149,17 @@ Route::middleware([
     Route::post('/api/order-status', [App\Http\Controllers\Api\OrderStatusController::class, 'update'])->name('api.order-status.update')->withoutMiddleware([VerifyCsrfToken::class]);
     Route::get('/api/search/suggestions', [App\Http\Controllers\Api\SearchController::class, 'suggestions'])->name('api.search.suggestions');
     Route::get('/api/products/{product}', [App\Http\Controllers\Api\ProductController::class, 'show'])->name('api.products.show');
-    Route::get('/api/products/search', \App\Http\Controllers\Api\ProductSearchController::class)->name('api.products.search');
+    Route::get('/api/products/search', App\Http\Controllers\Api\ProductSearchController::class)->name('api.products.search');
+
+    // Notification API routes (requires auth)
+    Route::middleware('auth')->prefix('api/notifications')->name('api.notifications.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\NotificationController::class, 'index'])->name('index');
+        Route::get('/unread-count', [App\Http\Controllers\Api\NotificationController::class, 'unreadCount'])->name('unread-count');
+        Route::post('/{id}/mark-as-read', [App\Http\Controllers\Api\NotificationController::class, 'markAsRead'])->name('mark-as-read');
+        Route::post('/mark-all-as-read', [App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead'])->name('mark-all-as-read');
+        Route::delete('/{id}', [App\Http\Controllers\Api\NotificationController::class, 'destroy'])->name('destroy');
+        Route::post('/clear-read', [App\Http\Controllers\Api\NotificationController::class, 'clearRead'])->name('clear-read');
+    });
 
     // Payment gateway webhooks (no auth, no CSRF)
     Route::post('/api/webhooks/paymob', [App\Http\Controllers\PaymobWebhookController::class, 'handle'])->name('webhooks.paymob')->withoutMiddleware([VerifyCsrfToken::class]);
@@ -159,7 +170,7 @@ Route::middleware([
         Route::get('/payments/{order}/kashier', [App\Http\Controllers\PaymentController::class, 'showKashierPayment'])->name('payment.kashier');
     });
 
-    Route::get('/pages/{slug}', [\App\Http\Controllers\PageController::class, 'show'])->name('pages.show');
+    Route::get('/pages/{slug}', [App\Http\Controllers\PageController::class, 'show'])->name('pages.show');
 
-    require __DIR__ . '/auth.php';
+    require __DIR__.'/auth.php';
 });

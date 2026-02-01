@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Enums\OrderPosStatus;
+use App\Jobs\SendOrderStatusNotificationJob;
 use App\Jobs\SendOrderToPosJob;
 use App\Jobs\SendOrderUpdateMailJob;
 use App\Models\Order;
 
-class OrderObserver
+final class OrderObserver
 {
     public function created(Order $order): void
     {
-        SendOrderUpdateMailJob::dispatch($order);
+        // SendOrderUpdateMailJob::dispatch($order);
+        SendOrderStatusNotificationJob::dispatch($order);
     }
 
     public function updated(Order $order): void
@@ -23,7 +25,8 @@ class OrderObserver
         }
 
         if ($order->isDirty('status')) {
-            SendOrderUpdateMailJob::dispatch($order);
+            // SendOrderUpdateMailJob::dispatch($order);
+            SendOrderStatusNotificationJob::dispatch($order);
         }
     }
 }
