@@ -17,16 +17,21 @@ class PagesTable
         return $table
             ->columns([
                 TextColumn::make('title')
+                    ->label('العنوان')
                     ->searchable(),
                 TextColumn::make('slug')
+                    ->label('رابط مختصر')
                     ->searchable(),
                 IconColumn::make('is_active')
+                    ->label('نشط')
                     ->boolean(),
                 TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
+                    ->label('تاريخ التحديث')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

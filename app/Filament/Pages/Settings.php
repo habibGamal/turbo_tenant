@@ -141,6 +141,10 @@ final class Settings extends Page
                                 ->minValue(0)
                                 ->default(0)
                                 ->prefix('EGP'),
+                            Toggle::make(SettingKey::ONLINE_PAYMENTS_ENABLED->value)
+                                ->label(SettingKey::ONLINE_PAYMENTS_ENABLED->label())
+                                ->helperText('Allow customers to pay online with credit/debit cards')
+                                ->default(true),
                         ])
                         ->columns(2),
 
@@ -192,7 +196,7 @@ final class Settings extends Page
 
                     Section::make('Payment Gateway (Paymob)')
                         ->description('Configure Paymob payment gateway credentials')
-                        ->collapsed(fn($get) => $get(SettingKey::ACTIVE_PAYMENT_GATEWAY->value) !== 'paymob')
+                        ->collapsed(fn ($get) => $get(SettingKey::ACTIVE_PAYMENT_GATEWAY->value) !== 'paymob')
                         ->schema([
                             TextInput::make(SettingKey::PAYMOB_BASE_URL->value)
                                 ->label(SettingKey::PAYMOB_BASE_URL->label())
@@ -236,7 +240,7 @@ final class Settings extends Page
 
                     Section::make('Payment Gateway (Kashier)')
                         ->description('Configure Kashier payment gateway credentials')
-                        ->collapsed(fn($get) => $get(SettingKey::ACTIVE_PAYMENT_GATEWAY->value) !== 'kashier')
+                        ->collapsed(fn ($get) => $get(SettingKey::ACTIVE_PAYMENT_GATEWAY->value) !== 'kashier')
                         ->schema([
                             TextInput::make(SettingKey::KASHIER_MERCHANT_ID->value)
                                 ->label(SettingKey::KASHIER_MERCHANT_ID->label())
@@ -401,6 +405,10 @@ final class Settings extends Page
 
         if (isset($data[SettingKey::ACCEPT_ORDERS_AFTER_WORK_TIMES->value])) {
             $data[SettingKey::ACCEPT_ORDERS_AFTER_WORK_TIMES->value] = $data[SettingKey::ACCEPT_ORDERS_AFTER_WORK_TIMES->value] ? 'true' : 'false';
+        }
+
+        if (isset($data[SettingKey::ONLINE_PAYMENTS_ENABLED->value])) {
+            $data[SettingKey::ONLINE_PAYMENTS_ENABLED->value] = $data[SettingKey::ONLINE_PAYMENTS_ENABLED->value] ? 'true' : 'false';
         }
 
         if (isset($data[SettingKey::PRODUCT_SHOW_CARDS->value])) {

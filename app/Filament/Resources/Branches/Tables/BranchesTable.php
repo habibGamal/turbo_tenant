@@ -19,25 +19,31 @@ final class BranchesTable
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->label('الاسم')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('link')
+                    ->label('الرابط')
                     ->limit(50)
                     ->searchable(),
                 IconColumn::make('is_active')
+                    ->label('نشط')
                     ->boolean()
                     ->sortable(),
                 TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
+                    ->label('تاريخ التحديث')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Filter::make('is_active')
+                    ->label('نشط')
                     ->toggle(),
             ])
             ->recordActions([

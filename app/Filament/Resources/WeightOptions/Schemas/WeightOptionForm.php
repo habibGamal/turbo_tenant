@@ -16,18 +16,20 @@ final class WeightOptionForm
     {
         return $schema
             ->components([
-                Section::make('Basic Information')
+                Section::make('معلومات أساسية')
                     ->schema([
                         TextInput::make('name')
+                            ->label('الاسم')
                             ->required()
                             ->maxLength(255)
-                            ->helperText('e.g., "Standard Weight", "Small Portions"')
+                            ->helperText('مثل: "الوزن القياسي"، "أحجام صغيرة"')
                             ->columnSpan(2),
                         Select::make('unit')
+                            ->label('الوحدة')
                             ->options([
-                                'kg' => 'Kilogram (kg)',
-                                'g' => 'Gram (g)',
-                                'lb' => 'Pound (lb)',
+                                'kg' => 'كيلوجرام (kg)',
+                                'g' => 'جرام (g)',
+                                'lb' => 'رطل (lb)',
                             ])
                             ->default('kg')
                             ->required(),
@@ -35,30 +37,32 @@ final class WeightOptionForm
                     ->columns(3)
                     ->columnSpanFull(),
 
-                Section::make('Weight Values')
+                Section::make('قيم الوزن')
                     ->schema([
                         Repeater::make('values')
                             ->relationship()
                             ->schema([
                                 TextInput::make('value')
+                                    ->label('القيمة')
                                     ->required()
                                     ->numeric()
                                     ->minValue(0.001)
                                     ->step(0.001)
                                     ->suffix(fn (callable $get) => $get('../../unit') ?? 'kg')
-                                    ->helperText('The weight value (e.g., 0.25, 0.5, 1.0)')
+                                    ->helperText('قيمة الوزن (مثل: 0.25، 0.5، 1.0)')
                                     ->columnSpan(1),
                                 TextInput::make('label')
+                                    ->label('التسمية')
                                     ->maxLength(255)
-                                    ->placeholder('Optional label')
-                                    ->helperText('e.g., "Quarter kg", "Half kg", "1 kg"')
+                                    ->placeholder('تسمية اختيارية')
+                                    ->helperText('مثل: "ربع كيلو"، "نصف كيلو"، "1 كيلو"')
                                     ->columnSpan(1),
                                 TextInput::make('sort_order')
                                     ->numeric()
                                     ->default(0)
                                     ->required()
-                                    ->label('Sort Order')
-                                    ->helperText('Lower numbers appear first')
+                                    ->label('ترتيب العرض')
+                                    ->helperText('الأرقام الأقل تظهر أولاً')
                                     ->columnSpan(1),
                             ])
                             ->columns(3)
@@ -69,7 +73,7 @@ final class WeightOptionForm
                                 $state['label'] ??
                                 (isset($state['value']) ? "{$state['value']}" : null)
                             )
-                            ->addActionLabel('Add Weight Value')
+                            ->addActionLabel('إضافة قيمة وزن')
                             ->reorderable()
                             ->reorderableWithButtons()
                             ->deleteAction(
@@ -77,7 +81,7 @@ final class WeightOptionForm
                             ),
                     ])
                     ->columnSpanFull()
-                    ->description('Define specific weight values that customers can choose from. For example: 0.25 kg, 0.5 kg, 1 kg.'),
+                    ->description('حدد قيم وزن محددة يمكن للعملاء الاختيار منها. مثل: 0.25 كجم، 0.5 كجم، 1 كجم.'),
             ]);
     }
 }

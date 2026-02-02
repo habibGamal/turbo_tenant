@@ -22,6 +22,12 @@ final class SectionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = 'الأقسام';
+
+    protected static ?string $modelLabel = 'قسم';
+
+    protected static ?string $pluralModelLabel = 'الأقسام';
+
     public static function form(Schema $schema): Schema
     {
         return SectionForm::configure($schema);

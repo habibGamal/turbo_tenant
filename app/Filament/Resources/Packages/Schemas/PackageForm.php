@@ -22,162 +22,162 @@ final class PackageForm
         return $schema
             ->columns(3)
             ->components([
-                Section::make('Basic Information')
+                Section::make('معلومات أساسية')
                     ->schema([
                         TextInput::make('name')
                             ->required()
                             ->maxLength(255)
-                            ->label('Name'),
+                            ->label('الاسم'),
 
                         TextInput::make('name_ar')
                             ->maxLength(255)
-                            ->label('Name (Arabic)'),
+                            ->label('الاسم (عربي)'),
 
                         Textarea::make('description')
                             ->required()
                             ->rows(3)
-                            ->label('Description')
+                            ->label('الوصف')
                             ->columnSpanFull(),
 
                         Textarea::make('description_ar')
                             ->rows(3)
-                            ->label('Description (Arabic)')
+                            ->label('الوصف (عربي)')
                             ->columnSpanFull(),
                     ])
                     ->columns(2)
                     ->columnSpan(2),
 
-                Section::make('Status')
+                Section::make('الحالة')
                     ->schema([
                         Toggle::make('is_active')
                             ->default(true)
-                            ->label('Active'),
+                            ->label('نشط'),
 
                         Toggle::make('is_featured')
                             ->default(false)
-                            ->label('Featured'),
+                            ->label('مميز'),
                     ])
                     ->columnSpan(1),
 
-                Section::make('Pricing')
+                Section::make('التسعير')
                     ->schema([
                         TextInput::make('price')
                             ->required()
                             ->numeric()
                             ->prefix('$')
                             ->minValue(0)
-                            ->label('Price'),
+                            ->label('السعر'),
 
                         TextInput::make('original_price')
                             ->numeric()
                             ->prefix('$')
                             ->minValue(0)
-                            ->label('Original Price'),
+                            ->label('السعر الأصلي'),
 
                         TextInput::make('discount_percentage')
                             ->numeric()
                             ->suffix('%')
                             ->minValue(0)
                             ->maxValue(100)
-                            ->label('Discount %'),
+                            ->label('نسبة الخصم'),
                     ])
                     ->columns(3)
                     ->columnSpan(2),
 
-                Section::make('Display Settings')
+                Section::make('إعدادات العرض')
                     ->schema([
                         TextInput::make('badge')
                             ->maxLength(255)
-                            ->label('Badge'),
+                            ->label('الشارة'),
 
                         TextInput::make('badge_ar')
                             ->maxLength(255)
-                            ->label('Badge (Arabic)'),
+                            ->label('الشارة (عربي)'),
 
                         TextInput::make('icon')
                             ->default('gift')
                             ->maxLength(255)
-                            ->label('Icon'),
+                            ->label('الأيقونة'),
 
                         TextInput::make('gradient')
                             ->default('from-orange-500/10 via-red-500/5 to-pink-500/10')
                             ->maxLength(255)
-                            ->label('Gradient')
+                            ->label('التدرج اللوني')
                             ->columnSpanFull(),
 
                         TextInput::make('sort_order')
                             ->numeric()
                             ->default(0)
-                            ->label('Sort Order'),
+                            ->label('ترتيب العرض'),
                     ])
                     ->columns(3)
                     ->columnSpan(2),
 
-                Section::make('Validity Period')
+                Section::make('فترة الصلاحية')
                     ->schema([
                         DateTimePicker::make('valid_from')
-                            ->label('Valid From'),
+                            ->label('صالح من'),
 
                         DateTimePicker::make('valid_until')
-                            ->label('Valid Until'),
+                            ->label('صالح حتى'),
                     ])
                     ->columns(2)
                     ->columnSpan(2)
                     ->collapsible(),
 
-                Section::make('Package Contents')
+                Section::make('محتويات الباقة')
                     ->schema([
                         Repeater::make('groups')
                             ->relationship()
                             ->schema([
                                 TextInput::make('name')
-                                    ->label('Group Name')
-                                    ->placeholder('e.g., Choose Your Main Dish'),
+                                    ->label('اسم المجموعة')
+                                    ->placeholder('مثل: اختر طبقك الرئيسي'),
 
                                 TextInput::make('name_ar')
-                                    ->label('Group Name (Arabic)'),
+                                    ->label('اسم المجموعة (عربي)'),
 
                                 Select::make('selection_type')
                                     ->required()
                                     ->options([
-                                        'all' => 'All Items (Fixed)',
-                                        'choose_one' => 'Choose One',
-                                        'choose_multiple' => 'Choose Multiple',
+                                        'all' => 'جميع العناصر (ثابت)',
+                                        'choose_one' => 'اختر واحد',
+                                        'choose_multiple' => 'اختر متعدد',
                                     ])
                                     ->default('all')
                                     ->reactive()
-                                    ->label('Selection Type'),
+                                    ->label('نوع الاختيار'),
 
                                 TextInput::make('min_selections')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->label('Min Selections')
+                                    ->label('الحد الأدنى للاختيارات')
                                     ->visible(fn ($get) => in_array($get('selection_type'), ['choose_one', 'choose_multiple'])),
 
                                 TextInput::make('max_selections')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->label('Max Selections')
+                                    ->label('الحد الأقصى للاختيارات')
                                     ->visible(fn ($get) => in_array($get('selection_type'), ['choose_one', 'choose_multiple'])),
 
                                 TextInput::make('sort_order')
                                     ->numeric()
                                     ->default(0)
-                                    ->label('Sort Order'),
+                                    ->label('ترتيب العرض'),
 
                                 Repeater::make('items')
                                     ->relationship()
                                     ->schema([
                                         Select::make('product_id')
                                             ->required()
-                                            ->label('Product')
+                                            ->label('المنتج')
                                             ->options(Product::where('is_active', true)->pluck('name', 'id'))
                                             ->searchable()
                                             ->reactive()
                                             ->preload(),
 
                                         Select::make('variant_id')
-                                            ->label('Variant (Optional)')
+                                            ->label('تنويع (اختياري)')
                                             ->options(function ($get) {
                                                 $productId = $get('product_id');
                                                 if (! $productId) {
@@ -196,41 +196,41 @@ final class PackageForm
                                             ->numeric()
                                             ->default(1)
                                             ->minValue(1)
-                                            ->label('Quantity'),
+                                            ->label('الكمية'),
 
                                         TextInput::make('price_adjustment')
                                             ->numeric()
                                             ->default(0)
                                             ->prefix('$')
-                                            ->label('Price Adjustment')
-                                            ->helperText('Extra charge for this option'),
+                                            ->label('تعديل السعر')
+                                            ->helperText('رسوم إضافية لهذا الخيار'),
 
                                         Toggle::make('is_default')
-                                            ->label('Default Selection')
-                                            ->helperText('Pre-selected for conditional groups'),
+                                            ->label('الاختيار الافتراضي')
+                                            ->helperText('محدد مسبقاً للمجموعات الشرطية'),
 
                                         TextInput::make('sort_order')
                                             ->numeric()
                                             ->default(0)
-                                            ->label('Sort Order'),
+                                            ->label('ترتيب العرض'),
                                     ])
                                     ->columns(3)
                                     ->defaultItems(1)
-                                    ->addActionLabel('Add Item')
+                                    ->addActionLabel('إضافة عنصر')
                                     ->collapsible()
-                                    ->itemLabel(fn (array $state): ?string => Product::find($state['product_id'])?->name ?? 'Item')
+                                    ->itemLabel(fn (array $state): ?string => Product::find($state['product_id'])?->name ?? 'عنصر')
                                     ->columnSpanFull(),
                             ])
                             ->columns(3)
                             ->defaultItems(1)
-                            ->addActionLabel('Add Group')
+                            ->addActionLabel('إضافة مجموعة')
                             ->collapsible()
-                            ->itemLabel(fn (array $state): ?string => $state['name'] ?? 'Group')
+                            ->itemLabel(fn (array $state): ?string => $state['name'] ?? 'مجموعة')
                             ->reorderable()
                             ->cloneable(),
                     ])
                     ->columnSpanFull()
-                    ->description('Define package groups and items. Groups can be fixed (all items) or conditional (choose one/multiple).'),
+                    ->description('حدد مجموعات وعناصر الباقة. المجموعات يمكن أن تكون ثابتة (جميع العناصر) أو شرطية (اختر واحداً/متعدد).'),
             ]);
     }
 }

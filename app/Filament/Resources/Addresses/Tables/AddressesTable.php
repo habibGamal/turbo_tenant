@@ -24,70 +24,70 @@ final class AddressesTable
                     ->sortable(),
 
                 TextColumn::make('user.name')
-                    ->label('User')
+                    ->label('المستخدم')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('area.name')
-                    ->label('Area')
+                    ->label('المنطقة')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('area.governorate.name')
-                    ->label('Governorate')
+                    ->label('المحافظة')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('phone_number')
-                    ->label('Phone')
+                    ->label('رقم الهاتف')
                     ->searchable(),
 
                 TextColumn::make('street')
-                    ->label('Street')
+                    ->label('الشارع')
                     ->searchable()
                     ->limit(30),
 
                 TextColumn::make('building')
-                    ->label('Building')
+                    ->label('المبنى')
                     ->searchable(),
 
                 TextColumn::make('floor')
-                    ->label('Floor')
+                    ->label('الدور')
                     ->searchable(),
 
                 TextColumn::make('apartment')
-                    ->label('Apartment')
+                    ->label('الشقة')
                     ->searchable(),
 
                 IconColumn::make('is_default')
-                    ->label('Default')
+                    ->label('افتراضي')
                     ->boolean()
                     ->sortable(),
 
                 TextColumn::make('created_at')
-                    ->label('Created At')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('user_id')
-                    ->label('User')
+                    ->label('المستخدم')
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload(),
 
                 SelectFilter::make('area_id')
-                    ->label('Area')
+                    ->label('المنطقة')
                     ->relationship('area', 'name')
                     ->searchable()
                     ->preload(),
 
                 TernaryFilter::make('is_default')
-                    ->label('Default')
-                    ->placeholder('All')
-                    ->trueLabel('Default only')
-                    ->falseLabel('Non-default only'),
+                    ->label('افتراضي')
+                    ->placeholder('الكل')
+                    ->trueLabel('افتراضي فقط')
+                    ->falseLabel('غير افتراضي فقط'),
             ])
             ->actions([
                 EditAction::make(),

@@ -20,55 +20,60 @@ final class ExtraOptionForm
     {
         return $schema
             ->components([
-                Section::make('Basic Information')
+                Section::make('معلومات أساسية')
                     ->schema([
                         TextInput::make('name')
+                            ->label('الاسم')
                             ->required()
                             ->maxLength(255),
                         Textarea::make('description')
+                            ->label('الوصف')
                             ->rows(3)
                             ->maxLength(65535),
                         Toggle::make('is_active')
+                            ->label('نشط')
                             ->default(true)
                             ->required(),
                     ])
                     ->columnSpanFull(),
 
-                Section::make('Option Items')
+                Section::make('عناصر الخيار')
                     ->schema([
                         Repeater::make('items')
                             ->relationship()
                             ->schema([
                                 TextInput::make('name')
+                                    ->label('الاسم')
                                     ->required()
                                     ->maxLength(255)
                                     ->columnSpan(2),
                                 TextInput::make('price')
+                                    ->label('السعر')
                                     ->numeric()
                                     ->default(0)
                                     ->prefix('$')
                                     ->required(),
                                 Toggle::make('is_default')
                                     ->default(false)
-                                    ->label('Default Selection'),
+                                    ->label('الاختيار الافتراضي'),
                                 TextInput::make('sort_order')
                                     ->numeric()
                                     ->default(0)
-                                    ->label('Sort Order'),
+                                    ->label('ترتيب العرض'),
                                 Radio::make('pos_mapping_type')
                                     ->options([
-                                        'pos_item' => 'POS Item',
-                                        'notes' => 'Notes',
+                                        'pos_item' => 'عنصر POS',
+                                        'notes' => 'ملاحظات',
                                     ])
                                     ->default('pos_item')
                                     ->inline()
                                     ->required()
-                                    ->label('POS Mapping Type')
+                                    ->label('نوع ربط POS')
                                     ->live(),
                                 Toggle::make('allow_quantity')
                                     ->default(false)
-                                    ->label('Allow Quantity Selection')
-                                    ->helperText('Allow customers to select quantity for this item'),
+                                    ->label('السماح باختيار الكمية')
+                                    ->helperText('السماح للعملاء باختيار كمية لهذا العنصر'),
                                 Repeater::make('posMappings')
                                     ->relationship()
                                     ->schema([
@@ -76,12 +81,12 @@ final class ExtraOptionForm
                                             ->columnSpan(2),
                                         Select::make('branch_id')
                                             ->relationship('branch', 'name')
-                                            ->label('Branch (Optional)')
-                                            ->helperText('Leave empty for all branches'),
+                                            ->label('الفرع (اختياري)')
+                                            ->helperText('اتركه فارغاً لجميع الفروع'),
                                     ])
                                     ->columns(3)
                                     ->defaultItems(0)
-                                    ->addActionLabel('Add POS Mapping')
+                                    ->addActionLabel('إضافة ربط POS')
                                     ->collapsible()
                                     ->visible(fn (callable $get) => $get('pos_mapping_type') === 'pos_item')
                                     ->columnSpanFull(),

@@ -22,6 +22,12 @@ final class CouponResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = 'الكوبونات';
+
+    protected static ?string $modelLabel = 'كوبون';
+
+    protected static ?string $pluralModelLabel = 'الكوبونات';
+
     public static function form(Schema $schema): Schema
     {
         return CouponForm::configure($schema);

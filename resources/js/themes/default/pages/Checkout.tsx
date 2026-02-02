@@ -246,7 +246,13 @@ export default function Checkout({
     const paymentMethods = [
         { value: "cod", label: t("cashOnDelivery"), icon: DollarSign },
         { value: "card", label: t("creditCard"), icon: CreditCard },
-    ];
+    ].filter((method) => {
+        // Filter out card payment if online payments are disabled
+        if (method.value === "card" && !settings.online_payments_enabled) {
+            return false;
+        }
+        return true;
+    });
 
     if (!cart || cart.items.length === 0) {
         return (

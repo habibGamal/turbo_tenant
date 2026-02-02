@@ -22,6 +22,12 @@ final class GovernorateResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::AdjustmentsHorizontal;
 
+    protected static ?string $navigationLabel = 'المحافظات';
+
+    protected static ?string $modelLabel = 'محافظة';
+
+    protected static ?string $pluralModelLabel = 'المحافظات';
+
     // protected static ?string $navigationGroup = 'Locations';
 
     protected static ?int $navigationSort = 1;

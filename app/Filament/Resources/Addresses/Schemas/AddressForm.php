@@ -26,32 +26,32 @@ final class AddressForm
 
     private static function getMainSection(): Component
     {
-        return Section::make('User & Area')
+        return Section::make('المستخدم والمنطقة')
             ->schema([
                 Grid::make(2)
                     ->schema([
                         Select::make('user_id')
-                            ->label('User')
+                            ->label('المستخدم')
                             ->relationship('user', 'name')
                             ->searchable()
                             ->preload()
                             ->required(),
 
                         Select::make('area_id')
-                            ->label('Area')
+                            ->label('المنطقة')
                             ->relationship('area', 'name')
                             ->searchable()
                             ->preload()
                             ->required(),
 
                         TextInput::make('phone_number')
-                            ->label('Phone Number')
+                            ->label('رقم الهاتف')
                             ->tel()
                             ->required()
                             ->maxLength(255),
 
                         Toggle::make('is_default')
-                            ->label('Default Address')
+                            ->label('عنوان افتراضي')
                             ->default(false),
                     ]),
             ]);
@@ -59,34 +59,34 @@ final class AddressForm
 
     private static function getAddressDetailsSection(): Component
     {
-        return Section::make('Address Details')
+        return Section::make('تفاصيل العنوان')
             ->schema([
                 Grid::make(2)
                     ->schema([
                         TextInput::make('street')
-                            ->label('Street')
+                            ->label('الشارع')
                             ->maxLength(255),
 
                         TextInput::make('building')
-                            ->label('Building')
+                            ->label('المبنى')
                             ->maxLength(255),
 
                         TextInput::make('floor')
-                            ->label('Floor')
+                            ->label('الدور')
                             ->maxLength(255),
 
                         TextInput::make('apartment')
-                            ->label('Apartment')
+                            ->label('الشقة')
                             ->maxLength(255),
                     ]),
 
                 Textarea::make('full_address')
-                    ->label('Full Address')
+                    ->label('العنوان الكامل')
                     ->rows(3)
                     ->columnSpanFull(),
 
                 Textarea::make('notes')
-                    ->label('Notes')
+                    ->label('ملاحظات')
                     ->rows(2)
                     ->columnSpanFull(),
             ]);

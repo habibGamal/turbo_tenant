@@ -17,6 +17,11 @@ pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Feature');
 
+// Central panel tests (no tenancy initialization)
+pest()->extend(Tests\CentralTestCase::class)
+    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->in('Feature/Central');
+
 /*
 |--------------------------------------------------------------------------
 | Expectations

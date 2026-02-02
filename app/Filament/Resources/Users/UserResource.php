@@ -22,6 +22,12 @@ final class UserResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
 
+    protected static ?string $navigationLabel = 'المستخدمين';
+
+    protected static ?string $modelLabel = 'مستخدم';
+
+    protected static ?string $pluralModelLabel = 'المستخدمين';
+
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function getGloballySearchableAttributes(): array

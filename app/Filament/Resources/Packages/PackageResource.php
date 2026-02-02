@@ -22,11 +22,11 @@ final class PackageResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $navigationLabel = 'Packages';
+    protected static ?string $navigationLabel = 'الباقات';
 
-    protected static ?string $modelLabel = 'Package';
+    protected static ?string $modelLabel = 'باقة';
 
-    protected static ?string $pluralModelLabel = 'Packages';
+    protected static ?string $pluralModelLabel = 'الباقات';
 
     protected static ?int $navigationSort = 3;
 

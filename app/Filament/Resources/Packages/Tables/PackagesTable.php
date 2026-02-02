@@ -20,24 +20,28 @@ final class PackagesTable
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->label('الاسم')
                     ->searchable()
                     ->sortable()
                     ->description(fn ($record) => $record->description)
                     ->limit(30),
 
                 TextColumn::make('price')
+                    ->label('السعر')
                     ->money('USD')
                     ->sortable()
                     ->badge()
                     ->color('success'),
 
                 TextColumn::make('original_price')
+                    ->label('السعر الأصلي')
                     ->money('USD')
                     ->sortable()
                     ->toggleable()
                     ->color('gray'),
 
                 TextColumn::make('discount_percentage')
+                    ->label('نسبة الخصم')
                     ->suffix('%')
                     ->sortable()
                     ->toggleable()
@@ -45,6 +49,7 @@ final class PackagesTable
                     ->color('warning'),
 
                 TextColumn::make('badge')
+                    ->label('الشارة')
                     ->badge()
                     ->color('primary')
                     ->toggleable(),
@@ -52,69 +57,74 @@ final class PackagesTable
                 IconColumn::make('is_active')
                     ->boolean()
                     ->sortable()
-                    ->label('Active'),
+                    ->label('نشط'),
 
                 IconColumn::make('is_featured')
                     ->boolean()
                     ->sortable()
-                    ->label('Featured'),
+                    ->label('مميز'),
 
                 TextColumn::make('groups_count')
                     ->counts('groups')
-                    ->label('Groups')
+                    ->label('عدد المجموعات')
                     ->badge()
                     ->color('info'),
 
                 TextColumn::make('items_count')
                     ->counts('items')
-                    ->label('Items')
+                    ->label('عدد العناصر')
                     ->badge()
                     ->color('info'),
 
                 TextColumn::make('sort_order')
+                    ->label('ترتيب العرض')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('valid_from')
+                    ->label('صالح من')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('valid_until')
+                    ->label('صالح حتى')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('updated_at')
+                    ->label('تاريخ التحديث')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 TernaryFilter::make('is_active')
-                    ->label('Active')
+                    ->label('نشط')
                     ->boolean()
-                    ->trueLabel('Active only')
-                    ->falseLabel('Inactive only')
+                    ->trueLabel('نشط فقط')
+                    ->falseLabel('غير نشط فقط')
                     ->native(false),
 
                 TernaryFilter::make('is_featured')
-                    ->label('Featured')
+                    ->label('مميز')
                     ->boolean()
-                    ->trueLabel('Featured only')
-                    ->falseLabel('Not featured')
+                    ->trueLabel('مميز فقط')
+                    ->falseLabel('غير مميز')
                     ->native(false),
 
                 SelectFilter::make('has_discount')
-                    ->label('Discount')
+                    ->label('الخصم')
                     ->options([
-                        'yes' => 'With Discount',
-                        'no' => 'No Discount',
+                        'yes' => 'بخصم',
+                        'no' => 'بدون خصم',
                     ])
                     ->query(function ($query, $state) {
                         if ($state['value'] === 'yes') {

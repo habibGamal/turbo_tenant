@@ -269,6 +269,7 @@ export type PageProps<
         image_placeholder: string;
         product_show_cards: ProductShowCard[];
         cod_fee: number;
+        online_payments_enabled: boolean;
     };
 };
 

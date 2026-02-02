@@ -23,6 +23,12 @@ final class ProductResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = 'المنتجات';
+
+    protected static ?string $modelLabel = 'منتج';
+
+    protected static ?string $pluralModelLabel = 'المنتجات';
+
     public static function form(Schema $schema): Schema
     {
         return ProductForm::configure($schema);

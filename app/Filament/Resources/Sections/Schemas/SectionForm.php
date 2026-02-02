@@ -18,33 +18,37 @@ final class SectionForm
     {
         return $schema
             ->components([
-                Section::make('Basic Information')
+                Section::make('معلومات أساسية')
                     ->schema([
                         TextInput::make('title')
+                            ->label('العنوان')
                             ->required()
                             ->maxLength(255),
                         Select::make('location')
+                            ->label('الموقع')
                             ->options([
-                                'home' => 'Home',
-                                'menu' => 'Menu',
-                                'featured' => 'Featured',
+                                'home' => 'الرئيسية',
+                                'menu' => 'القائمة',
+                                'featured' => 'مميز',
                             ])
                             ->required(),
                         TextInput::make('sort_order')
+                            ->label('ترتيب العرض')
                             ->numeric()
                             ->default(0)
                             ->required(),
                         Toggle::make('is_active')
+                            ->label('نشط')
                             ->default(true)
                             ->required(),
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
 
-                Section::make('Products')
+                Section::make('المنتجات')
                     ->schema([
                         Select::make('category_id')
-                            ->label('Add Products from Category')
+                            ->label('إضافة منتجات من فئة')
                             ->options(\App\Models\Category::pluck('name', 'id'))
                             ->searchable()
                             ->live()
@@ -62,6 +66,7 @@ final class SectionForm
                             }),
 
                         Select::make('products')
+                            ->label('المنتجات')
                             ->relationship('products', 'name')
                             ->multiple()
                             ->searchable()

@@ -22,6 +22,12 @@ class PageResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = 'الصفحات';
+
+    protected static ?string $modelLabel = 'صفحة';
+
+    protected static ?string $pluralModelLabel = 'الصفحات';
+
     protected static ?string $recordTitleAttribute = 'title';
 
     public static function form(Schema $schema): Schema

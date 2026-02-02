@@ -20,33 +20,40 @@ final class SectionsTable
         return $table
             ->columns([
                 TextColumn::make('title')
+                    ->label('العنوان')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('location')
+                    ->label('الموقع')
                     ->badge()
                     ->sortable(),
                 TextColumn::make('products_count')
                     ->counts('products')
-                    ->label('Products'),
+                    ->label('عدد المنتجات'),
                 TextColumn::make('sort_order')
+                    ->label('ترتيب العرض')
                     ->numeric()
                     ->sortable(),
                 IconColumn::make('is_active')
+                    ->label('نشط')
                     ->boolean()
                     ->sortable(),
                 TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Filter::make('is_active')
+                    ->label('نشط')
                     ->toggle(),
                 SelectFilter::make('location')
+                    ->label('الموقع')
                     ->options([
-                        'home' => 'Home',
-                        'menu' => 'Menu',
-                        'featured' => 'Featured',
+                        'home' => 'الرئيسية',
+                        'menu' => 'القائمة',
+                        'featured' => 'مميز',
                     ]),
             ])
             ->recordActions([

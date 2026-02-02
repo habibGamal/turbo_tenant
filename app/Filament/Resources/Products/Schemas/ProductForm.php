@@ -21,21 +21,25 @@ final class ProductForm
         return $schema
             ->columns(3)
             ->components([
-                Section::make('Basic Information')
+                Section::make('معلومات أساسية')
                     ->schema([
                         TextInput::make('name')
+                            ->label('الاسم')
                             ->required()
                             ->maxLength(255),
                         Select::make('category_id')
+                            ->label('الفئة')
                             ->relationship('category', 'name')
                             ->required()
                             ->searchable()
                             ->preload(),
                         Textarea::make('description')
+                            ->label('الوصف')
                             ->rows(3)
                             ->maxLength(65535)
                             ->columnSpanFull(),
                         FileUpload::make('image')
+                            ->label('الصورة')
                             ->image()
                             ->imageEditor()
                             ->directory('products')
@@ -44,23 +48,27 @@ final class ProductForm
                     ->columns(2)
                     ->columnSpan(2),
 
-                Section::make('Status')
+                Section::make('الحالة')
                     ->schema([
                         Toggle::make('is_active')
+                            ->label('نشط')
                             ->default(true),
                         Toggle::make('sell_by_weight')
+                            ->label('بيع بالوزن')
                             ->default(false)
                             ->reactive(),
                     ])
                     ->columnSpan(1),
 
-                Section::make('Pricing')
+                Section::make('التسعير')
                     ->schema([
                         TextInput::make('base_price')
+                            ->label('السعر الأساسي')
                             ->numeric()
                             ->prefix('$')
                             ->maxValue(99999.99),
                         TextInput::make('price_after_discount')
+                            ->label('السعر بعد الخصم')
                             ->numeric()
                             ->prefix('$')
                             ->maxValue(99999.99),
@@ -68,13 +76,15 @@ final class ProductForm
                     ->columns(2)
                     ->columnSpan(2),
 
-                Section::make('Additional Options')
+                Section::make('خيارات إضافية')
                     ->schema([
                         Select::make('extra_option_id')
+                            ->label('الخيار الإضافي')
                             ->relationship('extraOption', 'name')
                             ->searchable()
                             ->preload(),
                         Select::make('weight_options_id')
+                            ->label('خيارات الوزن')
                             ->relationship('weightOption', 'name')
                             ->searchable()
                             ->preload()
@@ -83,12 +93,13 @@ final class ProductForm
                     ->columns(2)
                     ->columnSpan(2),
 
-                Section::make('POS Mappings')
+                Section::make('ربط POS')
                     ->schema([
                         Repeater::make('posMappings')
                             ->relationship()
                             ->schema([
                                 Select::make('branch_id')
+                                    ->label('الفرع')
                                     ->relationship('branch', 'name')
                                     ->searchable()
                                     ->preload(),
@@ -96,21 +107,21 @@ final class ProductForm
                                     ->relationship('variant', 'name')
                                     ->searchable()
                                     ->preload()
-                                    ->label('Product Variant (Optional)'),
+                                    ->label('تنويع المنتج (اختياري)'),
                                 Select::make('extra_option_item_id')
                                     ->relationship('extraOptionItem', 'name')
                                     ->searchable()
                                     ->preload()
-                                    ->label('Extra Option Item (Optional)'),
+                                    ->label('خيار إضافي (اختياري)'),
                                 PosItemSelect::make('pos_item_id'),
                             ])
                             ->columns(4)
                             ->defaultItems(0)
                             ->collapsible()
-                            ->addActionLabel('Add POS Mapping'),
+                            ->addActionLabel('إضافة ربط POS'),
                     ])
                     ->columnSpanFull()
-                    ->description('Map products to POS system items by branch, variant, and extra options'),
+                    ->description('ربط المنتجات مع عناصر نظام POS حسب الفرع والتنويع والخيارات الإضافية'),
             ]);
     }
 }

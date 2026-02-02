@@ -25,35 +25,46 @@ final class ProductsTable
         return $table
             ->columns([
                 ImageColumn::make('image')
+                    ->label('الصورة')
                     ->square(),
                 TextColumn::make('name')
+                    ->label('الاسم')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('category.name')
+                    ->label('الفئة')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('base_price')
+                    ->label('السعر الأساسي')
                     ->money('USD')
                     ->sortable(),
                 TextColumn::make('price_after_discount')
+                    ->label('السعر بعد الخصم')
                     ->money('USD')
                     ->sortable(),
                 IconColumn::make('sell_by_weight')
+                    ->label('بيع بالوزن')
                     ->boolean(),
                 IconColumn::make('is_active')
+                    ->label('نشط')
                     ->boolean()
                     ->sortable(),
                 TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Filter::make('is_active')
+                    ->label('نشط')
                     ->toggle(),
                 Filter::make('sell_by_weight')
+                    ->label('بيع بالوزن')
                     ->toggle(),
                 SelectFilter::make('category')
+                    ->label('الفئة')
                     ->relationship('category', 'name')
                     ->searchable()
                     ->preload(),
@@ -64,40 +75,40 @@ final class ProductsTable
             ->toolbarActions([
                 BulkActionGroup::make([
                     BulkAction::make('activate')
-                        ->label('Activate Selected')
+                        ->label('تفعيل المحدد')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->requiresConfirmation()
                         ->action(fn (Collection $records) => $records->each->update(['is_active' => true]))
                         ->deselectRecordsAfterCompletion(),
                     BulkAction::make('deactivate')
-                        ->label('Deactivate Selected')
+                        ->label('إلغاء تفعيل المحدد')
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
                         ->requiresConfirmation()
                         ->action(fn (Collection $records) => $records->each->update(['is_active' => false]))
                         ->deselectRecordsAfterCompletion(),
                     BulkAction::make('enable_sell_by_weight')
-                        ->label('Enable Sell by Weight')
+                        ->label('تفعيل البيع بالوزن')
                         ->icon('heroicon-o-scale')
                         ->color('info')
                         ->requiresConfirmation()
                         ->action(fn (Collection $records) => $records->each->update(['sell_by_weight' => true]))
                         ->deselectRecordsAfterCompletion(),
                     BulkAction::make('disable_sell_by_weight')
-                        ->label('Disable Sell by Weight')
+                        ->label('إلغاء البيع بالوزن')
                         ->icon('heroicon-o-scale')
                         ->color('gray')
                         ->requiresConfirmation()
                         ->action(fn (Collection $records) => $records->each->update(['sell_by_weight' => false]))
                         ->deselectRecordsAfterCompletion(),
                     BulkAction::make('change_category')
-                        ->label('Change Category')
+                        ->label('تغيير الفئة')
                         ->icon('heroicon-o-tag')
                         ->color('warning')
                         ->form([
                             Select::make('category_id')
-                                ->label('New Category')
+                                ->label('الفئة الجديدة')
                                 ->relationship('category', 'name')
                                 ->searchable()
                                 ->preload()
@@ -108,12 +119,12 @@ final class ProductsTable
                         })
                         ->deselectRecordsAfterCompletion(),
                     BulkAction::make('apply_extra_option')
-                        ->label('Apply Extra Option')
+                        ->label('تطبيق خيار إضافي')
                         ->icon('heroicon-o-plus-circle')
                         ->color('info')
                         ->form([
                             Select::make('extra_option_id')
-                                ->label('Extra Option')
+                                ->label('الخيار الإضافي')
                                 ->relationship('extraOption', 'name')
                                 ->searchable()
                                 ->preload()
@@ -124,18 +135,18 @@ final class ProductsTable
                         })
                         ->deselectRecordsAfterCompletion(),
                     BulkAction::make('apply_weight_option')
-                        ->label('Apply Weight Option')
+                        ->label('تطبيق خيار الوزن')
                         ->icon('heroicon-o-calculator')
                         ->color('success')
                         ->form([
                             Select::make('weight_options_id')
-                                ->label('Weight Option')
+                                ->label('خيار الوزن')
                                 ->relationship('weightOption', 'name')
                                 ->searchable()
                                 ->preload()
                                 ->required(),
                             Toggle::make('enable_sell_by_weight')
-                                ->label('Also enable "Sell by Weight"')
+                                ->label('تفعيل "البيع بالوزن" أيضاً')
                                 ->default(true),
                         ])
                         ->action(function (Collection $records, array $data): void {

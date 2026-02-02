@@ -22,6 +22,12 @@ final class ExtraOptionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = 'الخيارات الإضافية';
+
+    protected static ?string $modelLabel = 'خيار إضافي';
+
+    protected static ?string $pluralModelLabel = 'الخيارات الإضافية';
+
     public static function form(Schema $schema): Schema
     {
         return ExtraOptionForm::configure($schema);

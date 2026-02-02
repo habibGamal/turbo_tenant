@@ -23,41 +23,41 @@ final class GovernoratesTable
                     ->sortable(),
 
                 TextColumn::make('name')
-                    ->label('Name (English)')
+                    ->label('الاسم (إنجليزي)')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('name_ar')
-                    ->label('Name (Arabic)')
+                    ->label('الاسم (عربي)')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('areas_count')
-                    ->label('Areas')
+                    ->label('عدد المناطق')
                     ->counts('areas')
                     ->sortable(),
 
                 TextColumn::make('sort_order')
-                    ->label('Sort Order')
+                    ->label('ترتيب العرض')
                     ->sortable(),
 
                 IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label('نشط')
                     ->boolean()
                     ->sortable(),
 
                 TextColumn::make('created_at')
-                    ->label('Created At')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 TernaryFilter::make('is_active')
-                    ->label('Active')
-                    ->placeholder('All')
-                    ->trueLabel('Active only')
-                    ->falseLabel('Inactive only'),
+                    ->label('نشط')
+                    ->placeholder('الكل')
+                    ->trueLabel('نشط فقط')
+                    ->falseLabel('غير نشط فقط'),
             ])
             ->actions([
                 EditAction::make(),

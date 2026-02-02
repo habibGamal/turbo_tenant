@@ -22,6 +22,12 @@ final class CategoryResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = 'الفئات';
+
+    protected static ?string $modelLabel = 'فئة';
+
+    protected static ?string $pluralModelLabel = 'الفئات';
+
     public static function form(Schema $schema): Schema
     {
         return CategoryForm::configure($schema);

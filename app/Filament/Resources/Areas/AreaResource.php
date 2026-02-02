@@ -22,6 +22,12 @@ final class AreaResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::AcademicCap;
 
+    protected static ?string $navigationLabel = 'المناطق';
+
+    protected static ?string $modelLabel = 'منطقة';
+
+    protected static ?string $pluralModelLabel = 'المناطق';
+
     // protected static ?string $navigationGroup = 'Locations';
 
     protected static ?int $navigationSort = 2;

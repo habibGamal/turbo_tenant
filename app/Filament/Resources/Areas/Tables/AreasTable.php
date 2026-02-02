@@ -24,68 +24,68 @@ final class AreasTable
                     ->sortable(),
 
                 TextColumn::make('name')
-                    ->label('Name (English)')
+                    ->label('الاسم (إنجليزي)')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('name_ar')
-                    ->label('Name (Arabic)')
+                    ->label('الاسم (عربي)')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('governorate.name')
-                    ->label('Governorate')
+                    ->label('المحافظة')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('branch.name')
-                    ->label('Branch')
+                    ->label('الفرع')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('shipping_cost')
-                    ->label('Shipping Cost')
+                    ->label('تكلفة الشحن')
                     ->money('EGP')
                     ->sortable(),
 
                 TextColumn::make('addresses_count')
-                    ->label('Addresses')
+                    ->label('عدد العناوين')
                     ->counts('addresses')
                     ->sortable(),
 
                 TextColumn::make('sort_order')
-                    ->label('Sort Order')
+                    ->label('ترتيب العرض')
                     ->sortable(),
 
                 IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label('نشط')
                     ->boolean()
                     ->sortable(),
 
                 TextColumn::make('created_at')
-                    ->label('Created At')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('governorate_id')
-                    ->label('Governorate')
+                    ->label('المحافظة')
                     ->relationship('governorate', 'name')
                     ->searchable()
                     ->preload(),
 
                 SelectFilter::make('branch_id')
-                    ->label('Branch')
+                    ->label('الفرع')
                     ->relationship('branch', 'name')
                     ->searchable()
                     ->preload(),
 
                 TernaryFilter::make('is_active')
-                    ->label('Active')
-                    ->placeholder('All')
-                    ->trueLabel('Active only')
-                    ->falseLabel('Inactive only'),
+                    ->label('نشط')
+                    ->placeholder('الكل')
+                    ->trueLabel('نشط فقط')
+                    ->falseLabel('غير نشط فقط'),
             ])
             ->actions([
                 EditAction::make(),

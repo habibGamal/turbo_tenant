@@ -17,14 +17,17 @@ final class UserForm
         return $schema
             ->components([
                 TextInput::make('name')
+                    ->label('الاسم')
                     ->maxLength(255)
                     ->required(),
                 TextInput::make('email')
+                    ->label('بريد إلكتروني')
                     ->maxLength(255)
                     ->unique()
                     ->email()
                     ->required(),
                 TextInput::make('password')
+                    ->label('كلمة المرور')
                     ->password()
                     ->required(fn ($livewire): bool => $livewire instanceof CreateUser)
                     ->revealable(filament()->arePasswordsRevealable())

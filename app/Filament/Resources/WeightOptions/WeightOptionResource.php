@@ -22,6 +22,12 @@ final class WeightOptionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = 'خيارات الوزن';
+
+    protected static ?string $modelLabel = 'خيار وزن';
+
+    protected static ?string $pluralModelLabel = 'خيارات الوزن';
+
     public static function form(Schema $schema): Schema
     {
         return WeightOptionForm::configure($schema);

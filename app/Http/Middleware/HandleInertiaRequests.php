@@ -13,18 +13,17 @@ use Inertia\Middleware;
 
 final class HandleInertiaRequests extends Middleware
 {
-    public function __construct(
-        private readonly SettingService $settingService,
-        private readonly CartService $cartService,
-    ) {
-    }
-
     /**
      * The root template that is loaded on the first page visit.
      *
      * @var string
      */
     protected $rootView = 'app';
+
+    public function __construct(
+        private readonly SettingService $settingService,
+        private readonly CartService $cartService,
+    ) {}
 
     /**
      * Determine the current asset version.
@@ -41,7 +40,7 @@ final class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        if (tenant())
+        if (tenant()) {
             return [
                 ...parent::share($request),
                 'auth' => [
@@ -60,17 +59,19 @@ final class HandleInertiaRequests extends Middleware
                     'social_instagram' => $this->settingService->get(SettingKey::SOCIAL_INSTAGRAM),
                     'social_twitter' => $this->settingService->get(SettingKey::SOCIAL_TWITTER),
                     'cod_fee' => (float) $this->settingService->get(SettingKey::COD_FEE, 0),
+                    'online_payments_enabled' => $this->settingService->get(SettingKey::ONLINE_PAYMENTS_ENABLED, 'true') === 'true',
                     'facebook_app_id' => $this->settingService->get(SettingKey::FACEBOOK_APP_ID),
                     'product_show_cards' => json_decode($this->settingService->get(SettingKey::PRODUCT_SHOW_CARDS, '[]'), true),
                     'pages' => \App\Models\Page::where('is_active', true)->select('title', 'title_ar', 'slug')->get(),
                 ],
             ];
-        else
-            return [
-                ...parent::share($request),
-                'auth' => [
-                    'user' => $request->user(),
-                ],
-            ];
+        }
+
+        return [
+            ...parent::share($request),
+            'auth' => [
+                'user' => $request->user(),
+            ],
+        ];
     }
 }

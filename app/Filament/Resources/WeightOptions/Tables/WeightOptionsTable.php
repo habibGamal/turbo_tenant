@@ -17,27 +17,31 @@ final class WeightOptionsTable
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->label('الاسم')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('unit')
+                    ->label('الوحدة')
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'kg' => 'Kilogram (kg)',
-                        'g' => 'Gram (g)',
-                        'lb' => 'Pound (lb)',
+                        'kg' => 'كيلوجرام (kg)',
+                        'g' => 'جرام (g)',
+                        'lb' => 'رطل (lb)',
                         default => $state,
                     }),
                 TextColumn::make('values_count')
                     ->counts('values')
-                    ->label('Values'),
+                    ->label('عدد القيم'),
                 TextColumn::make('products_count')
                     ->counts('products')
-                    ->label('Products'),
+                    ->label('عدد المنتجات'),
                 TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
+                    ->label('تاريخ التحديث')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

@@ -23,27 +23,27 @@ final class GovernorateForm
 
     private static function getMainSection(): Component
     {
-        return Section::make('Governorate Information')
+        return Section::make('معلومات المحافظة')
             ->schema([
                 Grid::make(2)
                     ->schema([
                         TextInput::make('name')
-                            ->label('Name (English)')
+                            ->label('الاسم (إنجليزي)')
                             ->required()
                             ->maxLength(255),
 
                         TextInput::make('name_ar')
-                            ->label('Name (Arabic)')
+                            ->label('الاسم (عربي)')
                             ->maxLength(255),
 
                         TextInput::make('sort_order')
-                            ->label('Sort Order')
+                            ->label('ترتيب العرض')
                             ->numeric()
                             ->default(0)
                             ->required(),
 
                         Toggle::make('is_active')
-                            ->label('Active')
+                            ->label('نشط')
                             ->default(true)
                             ->required(),
                     ]),

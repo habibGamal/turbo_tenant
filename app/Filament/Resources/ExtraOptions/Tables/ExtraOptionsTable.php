@@ -20,28 +20,34 @@ final class ExtraOptionsTable
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->label('الاسم')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('description')
+                    ->label('الوصف')
                     ->limit(50)
                     ->searchable(),
                 TextColumn::make('items_count')
                     ->counts('items')
-                    ->label('Items'),
+                    ->label('عدد العناصر'),
                 IconColumn::make('is_active')
+                    ->label('نشط')
                     ->boolean()
                     ->sortable(),
                 TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
+                    ->label('تاريخ التحديث')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Filter::make('is_active')
+                    ->label('نشط')
                     ->toggle(),
             ])
             ->recordActions([

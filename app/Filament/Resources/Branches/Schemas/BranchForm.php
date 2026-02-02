@@ -19,14 +19,17 @@ final class BranchForm
                 Section::make()
                     ->schema([
                         TextInput::make('name')
+                            ->label('الاسم')
                             ->required()
                             ->maxLength(255),
                         Textarea::make('link')
+                            ->label('الرابط')
                             ->required()
                             ->rows(3)
                             ->maxLength(65535)
-                            ->helperText('Enter the branch link or URL'),
+                            ->helperText('أدخل رابط الفرع أو عنوان URL'),
                         Toggle::make('is_active')
+                            ->label('نشط')
                             ->default(true)
                             ->required(),
                     ])

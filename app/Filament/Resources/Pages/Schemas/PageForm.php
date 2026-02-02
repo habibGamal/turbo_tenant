@@ -16,29 +16,33 @@ class PageForm
     {
         return $schema
             ->components([
-                Tabs::make('Content')
+                Tabs::make('المحتوى')
                     ->tabs([
-                        Tab::make('English')
+                        Tab::make('إنجليزي')
                             ->schema([
                                 TextInput::make('title')
+                                    ->label('العنوان')
                                     ->required()
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(fn(string $operation, $state, $set) => $operation === 'create' ? $set('slug', Str::slug($state)) : null),
                                 RichEditor::make('content')
+                                    ->label('المحتوى')
                                     ->required(),
                             ]),
-                        Tab::make('Arabic')
+                        Tab::make('عربي')
                             ->schema([
                                 TextInput::make('title_ar')
-                                    ->label('Title (Arabic)'),
+                                    ->label('العنوان (عربي)'),
                                 RichEditor::make('content_ar')
-                                    ->label('Content (Arabic)'),
+                                    ->label('المحتوى (عربي)'),
                             ]),
                     ])->columnSpanFull(),
                 TextInput::make('slug')
+                    ->label('رابط مختصر')
                     ->required()
                     ->unique(ignoreRecord: true),
                 Toggle::make('is_active')
+                    ->label('نشط')
                     ->required()
                     ->default(true),
             ]);

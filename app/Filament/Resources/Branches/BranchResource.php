@@ -22,6 +22,12 @@ final class BranchResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingStorefront;
 
+    protected static ?string $navigationLabel = 'الفروع';
+
+    protected static ?string $modelLabel = 'فرع';
+
+    protected static ?string $pluralModelLabel = 'الفروع';
+
     public static function form(Schema $schema): Schema
     {
         return BranchForm::configure($schema);

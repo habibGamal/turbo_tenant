@@ -20,21 +20,26 @@ final class CategoryForm
                 Section::make()
                     ->schema([
                         TextInput::make('name')
+                            ->label('الاسم')
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
                         Textarea::make('description')
+                            ->label('الوصف')
                             ->rows(3)
                             ->maxLength(65535),
                         FileUpload::make('image')
+                            ->label('الصورة')
                             ->image()
                             ->imageEditor()
                             ->directory('categories'),
                         TextInput::make('sort_order')
+                            ->label('ترتيب العرض')
                             ->numeric()
                             ->default(0)
                             ->required(),
                         Toggle::make('is_active')
+                            ->label('نشط')
                             ->default(true)
                             ->required(),
                     ])

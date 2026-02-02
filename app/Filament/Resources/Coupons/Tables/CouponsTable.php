@@ -22,16 +22,19 @@ final class CouponsTable
         return $table
             ->columns([
                 TextColumn::make('code')
+                    ->label('الرمز')
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Bold)
                     ->copyable()
-                    ->copyMessage('Code copied to clipboard'),
+                    ->copyMessage('تم نسخ الرمز'),
                 TextColumn::make('name')
+                    ->label('الاسم')
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('type')
+                    ->label('النوع')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'percentage' => 'success',
@@ -39,53 +42,58 @@ final class CouponsTable
                     })
                     ->formatStateUsing(fn(string $state): string => ucfirst($state)),
                 TextColumn::make('value')
+                    ->label('القيمة')
                     ->sortable()
                     ->formatStateUsing(fn(string $state, $record): string =>
                         $record->type === 'percentage' ? "{$state}%" : "{$state} EGP"
                     ),
                 IconColumn::make('is_active')
+                    ->label('نشط')
                     ->boolean()
                     ->sortable(),
                 TextColumn::make('expiry_date')
+                    ->label('تاريخ الانتهاء')
                     ->dateTime()
                     ->sortable()
                     ->color(fn($state) => now()->gt($state) ? 'danger' : 'success'),
                 TextColumn::make('usage_count')
-                    ->label('Used')
+                    ->label('عدد مرات الاستخدام')
                     ->sortable()
                     ->formatStateUsing(fn(string $state, $record): string =>
                         $record->max_usage ? "{$state} / {$record->max_usage}" : $state
                     ),
                 TextColumn::make('total_consumed')
-                    ->label('Total Discount')
+                    ->label('إجمالي الخصم')
                     ->sortable()
                     ->money('EGP')
                     ->toggleable(),
                 TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 TernaryFilter::make('is_active')
-                    ->label('Active')
+                    ->label('نشط')
                     ->boolean()
-                    ->trueLabel('Active only')
-                    ->falseLabel('Inactive only')
+                    ->trueLabel('نشط فقط')
+                    ->falseLabel('غير نشط فقط')
                     ->native(false),
                 SelectFilter::make('type')
+                    ->label('النوع')
                     ->options([
-                        'percentage' => 'Percentage',
-                        'fixed' => 'Fixed Amount',
+                        'percentage' => 'نسبة مئوية',
+                        'fixed' => 'مبلغ ثابت',
                     ]),
                 TernaryFilter::make('expired')
-                    ->label('Status')
+                    ->label('الحالة')
                     ->queries(
                         true: fn($query) => $query->where('expiry_date', '<', now()),
                         false: fn($query) => $query->where('expiry_date', '>=', now()),
                     )
-                    ->trueLabel('Expired')
-                    ->falseLabel('Active'),
+                    ->trueLabel('منتهي')
+                    ->falseLabel('نشط'),
             ])
             ->actions([
                 EditAction::make(),

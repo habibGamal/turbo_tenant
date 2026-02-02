@@ -46,6 +46,27 @@ final class TenantResource extends Resource
                             ->disabled(fn (string $operation): bool => $operation === 'edit'),
                     ]),
 
+                Section::make('Admin Account')
+                    ->schema([
+                        TextInput::make('admin_name')
+                            ->label('Admin Name')
+                            ->required()
+                            ->maxLength(255),
+                        TextInput::make('admin_email')
+                            ->label('Admin Email')
+                            ->required()
+                            ->email()
+                            ->maxLength(255),
+                        TextInput::make('admin_password')
+                            ->label('Admin Password')
+                            ->password()
+                            ->required(fn (string $operation): bool => $operation === 'create')
+                            ->dehydrated(fn (?string $state): bool => filled($state))
+                            ->helperText(fn (string $operation): ?string => $operation === 'edit' ? 'Leave blank to keep the current password.' : null)
+                            ->minLength(8),
+                    ])
+                    ->columns(2),
+
                 Section::make('Domains')
                     ->schema([
                         Repeater::make('domains')
@@ -68,7 +89,7 @@ final class TenantResource extends Resource
     {
         return $table
             ->headerActions([
-               CreateAction::make(),
+                CreateAction::make(),
             ])
             ->columns([
                 TextColumn::make('id')
