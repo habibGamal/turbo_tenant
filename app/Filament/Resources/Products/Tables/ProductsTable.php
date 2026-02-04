@@ -9,7 +9,9 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -156,6 +158,43 @@ final class ProductsTable
                             }
                             $records->each->update($updateData);
                         })
+                        ->deselectRecordsAfterCompletion(),
+                    BulkAction::make('quickAddVariants')
+                        ->label('إضافة متغيرات سريعة')
+                        ->icon('heroicon-o-bolt')
+                        ->color('info')
+                        ->form([
+                            TagsInput::make('variant_names')
+                                ->label('أسماء المتغيرات')
+                                ->placeholder('أدخل اسم المتغير واضغط Enter')
+                                ->helperText('أضف أسماء المتغيرات بسرعة. اضغط Enter بعد كل اسم. سيتم إنشاء المتغيرات بإعدادات افتراضية.')
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $variantNames = $data['variant_names'];
+                            $totalVariantsCreated = 0;
+
+                            foreach ($records as $product) {
+                                $maxSortOrder = $product->variants()->max('sort_order') ?? 0;
+
+                                foreach ($variantNames as $index => $name) {
+                                    $product->variants()->create([
+                                        'name' => $name,
+                                        'is_available' => true,
+                                        'sort_order' => $maxSortOrder + $index + 1,
+                                    ]);
+                                    $totalVariantsCreated++;
+                                }
+                            }
+
+                            Notification::make()
+                                ->title('تم إنشاء المتغيرات بنجاح')
+                                ->body("{$totalVariantsCreated} متغير(ات) تمت إضافتها إلى {$records->count()} منتج(ات).")
+                                ->success()
+                                ->send();
+                        })
+                        ->successNotificationTitle('تم إنشاء المتغيرات')
+                        ->modalWidth('md')
                         ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
