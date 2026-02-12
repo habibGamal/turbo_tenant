@@ -76,7 +76,7 @@ export default function AddressForm({
                                 key={governorate.id}
                                 value={governorate.id.toString()}
                             >
-                                {governorate.name}
+                                {i18n.language === 'ar' ? governorate.name_ar : governorate.name}
                             </SelectItem>
                         ))}
                     </SelectContent>
@@ -104,7 +104,7 @@ export default function AddressForm({
                                 key={area.id}
                                 value={area.id.toString()}
                             >
-                                {area.name} ({t("deliveryFee")}:{" "}
+                                {i18n.language === 'ar' ? area.name_ar : area.name} ({t("deliveryFee")}:{" "}
                                 {area.shipping_cost.toFixed(2)}{" "}
                                 {t("currency")})
                             </SelectItem>
