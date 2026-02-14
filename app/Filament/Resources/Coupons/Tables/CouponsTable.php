@@ -36,16 +36,15 @@ final class CouponsTable
                 TextColumn::make('type')
                     ->label('النوع')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'percentage' => 'success',
                         'fixed' => 'info',
                     })
-                    ->formatStateUsing(fn(string $state): string => ucfirst($state)),
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state)),
                 TextColumn::make('value')
                     ->label('القيمة')
                     ->sortable()
-                    ->formatStateUsing(fn(string $state, $record): string =>
-                        $record->type === 'percentage' ? "{$state}%" : "{$state} EGP"
+                    ->formatStateUsing(fn (string $state, $record): string => $record->type === 'percentage' ? "{$state}%" : "{$state} EGP"
                     ),
                 IconColumn::make('is_active')
                     ->label('نشط')
@@ -55,12 +54,11 @@ final class CouponsTable
                     ->label('تاريخ الانتهاء')
                     ->dateTime()
                     ->sortable()
-                    ->color(fn($state) => now()->gt($state) ? 'danger' : 'success'),
+                    ->color(fn ($state) => now()->gt($state) ? 'danger' : 'success'),
                 TextColumn::make('usage_count')
                     ->label('عدد مرات الاستخدام')
                     ->sortable()
-                    ->formatStateUsing(fn(string $state, $record): string =>
-                        $record->max_usage ? "{$state} / {$record->max_usage}" : $state
+                    ->formatStateUsing(fn (string $state, $record): string => $record->max_usage ? "{$state} / {$record->max_usage}" : $state
                     ),
                 TextColumn::make('total_consumed')
                     ->label('إجمالي الخصم')
@@ -89,8 +87,8 @@ final class CouponsTable
                 TernaryFilter::make('expired')
                     ->label('الحالة')
                     ->queries(
-                        true: fn($query) => $query->where('expiry_date', '<', now()),
-                        false: fn($query) => $query->where('expiry_date', '>=', now()),
+                        true: fn ($query) => $query->where('expiry_date', '<', now()),
+                        false: fn ($query) => $query->where('expiry_date', '>=', now()),
                     )
                     ->trueLabel('منتهي')
                     ->falseLabel('نشط'),

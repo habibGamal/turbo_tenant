@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\Product;
-use App\Models\Tenant;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,14 +15,14 @@ final class HomeController extends Controller
         // Get categories with their products
         $categories = Category::query()
             ->orderBy('name')
-            ->get(['id', 'name', 'description','image']);
+            ->get(['id', 'name', 'description', 'image']);
 
         $sections = \App\Models\Section::query()
             ->with([
                 'products' => function ($query) {
                     $query->where('is_active', true)
                         ->with('category:id,name');
-                }
+                },
             ])
             ->where('is_active', true)
             ->orderBy('sort_order')

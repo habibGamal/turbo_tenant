@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
-class SearchController extends Controller
+final class SearchController extends Controller
 {
     public function suggestions(Request $request)
     {

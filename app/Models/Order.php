@@ -36,6 +36,7 @@ final class Order extends Model
         'total',
         'note',
         'user_id',
+        'guest_user_id',
         'coupon_id',
         'branch_id',
         'address_id',
@@ -46,6 +47,11 @@ final class Order extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function guestUser(): BelongsTo
+    {
+        return $this->belongsTo(GuestUser::class);
     }
 
     public function coupon(): BelongsTo
@@ -61,6 +67,38 @@ final class Order extends Model
     public function address(): BelongsTo
     {
         return $this->belongsTo(Address::class);
+    }
+
+    /**
+     * Check if this is a guest order
+     */
+    public function isGuestOrder(): bool
+    {
+        return $this->guest_user_id !== null;
+    }
+
+    /**
+     * Get the customer name (from User or GuestUser)
+     */
+    public function getCustomerName(): string
+    {
+        return $this->user?->name ?? $this->guestUser?->name ?? 'Unknown';
+    }
+
+    /**
+     * Get the customer phone (from User or GuestUser)
+     */
+    public function getCustomerPhone(): ?string
+    {
+        return $this->user?->phone ?? $this->guestUser?->phone;
+    }
+
+    /**
+     * Get the customer email (from User or GuestUser)
+     */
+    public function getCustomerEmail(): ?string
+    {
+        return $this->user?->email ?? $this->guestUser?->email;
     }
 
     public function items(): HasMany

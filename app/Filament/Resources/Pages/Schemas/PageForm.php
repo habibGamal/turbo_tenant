@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Pages\Schemas;
 
 use Filament\Forms\Components\RichEditor;
@@ -10,7 +12,7 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 
-class PageForm
+final class PageForm
 {
     public static function configure(Schema $schema): Schema
     {
@@ -24,7 +26,7 @@ class PageForm
                                     ->label('العنوان')
                                     ->required()
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(fn(string $operation, $state, $set) => $operation === 'create' ? $set('slug', Str::slug($state)) : null),
+                                    ->afterStateUpdated(fn (string $operation, $state, $set) => $operation === 'create' ? $set('slug', Str::slug($state)) : null),
                                 RichEditor::make('content')
                                     ->label('المحتوى')
                                     ->required(),

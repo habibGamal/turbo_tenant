@@ -95,7 +95,7 @@ final class VariantsRelationManager extends RelationManager
 
                         Notification::make()
                             ->title('Variants created successfully')
-                            ->body(count($variantNames) . ' variant(s) added.')
+                            ->body(count($variantNames).' variant(s) added.')
                             ->success()
                             ->send();
                     })

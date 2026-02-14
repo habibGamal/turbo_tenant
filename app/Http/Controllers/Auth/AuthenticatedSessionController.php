@@ -35,7 +35,7 @@ final class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
-        logger()->info('LoginRequest',$request->all());    
+        logger()->info('LoginRequest', $request->all());
         // Sync guest cart to authenticated user
         $cartService->syncGuestCartToUser($request->user());
 
@@ -45,7 +45,7 @@ final class AuthenticatedSessionController extends Controller
             // ]);
             logger()->info($request->expo_token);
             // if ($validator->passes()) {
-                $request->user()->update(['expo_token' => $request->expo_token]);
+            $request->user()->update(['expo_token' => $request->expo_token]);
             // }
         }
 

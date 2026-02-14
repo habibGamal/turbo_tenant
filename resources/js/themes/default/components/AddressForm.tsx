@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Loader2 } from "lucide-react";
 import { Governorate } from "@/types";
 
@@ -42,6 +43,12 @@ export default function AddressForm({
         (gov) => gov.id.toString() === data.governorate_id
     );
 
+    const sortedGovernorates = [...governorates].sort((a, b) => {
+        const nameA = (i18n.language === 'ar' ? a.name_ar : a.name) || '';
+        const nameB = (i18n.language === 'ar' ? b.name_ar : b.name) || '';
+        return nameA.localeCompare(nameB);
+    });
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post(route("addresses.store"), {
@@ -62,8 +69,17 @@ export default function AddressForm({
                 <Select
                     value={data.governorate_id}
                     onValueChange={(value) => {
-                        setData("governorate_id", value);
-                        setData("area_id", ""); // Reset area when governorate changes
+                        // Auto-select first area when governorate changes
+                        const selectedGov = governorates.find(
+                            (gov) => gov.id.toString() === value
+                        );
+                        const firstAreaId = selectedGov?.areas?.[0]?.id.toString() || "";
+
+                        setData((prevData) => ({
+                            ...prevData,
+                            governorate_id: value,
+                            area_id: firstAreaId,
+                        }));
                     }}
                     dir={isRTL ? "rtl" : "ltr"}
                 >
@@ -71,7 +87,7 @@ export default function AddressForm({
                         <SelectValue placeholder={t("selectGovernorate")} />
                     </SelectTrigger>
                     <SelectContent>
-                        {governorates.map((governorate) => (
+                        {sortedGovernorates.map((governorate) => (
                             <SelectItem
                                 key={governorate.id}
                                 value={governorate.id.toString()}
@@ -81,8 +97,8 @@ export default function AddressForm({
                         ))}
                     </SelectContent>
                 </Select>
-                {errors.area_id && (
-                    <p className="text-sm text-destructive">{errors.area_id}</p>
+                {errors.governorate_id && (
+                    <p className="text-sm text-destructive">{errors.governorate_id}</p>
                 )}
             </div>
 
@@ -90,9 +106,9 @@ export default function AddressForm({
             <div className="space-y-2">
                 <Label htmlFor="area">{t("area")}</Label>
                 <Select
+                    key={data.governorate_id}
                     value={data.area_id}
                     onValueChange={(value) => setData("area_id", value)}
-                    disabled={!selectedGovernorate}
                     dir={isRTL ? "rtl" : "ltr"}
                 >
                     <SelectTrigger id="area">
@@ -117,17 +133,19 @@ export default function AddressForm({
             </div>
 
             {/* Phone Number */}
-            <div className="space-y-2">
-                <Label htmlFor="phone_number">{t("phoneNumber")}</Label>
-                <Input
+            <div className="space-y-2" >
+                <Label dir="rtl" htmlFor="phone_number">{t("phoneNumber")}</Label>
+                <PhoneInput
                     id="phone_number"
-                    type="tel"
                     value={data.phone_number}
-                    onChange={(e) => setData("phone_number", e.target.value)}
+                    onChange={(value) => setData("phone_number", value || "")}
+                    defaultCountry="EG"
+                    countries={['EG']}
                     placeholder={t("phoneNumberPlaceholder")}
+                    dir="ltr"
                 />
                 {errors.phone_number && (
-                    <p className="text-sm text-destructive">
+                    <p dir={i18n.dir()}  className="text-sm text-destructive">
                         {errors.phone_number}
                     </p>
                 )}

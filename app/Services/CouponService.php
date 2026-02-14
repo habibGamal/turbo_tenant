@@ -8,7 +8,6 @@ use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 
 final class CouponService
 {
@@ -25,7 +24,7 @@ final class CouponService
         ?int $governorateId = null
     ): array {
         // Check if coupon is active
-        if (!$coupon->is_active) {
+        if (! $coupon->is_active) {
             return [
                 'valid' => false,
                 'message' => 'This coupon is not active',
@@ -71,7 +70,7 @@ final class CouponService
         }
 
         // Validate applicable products/categories
-        if (!$this->validateApplicableItems($coupon, $cartItems)) {
+        if (! $this->validateApplicableItems($coupon, $cartItems)) {
             return [
                 'valid' => false,
                 'message' => 'This coupon is not applicable to items in your cart',
@@ -79,7 +78,7 @@ final class CouponService
         }
 
         // Validate governorate/area restrictions
-        if (!$this->validateShippingLocation($coupon, $governorateId, $areaId)) {
+        if (! $this->validateShippingLocation($coupon, $governorateId, $areaId)) {
             return [
                 'valid' => false,
                 'message' => 'This coupon is not available for your delivery location',
@@ -87,7 +86,7 @@ final class CouponService
         }
 
         // Validate user restrictions
-        if (!$this->validateUserRestrictions($coupon, $user)) {
+        if (! $this->validateUserRestrictions($coupon, $user)) {
             return [
                 'valid' => false,
                 'message' => 'This coupon is not available for your account',
@@ -95,7 +94,7 @@ final class CouponService
         }
 
         // Validate time restrictions (days and hours)
-        if (!$this->validateTimeRestrictions($coupon)) {
+        if (! $this->validateTimeRestrictions($coupon)) {
             return [
                 'valid' => false,
                 'message' => 'This coupon is not valid at this time',
@@ -144,7 +143,7 @@ final class CouponService
         float $subTotal,
         float $discount
     ): float {
-        if (!$coupon) {
+        if (! $coupon) {
             return $originalShippingFee;
         }
 
@@ -181,7 +180,7 @@ final class CouponService
      */
     public function findByCode(string $code): ?Coupon
     {
-        return Coupon::where('code', strtoupper($code))
+        return Coupon::where('code', mb_strtoupper($code))
             ->where('is_active', true)
             ->first();
     }
@@ -210,6 +209,7 @@ final class CouponService
                     return true;
                 }
             }
+
             return false;
         }
 
@@ -225,6 +225,7 @@ final class CouponService
                     return true;
                 }
             }
+
             return false;
         }
 
@@ -268,16 +269,16 @@ final class CouponService
 
         // Check governorate restrictions
         $applicableGovernorates = $conditions['shipping']['applicable_governorates'] ?? [];
-        if (!empty($applicableGovernorates) && $governorateId !== null) {
-            if (!in_array($governorateId, $applicableGovernorates)) {
+        if (! empty($applicableGovernorates) && $governorateId !== null) {
+            if (! in_array($governorateId, $applicableGovernorates)) {
                 return false;
             }
         }
 
         // Check area restrictions
         $applicableAreas = $conditions['shipping']['applicable_areas'] ?? [];
-        if (!empty($applicableAreas) && $areaId !== null) {
-            if (!in_array($areaId, $applicableAreas)) {
+        if (! empty($applicableAreas) && $areaId !== null) {
+            if (! in_array($areaId, $applicableAreas)) {
                 return false;
             }
         }
@@ -307,7 +308,7 @@ final class CouponService
         // Check if coupon is for specific users
         if (isset($restrictions['user_specific']) && $restrictions['user_specific']) {
             $userIds = $restrictions['user_ids'] ?? [];
-            if (!empty($userIds) && !in_array($user->id, $userIds)) {
+            if (! empty($userIds) && ! in_array($user->id, $userIds)) {
                 return false;
             }
         }
@@ -325,8 +326,8 @@ final class CouponService
 
         // Check valid days (0 = Sunday, 6 = Saturday)
         $validDays = $conditions['valid_days'] ?? null;
-        if ($validDays !== null && is_array($validDays) && !empty($validDays)) {
-            if (!in_array($now->dayOfWeek, $validDays)) {
+        if ($validDays !== null && is_array($validDays) && ! empty($validDays)) {
+            if (! in_array($now->dayOfWeek, $validDays)) {
                 return false;
             }
         }

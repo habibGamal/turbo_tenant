@@ -14,8 +14,7 @@ final class KashierWebhookController extends Controller
 {
     public function __construct(
         private readonly PlaceOrderService $placeOrderService
-    ) {
-    }
+    ) {}
 
     /**
      * Handle Kashier webhook notification.
@@ -28,7 +27,7 @@ final class KashierWebhookController extends Controller
             // Get signature from header
             $signature = $request->header('X-Kashier-Signature');
 
-            if (!$signature) {
+            if (! $signature) {
                 Log::warning('Kashier webhook received without signature', [
                     'data' => $webhookData,
                 ]);
@@ -46,7 +45,7 @@ final class KashierWebhookController extends Controller
 
             $result = $this->placeOrderService->handleWebhook($webhookData, $signature);
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 Log::error('Kashier webhook processing failed', [
                     'error' => $result['error'] ?? 'Unknown error',
                     'data' => $webhookData,

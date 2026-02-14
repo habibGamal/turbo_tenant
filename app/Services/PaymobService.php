@@ -33,7 +33,7 @@ final class PaymobService implements PaymentGatewayInterface
         // Parse integration IDs from comma-separated string
         $integrationIdsString = $this->settingService->get(SettingKey::PAYMOB_INTEGRATION_IDS, '');
         $this->integrationIds = array_map(
-            fn($id) => (int) $id,
+            fn ($id) => (int) $id,
             array_filter(explode(',', $integrationIdsString))
         );
 
@@ -79,9 +79,9 @@ final class PaymobService implements PaymentGatewayInterface
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Token ' . $this->secretKey,
+                'Authorization' => 'Token '.$this->secretKey,
                 'Content-Type' => 'application/json',
-            ])->post($this->baseUrl . '/v1/intention/', $payload);
+            ])->post($this->baseUrl.'/v1/intention/', $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -124,7 +124,7 @@ final class PaymobService implements PaymentGatewayInterface
 
             return [
                 'success' => false,
-                'error' => 'Payment service error: ' . $e->getMessage(),
+                'error' => 'Payment service error: '.$e->getMessage(),
             ];
         }
     }
@@ -134,7 +134,7 @@ final class PaymobService implements PaymentGatewayInterface
      */
     public function buildCheckoutUrl(string $clientSecret): string
     {
-        return $this->baseUrl . '/unifiedcheckout/?' . http_build_query([
+        return $this->baseUrl.'/unifiedcheckout/?'.http_build_query([
             'publicKey' => $this->publicKey,
             'clientSecret' => $clientSecret,
         ]);
@@ -214,9 +214,9 @@ final class PaymobService implements PaymentGatewayInterface
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Token ' . $this->secretKey,
+                'Authorization' => 'Token '.$this->secretKey,
                 'Content-Type' => 'application/json',
-            ])->post($this->baseUrl . '/api/acceptance/void_refund/refund', $payload);
+            ])->post($this->baseUrl.'/api/acceptance/void_refund/refund', $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -251,7 +251,7 @@ final class PaymobService implements PaymentGatewayInterface
 
             return [
                 'success' => false,
-                'error' => 'Refund service error: ' . $e->getMessage(),
+                'error' => 'Refund service error: '.$e->getMessage(),
             ];
         }
     }
@@ -387,7 +387,7 @@ final class PaymobService implements PaymentGatewayInterface
             return 'failed';
         }
 
-        if ($success && !$pending) {
+        if ($success && ! $pending) {
             return 'completed';
         }
 
@@ -411,7 +411,7 @@ final class PaymobService implements PaymentGatewayInterface
      */
     private function generateMerchantOrderId(Order $order): string
     {
-        return 'ORD_' . $order->order_number . '_' . time();
+        return 'ORD_'.$order->order_number.'_'.time();
     }
 
     /**

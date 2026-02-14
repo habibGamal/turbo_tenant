@@ -7,12 +7,12 @@ namespace App\Providers;
 use App\Models\Order;
 use App\Observers\OrderObserver;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Features\SupportFileUploads\FilePreviewController;
 use Livewire\Livewire;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
-use Illuminate\Support\Facades\URL;
 
 final class AppServiceProvider extends ServiceProvider
 {
@@ -35,7 +35,7 @@ final class AppServiceProvider extends ServiceProvider
         Vite::prefetch(concurrency: 3);
 
         // Only configure tenant-specific Livewire routes if not on central domain
-        if (!$this->isCentralDomain()) {
+        if (! $this->isCentralDomain()) {
             Livewire::setUpdateRoute(function ($handle) {
                 return Route::post('/livewire/update', $handle)
                     ->middleware(['web', InitializeTenancyByDomain::class]);

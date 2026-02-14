@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Orders\Pages;
 
-use App\Filament\Resources\Orders\OrderResource;
-use Filament\Actions\EditAction;
-use Filament\Resources\Pages\ViewRecord;
-use Filament\Actions\Action;
 use App\Enums\OrderPosStatus;
+use App\Filament\Resources\Orders\OrderResource;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
+use Filament\Resources\Pages\ViewRecord;
 
 final class ViewOrder extends ViewRecord
 {
@@ -26,7 +26,7 @@ final class ViewOrder extends ViewRecord
                     $record->update(['pos_status' => OrderPosStatus::READY]);
                     Notification::make()->title('Order sent to POS')->success()->send();
                 })
-                ->visible(fn($record) => $record->pos_status === OrderPosStatus::FAILED),
+                ->visible(fn ($record) => $record->pos_status === OrderPosStatus::FAILED),
         ];
     }
 }

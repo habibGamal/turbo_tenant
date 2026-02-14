@@ -20,14 +20,35 @@ final class OrdersTable
                     ->searchable()
                     ->sortable()
                     ->copyable(),
-                TextColumn::make('user.name')
+                TextColumn::make('customer')
                     ->label('العميل')
-                    ->searchable()
-                    ->sortable(),
+                    ->state(fn ($record) => $record->getCustomerName())
+                    ->searchable(query: function ($query, $search) {
+                        return $query->where(function ($q) use ($search) {
+                            $q->whereHas('user', fn ($q) => $q->where('name', 'like', "%{$search}%"))
+                                ->orWhereHas('guestUser', fn ($q) => $q->where('name', 'like', "%{$search}%"));
+                        });
+                    })
+                    ->sortable(query: function ($query, $direction) {
+                        return $query->orderBy(
+                            \App\Models\User::select('name')
+                                ->whereColumn('users.id', 'orders.user_id')
+                                ->union(
+                                    \App\Models\GuestUser::select('name')
+                                        ->whereColumn('guest_users.id', 'orders.guest_user_id')
+                                ),
+                            $direction
+                        );
+                    }),
+                TextColumn::make('customer_type')
+                    ->label('نوع العميل')
+                    ->badge()
+                    ->state(fn ($record) => $record->isGuestOrder() ? 'زائر' : 'مسجل')
+                    ->color(fn ($record) => $record->isGuestOrder() ? 'warning' : 'success'),
                 TextColumn::make('type')
                     ->label('النوع')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'web_delivery' => 'success',
                         'web_takeaway' => 'info',
                         'pos' => 'warning',
@@ -36,7 +57,7 @@ final class OrdersTable
                 TextColumn::make('status')
                     ->label('الحالة')
                     ->badge()
-                    ->color(fn(string|\App\Enums\OrderStatus $state): string => match ($state instanceof \App\Enums\OrderStatus ? $state->value : $state) {
+                    ->color(fn (string|\App\Enums\OrderStatus $state): string => match ($state instanceof \App\Enums\OrderStatus ? $state->value : $state) {
                         'pending' => 'gray',
                         'processing' => 'warning',
                         'out_for_delivery' => 'primary',
@@ -58,6 +79,22 @@ final class OrdersTable
                     ->sortable(),
             ])
             ->filters([
+                SelectFilter::make('customer_type')
+                    ->label('نوع العميل')
+                    ->options([
+                        'guest' => 'زائر',
+                        'user' => 'مسجل',
+                    ])
+                    ->query(function ($query, $state) {
+                        if ($state['value'] === 'guest') {
+                            return $query->whereNotNull('guest_user_id');
+                        }
+                        if ($state['value'] === 'user') {
+                            return $query->whereNotNull('user_id');
+                        }
+
+                        return $query;
+                    }),
                 SelectFilter::make('status')
                     ->label('الحالة')
                     ->options([

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 final class Coupon extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'code',
         'name',
@@ -28,19 +29,6 @@ final class Coupon extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
-    }
-
-    protected function casts(): array
-    {
-        return [
-            'value' => 'double',
-            'expiry_date' => 'datetime',
-            'is_active' => 'boolean',
-            'max_usage' => 'integer',
-            'usage_count' => 'integer',
-            'total_consumed' => 'double',
-            'conditions' => 'array',
-        ];
     }
 
     /**
@@ -81,6 +69,20 @@ final class Coupon extends Model
     public function getConditionsAttribute($value): array
     {
         $conditions = $value ? json_decode($value, true) : [];
+
         return array_replace_recursive($this->getDefaultConditions(), $conditions);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'value' => 'double',
+            'expiry_date' => 'datetime',
+            'is_active' => 'boolean',
+            'max_usage' => 'integer',
+            'usage_count' => 'integer',
+            'total_consumed' => 'double',
+            'conditions' => 'array',
+        ];
     }
 }

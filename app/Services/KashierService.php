@@ -114,7 +114,7 @@ final class KashierService implements PaymentGatewayInterface
 
             return [
                 'success' => false,
-                'error' => 'Payment service error: ' . $e->getMessage(),
+                'error' => 'Payment service error: '.$e->getMessage(),
             ];
         }
     }
@@ -139,8 +139,9 @@ final class KashierService implements PaymentGatewayInterface
         }
 
         // For responses with signature
-        if (!isset($data['signature'])) {
+        if (! isset($data['signature'])) {
             Log::warning('No signature found in Kashier payment response');
+
             return false;
         }
 
@@ -152,7 +153,7 @@ final class KashierService implements PaymentGatewayInterface
             $queryString .= "&{$key}={$value}";
         }
 
-        $queryString = ltrim($queryString, '&');
+        $queryString = mb_ltrim($queryString, '&');
         $expectedSignature = hash_hmac('sha256', $queryString, $this->apiKey);
 
         return hash_equals($expectedSignature, $data['signature']);
@@ -172,7 +173,7 @@ final class KashierService implements PaymentGatewayInterface
             $amount = $data['amount'] ?? 0;
 
             // Determine payment status
-            $paymentStatus = match (strtoupper($status)) {
+            $paymentStatus = match (mb_strtoupper($status)) {
                 'SUCCESS', 'CAPTURED' => 'completed',
                 'PENDING' => 'processing',
                 'REFUNDED' => 'refunded',
@@ -261,7 +262,7 @@ final class KashierService implements PaymentGatewayInterface
 
             return [
                 'success' => false,
-                'error' => 'Refund service error: ' . $e->getMessage(),
+                'error' => 'Refund service error: '.$e->getMessage(),
             ];
         }
     }
@@ -275,6 +276,16 @@ final class KashierService implements PaymentGatewayInterface
     }
 
     /**
+     * Get the API base URL based on mode.
+     */
+    public function getApiBaseUrl(): string
+    {
+        return $this->mode === 'live'
+            ? 'https://api.kashier.io'
+            : 'https://test-api.kashier.io';
+    }
+
+    /**
      * Validate webhook payload signature from Kashier.
      */
     private function validateWebhookPayload(array $webhookData, string $kashierSignature): bool
@@ -282,8 +293,9 @@ final class KashierService implements PaymentGatewayInterface
         try {
             $data = $webhookData['data'] ?? $webhookData;
 
-            if (!isset($data['signatureKeys']) || !is_array($data['signatureKeys'])) {
+            if (! isset($data['signatureKeys']) || ! is_array($data['signatureKeys'])) {
                 Log::warning('Kashier webhook missing signatureKeys');
+
                 return false;
             }
 
@@ -311,6 +323,7 @@ final class KashierService implements PaymentGatewayInterface
             Log::error('Error validating Kashier webhook signature', [
                 'exception' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -324,17 +337,7 @@ final class KashierService implements PaymentGatewayInterface
             'ORD-%d-%s-%s',
             $order->id,
             date('Ymd'),
-            strtoupper(substr(uniqid(), -6))
+            mb_strtoupper(mb_substr(uniqid(), -6))
         );
-    }
-
-    /**
-     * Get the API base URL based on mode.
-     */
-    public function getApiBaseUrl(): string
-    {
-        return $this->mode === 'live'
-            ? 'https://api.kashier.io'
-            : 'https://test-api.kashier.io';
     }
 }

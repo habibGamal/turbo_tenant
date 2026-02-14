@@ -7,9 +7,9 @@ namespace App\Filament\Resources\Sections\Schemas;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 final class SectionForm
@@ -54,7 +54,7 @@ final class SectionForm
                             ->live()
                             ->dehydrated(false)
                             ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                                if (!$state) {
+                                if (! $state) {
                                     return;
                                 }
 

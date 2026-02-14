@@ -28,8 +28,8 @@ final class CreateTenant extends Command
      */
     public function handle(TenantService $tenantService): int
     {
-        $tenantId = $this->option('id') ?: 'myhome';
-        $domain = $this->option('domain') ?: 'myhome.turbospace.click';
+        $tenantId = $this->option('id') ?: 'kofe';
+        $domain = $this->option('domain') ?: 'kofe.localhost';
 
         $tenant = $tenantService->createTenant($tenantId);
         $tenantService->setupTenant($tenant, $domain);

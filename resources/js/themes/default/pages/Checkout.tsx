@@ -44,6 +44,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import axios from "axios";
 
 interface CheckoutPageProps extends PageProps {
@@ -51,6 +52,7 @@ interface CheckoutPageProps extends PageProps {
     addresses: Address[];
     branches: Branch[];
     governorates: Governorate[];
+    is_guest?: boolean;
 }
 
 export default function Checkout({
@@ -60,6 +62,7 @@ export default function Checkout({
     governorates,
     auth,
     settings,
+    is_guest = false,
 }: CheckoutPageProps) {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === "ar";
@@ -94,10 +97,22 @@ export default function Checkout({
         note: "",
         type: "web_delivery",
         billing_data: {
-            first_name: auth.user.name,
-            email: auth.user.email,
+            first_name: auth?.user?.name || "",
+            email: auth?.user?.email || "",
         },
         coupon_id: null as number | null,
+        guest_data: is_guest ? {
+            name: "",
+            phone: "",
+            phone_country_code: "+20",
+            email: "",
+            street: "",
+            building: "",
+            floor: "",
+            apartment: "",
+            city: "",
+            area_id: null as number | null,
+        } : undefined,
     });
 
     const formatCurrency = (amount: number | undefined) => {
@@ -107,17 +122,23 @@ export default function Checkout({
 
     const calculateDeliveryFee = () => {
         if (data.type === "web_takeaway") return 0;
-        if (!data.address_id) return 0;
-        const address = addresses.find((a) => a.id === data.address_id);
 
         // If free shipping coupon is applied
         if (appliedCoupon?.free_shipping) {
-            // Check if there's a threshold (handled by backend usually, but for display we trust the coupon flag if simple)
-            // For more complex logic we might need to rely on what backend returned.
-            // But here we can just say if free_shipping is true, return 0.
             return 0;
         }
 
+        // For guest users
+        if (is_guest && data.guest_data?.area_id) {
+            const area = governorates
+                .flatMap(g => g.areas || [])
+                .find(a => a.id === data.guest_data?.area_id);
+            return area?.shipping_cost || 0;
+        }
+
+        // For registered users
+        if (!data.address_id) return 0;
+        const address = addresses.find((a) => a.id === data.address_id);
         return address?.area?.shipping_cost || 0;
     };
 
@@ -192,9 +213,20 @@ export default function Checkout({
             return;
         }
 
-        if (data.type === "web_delivery" && !data.address_id) {
+        if (data.type === "web_delivery" && !is_guest && !data.address_id) {
             alert(t("pleaseSelectAddress"));
             return;
+        }
+
+        if (data.type === "web_delivery" && is_guest) {
+            if (!data.guest_data?.name || !data.guest_data?.phone) {
+                alert(t("pleaseProvideGuestInfo"));
+                return;
+            }
+            if (!data.guest_data?.area_id) {
+                alert(t("pleaseSelectArea"));
+                return;
+            }
         }
 
         if (!cart || cart.items.length === 0) {
@@ -379,8 +411,238 @@ export default function Checkout({
                             </CardContent>
                         </Card>
 
+                        {/* Guest Information Form */}
+                        {is_guest && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>{t("guestInformation")}</CardTitle>
+                                    <CardDescription>
+                                        {t("guestInformationDescription")}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {/* Name */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="guest_name">{t("fullName")}</Label>
+                                        <Input
+                                            id="guest_name"
+                                            type="text"
+                                            value={data.guest_data?.name || ""}
+                                            onChange={(e) =>
+                                                setData("guest_data", {
+                                                    ...data.guest_data!,
+                                                    name: e.target.value,
+                                                })
+                                            }
+                                            placeholder={t("fullNamePlaceholder")}
+                                        />
+                                        {(errors as any)["guest_data.name"] && (
+                                            <p className="text-sm text-destructive">
+                                                {(errors as any)["guest_data.name"]}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Phone */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="guest_phone">{t("phoneNumber")}</Label>
+                                        <PhoneInput
+                                            id="guest_phone"
+                                            value={data.guest_data?.phone || ""}
+                                            onChange={(value) =>
+                                                setData("guest_data", {
+                                                    ...data.guest_data!,
+                                                    phone: value || "",
+                                                })
+                                            }
+                                            defaultCountry="EG"
+                                            countries={['EG', 'SA', 'AE']}
+                                            placeholder={t("phoneNumberPlaceholder")}
+                                        />
+                                        {(errors as any)["guest_data.phone"] && (
+                                            <p className="text-sm text-destructive">
+                                                {(errors as any)["guest_data.phone"]}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Email */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="guest_email">{t("email")} ({t("optional")})</Label>
+                                        <Input
+                                            id="guest_email"
+                                            type="email"
+                                            value={data.guest_data?.email || ""}
+                                            onChange={(e) =>
+                                                setData("guest_data", {
+                                                    ...data.guest_data!,
+                                                    email: e.target.value,
+                                                })
+                                            }
+                                            placeholder={t("emailPlaceholder")}
+                                        />
+                                        {(errors as any)["guest_data.email"] && (
+                                            <p className="text-sm text-destructive">
+                                                {(errors as any)["guest_data.email"]}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {data.type === "web_delivery" && (
+                                        <>
+                                            {/* Area Selection */}
+                                            <div className="space-y-2">
+                                                <Label htmlFor="guest_area">{t("area")}</Label>
+                                                <Select
+                                                    value={data.guest_data?.area_id?.toString() || ""}
+                                                    onValueChange={(value) =>
+                                                        setData("guest_data", {
+                                                            ...data.guest_data!,
+                                                            area_id: parseInt(value),
+                                                        })
+                                                    }
+                                                    dir={isRTL ? "rtl" : "ltr"}
+                                                >
+                                                    <SelectTrigger id="guest_area">
+                                                        <SelectValue placeholder={t("selectArea")} />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {governorates.map((governorate) =>
+                                                            governorate.areas?.map((area) => (
+                                                                <SelectItem
+                                                                    key={area.id}
+                                                                    value={area.id.toString()}
+                                                                >
+                                                                    {i18n.language === 'ar' ? governorate.name_ar : governorate.name} - {i18n.language === 'ar' ? area.name_ar : area.name} ({t("deliveryFee")}: {area.shipping_cost.toFixed(2)} {t("currency")})
+                                                                </SelectItem>
+                                                            ))
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                                {(errors as any)["guest_data.area_id"] && (
+                                                    <p className="text-sm text-destructive">
+                                                        {(errors as any)["guest_data.area_id"]}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {/* Street */}
+                                            <div className="space-y-2">
+                                                <Label htmlFor="guest_street">{t("street")}</Label>
+                                                <Input
+                                                    id="guest_street"
+                                                    type="text"
+                                                    value={data.guest_data?.street || ""}
+                                                    onChange={(e) =>
+                                                        setData("guest_data", {
+                                                            ...data.guest_data!,
+                                                            street: e.target.value,
+                                                        })
+                                                    }
+                                                    placeholder={t("streetPlaceholder")}
+                                                />
+                                                {(errors as any)["guest_data.street"] && (
+                                                    <p className="text-sm text-destructive">
+                                                        {(errors as any)["guest_data.street"]}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {/* Building */}
+                                            <div className="space-y-2">
+                                                <Label htmlFor="guest_building">{t("building")}</Label>
+                                                <Input
+                                                    id="guest_building"
+                                                    type="text"
+                                                    value={data.guest_data?.building || ""}
+                                                    onChange={(e) =>
+                                                        setData("guest_data", {
+                                                            ...data.guest_data!,
+                                                            building: e.target.value,
+                                                        })
+                                                    }
+                                                    placeholder={t("buildingPlaceholder")}
+                                                />
+                                                {(errors as any)["guest_data.building"] && (
+                                                    <p className="text-sm text-destructive">
+                                                        {(errors as any)["guest_data.building"]}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {/* Floor & Apartment */}
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="guest_floor">{t("floor")}</Label>
+                                                    <Input
+                                                        id="guest_floor"
+                                                        type="text"
+                                                        value={data.guest_data?.floor || ""}
+                                                        onChange={(e) =>
+                                                            setData("guest_data", {
+                                                                ...data.guest_data!,
+                                                                floor: e.target.value,
+                                                            })
+                                                        }
+                                                        placeholder={t("floorPlaceholder")}
+                                                    />
+                                                    {(errors as any)["guest_data.floor"] && (
+                                                        <p className="text-sm text-destructive">
+                                                            {(errors as any)["guest_data.floor"]}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="guest_apartment">{t("apartment")}</Label>
+                                                    <Input
+                                                        id="guest_apartment"
+                                                        type="text"
+                                                        value={data.guest_data?.apartment || ""}
+                                                        onChange={(e) =>
+                                                            setData("guest_data", {
+                                                                ...data.guest_data!,
+                                                                apartment: e.target.value,
+                                                            })
+                                                        }
+                                                        placeholder={t("apartmentPlaceholder")}
+                                                    />
+                                                    {(errors as any)["guest_data.apartment"] && (
+                                                        <p className="text-sm text-destructive">
+                                                            {(errors as any)["guest_data.apartment"]}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* City */}
+                                            <div className="space-y-2">
+                                                <Label htmlFor="guest_city">{t("city")} ({t("optional")})</Label>
+                                                <Input
+                                                    id="guest_city"
+                                                    type="text"
+                                                    value={data.guest_data?.city || ""}
+                                                    onChange={(e) =>
+                                                        setData("guest_data", {
+                                                            ...data.guest_data!,
+                                                            city: e.target.value,
+                                                        })
+                                                    }
+                                                    placeholder={t("cityPlaceholder")}
+                                                />
+                                                {(errors as any)["guest_data.city"] && (
+                                                    <p className="text-sm text-destructive">
+                                                        {(errors as any)["guest_data.city"]}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )}
+
                         {/* Delivery Address */}
-                        {data.type === "web_delivery" && (
+                        {data.type === "web_delivery" && !is_guest && (
                             <Card>
                                 <CardHeader>
                                     <div className="flex items-center justify-between">

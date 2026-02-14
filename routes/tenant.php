@@ -119,13 +119,21 @@ Route::middleware([
     Route::get('/menu', [App\Http\Controllers\MenuController::class, 'index'])->name('menu');
     Route::get('/sections/{section}', [App\Http\Controllers\SectionController::class, 'show'])->name('sections.show');
 
-    // Order routes
+    // Guest-accessible order routes (no auth required)
+    Route::get('/checkout', [App\Http\Controllers\OrderController::class, 'checkout'])->name('checkout');
+    Route::post('/orders/place', [App\Http\Controllers\OrderController::class, 'placeOrder'])->name('orders.place');
+    Route::get('/orders/{orderId}/payment/callback', [App\Http\Controllers\OrderController::class, 'paymentCallback'])->name('orders.payment.callback');
+
+    // Guest order tracking
+    Route::post('/orders/track', [App\Http\Controllers\OrderController::class, 'trackGuestOrder'])->name('orders.track');
+    Route::get('/track-order', function () {
+        return Inertia\Inertia::render('Track');
+    })->name('orders.track.page');
+
+    // Order routes (require authentication)
     Route::middleware('auth')->group(function () {
-        Route::get('/checkout', [App\Http\Controllers\OrderController::class, 'checkout'])->name('checkout');
-        Route::post('/orders/place', [App\Http\Controllers\OrderController::class, 'placeOrder'])->name('orders.place');
         Route::get('/orders', [App\Http\Controllers\OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{orderId}', [App\Http\Controllers\OrderController::class, 'show'])->name('orders.show');
-        Route::get('/orders/{orderId}/payment/callback', [App\Http\Controllers\OrderController::class, 'paymentCallback'])->name('orders.payment.callback');
         Route::post('/coupons/validate', [App\Http\Controllers\CouponController::class, 'validate'])->name('coupons.validate');
 
         // Address routes

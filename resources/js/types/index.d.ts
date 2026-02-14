@@ -5,6 +5,24 @@ export interface User {
     email_verified_at?: string;
 }
 
+export interface GuestUser {
+    id: number;
+    name: string;
+    email?: string;
+    phone: string;
+    phone_country_code: string;
+    street?: string;
+    building?: string;
+    floor?: string;
+    apartment?: string;
+    city?: string;
+    area_id?: number;
+    area?: Area;
+    created_at: string;
+    updated_at: string;
+    full_phone: string;
+}
+
 export interface Category {
     id: number;
     name: string;
@@ -215,6 +233,7 @@ export interface OrderItem {
     product?: {
         id: number;
         name: string;
+        image?: string;
         sell_by_weight?: boolean;
         weight_option?: WeightOption;
     };
@@ -230,7 +249,8 @@ export interface Order {
     order_number: string;
     merchant_order_id?: string;
     transaction_id?: string;
-    user_id: number;
+    user_id?: number;
+    guest_user_id?: number;
     branch_id: number;
     address_id?: number;
     coupon_id?: number;
@@ -248,6 +268,7 @@ export interface Order {
     created_at: string;
     updated_at: string;
     user?: User;
+    guest_user?: GuestUser;
     branch?: Branch;
     address?: Address;
     items: OrderItem[];

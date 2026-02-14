@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\PaymentMethod;
+use App\Models\GuestUser;
 use App\Services\CartService;
+use App\Services\GuestUserService;
 use App\Services\PlaceOrderService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -20,9 +22,9 @@ final class OrderController extends Controller
 {
     public function __construct(
         private readonly PlaceOrderService $placeOrderService,
-        private readonly CartService $cartService
-    ) {
-    }
+        private readonly CartService $cartService,
+        private readonly GuestUserService $guestUserService
+    ) {}
 
     /**
      * Place a new order
@@ -36,6 +38,21 @@ final class OrderController extends Controller
             'coupon_id' => 'nullable|integer|exists:coupons,id',
             'note' => 'nullable|string|max:1000',
             'type' => 'required|in:web_delivery,web_takeaway,pos',
+
+            // Guest user data (required if not authenticated)
+            'guest_data' => 'required_without:auth|array',
+            'guest_data.name' => 'required_with:guest_data|string|max:255',
+            'guest_data.phone' => 'required_with:guest_data|string|max:20',
+            'guest_data.phone_country_code' => 'nullable|string|max:5',
+            'guest_data.email' => 'nullable|email|max:255',
+            'guest_data.street' => 'nullable|string|max:255',
+            'guest_data.building' => 'nullable|string|max:255',
+            'guest_data.floor' => 'nullable|string|max:255',
+            'guest_data.apartment' => 'nullable|string|max:255',
+            'guest_data.city' => 'nullable|string|max:255',
+            'guest_data.area_id' => 'nullable|integer|exists:areas,id',
+
+            // Billing data
             'billing_data' => 'nullable|array',
             'billing_data.first_name' => 'nullable|string|max:255',
             'billing_data.last_name' => 'nullable|string|max:255',
@@ -59,11 +76,18 @@ final class OrderController extends Controller
 
         $user = Auth::user();
 
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'errors' => ['auth' => ['User not authenticated']],
-            ], 401);
+        // If not authenticated, create/find guest user
+        if (! $user) {
+            $guestData = $request->input('guest_data');
+            if (! $guestData) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['guest_data' => ['Guest information is required']],
+                ], 422);
+            }
+
+            // Find or create the guest user BEFORE placing order
+            $user = $this->guestUserService->findOrCreate($guestData);
         }
 
         try {
@@ -80,7 +104,7 @@ final class OrderController extends Controller
                 billingData: $request->input('billing_data', [])
             );
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 return response()->json([
                     'success' => false,
                     'errors' => ['order' => [$result['error']]],
@@ -117,7 +141,7 @@ final class OrderController extends Controller
             ], 400);
         } catch (Exception $e) {
             Log::error('Place order exception', [
-                'user_id' => $user->id,
+                'user_id' => $user?->id ?? 'guest',
                 'error' => $e->getMessage(),
             ]);
 
@@ -164,17 +188,11 @@ final class OrderController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user) {
-            return Inertia::render('Checkout', [
-                'error' => 'User not authenticated',
-            ]);
-        }
-
-        // Get cart data
+        // Get cart data (works for both authenticated users and guests)
         $cart = $this->cartService->getCart($user);
 
-        // Get user's addresses
-        $addresses = $user->addresses()->with('area.governorate')->get();
+        // Get user's addresses if authenticated
+        $addresses = $user ? $user->addresses()->with('area.governorate')->get() : [];
 
         // Get available branches
         $branches = \App\Models\Branch::where('is_active', true)->get();
@@ -183,7 +201,7 @@ final class OrderController extends Controller
         $governorates = \App\Models\Governorate::with([
             'areas' => function ($query) {
                 $query->where('is_active', true)->orderBy('sort_order');
-            }
+            },
         ])
             ->where('is_active', true)
             ->orderBy('sort_order')
@@ -194,6 +212,7 @@ final class OrderController extends Controller
             'addresses' => $addresses,
             'branches' => $branches,
             'governorates' => $governorates,
+            'is_guest' => ! $user,
         ]);
     }
 
@@ -204,7 +223,7 @@ final class OrderController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             abort(401, 'User not authenticated');
         }
 
@@ -219,13 +238,66 @@ final class OrderController extends Controller
     }
 
     /**
+     * Track guest order by order number and phone
+     */
+    public function trackGuestOrder(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'order_number' => 'required|string',
+            'phone' => 'required|string',
+            'phone_country_code' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $orderNumber = $request->input('order_number');
+        $phone = $request->input('phone');
+        $phoneCountryCode = $request->input('phone_country_code', '+20');
+
+        // Find guest user
+        $guestUser = GuestUser::where('phone', $phone)
+            ->where('phone_country_code', $phoneCountryCode)
+            ->first();
+
+        if (! $guestUser) {
+            return response()->json([
+                'success' => false,
+                'error' => 'No orders found for this phone number',
+            ], 404);
+        }
+
+        // Find order
+        $order = \App\Models\Order::with(['items.extras', 'items.product.weightOption', 'items.weightOptionValue', 'branch', 'guestUser'])
+            ->where('order_number', $orderNumber)
+            ->where('guest_user_id', $guestUser->id)
+            ->first();
+
+        if (! $order) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Order not found',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'order' => $order,
+        ]);
+    }
+
+    /**
      * Get user's orders
      */
     public function index(Request $request): Response
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             abort(401, 'User not authenticated');
         }
 

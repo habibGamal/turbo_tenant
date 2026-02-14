@@ -18,9 +18,7 @@ use Throwable;
 
 final class GoogleAuthController extends Controller
 {
-    public function __construct(private readonly SettingService $settingService)
-    {
-    }
+    public function __construct(private readonly SettingService $settingService) {}
 
     public function redirect(): RedirectResponse
     {
@@ -44,7 +42,7 @@ final class GoogleAuthController extends Controller
 
             if ($user) {
                 // Update existing user with Google ID if not set
-                if (!$user->google_id) {
+                if (! $user->google_id) {
                     $user->update([
                         'google_id' => $googleUser->getId(),
                         'avatar' => $googleUser->getAvatar(),
@@ -95,7 +93,7 @@ final class GoogleAuthController extends Controller
     {
         $accessToken = $request->input('access_token');
 
-        if (!$accessToken) {
+        if (! $accessToken) {
             return redirect()->route('login')->with('error', 'No Access token provided.');
         }
 
@@ -116,7 +114,7 @@ final class GoogleAuthController extends Controller
 
             if ($user) {
                 // Update existing user with Google ID if not set
-                if (!$user->google_id) {
+                if (! $user->google_id) {
                     $user->update([
                         'google_id' => $googleId,
                         'avatar' => $avatar ?? $user->avatar,

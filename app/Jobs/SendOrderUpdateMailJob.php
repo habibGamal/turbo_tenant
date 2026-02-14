@@ -1,14 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs;
 
 use App\Mail\OrderUpdateMail;
 use App\Models\Order;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Mail;
 
-class SendOrderUpdateMailJob implements ShouldQueue
+final class SendOrderUpdateMailJob implements ShouldQueue
 {
     use Queueable;
 
@@ -30,7 +33,7 @@ class SendOrderUpdateMailJob implements ShouldQueue
                 Mail::to($this->order->user)->send(new OrderUpdateMail($this->order));
             }
 
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             logger()->error($exception->getMessage());
         }
     }

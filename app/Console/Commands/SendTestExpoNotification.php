@@ -1,20 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
-
-use Stancl\Tenancy\Concerns\HasATenantsOption;
-use Stancl\Tenancy\Concerns\TenantAwareCommand;
-
-
-use Illuminate\Console\Command;
 
 use App\Models\User;
 use App\Notifications\TestExpoNotification;
+use Exception;
+use Illuminate\Console\Command;
+use Stancl\Tenancy\Concerns\HasATenantsOption;
+use Stancl\Tenancy\Concerns\TenantAwareCommand;
 
-class SendTestExpoNotification extends Command
+final class SendTestExpoNotification extends Command
 {
-    
-    use TenantAwareCommand ,HasATenantsOption ;
+    use HasATenantsOption ,TenantAwareCommand;
+
     /**
      * The name and signature of the console command.
      *
@@ -42,8 +42,8 @@ class SendTestExpoNotification extends Command
             $this->line("Sending to user: {$user->email}");
             try {
                 $user->notify(new TestExpoNotification());
-            } catch (\Exception $e) {
-                $this->error("Failed to send to {$user->email}: " . $e->getMessage());
+            } catch (Exception $e) {
+                $this->error("Failed to send to {$user->email}: ".$e->getMessage());
             }
         }
 

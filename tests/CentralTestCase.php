@@ -29,7 +29,7 @@ abstract class CentralTestCase extends BaseTestCase
         $this->withoutVite();
     }
 
-    protected function tearDown( ): void
+    protected function tearDown(): void
     {
         // Ensure tenancy is ended
         if (tenancy()->initialized) {

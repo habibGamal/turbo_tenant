@@ -69,8 +69,7 @@ final class WeightOptionForm
                             ->orderColumn('sort_order')
                             ->defaultItems(1)
                             ->collapsible()
-                            ->itemLabel(fn (array $state): ?string =>
-                                $state['label'] ??
+                            ->itemLabel(fn (array $state): ?string => $state['label'] ??
                                 (isset($state['value']) ? "{$state['value']}" : null)
                             )
                             ->addActionLabel('إضافة قيمة وزن')

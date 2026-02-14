@@ -10,7 +10,6 @@ use App\Models\Governorate;
 use App\Models\Product;
 use App\Models\User;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -63,7 +62,7 @@ final class CouponForm
                             ->required()
                             ->numeric()
                             ->minValue(0)
-                            ->suffix(fn(Get $get) => $get('type') === 'percentage' ? '%' : 'EGP')
+                            ->suffix(fn (Get $get) => $get('type') === 'percentage' ? '%' : 'EGP')
                             ->columnSpan(1),
                         DateTimePicker::make('expiry_date')
                             ->label('تاريخ الانتهاء')
@@ -120,13 +119,13 @@ final class CouponForm
                             ->multiple()
                             ->searchable()
                             ->options(Product::where('is_active', true)->pluck('name', 'id'))
-                            ->visible(fn(Get $get) => $get('conditions.applicable_to.type') === 'products'),
+                            ->visible(fn (Get $get) => $get('conditions.applicable_to.type') === 'products'),
                         Select::make('conditions.applicable_to.category_ids')
                             ->label('اختر الفئات')
                             ->multiple()
                             ->searchable()
                             ->options(Category::where('is_active', true)->pluck('name', 'id'))
-                            ->visible(fn(Get $get) => $get('conditions.applicable_to.type') === 'categories'),
+                            ->visible(fn (Get $get) => $get('conditions.applicable_to.type') === 'categories'),
                     ])
                     ->collapsible(),
 
@@ -142,7 +141,7 @@ final class CouponForm
                             ->minValue(0)
                             ->suffix('EGP')
                             ->hint('إجمالي الطلب المطلوب للشحن المجاني')
-                            ->visible(fn(Get $get) => $get('conditions.shipping.free_shipping'))
+                            ->visible(fn (Get $get) => $get('conditions.shipping.free_shipping'))
                             ->columnSpan(1),
                         Select::make('conditions.shipping.applicable_governorates')
                             ->label('المحافظات القابلة للتطبيق')
@@ -177,7 +176,7 @@ final class CouponForm
                             ->multiple()
                             ->searchable()
                             ->options(User::all()->pluck('name', 'id'))
-                            ->visible(fn(Get $get) => $get('conditions.usage_restrictions.user_specific'))
+                            ->visible(fn (Get $get) => $get('conditions.usage_restrictions.user_specific'))
                             ->columnSpanFull(),
                     ])
                     ->columns(2)

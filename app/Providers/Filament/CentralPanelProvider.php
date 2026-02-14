@@ -41,7 +41,7 @@ final class CentralPanelProvider extends PanelProvider
                     ->recoverable(),
             )
             ->sidebarCollapsibleOnDesktop()
-                       ->topNavigation()
+            ->topNavigation()
             ->colors([
                 'primary' => Color::Blue,
             ])

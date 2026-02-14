@@ -15,8 +15,7 @@ final class PaymentController extends Controller
 {
     public function __construct(
         private readonly KashierService $kashierService
-    ) {
-    }
+    ) {}
 
     /**
      * Show the Kashier payment page.
@@ -26,14 +25,14 @@ final class PaymentController extends Controller
         $user = Auth::user();
 
         // Verify user owns the order
-        if (!$user || $order->user_id !== $user->id) {
+        if (! $user || $order->user_id !== $user->id) {
             abort(403, 'Unauthorized');
         }
 
         // Check order has kashier params stored
         $kashierParams = session("kashier_params_{$order->id}");
 
-        if (!$kashierParams) {
+        if (! $kashierParams) {
             // Generate new params if not in session
             $redirectionUrl = url("/orders/{$order->id}/payment/callback");
             $notificationUrl = url('/api/webhooks/kashier');
@@ -45,7 +44,7 @@ final class PaymentController extends Controller
                 $notificationUrl
             );
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 return Inertia::render('PaymentCallback', [
                     'success' => false,
                     'message' => $result['error'] ?? 'Failed to initialize payment',

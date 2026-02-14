@@ -8,7 +8,6 @@ use App\Filament\Central\Resources\TenantResource\Pages\ListTenants;
 use App\Models\Tenant;
 use App\Models\User;
 use Filament\Actions\DeleteAction;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
 

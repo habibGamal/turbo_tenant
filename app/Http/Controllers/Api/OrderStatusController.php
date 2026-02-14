@@ -8,6 +8,7 @@ use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\OrderStatusUpdateRequest;
 use App\Models\Order;
+use Exception;
 use Illuminate\Http\JsonResponse;
 
 final class OrderStatusController extends Controller
@@ -27,8 +28,9 @@ final class OrderStatusController extends Controller
             return response()->json([
                 'message' => 'تم تحديث حالة الطلب',
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             logger()->error($e->getMessage());
+
             return response()->json([
                 'message' => 'حدث خطأ ما',
             ], 400);

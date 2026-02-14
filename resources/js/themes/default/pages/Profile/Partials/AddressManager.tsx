@@ -156,7 +156,7 @@ export default function AddressManager({ addresses }: { addresses: Address[] }) 
                         className="border rounded-lg p-4 relative hover:border-primary transition-colors"
                     >
                         {address.is_default && (
-                            <span className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+                            <span className="absolute top-2 ltr:right-2 rtl:left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
                                 {t("default")}
                             </span>
                         )}

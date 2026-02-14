@@ -1,18 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-
 use NotificationChannels\Expo\ExpoMessage;
 
-class TestExpoNotification extends Notification
+final class TestExpoNotification extends Notification
 {
     use Queueable;
-    
 
     /**
      * Create a new notification instance.

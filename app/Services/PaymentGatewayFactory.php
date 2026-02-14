@@ -18,8 +18,7 @@ final class PaymentGatewayFactory
         private readonly SettingService $settingService,
         private readonly PaymobService $paymobService,
         private readonly KashierService $kashierService
-    ) {
-    }
+    ) {}
 
     /**
      * Get the currently active payment gateway.

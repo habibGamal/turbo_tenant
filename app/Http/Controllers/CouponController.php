@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Services\CouponService;
 use App\Models\Address;
+use App\Services\CouponService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,8 +14,7 @@ final class CouponController extends Controller
 {
     public function __construct(
         private readonly CouponService $couponService
-    ) {
-    }
+    ) {}
 
     /**
      * Validate a coupon code
@@ -30,7 +29,7 @@ final class CouponController extends Controller
         ]);
 
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'valid' => false,
                 'message' => 'User not authenticated',
@@ -40,7 +39,7 @@ final class CouponController extends Controller
         $code = $request->input('code');
         $coupon = $this->couponService->findByCode($code);
 
-        if (!$coupon) {
+        if (! $coupon) {
             return response()->json([
                 'valid' => false,
                 'message' => 'Invalid coupon code',
@@ -62,7 +61,7 @@ final class CouponController extends Controller
             $governorateId
         );
 
-        if (!$validation['valid']) {
+        if (! $validation['valid']) {
             return response()->json($validation);
         }
 

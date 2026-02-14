@@ -19,18 +19,24 @@ final class AddressController extends Controller
     {
         $validated = $request->validate([
             'area_id' => 'required|integer|exists:areas,id',
-            'phone_number' => 'required|string|max:20',
+            'phone_number' => [
+                'required',
+                'string',
+                'regex:/^\+20[0-9]{10}$/',
+            ],
             'street' => 'required|string|max:255',
             'building' => 'required|string|max:255',
             'floor' => 'required|string|max:50',
             'apartment' => 'required|string|max:50',
             'notes' => 'nullable|string|max:1000',
             'is_default' => 'nullable|boolean',
+        ], [
+            'phone_number.regex' => 'رقم الهاتف يجب أن يكون رقم مصري صحيح.',
         ]);
 
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return back()->withErrors('يجب تسجيل الدخول لإضافة عنوان.');
         }
 
@@ -58,13 +64,19 @@ final class AddressController extends Controller
 
         $validated = $request->validate([
             'area_id' => 'required|integer|exists:areas,id',
-            'phone_number' => 'required|string|max:20',
+            'phone_number' => [
+                'required',
+                'string',
+                'regex:/^\+20[0-9]{10}$/',
+            ],
             'street' => 'required|string|max:255',
             'building' => 'required|string|max:255',
             'floor' => 'required|string|max:50',
             'apartment' => 'required|string|max:50',
             'notes' => 'nullable|string|max:1000',
             'is_default' => 'nullable|boolean',
+        ], [
+            'phone_number.regex' => 'رقم الهاتف يجب أن يكون رقم مصري صحيح.',
         ]);
 
         // If this is set as default, unset other defaults
@@ -99,7 +111,7 @@ final class AddressController extends Controller
         $governorates = Governorate::with([
             'areas' => function ($query) {
                 $query->where('is_active', true)->orderBy('sort_order');
-            }
+            },
         ])
             ->where('is_active', true)
             ->orderBy('sort_order')

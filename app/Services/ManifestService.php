@@ -17,7 +17,7 @@ final class ManifestService
     {
         $path = $this->getManifestPath();
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             return $this->getDefaultManifest();
         }
 

@@ -6,7 +6,6 @@ namespace App\Filament\Pages;
 
 use App\Services\ManifestService;
 use BackedEnum;
-use UnitEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
@@ -20,6 +19,7 @@ use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use UnitEnum;
 
 /**
  * @property-read Schema $form

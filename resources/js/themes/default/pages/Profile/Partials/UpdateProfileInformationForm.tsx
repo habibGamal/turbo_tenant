@@ -33,15 +33,6 @@ export default function UpdateProfileInformationForm({
 
     return (
         <section className={className}>
-            <header>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                    {t("profileInformation")}
-                </h2>
-
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    {t("updateProfileDescription")}
-                </p>
-            </header>
 
             <form onSubmit={submit} className="mt-6 space-y-6">
                 <div>

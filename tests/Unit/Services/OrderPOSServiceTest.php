@@ -187,7 +187,7 @@ describe('placeOrder', function () {
         expect($result)->toHaveKey('success')
             ->and($result['success'])->toBeTrue();
 
-        Http::assertSent(function ($request) use ($order) {
+        Http::assertSent(function ($request) {
             $data = $request->data();
 
             return $request->url() === 'https://pos.example.com/api/web-orders/place-order'
