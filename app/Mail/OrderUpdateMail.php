@@ -20,7 +20,7 @@ final class OrderUpdateMail extends Mailable
      */
     public function __construct(public Order $order)
     {
-        $this->order->load(['items.product', 'items.variant', 'address', 'user']);
+        $this->order->load(['items.product', 'items.variant', 'address', 'user', 'guestUser']);
     }
 
     /**

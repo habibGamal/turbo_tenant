@@ -29,12 +29,22 @@ final class SendOrderUpdateMailJob implements ShouldQueue
     public function handle(): void
     {
         try {
+            // Send email to authenticated user
             if ($this->order->user) {
                 Mail::to($this->order->user)->send(new OrderUpdateMail($this->order));
             }
+            // Send email to guest user if they have an email
+            elseif ($this->order->guestUser && $this->order->guestUser->email) {
+                Mail::to($this->order->guestUser->email)->send(new OrderUpdateMail($this->order));
+            }
 
         } catch (Exception $exception) {
-            logger()->error($exception->getMessage());
+            logger()->error('Failed to send order update email', [
+                'order_id' => $this->order->id,
+                'user_id' => $this->order->user_id,
+                'guest_user_id' => $this->order->guest_user_id,
+                'error' => $exception->getMessage(),
+            ]);
         }
     }
 }

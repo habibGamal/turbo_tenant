@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\Order;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;

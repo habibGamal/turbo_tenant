@@ -24,7 +24,8 @@ final class OrderController extends Controller
         private readonly PlaceOrderService $placeOrderService,
         private readonly CartService $cartService,
         private readonly GuestUserService $guestUserService
-    ) {}
+    ) {
+    }
 
     /**
      * Place a new order
@@ -77,9 +78,9 @@ final class OrderController extends Controller
         $user = Auth::user();
 
         // If not authenticated, create/find guest user
-        if (! $user) {
+        if (!$user) {
             $guestData = $request->input('guest_data');
-            if (! $guestData) {
+            if (!$guestData) {
                 return response()->json([
                     'success' => false,
                     'errors' => ['guest_data' => ['Guest information is required']],
@@ -104,7 +105,7 @@ final class OrderController extends Controller
                 billingData: $request->input('billing_data', [])
             );
 
-            if (! $result['success']) {
+            if (!$result['success']) {
                 return response()->json([
                     'success' => false,
                     'errors' => ['order' => [$result['error']]],
@@ -115,7 +116,22 @@ final class OrderController extends Controller
 
             // Return response for frontend to handle redirection
             if ($paymentMethod === PaymentMethod::COD) {
-                // COD payment - frontend should redirect to order show page
+                // COD payment - redirect based on user type
+                if ($user instanceof GuestUser) {
+                    // Guest users go to track page with auto-search params
+                    return response()->json([
+                        'success' => true,
+                        'redirect_type' => 'internal',
+                        'redirect_url' => route('orders.track.page', [
+                            'order_number' => $order->order_number,
+                            'phone' => $user->phone,
+                        ]),
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                    ]);
+                }
+
+                // Authenticated users go to order show page
                 return response()->json([
                     'success' => true,
                     'redirect_type' => 'internal',
@@ -212,7 +228,7 @@ final class OrderController extends Controller
             'addresses' => $addresses,
             'branches' => $branches,
             'governorates' => $governorates,
-            'is_guest' => ! $user,
+            'is_guest' => !$user,
         ]);
     }
 
@@ -223,7 +239,7 @@ final class OrderController extends Controller
     {
         $user = Auth::user();
 
-        if (! $user) {
+        if (!$user) {
             abort(401, 'User not authenticated');
         }
 
@@ -245,7 +261,6 @@ final class OrderController extends Controller
         $validator = Validator::make($request->all(), [
             'order_number' => 'required|string',
             'phone' => 'required|string',
-            'phone_country_code' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -257,14 +272,12 @@ final class OrderController extends Controller
 
         $orderNumber = $request->input('order_number');
         $phone = $request->input('phone');
-        $phoneCountryCode = $request->input('phone_country_code', '+20');
 
         // Find guest user
         $guestUser = GuestUser::where('phone', $phone)
-            ->where('phone_country_code', $phoneCountryCode)
             ->first();
 
-        if (! $guestUser) {
+        if (!$guestUser) {
             return response()->json([
                 'success' => false,
                 'error' => 'No orders found for this phone number',
@@ -277,7 +290,7 @@ final class OrderController extends Controller
             ->where('guest_user_id', $guestUser->id)
             ->first();
 
-        if (! $order) {
+        if (!$order) {
             return response()->json([
                 'success' => false,
                 'error' => 'Order not found',
@@ -297,7 +310,7 @@ final class OrderController extends Controller
     {
         $user = Auth::user();
 
-        if (! $user) {
+        if (!$user) {
             abort(401, 'User not authenticated');
         }
 

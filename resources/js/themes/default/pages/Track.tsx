@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Head } from "@inertiajs/react";
+import React, { useState, useEffect } from "react";
+import { Head, usePage } from "@inertiajs/react";
 import MainLayout from '@/themes/default/layouts/MainLayout';
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +27,8 @@ import {
     Truck,
     FileText,
     Search,
+    Copy,
+    Check,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Order, PageProps } from "@/types";
@@ -36,13 +38,20 @@ import axios from "axios";
 export default function Track({ auth, settings }: PageProps) {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === "ar";
+    const { url } = usePage();
 
-    const [orderNumber, setOrderNumber] = useState("");
-    const [phone, setPhone] = useState("");
+    // Get query parameters from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlOrderNumber = urlParams.get('order_number') || '';
+    const urlPhone = urlParams.get('phone') || '';
+
+    const [orderNumber, setOrderNumber] = useState(urlOrderNumber);
+    const [phone, setPhone] = useState(urlPhone);
     const [phoneCountryCode, setPhoneCountryCode] = useState("+20");
     const [isSearching, setIsSearching] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [order, setOrder] = useState<Order | null>(null);
+    const [isCopied, setIsCopied] = useState(false);
 
     const formatCurrency = (amount: number | undefined) => {
         const safeAmount = amount ?? 0;
@@ -58,6 +67,18 @@ export default function Track({ auth, settings }: PageProps) {
             hour: "2-digit",
             minute: "2-digit",
         }).format(date);
+    };
+
+    const copyOrderNumber = async () => {
+        if (!order?.order_number) return;
+
+        try {
+            await navigator.clipboard.writeText(order.order_number);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
     };
 
     const getStatusIcon = (status: string) => {
@@ -111,10 +132,8 @@ export default function Track({ auth, settings }: PageProps) {
         }
     };
 
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!orderNumber.trim() || !phone.trim()) {
+    const searchOrder = async (orderNum: string, phoneNum: string) => {
+        if (!orderNum.trim() || !phoneNum.trim()) {
             setError(t("pleaseProvideOrderNumberAndPhone"));
             return;
         }
@@ -124,22 +143,9 @@ export default function Track({ auth, settings }: PageProps) {
         setOrder(null);
 
         try {
-            // Extract country code from phone if it's in E.164 format
-            let cleanPhone = phone;
-            let countryCode = phoneCountryCode;
-
-            if (phone.startsWith("+")) {
-                const match = phone.match(/^(\+\d{1,4})(\d+)$/);
-                if (match) {
-                    countryCode = match[1];
-                    cleanPhone = match[2];
-                }
-            }
-
             const response = await axios.post(route("orders.track"), {
-                order_number: orderNumber.trim(),
-                phone: cleanPhone,
-                phone_country_code: countryCode,
+                order_number: orderNum.trim(),
+                phone: phoneNum,
             });
 
             if (response.data.success) {
@@ -162,6 +168,18 @@ export default function Track({ auth, settings }: PageProps) {
         } finally {
             setIsSearching(false);
         }
+    };
+
+    // Auto-search on mount if URL params are present
+    useEffect(() => {
+        if (urlOrderNumber && urlPhone) {
+            searchOrder(urlOrderNumber, urlPhone);
+        }
+    }, []);
+
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await searchOrder(orderNumber, phone);
     };
 
     return (
@@ -264,18 +282,31 @@ export default function Track({ auth, settings }: PageProps) {
                             <Card>
                                 <CardHeader>
                                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                        <div>
-                                            <CardTitle className="text-2xl mb-2">
+                                        <div className="flex-1">
+                                            <CardTitle className="text-lg mb-3">
                                                 {t("orderDetails")}
                                             </CardTitle>
-                                            <div className="flex items-center gap-2 text-muted-foreground">
-                                                <FileText className="w-4 h-4" />
-                                                <span>
-                                                    {t("orderNumber")}:{" "}
-                                                    <span className="font-mono font-medium text-foreground">
+                                            <div className="flex items-center gap-2 p-3 bg-primary/10 dark:bg-primary/20 rounded-lg border-2 border-primary/30">
+                                                <div className="flex-1">
+                                                    <p className="text-xs text-muted-foreground mb-1">
+                                                        {t("orderNumber")}
+                                                    </p>
+                                                    <p className="text-xl font-mono font-bold text-primary">
                                                         {order.order_number}
-                                                    </span>
-                                                </span>
+                                                    </p>
+                                                </div>
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    onClick={copyOrderNumber}
+                                                    className="shrink-0"
+                                                >
+                                                    {isCopied ? (
+                                                        <Check className="h-4 w-4 text-green-600" />
+                                                    ) : (
+                                                        <Copy className="h-4 w-4" />
+                                                    )}
+                                                </Button>
                                             </div>
                                         </div>
                                         <div className="flex flex-col gap-2">

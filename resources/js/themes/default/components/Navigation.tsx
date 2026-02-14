@@ -307,6 +307,14 @@ export default function Navigation({
                                     {t("menu")}
                                 </Button>
                             </Link>
+                            {!auth?.user && (
+                                <Link href="/track">
+                                    <Button variant="ghost" className="gap-2">
+                                        <Search className="h-4 w-4" />
+                                        {t("trackOrder")}
+                                    </Button>
+                                </Link>
+                            )}
                         </nav>
 
                         {/* Search Bar - Desktop */}
@@ -816,7 +824,7 @@ export default function Navigation({
 
             {/* Mobile Bottom Navigation */}
             <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 safe-bottom">
-                <div className="grid grid-cols-4 gap-1 p-2">
+                <div className={`grid gap-1 p-2 ${!auth?.user ? 'grid-cols-5' : 'grid-cols-4'}`}>
                     <Link href="/">
                         <Button
                             variant="ghost"
@@ -849,6 +857,17 @@ export default function Navigation({
                             <span className="text-xs">{t("cart")}</span>
                         </Button>
                     </Link>
+                    {!auth?.user && (
+                        <Link href="/track">
+                            <Button
+                                variant="ghost"
+                                className="flex-col h-auto py-2 w-full gap-1"
+                            >
+                                <Search className="h-5 w-5" />
+                                <span className="text-xs">{t("track")}</span>
+                            </Button>
+                        </Link>
+                    )}
                     {auth?.user ? (
                         <Link href="/profile">
                             <Button

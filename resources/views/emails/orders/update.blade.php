@@ -26,15 +26,15 @@
         </div>
 
         <div class="order-details">
-            <p>Hello {{ $order->user->name }},</p>
+            <p>Hello {{ $order->getCustomerName() }},</p>
             <p>Your order status has been updated to: <span class="status-badge">{{ $order->status->label() ?? $order->status }}</span></p>
-            
+
             <div class="order-info">
                 <h3>Order Information</h3>
                 <p><strong>Date:</strong> {{ $order->created_at->format('M d, Y H:i') }}</p>
                 <p><strong>Payment Method:</strong> {{ $order->payment_method->label() ?? $order->payment_method }}</p>
                 <p><strong>Payment Status:</strong> {{ $order->payment_status->label() ?? $order->payment_status }}</p>
-                
+
                 @if($order->address)
                 <h3>Shipping Address</h3>
                 <p>
