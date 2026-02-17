@@ -326,5 +326,12 @@
   "serviceFee": "رسوم الخدمة",
   "codFees": "رسوم الدفع عند الاستلام",
   "remove": "إزالة",
-  "failedToValidateCoupon": "فشل التحقق من صحة القسيمة"
+  "failedToValidateCoupon": "فشل التحقق من صحة القسيمة",
+  "back_to_top": "العودة إلى الأعلى",
+  "track": "تتبع",
+  "justNow": "الآن",
+  "minutesAgo": "{{count}} دقائق مضت",
+  "hoursAgo": "{{count}} ساعات مضت",
+  "daysAgo": "{{count}} أيام مضت",
+  "locale": "ar-EG"
 }

@@ -13,15 +13,19 @@ interface ProductInfoProps {
 }
 
 export default function ProductInfo({ product, totalPrice }: ProductInfoProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { settings } = usePage<PageProps>().props;
+
+    const getText = (text: string, textAr?: string) => {
+        return i18n.language === 'ar' && textAr ? textAr : text;
+    };
 
     const basePrice = product.base_price || 0;
     const hasDiscount =
         product.price_after_discount &&
         product.price_after_discount < basePrice;
 
-    const categoryName = typeof product.category === 'object' ? product.category?.name : product.category;
+    const categoryName = getText(product.category!.name,product.category!.name_ar);
 
     return (
         <div className="space-y-6">
@@ -34,7 +38,7 @@ export default function ProductInfo({ product, totalPrice }: ProductInfoProps) {
 
             {/* Product Name */}
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-                {product.name}
+                {getText(product.name, product.name_ar)}
             </h1>
 
             {/* Rating */}

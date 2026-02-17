@@ -610,6 +610,7 @@ final class PlaceOrderService
                 'weight_option_value_id' => $cartItem['weight_option_value_id'] ?? null,
                 'weight_multiplier' => $cartItem['weight_multiplier'] ?? 1,
                 'product_name' => $product['name'],
+                'product_name_ar' => $product['name_ar'] ?? null,
                 'variant_name' => $variant['name'] ?? null,
                 'quantity' => $cartItem['quantity'],
                 'unit_price' => $cartItem['price'],

@@ -436,6 +436,7 @@ final class CartService
             'product' => [
                 'id' => $item->product->id,
                 'name' => $item->product->name,
+                'name_ar' => $item->product->name_ar,
                 'image' => $item->product->image,
                 'base_price' => $item->product->base_price,
                 'price_after_discount' => $item->product->price_after_discount,

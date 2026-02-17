@@ -11,7 +11,11 @@ interface ProductImageProps {
 }
 
 export default function ProductImage({ product }: ProductImageProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+
+    const getText = (text: string, textAr?: string) => {
+        return i18n.language === 'ar' && textAr ? textAr : text;
+    };
 
     const basePrice = product.base_price || 0;
     const hasDiscount =
@@ -31,7 +35,7 @@ export default function ProductImage({ product }: ProductImageProps) {
             <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-primary/5 to-secondary/5 relative group">
                 <ImageWithFallback
                     src={product.image}
-                    alt={product.name}
+                    alt={getText(product.name, product.name_ar)}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
 
@@ -50,7 +54,7 @@ export default function ProductImage({ product }: ProductImageProps) {
                     onClick={() => {
                         if (navigator.share) {
                             navigator.share({
-                                title: product.name,
+                                title: getText(product.name, product.name_ar),
                                 text: product.description,
                                 url: window.location.href,
                             });

@@ -327,5 +327,12 @@
   "serviceFee": "Service Fee",
   "codFees": "Cash on Delivery Fees",
   "remove": "Remove",
-  "failedToValidateCoupon": "Failed to validate coupon"
+  "failedToValidateCoupon": "Failed to validate coupon",
+  "back_to_top": "Back to Top",
+  "track": "Track",
+  "justNow": "just now",
+  "minutesAgo": "{{count}} minutes ago",
+  "hoursAgo": "{{count}} hours ago",
+  "daysAgo": "{{count}} days ago",
+  "locale": "en-US"
 }

@@ -24,14 +24,16 @@ i18n
     // Initialize i18next
     .init({
         resources,
-        fallbackLng: 'ar', // Arabic as default fallback
-        lng: 'ar', // Set Arabic as the default language
+        fallbackLng: 'ar', // Fallback when translation key is missing
+        supportedLngs: ['ar', 'en'], // Supported languages
         debug: false,
         interpolation: {
             escapeValue: false, // React already escapes values
         },
         detection: {
-            order: ['localStorage', 'cookie', 'navigator'],
+            // Only check localStorage and cookie, not browser navigator
+            // This ensures first-time visitors get fallbackLng (Arabic)
+            order: ['localStorage', 'cookie'],
             caches: ['localStorage', 'cookie'],
         },
     });

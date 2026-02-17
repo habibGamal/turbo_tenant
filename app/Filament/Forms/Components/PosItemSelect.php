@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Filament\Forms\Components;
 
 use App\Services\ProductPOSImporterService;
-use Exception;
 use Filament\Forms\Components\Select;
+use Throwable;
 
 final class PosItemSelect extends Select
 {
@@ -24,7 +24,7 @@ final class PosItemSelect extends Select
                         ->pluck('name', 'productRef')
                         ->unique()
                         ->toArray();
-                } catch (Exception $e) {
+                } catch (Throwable $e) {
                     return [];
                 }
             })

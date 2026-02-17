@@ -72,7 +72,7 @@ export default function ProductOptionsModal({
                         <div className="aspect-square rounded-lg overflow-hidden border">
                             <ImageWithFallback
                                 src={product.image}
-                                alt={getText(product.name, product.nameAr)}
+                                alt={getText(product.name, product.name_ar)}
                                 className="w-full h-full object-cover"
                             />
                         </div>
@@ -82,7 +82,7 @@ export default function ProductOptionsModal({
                     <div>
                         <div>
                             <h3 className="font-bold text-lg">
-                                {getText(product.name, product.nameAr)}
+                                {getText(product.name, product.name_ar)}
                             </h3>
                             <p className="text-sm text-muted-foreground line-clamp-2">
                                 {getText(product.description, product.descriptionAr)}

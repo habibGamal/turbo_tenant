@@ -14,7 +14,7 @@ final class ProductController extends Controller
     {
         // Load product with all relationships
         $product->load([
-            'category:id,name,description',
+            'category:id,name,name_ar,description',
             'variants' => function ($query) {
                 $query->where('is_available', true)->orderBy('sort_order');
             },
@@ -44,6 +44,7 @@ final class ProductController extends Controller
         $productData = [
             'id' => $product->id,
             'name' => $product->name,
+            'name_ar' => $product->name_ar,
             'description' => $product->description,
             'image' => $product->image,
             'base_price' => $product->base_price,
@@ -54,6 +55,7 @@ final class ProductController extends Controller
             'category' => $product->category ? [
                 'id' => $product->category->id,
                 'name' => $product->category->name,
+                'name_ar' => $product->category->name_ar,
                 'description' => $product->category->description,
             ] : null,
             'variants' => $product->variants,
@@ -92,12 +94,13 @@ final class ProductController extends Controller
 
         $products = Product::whereIn('id', $ids)
             ->where('is_active', true)
-            ->with(['category:id,name'])
+            ->with(['category:id,name,name_ar'])
             ->get()
             ->map(function ($product) {
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
+                    'name_ar' => $product->name_ar,
                     'description' => $product->description,
                     'image' => $product->image,
                     'price' => $product->price_after_discount ?? $product->base_price,

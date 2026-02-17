@@ -33,6 +33,10 @@ final class ProductsTable
                     ->label('الاسم')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('name_ar')
+                    ->label('الاسم بالعربية')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('category.name')
                     ->label('الفئة')
                     ->searchable()

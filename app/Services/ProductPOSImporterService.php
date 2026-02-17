@@ -12,6 +12,7 @@ use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class ProductPOSImporterService
 {
@@ -39,14 +40,14 @@ final class ProductPOSImporterService
         $url = $baseUrl.'/api/get-products-master?ids='.$idsString;
 
         try {
-            $response = Http::timeout(30)->get($url);
+            $response = Http::timeout(10)->connectTimeout(3)->get($url);
 
             if (! $response->successful()) {
                 throw new Exception('لا يمكن الاتصال بالنقطة الرئيسية');
             }
 
             return $response->json();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             Log::error('Failed to get products by IDs from master', [
                 'ids' => $ids,
                 'error' => $e->getMessage(),
@@ -74,14 +75,14 @@ final class ProductPOSImporterService
         $url = $baseUrl.'/api/all-products-refs-master';
 
         try {
-            $response = Http::timeout(30)->get($url);
+            $response = Http::timeout(5)->connectTimeout(3)->get($url);
 
             if (! $response->successful()) {
                 throw new Exception('لا يمكن الاتصال بالنقطة الرئيسية');
             }
 
             return $response->json();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             Log::error('Failed to get all product references from master', [
                 'error' => $e->getMessage(),
             ]);
@@ -108,14 +109,14 @@ final class ProductPOSImporterService
         $url = $baseUrl.'/api/all-products-prices-master';
 
         try {
-            $response = Http::timeout(30)->get($url);
+            $response = Http::timeout(5)->connectTimeout(3)->get($url);
 
             if (! $response->successful()) {
                 throw new Exception('لا يمكن الاتصال بالنقطة الرئيسية');
             }
 
             return $response->json();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             Log::error('Failed to get all product prices from master', [
                 'error' => $e->getMessage(),
             ]);
@@ -144,14 +145,14 @@ final class ProductPOSImporterService
         $url = $baseUrl.'/api/get-products-prices-master?ids='.$idsString;
 
         try {
-            $response = Http::timeout(30)->get($url);
+            $response = Http::timeout(10)->connectTimeout(3)->get($url);
 
             if (! $response->successful()) {
                 throw new Exception('لا يمكن الاتصال بالنقطة الرئيسية');
             }
 
             return $response->json();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             Log::error('Failed to get product prices by IDs from master', [
                 'ids' => $ids,
                 'error' => $e->getMessage(),
@@ -181,14 +182,14 @@ final class ProductPOSImporterService
         $url = $baseUrl.'/api/get-products-master-by-refs?refs='.$refsString;
 
         try {
-            $response = Http::timeout(30)->get($url);
+            $response = Http::timeout(10)->connectTimeout(3)->get($url);
 
             if (! $response->successful()) {
                 throw new Exception('لا يمكن الاتصال بالنقطة الرئيسية');
             }
 
             return $response->json();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             Log::error('Failed to get products by references from master', [
                 'refs' => $refs,
                 'error' => $e->getMessage(),

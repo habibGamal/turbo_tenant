@@ -28,6 +28,8 @@ final class PageForm
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(fn (string $operation, $state, $set) => $operation === 'create' ? $set('slug', Str::slug($state)) : null),
                                 RichEditor::make('content')
+                                    ->fileAttachmentsDisk('local')
+                                    ->fileAttachmentsDirectory('attachments')
                                     ->label('المحتوى')
                                     ->required(),
                             ]),

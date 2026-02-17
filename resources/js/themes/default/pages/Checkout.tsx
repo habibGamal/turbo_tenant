@@ -1,51 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Head, router, useForm } from "@inertiajs/react";
 import MainLayout from '@/themes/default/layouts/MainLayout';
-import AddressForm from "@/themes/default/components/AddressForm";
-import { Button } from "@/components/ui/button";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
-import { ImageWithFallback } from "@/components/ui/image";
-import { Separator } from "@/components/ui/separator";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-    CreditCard,
-    Wallet,
-    Landmark,
-    DollarSign,
-    MapPin,
-    Store,
-    ShoppingBag,
-    Loader2,
-    Plus,
-} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Address, Branch, Cart, Governorate, PageProps } from "@/types";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { PhoneInput } from "@/components/ui/phone-input";
 import axios from "axios";
+
+// Checkout Components
+import EmptyCart from "@/themes/default/components/checkout/EmptyCart";
+import OrderTypeSelection from "@/themes/default/components/checkout/OrderTypeSelection";
+import BranchSelection from "@/themes/default/components/checkout/BranchSelection";
+import GuestInformationForm from "@/themes/default/components/checkout/GuestInformationForm";
+import DeliveryAddressSection from "@/themes/default/components/checkout/DeliveryAddressSection";
+import PaymentMethodSelection from "@/themes/default/components/checkout/PaymentMethodSelection";
+import OrderNotesSection from "@/themes/default/components/checkout/OrderNotesSection";
+import CouponCodeSection from "@/themes/default/components/checkout/CouponCodeSection";
+import OrderSummary from "@/themes/default/components/checkout/OrderSummary";
 
 interface CheckoutPageProps extends PageProps {
     cart: Cart;
@@ -64,30 +33,36 @@ export default function Checkout({
     settings,
     is_guest = false,
 }: CheckoutPageProps) {
-    const { t, i18n } = useTranslation();
-    const isRTL = i18n.language === "ar";
-    const [selectedAddress, setSelectedAddress] = useState<number | null>(
-        addresses.find((a) => a.is_default)?.id || addresses[0]?.id || null
-    );
-    const [selectedBranch, setSelectedBranch] = useState<number | null>(
-        branches[0]?.id || null
-    );
-    const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
+    const { t } = useTranslation();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Coupon State
-    const [couponCode, setCouponCode] = useState("");
-    const [couponError, setCouponError] = useState<string | null>(null);
-    const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
-    const [appliedCoupon, setAppliedCoupon] = useState<{
+    type AppliedCoupon = {
         id: number;
         code: string;
         discount: number;
         type: string;
         value: number;
         free_shipping: boolean;
-    } | null>(null);
-    const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+    };
+    const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+
+    // Load saved guest data from localStorage
+    const getSavedGuestData = () => {
+        if (is_guest) {
+            try {
+                const saved = localStorage.getItem('turbo_tenant_guest_data');
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+            } catch (error) {
+                console.error('Error loading guest data from localStorage:', error);
+            }
+        }
+        return null;
+    };
+
+    const savedGuestData = getSavedGuestData();
 
     const { data, setData, post, processing, errors } = useForm({
         branch_id: branches[0]?.id || 0,
@@ -102,22 +77,28 @@ export default function Checkout({
         },
         coupon_id: null as number | null,
         guest_data: is_guest ? {
-            name: "",
-            phone: "",
-            phone_country_code: "+20",
-            email: "",
-            street: "",
-            building: "",
-            floor: "",
-            apartment: "",
-            city: "",
-            area_id: null as number | null,
+            name: savedGuestData?.name || "",
+            phone: savedGuestData?.phone || "",
+            phone_country_code: savedGuestData?.phone_country_code || "+20",
+            email: savedGuestData?.email || "",
+            street: savedGuestData?.street || "",
+            building: savedGuestData?.building || "",
+            floor: savedGuestData?.floor || "",
+            apartment: savedGuestData?.apartment || "",
+            city: savedGuestData?.city || "",
+            area_id: savedGuestData?.area_id || null,
         } : undefined,
     });
 
-    const formatCurrency = (amount: number | undefined) => {
-        const safeAmount = amount ?? 0;
-        return `${safeAmount.toFixed(2)} ${t("currency")}`;
+    // Save guest data to localStorage
+    const saveGuestDataToLocalStorage = () => {
+        if (is_guest && data.guest_data) {
+            try {
+                localStorage.setItem('turbo_tenant_guest_data', JSON.stringify(data.guest_data));
+            } catch (error) {
+                console.error('Error saving guest data to localStorage:', error);
+            }
+        }
     };
 
     const calculateDeliveryFee = () => {
@@ -160,54 +141,17 @@ export default function Checkout({
     const discount = appliedCoupon ? appliedCoupon.discount : 0;
     const totalAmount = (cart?.total || 0) + deliveryFee + tax + service - discount;
 
-    const handleApplyCoupon = async () => {
-        if (!couponCode.trim()) return;
-
-        setIsValidatingCoupon(true);
-        setCouponError(null);
-        setCouponSuccess(null);
-
-        try {
-            const response = await axios.post(route("coupons.validate"), {
-                code: couponCode,
-                cart_items: cart.items,
-                sub_total: cart.total,
-                address_id: data.address_id,
-            });
-
-            if (response.data.valid) {
-                setAppliedCoupon(response.data.coupon);
-                setCouponSuccess(response.data.message);
-                setData("coupon_id", response.data.coupon.id);
-            } else {
-                setAppliedCoupon(null);
-                setCouponError(response.data.message);
-                setData("coupon_id", null);
-            }
-        } catch (error: any) {
-            setAppliedCoupon(null);
-            setData("coupon_id", null);
-            if (error.response?.data?.message) {
-                setCouponError(error.response.data.message);
-            } else {
-                setCouponError(t("failedToValidateCoupon"));
-            }
-        } finally {
-            setIsValidatingCoupon(false);
-        }
+    const handleCouponApplied = (coupon: AppliedCoupon) => {
+        setAppliedCoupon(coupon);
+        setData("coupon_id", coupon.id);
     };
 
-    const handleRemoveCoupon = () => {
+    const handleCouponRemoved = () => {
         setAppliedCoupon(null);
-        setCouponCode("");
-        setCouponSuccess(null);
-        setCouponError(null);
         setData("coupon_id", null);
     };
 
-    const handlePlaceOrder = async (e: React.FormEvent) => {
-        e.preventDefault();
-
+    const handlePlaceOrder = async () => {
         if (!data.branch_id) {
             alert(t("pleaseSelectBranch"));
             return;
@@ -240,6 +184,9 @@ export default function Checkout({
             const response = await axios.post(route("orders.place"), data);
 
             if (response.data.success) {
+                // Save guest data to localStorage for future orders
+                saveGuestDataToLocalStorage();
+
                 const { redirect_type, redirect_url, order_id } = response.data;
 
                 if (redirect_type === "external") {
@@ -275,43 +222,12 @@ export default function Checkout({
         }
     };
 
-    const paymentMethods = [
-        { value: "cod", label: t("cashOnDelivery"), icon: DollarSign },
-        { value: "card", label: t("creditCard"), icon: CreditCard },
-    ].filter((method) => {
-        // Filter out card payment if online payments are disabled
-        if (method.value === "card" && !settings.online_payments_enabled) {
-            return false;
-        }
-        return true;
-    });
-
     if (!cart || cart.items.length === 0) {
         return (
             <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5">
                 <Head title={t("checkout")} />
                 <main className="container mx-auto px-4 py-8">
-                    <Card className="py-16">
-                        <CardContent className="flex flex-col items-center gap-6">
-                            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-                                <ShoppingBag className="w-12 h-12 text-primary" />
-                            </div>
-                            <div className="text-center space-y-2">
-                                <h2 className="text-2xl font-semibold">
-                                    {t("cartEmpty")}
-                                </h2>
-                                <p className="text-muted-foreground">
-                                    {t("cartEmptyDescription")}
-                                </p>
-                            </div>
-                            <Button
-                                onClick={() => router.visit(route("home"))}
-                                size="lg"
-                            >
-                                {t("startShopping")}
-                            </Button>
-                        </CardContent>
-                    </Card>
+                    <EmptyCart />
                 </main>
             </MainLayout>
         );
@@ -334,801 +250,77 @@ export default function Checkout({
                 <div className="grid lg:grid-cols-3 gap-8">
                     {/* Checkout Form */}
                     <div className="lg:col-span-2 space-y-6">
-                        {/* Order Type */}
-                        <Card >
-                            <CardHeader>
-                                <CardTitle>{t("orderType")}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <RadioGroup
-                                    value={data.type}
-                                    onValueChange={(value) =>
-                                        setData("type", value)
-                                    }
-                                    className="space-y-3"
-                                    dir={isRTL ? "rtl" : "ltr"}
-                                >
-                                    <div className="flex items-center space-x-2 ">
-                                        <RadioGroupItem
-                                            value="web_delivery"
-                                            id="delivery"
-                                        />
-                                        <Label
-                                            htmlFor="delivery"
-                                            className="flex-1 cursor-pointer"
-                                        >
-                                            {t("delivery")}
-                                        </Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2 ">
-                                        <RadioGroupItem
-                                            value="web_takeaway"
-                                            id="takeaway"
-                                        />
-                                        <Label
-                                            htmlFor="takeaway"
-                                            className="flex-1 cursor-pointer"
-                                        >
-                                            {t("takeaway")}
-                                        </Label>
-                                    </div>
-                                </RadioGroup>
-                            </CardContent>
-                        </Card>
+                        <OrderTypeSelection
+                            value={data.type}
+                            onChange={(value) => setData("type", value)}
+                        />
 
-                        {/* Branch Selection */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{t("pleaseSelectBranch")}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Select
-                                    value={data.branch_id?.toString()}
-                                    onValueChange={(value) =>
-                                        setData(
-                                            "branch_id",
-                                            parseInt(value)
-                                        )
-                                    }
-                                    dir={isRTL ? "rtl" : "ltr"}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue
-                                            placeholder={t("pleaseSelectBranch")}
-                                        />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {branches.map((branch) => (
-                                            <SelectItem
-                                                key={branch.id}
-                                                value={branch.id.toString()}
-                                            >
-                                                {branch.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </CardContent>
-                        </Card>
+                        <BranchSelection
+                            branches={branches}
+                            value={data.branch_id}
+                            onChange={(value) => setData("branch_id", value)}
+                        />
 
-                        {/* Guest Information Form */}
                         {is_guest && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>{t("guestInformation")}</CardTitle>
-                                    <CardDescription>
-                                        {t("guestInformationDescription")}
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    {/* Name */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="guest_name">{t("fullName")}</Label>
-                                        <Input
-                                            id="guest_name"
-                                            type="text"
-                                            value={data.guest_data?.name || ""}
-                                            onChange={(e) =>
-                                                setData("guest_data", {
-                                                    ...data.guest_data!,
-                                                    name: e.target.value,
-                                                })
-                                            }
-                                            placeholder={t("fullNamePlaceholder")}
-                                        />
-                                        {(errors as any)["guest_data.name"] && (
-                                            <p className="text-sm text-destructive">
-                                                {(errors as any)["guest_data.name"]}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* Phone */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="guest_phone">{t("phoneNumber")}</Label>
-                                        <PhoneInput
-                                            id="guest_phone"
-                                            value={data.guest_data?.phone || ""}
-                                            onChange={(value) =>
-                                                setData("guest_data", {
-                                                    ...data.guest_data!,
-                                                    phone: value || "",
-                                                })
-                                            }
-                                            defaultCountry="EG"
-                                            countries={['EG', 'SA', 'AE']}
-                                            placeholder={t("phoneNumberPlaceholder")}
-                                        />
-                                        {(errors as any)["guest_data.phone"] && (
-                                            <p className="text-sm text-destructive">
-                                                {(errors as any)["guest_data.phone"]}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* Email */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="guest_email">{t("email")} ({t("optional")})</Label>
-                                        <Input
-                                            id="guest_email"
-                                            type="email"
-                                            value={data.guest_data?.email || ""}
-                                            onChange={(e) =>
-                                                setData("guest_data", {
-                                                    ...data.guest_data!,
-                                                    email: e.target.value,
-                                                })
-                                            }
-                                            placeholder={t("emailPlaceholder")}
-                                        />
-                                        {(errors as any)["guest_data.email"] && (
-                                            <p className="text-sm text-destructive">
-                                                {(errors as any)["guest_data.email"]}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {data.type === "web_delivery" && (
-                                        <>
-                                            {/* Area Selection */}
-                                            <div className="space-y-2">
-                                                <Label htmlFor="guest_area">{t("area")}</Label>
-                                                <Select
-                                                    value={data.guest_data?.area_id?.toString() || ""}
-                                                    onValueChange={(value) =>
-                                                        setData("guest_data", {
-                                                            ...data.guest_data!,
-                                                            area_id: parseInt(value),
-                                                        })
-                                                    }
-                                                    dir={isRTL ? "rtl" : "ltr"}
-                                                >
-                                                    <SelectTrigger id="guest_area">
-                                                        <SelectValue placeholder={t("selectArea")} />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {governorates.map((governorate) =>
-                                                            governorate.areas?.map((area) => (
-                                                                <SelectItem
-                                                                    key={area.id}
-                                                                    value={area.id.toString()}
-                                                                >
-                                                                    {i18n.language === 'ar' ? governorate.name_ar : governorate.name} - {i18n.language === 'ar' ? area.name_ar : area.name} ({t("deliveryFee")}: {area.shipping_cost.toFixed(2)} {t("currency")})
-                                                                </SelectItem>
-                                                            ))
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
-                                                {(errors as any)["guest_data.area_id"] && (
-                                                    <p className="text-sm text-destructive">
-                                                        {(errors as any)["guest_data.area_id"]}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            {/* Street */}
-                                            <div className="space-y-2">
-                                                <Label htmlFor="guest_street">{t("street")}</Label>
-                                                <Input
-                                                    id="guest_street"
-                                                    type="text"
-                                                    value={data.guest_data?.street || ""}
-                                                    onChange={(e) =>
-                                                        setData("guest_data", {
-                                                            ...data.guest_data!,
-                                                            street: e.target.value,
-                                                        })
-                                                    }
-                                                    placeholder={t("streetPlaceholder")}
-                                                />
-                                                {(errors as any)["guest_data.street"] && (
-                                                    <p className="text-sm text-destructive">
-                                                        {(errors as any)["guest_data.street"]}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            {/* Building */}
-                                            <div className="space-y-2">
-                                                <Label htmlFor="guest_building">{t("building")}</Label>
-                                                <Input
-                                                    id="guest_building"
-                                                    type="text"
-                                                    value={data.guest_data?.building || ""}
-                                                    onChange={(e) =>
-                                                        setData("guest_data", {
-                                                            ...data.guest_data!,
-                                                            building: e.target.value,
-                                                        })
-                                                    }
-                                                    placeholder={t("buildingPlaceholder")}
-                                                />
-                                                {(errors as any)["guest_data.building"] && (
-                                                    <p className="text-sm text-destructive">
-                                                        {(errors as any)["guest_data.building"]}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            {/* Floor & Apartment */}
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="guest_floor">{t("floor")}</Label>
-                                                    <Input
-                                                        id="guest_floor"
-                                                        type="text"
-                                                        value={data.guest_data?.floor || ""}
-                                                        onChange={(e) =>
-                                                            setData("guest_data", {
-                                                                ...data.guest_data!,
-                                                                floor: e.target.value,
-                                                            })
-                                                        }
-                                                        placeholder={t("floorPlaceholder")}
-                                                    />
-                                                    {(errors as any)["guest_data.floor"] && (
-                                                        <p className="text-sm text-destructive">
-                                                            {(errors as any)["guest_data.floor"]}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="guest_apartment">{t("apartment")}</Label>
-                                                    <Input
-                                                        id="guest_apartment"
-                                                        type="text"
-                                                        value={data.guest_data?.apartment || ""}
-                                                        onChange={(e) =>
-                                                            setData("guest_data", {
-                                                                ...data.guest_data!,
-                                                                apartment: e.target.value,
-                                                            })
-                                                        }
-                                                        placeholder={t("apartmentPlaceholder")}
-                                                    />
-                                                    {(errors as any)["guest_data.apartment"] && (
-                                                        <p className="text-sm text-destructive">
-                                                            {(errors as any)["guest_data.apartment"]}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* City */}
-                                            <div className="space-y-2">
-                                                <Label htmlFor="guest_city">{t("city")} ({t("optional")})</Label>
-                                                <Input
-                                                    id="guest_city"
-                                                    type="text"
-                                                    value={data.guest_data?.city || ""}
-                                                    onChange={(e) =>
-                                                        setData("guest_data", {
-                                                            ...data.guest_data!,
-                                                            city: e.target.value,
-                                                        })
-                                                    }
-                                                    placeholder={t("cityPlaceholder")}
-                                                />
-                                                {(errors as any)["guest_data.city"] && (
-                                                    <p className="text-sm text-destructive">
-                                                        {(errors as any)["guest_data.city"]}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </>
-                                    )}
-                                </CardContent>
-                            </Card>
+                            <GuestInformationForm
+                                guestData={data.guest_data!}
+                                onChange={(updates) =>
+                                    setData("guest_data", {
+                                        ...data.guest_data!,
+                                        ...updates,
+                                    })
+                                }
+                                governorates={governorates}
+                                orderType={data.type}
+                                errors={errors as Record<string, string>}
+                            />
                         )}
 
-                        {/* Delivery Address */}
                         {data.type === "web_delivery" && !is_guest && (
-                            <Card>
-                                <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <CardTitle>
-                                                {t("deliveryAddress")}
-                                            </CardTitle>
-                                            <CardDescription>
-                                                {t("selectDeliveryAddress")}
-                                            </CardDescription>
-                                        </div>
-                                        {addresses.length > 0 && (
-                                            <Dialog
-                                                open={isAddressDialogOpen}
-                                                onOpenChange={
-                                                    setIsAddressDialogOpen
-                                                }
-                                            >
-                                                <DialogTrigger asChild>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                    >
-                                                        <Plus className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
-                                                        {t("addNew")}
-                                                    </Button>
-                                                </DialogTrigger>
-                                                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                                                    <DialogHeader>
-                                                        <DialogTitle>
-                                                            {t(
-                                                                "addNewAddress"
-                                                            )}
-                                                        </DialogTitle>
-                                                        <DialogDescription>
-                                                            {t(
-                                                                "fillAddressDetails"
-                                                            )}
-                                                        </DialogDescription>
-                                                    </DialogHeader>
-                                                    <AddressForm
-                                                        governorates={
-                                                            governorates
-                                                        }
-                                                        onSuccess={() => {
-                                                            setIsAddressDialogOpen(
-                                                                false
-                                                            );
-                                                            router.reload({
-                                                                only: [
-                                                                    "addresses",
-                                                                ],
-                                                            });
-                                                        }}
-                                                    />
-                                                </DialogContent>
-                                            </Dialog>
-                                        )}
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    {addresses.length === 0 ? (
-                                        <div className="space-y-4">
-                                            <div className="text-center py-4 text-muted-foreground">
-                                                <MapPin className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                                                <p className="text-sm">
-                                                    {t("noAddressesFound")}
-                                                </p>
-                                            </div>
-                                            <AddressForm
-                                                governorates={governorates}
-                                                onSuccess={() => {
-                                                    router.reload({
-                                                        only: ["addresses"],
-                                                    });
-                                                }}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <RadioGroup
-                                            value={data.address_id?.toString()}
-                                            onValueChange={(value) =>
-                                                setData(
-                                                    "address_id",
-                                                    parseInt(value)
-                                                )
-                                            }
-                                            className="space-y-2"
-                                        >
-                                            {addresses.map((address) => (
-                                                <div
-                                                    key={address.id}
-                                                    className="flex items-start space-x-3 border rounded-lg p-3 hover:bg-accent/50 transition-colors"
-                                                >
-                                                    <RadioGroupItem
-                                                        value={address.id.toString()}
-                                                        id={`address-${address.id}`}
-                                                        className="mt-0.5"
-                                                    />
-                                                    <Label
-                                                        htmlFor={`address-${address.id}`}
-                                                        className="flex-1 cursor-pointer"
-                                                    >
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span className="font-medium text-sm">
-                                                                {
-                                                                    address
-                                                                        .area
-                                                                        ?.governorate
-                                                                        ?.name
-                                                                }
-                                                                ,{" "}
-                                                                {
-                                                                    address
-                                                                        .area
-                                                                        ?.name
-                                                                }
-                                                            </span>
-                                                            {address.is_default && (
-                                                                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                                                                    {t(
-                                                                        "default"
-                                                                    )}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {address.street}
-                                                            ,{" "}
-                                                            {
-                                                                address.building
-                                                            }
-                                                            , {t("floor")}{" "}
-                                                            {address.floor},{" "}
-                                                            {t("apt")}{" "}
-                                                            {
-                                                                address.apartment
-                                                            }
-                                                        </p>
-                                                        <div className="flex items-center justify-between mt-1">
-                                                            <span className="text-xs text-muted-foreground">
-                                                                {
-                                                                    address.phone_number
-                                                                }
-                                                            </span>
-                                                            <span className="text-xs font-medium text-primary">
-                                                                {t(
-                                                                    "deliveryFee"
-                                                                )}
-                                                                :{" "}
-                                                                {formatCurrency(
-                                                                    address
-                                                                        .area
-                                                                        ?.shipping_cost ||
-                                                                    0
-                                                                )}
-                                                            </span>
-                                                        </div>
-                                                    </Label>
-                                                </div>
-                                            ))}
-                                        </RadioGroup>
-                                    )}
-                                </CardContent>
-                            </Card>
+                            <DeliveryAddressSection
+                                addresses={addresses}
+                                governorates={governorates}
+                                selectedAddressId={data.address_id}
+                                onAddressChange={(addressId) =>
+                                    setData("address_id", addressId)
+                                }
+                            />
                         )}
 
-                        {/* Payment Method */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{t("paymentMethod")}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <RadioGroup
-                                    value={data.payment_method}
-                                    onValueChange={(value) =>
-                                        setData("payment_method", value)
-                                    }
-                                    className="space-y-3"
-                                    dir={isRTL ? "rtl" : "ltr"}
-                                >
-                                    {paymentMethods.map((method) => {
-                                        const Icon = method.icon;
-                                        return (
-                                            <div
-                                                key={method.value}
-                                                className="flex items-center space-x-3"
-                                            >
-                                                <RadioGroupItem
-                                                    value={method.value}
-                                                    id={method.value}
-                                                />
-                                                <Label
-                                                    htmlFor={method.value}
-                                                    className="flex items-center gap-3 flex-1 cursor-pointer"
-                                                >
-                                                    <Icon className="w-5 h-5 text-muted-foreground" />
-                                                    <span>
-                                                        {method.label}
-                                                    </span>
-                                                </Label>
-                                            </div>
-                                        );
-                                    })}
-                                </RadioGroup>
-                            </CardContent>
-                        </Card>
+                        <PaymentMethodSelection
+                            value={data.payment_method}
+                            onChange={(value) => setData("payment_method", value)}
+                            onlinePaymentsEnabled={settings.online_payments_enabled}
+                        />
 
-                        {/* Order Notes */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{t("orderNotes")}</CardTitle>
-                                <CardDescription>
-                                    {t("addOrderNotesOptional")}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Textarea
-                                    placeholder={t("orderNotesPlaceholder")}
-                                    value={data.note}
-                                    onChange={(e) =>
-                                        setData("note", e.target.value)
-                                    }
-                                    rows={4}
-                                />
-                            </CardContent>
-                        </Card>
-                        {/* Coupon Code */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{t("couponCode")}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    <div className="flex gap-2">
-                                        <Input
-                                            placeholder={t("enterCouponCode")}
-                                            value={couponCode}
-                                            onChange={(e) => setCouponCode(e.target.value)}
-                                            disabled={!!appliedCoupon || isValidatingCoupon}
-                                        />
-                                        {appliedCoupon ? (
-                                            <Button
-                                                variant="destructive"
-                                                onClick={handleRemoveCoupon}
-                                                type="button"
-                                            >
-                                                {t("remove")}
-                                            </Button>
-                                        ) : (
-                                            <Button
-                                                variant="outline"
-                                                onClick={handleApplyCoupon}
-                                                disabled={!couponCode || isValidatingCoupon}
-                                                type="button"
-                                            >
-                                                {isValidatingCoupon ? (
-                                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                                ) : (
-                                                    t("apply")
-                                                )}
-                                            </Button>
-                                        )}
-                                    </div>
-                                    {couponError && (
-                                        <p className="text-sm text-destructive">{couponError}</p>
-                                    )}
-                                    {couponSuccess && (
-                                        <p className="text-sm text-green-600">{couponSuccess}</p>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <OrderNotesSection
+                            value={data.note}
+                            onChange={(value) => setData("note", value)}
+                        />
+
+                        <CouponCodeSection
+                            cartItems={cart.items}
+                            cartTotal={cart.total}
+                            addressId={data.address_id}
+                            appliedCoupon={appliedCoupon}
+                            onCouponApplied={handleCouponApplied}
+                            onCouponRemoved={handleCouponRemoved}
+                        />
                     </div>
 
                     {/* Order Summary */}
                     <div className="lg:col-span-1">
-                        <Card className="sticky top-4">
-                            <CardHeader>
-                                <CardTitle>{t("orderSummary")}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {/* Cart Items List */}
-                                <div className="space-y-2 max-h-96 overflow-y-auto">
-                                    {cart.items.map((item) => (
-                                        <div
-                                            key={item.id}
-                                            className="flex gap-2 pb-2 border-b border-border/50 last:border-0"
-                                        >
-                                            {/* Item Image */}
-                                            <div className="w-12 h-12 rounded-md bg-gradient-to-br from-primary/5 to-secondary/5 relative overflow-hidden shrink-0">
-                                                <ImageWithFallback
-                                                    src={
-                                                        item.product
-                                                            ?.image
-                                                    }
-                                                    alt={
-                                                        item.product
-                                                            ?.name ||
-                                                        t("product")
-                                                    }
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-
-                                            {/* Item Details */}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="font-medium text-xs leading-tight truncate">
-                                                            {item.product
-                                                                ?.name ||
-                                                                t(
-                                                                    "unknownProduct"
-                                                                )}
-                                                        </div>
-                                                        {item.variant && (
-                                                            <div className="text-[10px] text-muted-foreground">
-                                                                {
-                                                                    item
-                                                                        .variant
-                                                                        .name
-                                                                }
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-xs font-semibold text-primary shrink-0">
-                                                        {formatCurrency(
-                                                            item.subtotal
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-2 mt-0.5">
-                                                    {item.product
-                                                        ?.sell_by_weight &&
-                                                        item.weight_option_value ? (
-                                                        <span className="text-[10px] text-muted-foreground">
-                                                            {parseFloat(
-                                                                item.quantity
-                                                            ).toFixed(
-                                                                2
-                                                            )}{" "}
-                                                            {
-                                                                item.product
-                                                                    .weight_option
-                                                                    ?.unit
-                                                            }
-                                                            {item.weight_multiplier >
-                                                                1 &&
-                                                                ` ${t(
-                                                                    "multiply"
-                                                                )} ${item.weight_multiplier
-                                                                }`}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-[10px] text-muted-foreground">
-                                                            {t("qty")}:{" "}
-                                                            {parseFloat(
-                                                                item.quantity
-                                                            ).toFixed(0)}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                {item.extras.length > 0 && (
-                                                    <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                                                        {item.extras.map(
-                                                            (extra) => (
-                                                                <div
-                                                                    key={
-                                                                        extra.id
-                                                                    }
-                                                                    className="flex items-center gap-1"
-                                                                >
-                                                                    <span>
-                                                                        +{" "}
-                                                                        {
-                                                                            extra.name
-                                                                        }
-                                                                    </span>
-                                                                    {extra.quantity >
-                                                                        1 && (
-                                                                            <span>
-                                                                                {t(
-                                                                                    "multiply"
-                                                                                )}{" "}
-                                                                                {
-                                                                                    extra.quantity
-                                                                                }
-                                                                            </span>
-                                                                        )}
-                                                                </div>
-                                                            )
-                                                        )}
-                                                    </div>
-                                                )}
-                                                <div className="text-sm font-semibold text-primary mt-1">
-                                                    {formatCurrency(
-                                                        item.subtotal
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <Separator />
-
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted-foreground">
-                                            {t("subtotal")}
-                                        </span>
-                                        <span className="font-medium">
-                                            {formatCurrency(cart?.total)}
-                                        </span>
-                                    </div>
-
-                                    {appliedCoupon && (
-                                        <div className="flex items-center justify-between text-sm text-green-600">
-                                            <span>
-                                                {t("discount")} ({appliedCoupon.code})
-                                            </span>
-                                            <span className="font-medium">
-                                                - {formatCurrency(appliedCoupon.discount)}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted-foreground">
-                                            {t("tax")}
-                                        </span>
-                                        <span className="font-medium">
-                                            {formatCurrency(tax)}
-                                        </span>
-                                    </div>
-                                    {service > 0 && (
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-muted-foreground">
-                                                {t("codFees")}
-                                            </span>
-                                            <span className="font-medium">
-                                                {formatCurrency(service)}
-                                            </span>
-                                        </div>
-                                    )}
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted-foreground">
-                                            {t("deliveryFee")}
-                                        </span>
-                                        <span className="font-medium">
-                                            {deliveryFee > 0
-                                                ? formatCurrency(
-                                                    deliveryFee
-                                                )
-                                                : t("free")}
-                                        </span>
-                                    </div>
-                                    <Separator />
-                                    <div className="flex items-center justify-between">
-                                        <span className="font-semibold text-lg">
-                                            {t("total")}
-                                        </span>
-                                        <span className="font-bold text-2xl text-primary">
-                                            {formatCurrency(totalAmount)}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <Button
-                                    className="w-full"
-                                    size="lg"
-                                    onClick={handlePlaceOrder}
-                                    disabled={isSubmitting}
-                                >
-                                    {isSubmitting ? (
-                                        <>
-                                            <Loader2 className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
-                                            {t("placingOrder")}
-                                        </>
-                                    ) : (
-                                        t("placeOrder")
-                                    )}
-                                </Button>
-                            </CardContent>
-                        </Card>
+                        <OrderSummary
+                            cart={cart}
+                            deliveryFee={deliveryFee}
+                            tax={tax}
+                            service={service}
+                            discount={discount}
+                            totalAmount={totalAmount}
+                            appliedCoupon={appliedCoupon}
+                            isSubmitting={isSubmitting}
+                            onPlaceOrder={handlePlaceOrder}
+                        />
                     </div>
                 </div>
             </main>

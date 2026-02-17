@@ -27,6 +27,9 @@ final class ProductForm
                             ->label('الاسم')
                             ->required()
                             ->maxLength(255),
+                        TextInput::make('name_ar')
+                            ->label('الاسم بالعربية')
+                            ->maxLength(255),
                         Select::make('category_id')
                             ->label('الفئة')
                             ->relationship('category', 'name')

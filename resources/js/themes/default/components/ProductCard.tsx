@@ -30,7 +30,6 @@ export default function ProductCard({
 }: ProductCardProps) {
     const { t, i18n } = useTranslation();
     const { isFavorite, toggleFavorite } = useFavorites();
-
     const handleCardClick = () => {
         if (onClick) {
             onClick();
@@ -73,12 +72,11 @@ export default function ProductCard({
 
     const getCategoryName = () => {
         if (!product.category) return null;
-
         if (typeof product.category === 'string') {
             return getText(product.category, product.categoryAr);
         }
 
-        return getText(product.category.name, product.category.nameAr);
+        return getText(product.category.name, product.category.name_ar);
     };
 
     const displayPrice = product.price_after_discount || product.base_price;
@@ -94,7 +92,7 @@ export default function ProductCard({
                 <div className="relative aspect-square overflow-hidden rounded-t-lg">
                     <ImageWithFallback
                         src={product.image}
-                        alt={getText(product.name, product.nameAr)}
+                        alt={getText(product.name, product.name_ar)}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
 
@@ -155,7 +153,7 @@ export default function ProductCard({
                 <CardHeader className="pb-3">
                     <div className="space-y-1">
                         <h3 className="font-semibold text-lg leading-tight ">
-                            {getText(product.name, product.nameAr)}
+                            {getText(product.name, product.name_ar)}
                         </h3>
                         {getCategoryName() && (
                             <Badge variant="outline" className="text-xs">

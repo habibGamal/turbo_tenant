@@ -36,6 +36,10 @@ export default function OrderShow({ order, auth }: OrderShowPageProps) {
     const isRTL = i18n.language === "ar";
     const BackArrowIcon = isRTL ? ArrowRight : ArrowLeft;
 
+    const getText = (text: string, textAr?: string) => {
+        return i18n.language === 'ar' && textAr ? textAr : text;
+    };
+
     const formatCurrency = (amount: number | undefined) => {
         const safeAmount = amount ?? 0;
         return `${safeAmount.toFixed(2)} ${t("currency")}`;
@@ -255,11 +259,11 @@ export default function OrderShow({ order, auth }: OrderShowPageProps) {
                                                 <div className="font-semibold">
                                                     {item.product?.sell_by_weight ? (
                                                         <>
-                                                            {item.weight_multiplier} x {item.product_name}
+                                                            {item.weight_multiplier} x {item.product ? getText(item.product.name, item.product.name_ar) : getText(item.product_name, item.product_name_ar)}
                                                         </>
                                                     ) : (
                                                         <>
-                                                            {parseFloat(item.quantity).toFixed(0)} x {item.product_name}
+                                                            {parseFloat(item.quantity).toFixed(0)} x {item.product ? getText(item.product.name, item.product.name_ar) : getText(item.product_name, item.product_name_ar)}
                                                         </>
                                                     )}
                                                 </div>

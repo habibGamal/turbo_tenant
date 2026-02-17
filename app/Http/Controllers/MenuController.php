@@ -32,13 +32,14 @@ final class MenuController extends Controller
 
         // Build query
         $query = Product::query()
-            ->with('category:id,name')
+            ->with('category:id,name,name_ar')
             ->where('is_active', true);
 
         // Apply search filter
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('name_ar', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
             });
         }
@@ -46,7 +47,8 @@ final class MenuController extends Controller
         // Apply category filter
         if (! empty($categories)) {
             $query->whereHas('category', function ($q) use ($categories) {
-                $q->whereIn('name', $categories);
+                $q->whereIn('name', $categories)
+                    ->orWhereIn('name_ar', $categories);
             });
         }
 
@@ -85,13 +87,14 @@ final class MenuController extends Controller
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->get(['id', 'name', 'image']);
+            ->get(['id', 'name', 'name_ar', 'image']);
 
         // Transform products for frontend
         $products->getCollection()->transform(function ($product) {
             return [
                 'id' => $product->id,
                 'name' => $product->name,
+                'nameAr' => $product->name_ar,
                 'description' => $product->description,
                 'image' => $product->image,
                 'price' => $product->price_after_discount ?? $product->base_price,
@@ -100,6 +103,7 @@ final class MenuController extends Controller
                 'category' => $product->category ? [
                     'id' => $product->category->id,
                     'name' => $product->category->name,
+                    'nameAr' => $product->category->name_ar,
                 ] : null,
                 'sell_by_weight' => $product->sell_by_weight,
             ];
@@ -109,10 +113,11 @@ final class MenuController extends Controller
         $searchSuggestions = [];
         if ($getSuggestions && mb_strlen($searchQuery) >= 2) {
             $searchSuggestions = Product::query()
-                ->with('category:id,name')
+                ->with('category:id,name,name_ar')
                 ->where('is_active', true)
                 ->where(function ($q) use ($searchQuery) {
                     $q->where('name', 'like', "%{$searchQuery}%")
+                        ->orWhere('name_ar', 'like', "%{$searchQuery}%")
                         ->orWhere('description', 'like', "%{$searchQuery}%");
                 })
                 ->limit(5)
@@ -121,12 +126,14 @@ final class MenuController extends Controller
                     return [
                         'id' => $product->id,
                         'name' => $product->name,
+                        'nameAr' => $product->name_ar,
                         'description' => $product->description,
                         'image' => $product->image,
                         'price' => $product->price_after_discount ?? $product->base_price,
                         'category' => $product->category ? [
                             'id' => $product->category->id,
                             'name' => $product->category->name,
+                            'nameAr' => $product->category->name_ar,
                         ] : null,
                     ];
                 });

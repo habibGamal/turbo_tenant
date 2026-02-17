@@ -26,7 +26,6 @@ createInertiaApp({
     },
     resolve: async (name) => {
         // Try to resolve from theme first, fallback to default Pages
-        console.log("resolving page: " + name);
         return resolvePageComponent(
             `./themes/default/pages/${name}.tsx`,
             import.meta.glob("./themes/default/pages/**/*.tsx")
@@ -52,7 +51,6 @@ createInertiaApp({
         // Get theme configuration based on tenant or default
         const themeName = getThemeName(props.initialPage.props);
         const themeConfig = getTheme(themeName);
-        console.log(props);
         root.render(
             <ThemeProvider theme={themeConfig}>
                 <InitPixel

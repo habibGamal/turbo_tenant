@@ -14,7 +14,7 @@ final class ProductController extends Controller
     {
         // Load product with all relationships
         $product->load([
-            'category:id,name,description',
+            'category:id,name,name_ar,description',
             'variants' => function ($query) {
                 $query->where('is_available', true)->orderBy('sort_order');
             },
@@ -27,7 +27,7 @@ final class ProductController extends Controller
         ]);
         // Get related products from the same category
         $relatedProducts = Product::query()
-            ->with('category:id,name')
+            ->with('category:id,name,name_ar')
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('is_active', true)
@@ -37,19 +37,20 @@ final class ProductController extends Controller
                 return [
                     'id' => $relatedProduct->id,
                     'name' => $relatedProduct->name,
+                    'name_ar' => $relatedProduct->name_ar,
                     'description' => $relatedProduct->description,
                     'image' => $relatedProduct->image,
                     'price' => $relatedProduct->price_after_discount ?? $relatedProduct->base_price,
                     'base_price' => $relatedProduct->base_price,
                     'price_after_discount' => $relatedProduct->price_after_discount,
-                    'category' => $relatedProduct->category?->name,
+                    'category' => $relatedProduct->category,
                     'rating' => 4.5, // TODO: Add actual rating from reviews
                 ];
             });
 
         // Get promotional products (products with discounts)
         $promotionalProducts = Product::query()
-            ->with('category:id,name')
+            ->with('category:id,name,name_ar')
             ->where('is_active', true)
             ->whereNotNull('price_after_discount')
             ->where('id', '!=', $product->id)
@@ -59,12 +60,13 @@ final class ProductController extends Controller
                 return [
                     'id' => $promoProduct->id,
                     'name' => $promoProduct->name,
+                    'name_ar' => $promoProduct->name_ar,
                     'description' => $promoProduct->description,
                     'image' => $promoProduct->image,
                     'price' => $promoProduct->price_after_discount,
                     'base_price' => $promoProduct->base_price,
                     'price_after_discount' => $promoProduct->price_after_discount,
-                    'category' => $promoProduct->category?->name,
+                    'category' => $promoProduct->category,
                     'rating' => 4.5,
                 ];
             });
@@ -87,6 +89,7 @@ final class ProductController extends Controller
         $productData = [
             'id' => $product->id,
             'name' => $product->name,
+            'name_ar' => $product->name_ar,
             'description' => $product->description,
             'image' => $product->image,
             'base_price' => $product->base_price,
@@ -97,6 +100,7 @@ final class ProductController extends Controller
             'category' => $product->category ? [
                 'id' => $product->category->id,
                 'name' => $product->category->name,
+                'name_ar' => $product->category->name_ar,
                 'description' => $product->category->description,
             ] : null,
             'variants' => $product->variants,

@@ -11,6 +11,7 @@ final class Section extends Model
 {
     protected $fillable = [
         'title',
+        'title_ar',
         'location',
         'is_active',
         'sort_order',

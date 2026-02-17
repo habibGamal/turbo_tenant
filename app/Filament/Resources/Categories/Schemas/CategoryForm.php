@@ -24,6 +24,9 @@ final class CategoryForm
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
+                        TextInput::make('name_ar')
+                            ->label('الاسم بالعربية')
+                            ->maxLength(255),
                         Textarea::make('description')
                             ->label('الوصف')
                             ->rows(3)

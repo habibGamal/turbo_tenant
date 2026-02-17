@@ -33,6 +33,10 @@ export default function MenuPage({
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === "ar";
 
+    const getText = (text: string, textAr?: string) => {
+        return i18n.language === 'ar' && textAr ? textAr : text;
+    };
+
     // Get URL params
     const getUrlParams = () => {
         const params = new URLSearchParams(window.location.search);
@@ -219,7 +223,7 @@ export default function MenuPage({
                                 htmlFor={`category-${category.id}`}
                                 className="text-sm font-medium cursor-pointer flex-1 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                             >
-                                {category.name}
+                                {getText(category.name, category.name_ar)}
                             </label>
                         </div>
                     ))}
@@ -375,7 +379,7 @@ export default function MenuPage({
                                                     className="flex items-center gap-3 p-3 hover:bg-accent rounded-md cursor-pointer transition-colors"
                                                     onClick={() => {
                                                         setSearchQuery(
-                                                            product.name
+                                                            getText(product.name, product.name_ar)
                                                         );
                                                         setShowSuggestions(
                                                             false
@@ -383,7 +387,7 @@ export default function MenuPage({
                                                         router.get(
                                                             `/menu`,
                                                             {
-                                                                search: product.name,
+                                                                search: getText(product.name, product.name_ar),
                                                             }
                                                         );
                                                     }}
@@ -399,7 +403,7 @@ export default function MenuPage({
                                                     />
                                                     <div className="flex-1 min-w-0">
                                                         <p className="font-medium truncate">
-                                                            {product.name}
+                                                            {getText(product.name, product.name_ar)}
                                                         </p>
                                                         <div className="flex items-center gap-2">
                                                             <p className="text-sm text-muted-foreground">
@@ -416,9 +420,7 @@ export default function MenuPage({
                                                                     <span className="text-xs text-muted-foreground">
                                                                         •{" "}
                                                                         {
-                                                                            product
-                                                                                .category
-                                                                                .name
+                                                                            getText(product.category.name, product.category.name_ar)
                                                                         }
                                                                     </span>
                                                                 )}
@@ -440,7 +442,8 @@ export default function MenuPage({
                     maxPrice) && (
                         <div className="flex flex-wrap gap-2 mb-8">
                             {selectedCategories.map((category) => {
-                                const categoryName = category;
+                                const categoryObj = categories.find(c => c.name === category);
+                                const categoryName = categoryObj ? getText(categoryObj.name, categoryObj.name_ar) : category;
                                 const categoryKey = category;
                                 return (
                                     <div

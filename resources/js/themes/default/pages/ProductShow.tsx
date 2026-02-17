@@ -54,6 +54,10 @@ export default function ProductShow({
     const isRTL = i18n.language === "ar";
     const { settings } = usePage<PageProps>().props;
 
+    const getText = (text: string, textAr?: string) => {
+        return i18n.language === 'ar' && textAr ? textAr : text;
+    };
+
     const {
         quantity,
         setQuantity,
@@ -86,11 +90,12 @@ export default function ProductShow({
         });
     }, [selectedVariant, product]);
 
-    const categoryName = typeof product.category === 'object' ? product.category?.name : product.category;
+    console.log("Product Data:", product);
+    const categoryName = getText(product.category!.name,product.category!.name_ar);
 
     return (
         <MainLayout categories={[]} cartItemsCount={0}>
-            <Head title={product.name} />
+            <Head title={getText(product.name, product.name_ar)} />
             <div className="min-h-screen bg-background">
                 <main className="container mx-auto px-4 py-8">
                     {/* Breadcrumb */}
@@ -113,7 +118,7 @@ export default function ProductShow({
                                 <span>/</span>
                             </>
                         )}
-                        <span className="text-foreground">{product.name}</span>
+                        <span className="text-foreground">{getText(product.name, product.name_ar)}</span>
                     </div>
 
                     {/* Product Details Section */}

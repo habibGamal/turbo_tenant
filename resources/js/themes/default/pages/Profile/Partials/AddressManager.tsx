@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PhoneInput } from "@/components/ui/phone-input";
 import {
     Dialog,
     DialogContent,
@@ -21,7 +22,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
-import { Plus, Pencil, Trash2, MapPin } from "lucide-react";
+import { Plus, Pencil, Trash2, MapPin, Loader2 } from "lucide-react";
 import axios from "axios";
 import { useEffect } from "react";
 
@@ -55,7 +56,7 @@ interface Governorate {
 }
 
 export default function AddressManager({ addresses }: { addresses: Address[] }) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
     const [governorates, setGovernorates] = useState<Governorate[]>([]);
@@ -270,31 +271,33 @@ export default function AddressManager({ addresses }: { addresses: Address[] }) 
                             )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>{t("building")}</Label>
-                                <Input
-                                    value={data.building}
-                                    onChange={(e) => setData("building", e.target.value)}
-                                    required
-                                />
-                                {errors.building && (
-                                    <p className="text-sm text-red-600">{errors.building}</p>
-                                )}
-                            </div>
-                            <div className="space-y-2">
-                                <Label>{t("phoneNumber")}</Label>
-                                <Input
-                                    value={data.phone_number}
-                                    onChange={(e) => setData("phone_number", e.target.value)}
-                                    required
-                                />
-                                {errors.phone_number && (
-                                    <p className="text-sm text-red-600">
-                                        {errors.phone_number}
-                                    </p>
-                                )}
-                            </div>
+                        <div className="space-y-2">
+                            <Label>{t("building")}</Label>
+                            <Input
+                                value={data.building}
+                                onChange={(e) => setData("building", e.target.value)}
+                                required
+                            />
+                            {errors.building && (
+                                <p className="text-sm text-red-600">{errors.building}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label dir="rtl">{t("phoneNumber")}</Label>
+                            <PhoneInput
+                                value={data.phone_number}
+                                onChange={(value) => setData("phone_number", value || "")}
+                                defaultCountry="EG"
+                                countries={['EG']}
+                                placeholder={t("phoneNumberPlaceholder")}
+                                dir="ltr"
+                            />
+                            {errors.phone_number && (
+                                <p dir={i18n.dir()} className="text-sm text-red-600">
+                                    {errors.phone_number}
+                                </p>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">

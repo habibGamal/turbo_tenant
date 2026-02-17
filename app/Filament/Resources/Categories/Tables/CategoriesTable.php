@@ -26,6 +26,10 @@ final class CategoriesTable
                     ->label('الاسم')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('name_ar')
+                    ->label('الاسم بالعربية')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('description')
                     ->label('الوصف')
                     ->limit(50)

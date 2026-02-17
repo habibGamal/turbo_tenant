@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 interface Product {
     id: number;
     name: string;
+    name_ar?: string;
     description: string;
     price: number;
     image?: string;
@@ -83,12 +84,11 @@ export default function HomePage({
                     title: s.title,
                     products: s.products.map(p => ({
                         ...p,
-                        nameAr: p.name, // TODO: Add actual Arabic translations
                         descriptionAr: p.description,
                         // Map product fields if necessary to match ProductsSection expectations
                         // For now assuming they match or are compatible
-                        category: typeof p.category === 'string' ? p.category : (p.category as any)?.name,
-                        categoryAr: typeof p.category === 'string' ? p.category : (p.category as any)?.name,
+                        // category: typeof p.category === 'string' ? p.category : (p.category as any)?.name,
+                        // categoryAr: typeof p.category === 'string' ? p.category : (p.category as any)?.name,
                     })),
                     icon: 'star' // Default icon, or map based on title
                 }))} />

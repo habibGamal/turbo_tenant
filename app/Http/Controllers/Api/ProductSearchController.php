@@ -21,10 +21,11 @@ final class ProductSearchController extends Controller
         }
 
         $products = Product::query()
-            ->with('category:id,name')
+            ->with('category:id,name,name_ar')
             ->where('is_active', true)
             ->where(function ($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
+                    ->orWhere('name_ar', 'like', "%{$query}%")
                     ->orWhere('description', 'like', "%{$query}%");
             })
             ->limit($limit)
@@ -33,12 +34,14 @@ final class ProductSearchController extends Controller
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
+                    'nameAr' => $product->name_ar,
                     'description' => $product->description,
                     'image' => $product->image,
                     'price' => $product->price_after_discount ?? $product->base_price,
                     'category' => $product->category ? [
                         'id' => $product->category->id,
                         'name' => $product->category->name,
+                        'nameAr' => $product->category->name_ar,
                     ] : null,
                 ];
             });

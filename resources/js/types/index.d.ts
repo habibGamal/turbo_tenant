@@ -26,7 +26,7 @@ export interface GuestUser {
 export interface Category {
     id: number;
     name: string;
-    nameAr?: string;
+    name_ar?: string;
     description?: string;
     image?: string;
 }
@@ -80,7 +80,7 @@ export interface WeightOption {
 export interface Product {
     id: number;
     name: string;
-    nameAr?: string;
+    name_ar?: string;
     description: string;
     descriptionAr?: string;
     image?: string;
@@ -91,7 +91,7 @@ export interface Product {
     is_active?: boolean;
     sell_by_weight?: boolean;
     weight_option?: WeightOption;
-    category?: Category | string;
+    category?: Category;
     categoryAr?: string;
     variants?: ProductVariant[];
     extraOption?: ExtraOption;
@@ -129,6 +129,7 @@ export interface CartItem {
     product: {
         id: number;
         name: string;
+        name_ar?: string;
         image?: string;
         base_price: number;
         price_after_discount?: number;
@@ -225,6 +226,7 @@ export interface OrderItem {
     weight_option_value_id?: number;
     weight_multiplier: number;
     product_name: string;
+    product_name_ar?: string;
     variant_name?: string;
     quantity: string;
     unit_price: number;
@@ -233,6 +235,7 @@ export interface OrderItem {
     product?: {
         id: number;
         name: string;
+        name_ar?: string;
         image?: string;
         sell_by_weight?: boolean;
         weight_option?: WeightOption;

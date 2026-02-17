@@ -35,7 +35,11 @@ export default function CartItem({
     onWeightChange,
     formatCurrency,
 }: CartItemProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+
+    const getText = (text: string, textAr?: string) => {
+        return i18n.language === 'ar' && textAr ? textAr : text;
+    };
 
     return (
         <div>
@@ -48,7 +52,7 @@ export default function CartItem({
                     <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg bg-gradient-to-br from-primary/5 to-secondary/5 relative overflow-hidden">
                         <ImageWithFallback
                             src={item.product?.image}
-                            alt={item.product?.name || t("product")}
+                            alt={getText(item.product?.name || t("product"), item.product?.name_ar)}
                             className="w-full h-full object-cover"
                         />
                     </div>
@@ -60,7 +64,7 @@ export default function CartItem({
                         <div className="flex-1 min-w-0">
                             <Link href={route("products.show", item.product_id)}>
                                 <h3 className=" font-semibold text-base sm:text-lg leading-tight  hover:text-primary transition-colors">
-                                    {item.product?.name || t("unknownProduct")}
+                                    {getText(item.product?.name || t("unknownProduct"), item.product?.name_ar)}
                                 </h3>
                             </Link>
                             {item.variant && (

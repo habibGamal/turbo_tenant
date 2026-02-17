@@ -24,6 +24,9 @@ final class SectionForm
                             ->label('العنوان')
                             ->required()
                             ->maxLength(255),
+                        TextInput::make('title_ar')
+                            ->label('العنوان بالعربية')
+                            ->maxLength(255),
                         Select::make('location')
                             ->label('الموقع')
                             ->options([

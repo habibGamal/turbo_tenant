@@ -15,13 +15,13 @@ final class HomeController extends Controller
         // Get categories with their products
         $categories = Category::query()
             ->orderBy('name')
-            ->get(['id', 'name', 'description', 'image']);
+            ->get(['id', 'name', 'name_ar', 'description', 'image']);
 
         $sections = \App\Models\Section::query()
             ->with([
                 'products' => function ($query) {
                     $query->where('is_active', true)
-                        ->with('category:id,name');
+                        ->with('category:id,name,name_ar');
                 },
             ])
             ->where('is_active', true)

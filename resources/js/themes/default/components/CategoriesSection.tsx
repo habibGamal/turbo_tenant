@@ -8,7 +8,7 @@ import { ImageWithFallback } from '@/components/ui/image';
 interface Category {
     id: number;
     name: string;
-    nameAr?: string;
+    name_ar?: string;
     slug: string;
     description?: string;
     descriptionAr?: string;
@@ -35,12 +35,12 @@ export default function CategoriesSection({
     const { t, i18n } = useTranslation();
 
     const defaultCategories: Category[] = [
-        { id: 1, name: t('categoryPizza'), nameAr: t('categoryPizza'), slug: 'pizza', icon: 'pizza', productsCount: 24, image: '/images/categories/pizza.jpg' },
-        { id: 2, name: t('categoryBurgers'), nameAr: t('categoryBurgers'), slug: 'burgers', icon: 'utensils', productsCount: 18, image: '/images/categories/burger.jpg' },
-        { id: 3, name: t('categorySalads'), nameAr: t('categorySalads'), slug: 'salads', icon: 'salad', productsCount: 15, image: '/images/categories/salad.jpg' },
-        { id: 4, name: t('categoryDesserts'), nameAr: t('categoryDesserts'), slug: 'desserts', icon: 'icecream', productsCount: 22, image: '/images/categories/dessert.jpg' },
-        { id: 5, name: t('categoryDrinks'), nameAr: t('categoryDrinks'), slug: 'drinks', icon: 'coffee', productsCount: 30, image: '/images/categories/drink.jpg' },
-        { id: 6, name: t('categorySoups'), nameAr: t('categorySoups'), slug: 'soups', icon: 'soup', productsCount: 12, image: '/images/categories/soup.jpg' },
+        { id: 1, name: t('categoryPizza'), name_ar: t('categoryPizza'), slug: 'pizza', icon: 'pizza', productsCount: 24, image: '/images/categories/pizza.jpg' },
+        { id: 2, name: t('categoryBurgers'), name_ar: t('categoryBurgers'), slug: 'burgers', icon: 'utensils', productsCount: 18, image: '/images/categories/burger.jpg' },
+        { id: 3, name: t('categorySalads'), name_ar: t('categorySalads'), slug: 'salads', icon: 'salad', productsCount: 15, image: '/images/categories/salad.jpg' },
+        { id: 4, name: t('categoryDesserts'), name_ar: t('categoryDesserts'), slug: 'desserts', icon: 'icecream', productsCount: 22, image: '/images/categories/dessert.jpg' },
+        { id: 5, name: t('categoryDrinks'), name_ar: t('categoryDrinks'), slug: 'drinks', icon: 'coffee', productsCount: 30, image: '/images/categories/drink.jpg' },
+        { id: 6, name: t('categorySoups'), name_ar: t('categorySoups'), slug: 'soups', icon: 'soup', productsCount: 12, image: '/images/categories/soup.jpg' },
     ];
 
     const categoriesToUse = categories || defaultCategories;
@@ -76,7 +76,7 @@ export default function CategoriesSection({
                                     <div className="relative aspect-square overflow-hidden">
                                         <ImageWithFallback
                                             src={category.image}
-                                            alt={getText(category.name, category.nameAr)}
+                                            alt={getText(category.name, category.name_ar)}
                                             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                                         />
                                         {/* Overlay Gradient */}
@@ -93,7 +93,7 @@ export default function CategoriesSection({
                                     {/* Category Info */}
                                     <div className="p-4 text-center flex-grow flex flex-col justify-center bg-card z-10 relative">
                                         <h3 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-1">
-                                            {getText(category.name, category.nameAr)}
+                                            {getText(category.name, category.name_ar)}
                                         </h3>
                                         {category.description && (
                                             <p className="text-xs text-muted-foreground line-clamp-2 mt-1 hidden md:block">

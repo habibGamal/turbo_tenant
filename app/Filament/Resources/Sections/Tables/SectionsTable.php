@@ -23,6 +23,10 @@ final class SectionsTable
                     ->label('العنوان')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('title_ar')
+                    ->label('العنوان بالعربية')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('location')
                     ->label('الموقع')
                     ->badge()

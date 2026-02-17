@@ -17,6 +17,7 @@ final class OrderItem extends Model
         'weight_option_value_id',
         'weight_multiplier',
         'product_name',
+        'product_name_ar',
         'variant_name',
         'notes',
         'quantity',
