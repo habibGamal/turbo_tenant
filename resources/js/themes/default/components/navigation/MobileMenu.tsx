@@ -203,7 +203,7 @@ export function MobileMenu({
                     {/* Copyright */}
                     <p className="text-xs text-muted-foreground">
                         © {new Date().getFullYear()}{" "}
-                        {settings?.site_name || t("home")}.{" "}
+                        {i18n.language === 'ar' && settings?.site_name_ar ? settings.site_name_ar : (settings?.site_name || t("home"))}.{" "}
                         {t("allRightsReserved")}.
                     </p>
                 </div>

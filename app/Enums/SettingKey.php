@@ -8,6 +8,7 @@ enum SettingKey: string
 {
     case SVG_LOGO = 'svg_logo';
     case SITE_NAME = 'site_name';
+    case SITE_NAME_AR = 'site_name_ar';
     case SITE_DESCRIPTION = 'site_description';
     case SITE_LOGO = 'site_logo';
     case SITE_FAVICON = 'site_favicon';
@@ -67,6 +68,7 @@ enum SettingKey: string
     {
         return match ($this) {
             self::SITE_NAME => 'Site Name',
+            self::SITE_NAME_AR => 'Site Name (Arabic)',
             self::SITE_DESCRIPTION => 'Site Description',
             self::SITE_LOGO => 'Site Logo',
             self::SITE_FAVICON => 'Site Favicon',
@@ -121,6 +123,7 @@ enum SettingKey: string
     {
         return match ($this) {
             self::SITE_NAME => 'Restaurant',
+            self::SITE_NAME_AR => null,
             self::SITE_DESCRIPTION => 'Your favorite restaurant',
             self::CONTACT_ADDRESS => '123 Restaurant St, City, State 12345',
             self::SOCIAL_FACEBOOK => 'https://facebook.com',
@@ -157,7 +160,7 @@ enum SettingKey: string
     public function type(): string
     {
         return match ($this) {
-            self::SITE_NAME, self::SITE_DESCRIPTION, self::SITE_LOGO, self::SITE_FAVICON,
+            self::SITE_NAME, self::SITE_NAME_AR, self::SITE_DESCRIPTION, self::SITE_LOGO, self::SITE_FAVICON,
             self::CONTACT_EMAIL, self::CONTACT_PHONE, self::CONTACT_ADDRESS,
             self::SOCIAL_FACEBOOK, self::SOCIAL_INSTAGRAM, self::SOCIAL_TWITTER,
             self::FACEBOOK_APP_ID => 'text',

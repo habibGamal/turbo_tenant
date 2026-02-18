@@ -26,6 +26,9 @@ final class ExtraOptionForm
                             ->label('الاسم')
                             ->required()
                             ->maxLength(255),
+                        TextInput::make('name_ar')
+                            ->label('الاسم بالعربية')
+                            ->maxLength(255),
                         Textarea::make('description')
                             ->label('الوصف')
                             ->rows(3)
@@ -45,6 +48,10 @@ final class ExtraOptionForm
                                 TextInput::make('name')
                                     ->label('الاسم')
                                     ->required()
+                                    ->maxLength(255)
+                                    ->columnSpan(2),
+                                TextInput::make('name_ar')
+                                    ->label('الاسم بالعربية')
                                     ->maxLength(255)
                                     ->columnSpan(2),
                                 TextInput::make('price')

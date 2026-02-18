@@ -104,6 +104,7 @@ export default function Navigation({
                         <Logo
                             siteLogo={settings?.site_logo}
                             siteName={settings?.site_name}
+                            siteNameAr={settings?.site_name_ar}
                         />
 
                         {/* Desktop Navigation Links - Hidden on Mobile */}

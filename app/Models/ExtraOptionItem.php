@@ -16,6 +16,7 @@ final class ExtraOptionItem extends Model
     protected $fillable = [
         'extra_option_id',
         'name',
+        'name_ar',
         'price',
         'is_default',
         'sort_order',

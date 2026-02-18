@@ -456,6 +456,7 @@ final class CartService
             'variant' => $item->variant ? [
                 'id' => $item->variant->id,
                 'name' => $item->variant->name,
+                'name_ar' => $item->variant->name_ar,
                 'price' => $item->variant->price,
             ] : null,
             'weight_option_value' => $item->weightOptionValue ? [
@@ -466,6 +467,7 @@ final class CartService
             'extras' => $item->extras->map(fn ($extra) => [
                 'id' => $extra->extraOptionItem->id,
                 'name' => $extra->extraOptionItem->name,
+                'name_ar' => $extra->extraOptionItem->name_ar,
                 'price' => $extra->extraOptionItem->price,
                 'quantity' => $extra->quantity,
             ])->toArray(),

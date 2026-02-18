@@ -49,6 +49,7 @@ final class HandleInertiaRequests extends Middleware
                 'cartItemsCount' => $this->cartService->getCartCount($request->user()),
                 'settings' => [
                     'site_name' => $this->settingService->get(SettingKey::SITE_NAME),
+                    'site_name_ar' => $this->settingService->get(SettingKey::SITE_NAME_AR),
                     'site_description' => $this->settingService->get(SettingKey::SITE_DESCRIPTION),
                     'site_logo' => $this->settingService->get(SettingKey::SITE_LOGO) ? Storage::url($this->settingService->get(SettingKey::SITE_LOGO)) : null,
                     'image_placeholder' => $this->settingService->get(SettingKey::IMAGE_PLACEHOLDER),

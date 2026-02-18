@@ -6,17 +6,20 @@ import { useTranslation } from "react-i18next";
 interface LogoProps {
     siteLogo?: string;
     siteName?: string;
+    siteNameAr?: string;
 }
 
-export function Logo({ siteLogo, siteName }: LogoProps) {
-    const { t } = useTranslation();
+export function Logo({ siteLogo, siteName, siteNameAr }: LogoProps) {
+    const { t, i18n } = useTranslation();
+
+    const displayName = i18n.language === 'ar' && siteNameAr ? siteNameAr : siteName;
 
     return (
         <Link href="/" className="flex items-center gap-2 shrink-0">
             {siteLogo ? (
                 <img
                     src={siteLogo}
-                    alt={siteName || t("home")}
+                    alt={displayName || t("home")}
                     className="h-12 w-auto object-contain rounded"
                 />
             ) : (
@@ -25,7 +28,7 @@ export function Logo({ siteLogo, siteName }: LogoProps) {
                 </div>
             )}
             <span className="text-xl font-bold hidden sm:inline">
-                {siteName || t("home")}
+                {displayName || t("home")}
             </span>
         </Link>
     );

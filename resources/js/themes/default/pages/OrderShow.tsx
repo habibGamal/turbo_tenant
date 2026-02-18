@@ -269,7 +269,7 @@ export default function OrderShow({ order, auth }: OrderShowPageProps) {
                                                 </div>
                                                 {item.variant_name && (
                                                     <div className="text-sm text-muted-foreground">
-                                                        {item.variant_name}
+                                                        {getText(item.variant_name, item.variant_name_ar)}
                                                     </div>
                                                 )}
                                                 {item.product?.sell_by_weight && item.weight_option_value && (
@@ -287,7 +287,7 @@ export default function OrderShow({ order, auth }: OrderShowPageProps) {
                                                             <div key={extra.id} className="flex items-center gap-2">
                                                                 <span className="text-xs">+</span>
                                                                 <span>
-                                                                    {extra.extra_name}
+                                                                    {getText(extra.extra_name, extra.extra_name_ar)}
                                                                     {extra.quantity > 1 && (
                                                                         <span className="ltr:ml-1 rtl:mr-1">
                                                                             × {extra.quantity}

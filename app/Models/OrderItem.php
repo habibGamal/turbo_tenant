@@ -19,6 +19,7 @@ final class OrderItem extends Model
         'product_name',
         'product_name_ar',
         'variant_name',
+        'variant_name_ar',
         'notes',
         'quantity',
         'unit_price',

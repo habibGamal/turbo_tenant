@@ -612,6 +612,7 @@ final class PlaceOrderService
                 'product_name' => $product['name'],
                 'product_name_ar' => $product['name_ar'] ?? null,
                 'variant_name' => $variant['name'] ?? null,
+                'variant_name_ar' => $variant['name_ar'] ?? null,
                 'quantity' => $cartItem['quantity'],
                 'unit_price' => $cartItem['price'],
                 'total' => $cartItem['subtotal'],
@@ -624,6 +625,7 @@ final class PlaceOrderService
                         'order_item_id' => $orderItem->id,
                         'extra_option_item_id' => $extra['id'],
                         'extra_name' => $extra['name'],
+                        'extra_name_ar' => $extra['name_ar'] ?? null,
                         'extra_price' => $extra['price'],
                         'quantity' => $extra['quantity'] ?? 1,
                     ]);

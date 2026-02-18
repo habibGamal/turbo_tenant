@@ -22,6 +22,11 @@ final class ExtraOptionsTable
                     ->label('الاسم')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('name_ar')
+                    ->label('الاسم بالعربية')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('description')
                     ->label('الوصف')
                     ->limit(50)

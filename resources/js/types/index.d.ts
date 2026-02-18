@@ -35,6 +35,7 @@ export interface ProductVariant {
     id: number;
     product_id: number;
     name: string;
+    name_ar?: string;
     price: number | null;
     is_available: boolean;
     sort_order: number;
@@ -44,6 +45,7 @@ export interface ExtraOptionItem {
     id: number;
     extra_option_id: number;
     name: string;
+    name_ar?: string;
     price: number;
     is_default: boolean;
     sort_order: number;
@@ -54,6 +56,7 @@ export interface ExtraOptionItem {
 export interface ExtraOption {
     id: number;
     name: string;
+    name_ar?: string;
     description?: string;
     is_active: boolean;
     min_selections: number;
@@ -115,6 +118,7 @@ export interface Review {
 export interface CartItemExtra {
     id: number;
     name: string;
+    name_ar?: string;
     price: number;
     quantity: number;
 }
@@ -139,6 +143,7 @@ export interface CartItem {
     variant?: {
         id: number;
         name: string;
+        name_ar?: string;
         price: number | null;
     } | null;
     weight_option_value?: {
@@ -214,6 +219,7 @@ export interface OrderItemExtra {
     order_item_id: number;
     extra_option_item_id: number;
     extra_name: string;
+    extra_name_ar?: string;
     extra_price: number;
     quantity: number;
 }
@@ -228,6 +234,7 @@ export interface OrderItem {
     product_name: string;
     product_name_ar?: string;
     variant_name?: string;
+    variant_name_ar?: string;
     quantity: string;
     unit_price: number;
     total: number;

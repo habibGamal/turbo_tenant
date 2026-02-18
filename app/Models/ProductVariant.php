@@ -16,6 +16,7 @@ final class ProductVariant extends Model
     protected $fillable = [
         'product_id',
         'name',
+        'name_ar',
         'price',
         'is_available',
         'sort_order',

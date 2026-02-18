@@ -94,7 +94,7 @@ final class MenuController extends Controller
             return [
                 'id' => $product->id,
                 'name' => $product->name,
-                'nameAr' => $product->name_ar,
+                'name_ar' => $product->name_ar,
                 'description' => $product->description,
                 'image' => $product->image,
                 'price' => $product->price_after_discount ?? $product->base_price,
@@ -103,7 +103,7 @@ final class MenuController extends Controller
                 'category' => $product->category ? [
                     'id' => $product->category->id,
                     'name' => $product->category->name,
-                    'nameAr' => $product->category->name_ar,
+                    'name_ar' => $product->category->name_ar,
                 ] : null,
                 'sell_by_weight' => $product->sell_by_weight,
             ];

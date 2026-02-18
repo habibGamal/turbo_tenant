@@ -42,8 +42,12 @@ export default function ProductOptions({
     isFavorite,
     handleToggleFavorite,
 }: ProductOptionsProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
+    const getText = (text: string, textAr?: string) => {
+        return i18n.language === 'ar' && textAr ? textAr : text;
+    };
+    console.log("ProductOptions render", product.extraOption)
     return (
         <div className="space-y-6">
             {/* Variants Selection */}
@@ -55,6 +59,7 @@ export default function ProductOptions({
                     <RadioGroup
                         value={selectedVariant?.toString()}
                         onValueChange={(value) => setSelectedVariant(parseInt(value))}
+                        dir={i18n.dir()}
                     >
                         <div className="grid grid-cols-2 gap-3">
                             {product.variants.map((variant) => (
@@ -72,7 +77,7 @@ export default function ProductOptions({
                                         />
                                         <div>
                                             <div className="font-medium">
-                                                {variant.name}
+                                                {getText(variant.name, variant.name_ar)}
                                             </div>
                                             <div className="text-sm text-muted-foreground">
                                                 +{(variant.price ?? product.price).toFixed(2)} {t("currency")}
@@ -96,7 +101,7 @@ export default function ProductOptions({
                     <div className="space-y-3">
                         <div>
                             <label className="text-lg font-semibold">
-                                {product.extraOption.name}
+                                {getText(product.extraOption.name, product.extraOption.name_ar)}
                             </label>
                             {product.extraOption.description && (
                                 <p className="text-sm text-muted-foreground mt-1">
@@ -138,7 +143,7 @@ export default function ProductOptions({
                                             />
                                             <div className="flex-1">
                                                 <div className="font-medium">
-                                                    {item.name}
+                                                    {getText(item.name, item.name_ar)}
                                                 </div>
                                                 <div className="text-sm text-muted-foreground">
                                                     +{item.price.toFixed(2)} {t("currency")}
@@ -187,7 +192,7 @@ export default function ProductOptions({
             )}
 
             {/* Quantity & Add to Cart */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row gap-4 pt-4" >
                 {/* Quantity Selector */}
                 <div className="w-full sm:w-auto">
                     {product.sell_by_weight && product.weight_option?.values ? (
@@ -205,6 +210,7 @@ export default function ProductOptions({
                                 }
                             }}
                             className="flex flex-wrap gap-2"
+
                         >
                             {product.weight_option.values.map((value) => (
                                 <label

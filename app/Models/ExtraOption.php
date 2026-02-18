@@ -14,6 +14,7 @@ final class ExtraOption extends Model
 
     protected $fillable = [
         'name',
+        'name_ar',
         'description',
         'is_active',
         'min_selections',

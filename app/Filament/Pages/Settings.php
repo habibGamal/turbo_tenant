@@ -67,6 +67,9 @@ final class Settings extends Page
                                 ->label(SettingKey::SITE_NAME->label())
                                 ->required()
                                 ->maxLength(255),
+                            TextInput::make(SettingKey::SITE_NAME_AR->value)
+                                ->label(SettingKey::SITE_NAME_AR->label())
+                                ->maxLength(255),
                             FileUpload::make(SettingKey::SITE_LOGO->value)
                                 ->label(SettingKey::SITE_LOGO->label())
                                 ->image()

@@ -13,6 +13,7 @@ final class OrderItemExtra extends Model
         'order_item_id',
         'extra_option_item_id',
         'extra_name',
+        'extra_name_ar',
         'extra_price',
         'quantity',
     ];

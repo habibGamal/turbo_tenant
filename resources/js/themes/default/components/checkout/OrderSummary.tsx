@@ -80,7 +80,7 @@ export default function OrderSummary({
                                         </div>
                                         {item.variant && (
                                             <div className="text-[10px] text-muted-foreground truncate">
-                                                {item.variant.name}
+                                                {getText(item.variant.name, item.variant.name_ar)}
                                             </div>
                                         )}
                                     </div>
@@ -103,7 +103,7 @@ export default function OrderSummary({
                                 </div>
                                 {item.extras.length > 0 && (
                                     <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                                        {item.extras.map((extra) => extra.name).join(", ")}
+                                        {item.extras.map((extra) => getText(extra.name, extra.name_ar)).join(", ")}
                                     </div>
                                 )}
                                 <div className="text-sm font-semibold text-primary mt-1">

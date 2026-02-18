@@ -69,7 +69,7 @@ export default function CartItem({
                             </Link>
                             {item.variant && (
                                 <Badge variant="outline" className="mt-1 text-xs">
-                                    {item.variant.name}
+                                    {getText(item.variant.name, item.variant.name_ar)}
                                 </Badge>
                             )}
                         </div>
@@ -91,7 +91,7 @@ export default function CartItem({
                                 <div key={extra.id} className="flex items-center gap-2">
                                     <span className="text-xs">+</span>
                                     <span>
-                                        {extra.name}
+                                        {getText(extra.name, extra.name_ar)}
                                         {extra.quantity > 1 && (
                                             <span className="ltr:ml-1 rtl:mr-1">
                                                 × {extra.quantity}

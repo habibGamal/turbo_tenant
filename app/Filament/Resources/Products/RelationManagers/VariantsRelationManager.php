@@ -31,6 +31,9 @@ final class VariantsRelationManager extends RelationManager
                 TextInput::make('name')
                     ->required()
                     ->maxLength(255),
+                TextInput::make('name_ar')
+                    ->label('Name (Arabic)')
+                    ->maxLength(255),
                 TextInput::make('price')
                     ->numeric()
                     ->prefix('$')
@@ -52,6 +55,11 @@ final class VariantsRelationManager extends RelationManager
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('name_ar')
+                    ->label('Name (Arabic)')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('price')
                     ->money('EGP')
                     ->sortable(),

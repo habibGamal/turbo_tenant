@@ -93,7 +93,7 @@ export default function Footer({ sections, showNewsletter = true }: FooterProps)
                             {settings?.site_logo ? (
                                 <img
                                     src={settings.site_logo}
-                                    alt={settings?.site_name || t("home")}
+                                    alt={i18n.language === 'ar' && settings?.site_name_ar ? settings.site_name_ar : (settings?.site_name || t("home"))}
                                     className="h-10 w-auto object-contain"
                                 />
                             ) : (
@@ -101,7 +101,7 @@ export default function Footer({ sections, showNewsletter = true }: FooterProps)
                                     <ScrollText className="h-6 w-6 text-primary-foreground" />
                                 </div>
                             )}
-                            <span className="text-xl font-bold">{settings?.site_name || t('home')}</span>
+                            <span className="text-xl font-bold">{i18n.language === 'ar' && settings?.site_name_ar ? settings.site_name_ar : (settings?.site_name || t('home'))}</span>
                         </Link>
                         <p className="text-muted-foreground">
                             {settings?.site_description || t('deliveringDeliciousFood')}
@@ -191,7 +191,7 @@ export default function Footer({ sections, showNewsletter = true }: FooterProps)
                 {/* Bottom Bar */}
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
                     <p>
-                        © {new Date().getFullYear()} {settings?.site_name || t('home')}. {t('allRightsReserved')}.
+                        © {new Date().getFullYear()} {i18n.language === 'ar' && settings?.site_name_ar ? settings.site_name_ar : (settings?.site_name || t('home'))}. {t('allRightsReserved')}.
                     </p>
                 </div>
             </div>

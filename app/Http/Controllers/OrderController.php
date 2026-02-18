@@ -39,8 +39,8 @@ final class OrderController extends Controller
             'note' => 'nullable|string|max:1000',
             'type' => 'required|in:web_delivery,web_takeaway,pos',
 
-            // Guest user data (required if not authenticated)
-            'guest_data' => 'required_without:auth|array',
+            // Guest user data (validated manually after authentication check)
+            'guest_data' => 'nullable|array',
             'guest_data.name' => 'required_with:guest_data|string|max:255',
             'guest_data.phone' => 'required_with:guest_data|string|max:20',
             'guest_data.phone_country_code' => 'nullable|string|max:5',

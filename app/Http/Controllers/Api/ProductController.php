@@ -62,6 +62,7 @@ final class ProductController extends Controller
             'extraOption' => $product->extraOption ? [
                 'id' => $product->extraOption->id,
                 'name' => $product->extraOption->name,
+                'name_ar' => $product->extraOption->name_ar,
                 'description' => $product->extraOption->description,
                 'min_selections' => $product->extraOption->min_selections,
                 'max_selections' => $product->extraOption->max_selections,
