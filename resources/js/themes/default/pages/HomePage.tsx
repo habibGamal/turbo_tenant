@@ -5,23 +5,7 @@ import CategoriesSection from '@/themes/default/components/CategoriesSection';
 import PromotionalSection from '@/themes/default/components/PromotionalSection';
 import ProductsSection from '@/themes/default/components/ProductsSection';
 import { Separator } from '@/components/ui/separator';
-
-
-
-interface Product {
-    id: number;
-    name: string;
-    name_ar?: string;
-    description: string;
-    price: number;
-    image?: string;
-    category: string;
-    rating?: number;
-    is_featured?: boolean;
-    // Add other fields as needed
-    base_price?: number;
-    price_after_discount?: number;
-}
+import { Product } from '@/types';
 
 interface Category {
     id: number;
@@ -35,7 +19,6 @@ interface Section {
     id: number;
     title: string;
     products: Product[];
-    // Add other fields from Section model
 }
 
 
