@@ -59,6 +59,7 @@ final class HandleInertiaRequests extends Middleware
                     'social_facebook' => $this->settingService->get(SettingKey::SOCIAL_FACEBOOK),
                     'social_instagram' => $this->settingService->get(SettingKey::SOCIAL_INSTAGRAM),
                     'social_twitter' => $this->settingService->get(SettingKey::SOCIAL_TWITTER),
+                    'social_links' => json_decode($this->settingService->get(SettingKey::SOCIAL_LINKS, '[]'), true) ?? [],
                     'cod_fee' => (float) $this->settingService->get(SettingKey::COD_FEE, 0),
                     'online_payments_enabled' => $this->settingService->get(SettingKey::ONLINE_PAYMENTS_ENABLED, 'true') === 'true',
                     'facebook_app_id' => $this->settingService->get(SettingKey::FACEBOOK_APP_ID),

@@ -60,6 +60,7 @@ export function SearchBar({ className, autoFocus, onClose }: SearchBarProps) {
     };
 
     const handleProductClick = (product: Product) => {
+        console.log(product);
         setSearchQuery(getText(product.name, product.name_ar));
         setShowSuggestions(false);
         onClose?.();
@@ -80,25 +81,31 @@ export function SearchBar({ className, autoFocus, onClose }: SearchBarProps) {
                         suggestions.length > 0 && setShowSuggestions(true)
                     }
                     onBlur={() =>
-                        setTimeout(() => setShowSuggestions(false), 200)
+                        setTimeout(() => setShowSuggestions(false), 500)
                     }
                     autoFocus={autoFocus}
                 />
             </form>
-            {showSuggestions && suggestions.length > 0 && (
+            {
+            showSuggestions && suggestions.length > 0 && (
                 <Card className="absolute top-full left-0 right-0 mt-2 z-50 shadow-lg animate-in fade-in zoom-in-95 duration-200">
-                    <CardContent className="p-2">
-                        {suggestions.map((product) => (
+                    {suggestions.map((product) => (
+                        <CardContent
+                            className="p-2"
+                            onClick={() => {
+                                console.log(product);
+                                handleProductClick(product);
+                            }}
+                        >
                             <div
                                 key={product.id}
                                 className="flex items-center gap-3 p-2 hover:bg-accent rounded-md cursor-pointer transition-colors"
-                                onClick={() => handleProductClick(product)}
                             >
-                                <ImageWithFallback
+                                {/* <ImageWithFallback
                                     src={product.image}
                                     alt={getText(product.name, product.name_ar)}
                                     className="w-10 h-10 object-cover rounded shrink-0"
-                                />
+                                /> */}
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium truncate">
                                         {getText(product.name, product.name_ar)}
@@ -117,17 +124,19 @@ export function SearchBar({ className, autoFocus, onClose }: SearchBarProps) {
                                                 <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
                                                     {getText(
                                                         product.category.name,
-                                                        product.category.name_ar,
+                                                        product.category
+                                                            .name_ar,
                                                     )}
                                                 </span>
                                             )}
                                     </div>
                                 </div>
                             </div>
-                        ))}
-                    </CardContent>
+                        </CardContent>
+                    ))}
                 </Card>
-            )}
+            )
+            }
         </div>
     );
 }

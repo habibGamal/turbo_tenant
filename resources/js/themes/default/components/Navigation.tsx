@@ -174,15 +174,6 @@ export default function Navigation({
                                 autoFocus
                                 onClose={() => setSearchOpen(false)}
                             />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="absolute ltr:right-1 rtl:left-1 top-1/2 -translate-y-1/2"
-                                onClick={() => setSearchOpen(false)}
-                            >
-                                <X className="h-4 w-4" />
-                            </Button>
                         </div>
                     )}
                 </div>

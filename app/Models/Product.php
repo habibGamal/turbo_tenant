@@ -28,6 +28,10 @@ final class Product extends Model
         'weight_options_id',
     ];
 
+    protected $append = [
+        'price',
+    ];
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -86,5 +90,9 @@ final class Product extends Model
             'is_active' => 'boolean',
             'sell_by_weight' => 'boolean',
         ];
+    }
+
+    public function getPriceAttribute() {
+        return $this->price_after_discount ?? $this->base_price;
     }
 }

@@ -18,6 +18,7 @@ interface Category {
 interface Section {
     id: number;
     title: string;
+    title_ar:string;
     products: Product[];
 }
 
@@ -65,6 +66,7 @@ export default function HomePage({
                 <ProductsSection sections={sections.map(s => ({
                     id: s.id.toString(),
                     title: s.title,
+                    titleAr: s.title_ar,
                     products: s.products.map(p => ({
                         ...p,
                         descriptionAr: p.description,

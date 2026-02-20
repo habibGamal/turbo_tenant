@@ -10,6 +10,7 @@ use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
@@ -53,6 +54,10 @@ final class Settings extends Page
             $data[SettingKey::WORK_TIMES->value] = json_decode($data[SettingKey::WORK_TIMES->value], true) ?? [];
         }
 
+        if (isset($data[SettingKey::SOCIAL_LINKS->value])) {
+            $data[SettingKey::SOCIAL_LINKS->value] = json_decode($data[SettingKey::SOCIAL_LINKS->value], true) ?? [];
+        }
+
         $this->form->fill($data);
     }
 
@@ -88,18 +93,6 @@ final class Settings extends Page
                             TextInput::make(SettingKey::CONTACT_ADDRESS->value)
                                 ->label(SettingKey::CONTACT_ADDRESS->label())
                                 ->maxLength(255),
-                            TextInput::make(SettingKey::SOCIAL_FACEBOOK->value)
-                                ->label(SettingKey::SOCIAL_FACEBOOK->label())
-                                ->url()
-                                ->maxLength(255),
-                            TextInput::make(SettingKey::SOCIAL_INSTAGRAM->value)
-                                ->label(SettingKey::SOCIAL_INSTAGRAM->label())
-                                ->url()
-                                ->maxLength(255),
-                            TextInput::make(SettingKey::SOCIAL_TWITTER->value)
-                                ->label(SettingKey::SOCIAL_TWITTER->label())
-                                ->url()
-                                ->maxLength(255),
                             FileUpload::make(SettingKey::SITE_FAVICON->value)
                                 ->label(SettingKey::SITE_FAVICON->label())
                                 ->image()
@@ -117,6 +110,41 @@ final class Settings extends Page
                                 ->maxLength(255),
                         ])
                         ->columns(2),
+
+                    Section::make('Social Links')
+                        ->schema([
+                            Repeater::make(SettingKey::SOCIAL_LINKS->value)
+                                ->label('')
+                                ->schema([
+                                    Select::make('platform')
+                                        ->label('Platform')
+                                        ->options([
+                                            'facebook' => 'Facebook',
+                                            'instagram' => 'Instagram',
+                                            'twitter' => 'Twitter / X',
+                                            'tiktok' => 'TikTok',
+                                            'youtube' => 'YouTube',
+                                            'linkedin' => 'LinkedIn',
+                                            'whatsapp' => 'WhatsApp',
+                                            'telegram' => 'Telegram',
+                                            'snapchat' => 'Snapchat',
+                                            'pinterest' => 'Pinterest',
+                                            'other' => 'Other',
+                                        ])
+                                        ->required()
+                                        ->native(false),
+                                    TextInput::make('url')
+                                        ->label('URL')
+                                        ->url()
+                                        ->required()
+                                        ->maxLength(255),
+                                ])
+                                ->columns(2)
+                                ->addActionLabel('Add Social Link')
+                                ->defaultItems(0)
+                                ->reorderable()
+                                ->collapsible(),
+                        ]),
 
                     Section::make('Financial Settings')
                         ->schema([
@@ -186,7 +214,7 @@ final class Settings extends Page
                     Section::make('Payment Gateway Selection')
                         ->description('Choose which payment gateway to use for online payments')
                         ->schema([
-                            \Filament\Forms\Components\Select::make(SettingKey::ACTIVE_PAYMENT_GATEWAY->value)
+                            Select::make(SettingKey::ACTIVE_PAYMENT_GATEWAY->value)
                                 ->label(SettingKey::ACTIVE_PAYMENT_GATEWAY->label())
                                 ->options([
                                     'paymob' => 'Paymob',
@@ -264,7 +292,7 @@ final class Settings extends Page
                                 ->required()
                                 ->maxLength(255)
                                 ->helperText('Used for refund API authorization'),
-                            \Filament\Forms\Components\Select::make(SettingKey::KASHIER_MODE->value)
+                            Select::make(SettingKey::KASHIER_MODE->value)
                                 ->label(SettingKey::KASHIER_MODE->label())
                                 ->options([
                                     'test' => 'Test Mode',
@@ -277,7 +305,7 @@ final class Settings extends Page
                                 ->required()
                                 ->maxLength(10)
                                 ->default('EGP'),
-                            \Filament\Forms\Components\Select::make(SettingKey::KASHIER_ALLOWED_METHODS->value)
+                            Select::make(SettingKey::KASHIER_ALLOWED_METHODS->value)
                                 ->label(SettingKey::KASHIER_ALLOWED_METHODS->label())
                                 ->options([
                                     'card' => 'Credit/Debit Card Only',
@@ -359,7 +387,7 @@ final class Settings extends Page
                             Repeater::make(SettingKey::WORK_TIMES->value)
                                 ->label(SettingKey::WORK_TIMES->label())
                                 ->schema([
-                                    \Filament\Forms\Components\Select::make('day')
+                                    Select::make('day')
                                         ->options([
                                             'Sunday' => 'Sunday',
                                             'Monday' => 'Monday',
@@ -420,6 +448,10 @@ final class Settings extends Page
 
         if (isset($data[SettingKey::WORK_TIMES->value])) {
             $data[SettingKey::WORK_TIMES->value] = json_encode($data[SettingKey::WORK_TIMES->value]);
+        }
+
+        if (isset($data[SettingKey::SOCIAL_LINKS->value])) {
+            $data[SettingKey::SOCIAL_LINKS->value] = json_encode(array_values($data[SettingKey::SOCIAL_LINKS->value]));
         }
 
         $settingService->setMultiple($data);
