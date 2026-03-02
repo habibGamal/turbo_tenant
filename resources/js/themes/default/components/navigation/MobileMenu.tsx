@@ -9,10 +9,9 @@ import {
     MapPin,
     Phone,
     Mail,
-    Facebook,
-    Instagram,
-    Twitter,
+    Globe,
 } from "lucide-react";
+import { PLATFORM_ICONS } from "@/themes/default/components/icons/social-icons";
 import { useTranslation } from "react-i18next";
 
 interface FooterLink {
@@ -149,55 +148,28 @@ export function MobileMenu({
                     </div>
 
                     {/* Social Links */}
-                    <div className="flex gap-2">
-                        {settings?.social_facebook && (
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8"
-                                asChild
-                            >
-                                <a
-                                    href={settings.social_facebook}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                    <div className="flex flex-wrap gap-2">
+                        {(settings?.social_links ?? []).map((social: { platform: string; url: string }, idx: number) => {
+                            const Icon = PLATFORM_ICONS[social.platform] ?? Globe;
+                            return (
+                                <Button
+                                    key={idx}
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    asChild
                                 >
-                                    <Facebook className="h-4 w-4" />
-                                </a>
-                            </Button>
-                        )}
-                        {settings?.social_instagram && (
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8"
-                                asChild
-                            >
-                                <a
-                                    href={settings.social_instagram}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    <Instagram className="h-4 w-4" />
-                                </a>
-                            </Button>
-                        )}
-                        {settings?.social_twitter && (
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8"
-                                asChild
-                            >
-                                <a
-                                    href={settings.social_twitter}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    <Twitter className="h-4 w-4" />
-                                </a>
-                            </Button>
-                        )}
+                                    <a
+                                        href={social.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label={social.platform}
+                                    >
+                                        <Icon className="h-4 w-4" />
+                                    </a>
+                                </Button>
+                            );
+                        })}
                     </div>
 
                     {/* Copyright */}

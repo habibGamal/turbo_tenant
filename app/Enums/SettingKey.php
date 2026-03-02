@@ -18,6 +18,7 @@ enum SettingKey: string
     case SOCIAL_FACEBOOK = 'social_facebook';
     case SOCIAL_INSTAGRAM = 'social_instagram';
     case SOCIAL_TWITTER = 'social_twitter';
+    case SOCIAL_LINKS = 'social_links';
     case CURRENCY = 'currency';
     case TAX_RATE = 'tax_rate';
     case COD_FEE = 'cod_fee';
@@ -78,6 +79,7 @@ enum SettingKey: string
             self::SOCIAL_FACEBOOK => 'Facebook URL',
             self::SOCIAL_INSTAGRAM => 'Instagram URL',
             self::SOCIAL_TWITTER => 'Twitter URL',
+            self::SOCIAL_LINKS => 'Social Links',
             self::CURRENCY => 'Currency',
             self::TAX_RATE => 'Tax Rate (%)',
             self::COD_FEE => 'COD Fee',
@@ -129,6 +131,7 @@ enum SettingKey: string
             self::SOCIAL_FACEBOOK => 'https://facebook.com',
             self::SOCIAL_INSTAGRAM => 'https://instagram.com',
             self::SOCIAL_TWITTER => 'https://twitter.com',
+            self::SOCIAL_LINKS => '[]',
             self::CURRENCY => 'EGP',
             self::TAX_RATE => '0',
             self::COD_FEE => '0',
@@ -164,6 +167,7 @@ enum SettingKey: string
             self::CONTACT_EMAIL, self::CONTACT_PHONE, self::CONTACT_ADDRESS,
             self::SOCIAL_FACEBOOK, self::SOCIAL_INSTAGRAM, self::SOCIAL_TWITTER,
             self::FACEBOOK_APP_ID => 'text',
+            self::SOCIAL_LINKS => 'json',
             self::CURRENCY => 'text',
             self::TAX_RATE, self::COD_FEE, self::MIN_ORDER_AMOUNT => 'numeric',
             self::MAINTENANCE_MODE => 'boolean',

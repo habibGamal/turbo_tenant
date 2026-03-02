@@ -6,18 +6,7 @@ import ProductCard from "@/themes/default/components/ProductCard";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { Loader2, HeartOff } from "lucide-react";
-
-interface Product {
-    id: number;
-    name: string;
-    description: string;
-    image: string;
-    price: number;
-    base_price: number;
-    price_after_discount: number | undefined;
-    category: string;
-    rating: number;
-}
+import { Product } from "@/types";
 
 export default function Favorites() {
     const { t } = useTranslation();

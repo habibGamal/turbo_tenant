@@ -19,27 +19,15 @@ final class SearchController extends Controller
         }
 
         $suggestions = Product::query()
-            ->with('category:id,name')
+            ->with('category:id,name,name_ar')
             ->where('is_active', true)
             ->where(function ($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
+                    ->orWhere('name_ar' ,'like', "%{$query}%")
                     ->orWhere('description', 'like', "%{$query}%");
             })
             ->limit(5)
-            ->get()
-            ->map(function ($product) {
-                return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'description' => $product->description,
-                    'image' => $product->image,
-                    'price' => $product->price_after_discount ?? $product->base_price,
-                    'category' => $product->category ? [
-                        'id' => $product->category->id,
-                        'name' => $product->category->name,
-                    ] : null,
-                ];
-            });
+            ->get();
 
         return response()->json($suggestions);
     }
