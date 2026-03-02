@@ -14,7 +14,7 @@ interface InitExpoProps {
 const InitExpo: React.FC<InitExpoProps> = ({  children }) => {
     useEffect(() => {
         if(window.pushToken) {
-            alert("Storing Expo Push Token: " + window.pushToken);
+            // alert("Storing Expo Push Token: " + window.pushToken);
             window.localStorage.setItem('expoPushToken', window.pushToken);
         }
     }, []);

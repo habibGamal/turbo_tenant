@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Branch;
+use App\Models\GuestUser;
 use App\Models\Order;
 use App\Models\ProductPosMapping;
 use Exception;
@@ -93,6 +94,7 @@ final class OrderPOSService
         // Load required relationships
         $order->load([
             'user',
+            'guestUser.area.governorate',
             'address.area.governorate',
             'branch',
             'items.product',
@@ -165,16 +167,28 @@ final class OrderPOSService
      */
     private function buildOrderPayload(Order $order): array
     {
-        $user = $order->user;
-        $address = $order->address;
+        // Handle both regular users and guest users
+        if ($order->user) {
+            $user = $order->user;
+            $address = $order->address;
 
-        // Build user data
-        $userData = [
-            'name' => $user->name,
-            'phone' => $address?->phone_number ?? 'N/A',
-            'area' => $address?->area?->name ?? 'N/A',
-            'address' => $address ? $this->formatAddress($address) : 'N/A',
-        ];
+            // Build user data for regular users
+            $userData = [
+                'name' => $user->name,
+                'phone' => $address?->phone_number ?? $user->phone ?? 'N/A',
+                'area' => $address?->area?->name ?? 'N/A',
+                'address' => $address ? $this->formatAddress($address) : 'N/A',
+            ];
+        } else {
+            // Build user data for guest users
+            $guestUser = $order->guestUser;
+            $userData = [
+                'name' => $guestUser->name,
+                'phone' => $guestUser->full_phone ?? 'N/A',
+                'area' => $guestUser->area?->name ?? 'N/A',
+                'address' => $this->formatGuestAddress($guestUser),
+            ];
+        }
 
         // Build order items
         $orderItems = [];
@@ -340,6 +354,44 @@ final class OrderPOSService
 
         if ($address->area?->governorate) {
             $parts[] = $address->area->governorate->name;
+        }
+
+        return implode(', ', $parts);
+    }
+
+    /**
+     * Format guest user address for display
+     */
+    private function formatGuestAddress(GuestUser $guestUser): string
+    {
+        $parts = [];
+
+        if ($guestUser->street) {
+            $parts[] = $guestUser->street;
+        }
+
+        if ($guestUser->building) {
+            $parts[] = 'Building '.$guestUser->building;
+        }
+
+        if ($guestUser->floor) {
+            $parts[] = 'Floor '.$guestUser->floor;
+        }
+
+        if ($guestUser->apartment) {
+            $parts[] = 'Apartment '.$guestUser->apartment;
+        }
+
+        if ($guestUser->city) {
+            $parts[] = $guestUser->city;
+        }
+
+        if ($guestUser->area) {
+            $parts[] = $guestUser->area->name;
+        }
+
+        if ($guestUser->area?->governorate) {
+            $parts[] = $guestUser->area->governorate->name;
         }
 
         return implode(', ', $parts);
