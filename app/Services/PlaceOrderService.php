@@ -657,9 +657,9 @@ final class PlaceOrderService
             // For guest users, use GuestUser data
             return [
                 'first_name' => $billingData['first_name'] ?? $user->name ?? 'Guest',
-                'last_name' => $billingData['last_name'] ?? '',
+                'last_name' => $billingData['last_name'] ?? 'Guest',
                 'email' => $billingData['email'] ?? $user->email ?? 'guest@example.com',
-                'phone_number' => $billingData['phone_number'] ?? $user->full_phone,
+                'phone_number' => $billingData['phone_number'] ?? $user->phone,
                 'apartment' => $billingData['apartment'] ?? $user->apartment ?? 'NA',
                 'floor' => $billingData['floor'] ?? $user->floor ?? 'NA',
                 'street' => $billingData['street'] ?? $user->street ?? 'NA',
