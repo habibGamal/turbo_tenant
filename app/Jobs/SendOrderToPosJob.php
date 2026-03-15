@@ -23,14 +23,14 @@ final class SendOrderToPosJob implements ShouldQueue
      *
      * @var int
      */
-    public $backoff = 3;
+    public $backoff = 30;
 
     /**
      * The number of times the job may be attempted.
      *
      * @var int
      */
-    public $tries = 5;
+    public $tries = 10;
 
     public function __construct(
         public Order $order
