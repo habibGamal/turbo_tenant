@@ -17,6 +17,7 @@ use App\Models\GuestUser;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderItemExtra;
+use App\Models\Product;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -59,6 +60,15 @@ final class PlaceOrderService
             return [
                 'success' => false,
                 'error' => 'Cart is empty',
+            ];
+        }
+
+        $inactiveProductNames = $this->getInactiveCartProductNames($cart['items']);
+
+        if (! empty($inactiveProductNames)) {
+            return [
+                'success' => false,
+                'error' => 'Some products are unavailable: '.implode(', ', $inactiveProductNames),
             ];
         }
 
@@ -718,5 +728,25 @@ final class PlaceOrderService
         }
 
         return true; // Assume open if day not found in schedule
+    }
+
+    private function getInactiveCartProductNames(array $cartItems): array
+    {
+        $productIds = collect($cartItems)
+            ->pluck('product_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($productIds->isEmpty()) {
+            return [];
+        }
+
+        return Product::query()
+            ->whereIn('id', $productIds)
+            ->where('is_active', false)
+            ->pluck('name')
+            ->all();
     }
 }

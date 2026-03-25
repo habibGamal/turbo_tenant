@@ -19,7 +19,7 @@ final class StoreCartItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'product_id' => ['required', 'integer', 'exists:products,id,is_active,1'],
             'variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
             'weight_option_value_id' => ['nullable', 'integer', 'exists:weight_option_values,id'],
             'quantity' => ['required', 'numeric', 'min:0.001', 'max:9999.999'],
@@ -37,7 +37,7 @@ final class StoreCartItemRequest extends FormRequest
     {
         return [
             'product_id.required' => 'Product is required.',
-            'product_id.exists' => 'Selected product does not exist.',
+            'product_id.exists' => 'Selected product is unavailable.',
             'variant_id.exists' => 'Selected variant does not exist.',
             'quantity.required' => 'Quantity is required.',
             'quantity.min' => 'Quantity must be at least 0.001.',

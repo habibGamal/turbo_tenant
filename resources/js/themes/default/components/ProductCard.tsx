@@ -30,7 +30,13 @@ export default function ProductCard({
 }: ProductCardProps) {
     const { t, i18n } = useTranslation();
     const { isFavorite, toggleFavorite } = useFavorites();
+    const isProductActive = product.is_active ?? true;
+
     const handleCardClick = () => {
+        if (!isProductActive) {
+            return;
+        }
+
         if (onClick) {
             onClick();
         } else {
@@ -40,11 +46,14 @@ export default function ProductCard({
 
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
-    // const [fullProduct, setFullProduct] = React.useState<Product | null>(null);
-    const fullProduct = useRef()
+    const fullProduct = useRef<Product | null>(null);
 
     const handleAddToCartClick = async (e: React.MouseEvent) => {
         e.stopPropagation();
+
+        if (!isProductActive) {
+            return;
+        }
 
 
         setIsLoading(true);
@@ -85,19 +94,25 @@ export default function ProductCard({
     return (
         <>
             <Card
-                className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                className={`group transition-all duration-300 ${isProductActive ? 'hover:shadow-lg hover:-translate-y-1 cursor-pointer' : 'opacity-70 grayscale cursor-not-allowed'}`}
                 onClick={handleCardClick}
+                aria-disabled={!isProductActive}
             >
                 {/* Product Image */}
                 <div className="relative aspect-square overflow-hidden rounded-t-lg">
                     <ImageWithFallback
                         src={product.image}
                         alt={getText(product.name, product.name_ar)}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className={`w-full h-full object-cover transition-transform duration-300 ${isProductActive ? 'group-hover:scale-105' : ''}`}
                     />
 
                     {/* Badges */}
                     <div className="absolute z-10 top-2 ltr:left-2 rtl:right-2 flex flex-col gap-2">
+                        {!isProductActive && (
+                            <Badge variant="secondary" className="bg-muted text-muted-foreground shadow-lg">
+                                {t('unavailable')}
+                            </Badge>
+                        )}
                         {product.badge && (
                             <Badge className="backdrop-blur-sm bg-primary/90 shadow-lg">
                                 {getText(product.badge, product.badgeAr)}
@@ -196,7 +211,7 @@ export default function ProductCard({
                             size="icon"
                             className="shrink-0 shadow-lg"
                             onClick={handleAddToCartClick}
-                            disabled={addingToCart || isLoading}
+                            disabled={!isProductActive || addingToCart || isLoading}
                         >
                             {isLoading ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />

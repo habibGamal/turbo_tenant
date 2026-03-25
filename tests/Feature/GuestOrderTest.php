@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\Branch;
+use App\Models\Cart;
+use App\Models\CartItem;
 use App\Models\GuestUser;
 use App\Models\Product;
 use App\Models\User;
@@ -425,6 +427,44 @@ it('guest cannot place order with empty cart', function () {
     $response->assertJson([
         'success' => false,
     ]);
+});
+
+it('guest cannot place order when cart has inactive products', function () {
+    $sessionCartId = 'guest_test_cart_inactive';
+    $inactiveProduct = Product::factory()->create([
+        'is_active' => false,
+        'base_price' => 50.00,
+    ]);
+    $branch = Branch::factory()->create();
+
+    $this->withSession(['guest_cart_id' => $sessionCartId]);
+
+    $cart = Cart::factory()->create([
+        'user_id' => null,
+        'session_id' => $sessionCartId,
+    ]);
+
+    CartItem::factory()->create([
+        'cart_id' => $cart->id,
+        'product_id' => $inactiveProduct->id,
+        'quantity' => '1.000',
+    ]);
+
+    $response = $this->postJson(route('orders.place'), [
+        'branch_id' => $branch->id,
+        'payment_method' => 'cod',
+        'type' => 'web_delivery',
+        'guest_data' => [
+            'name' => 'Guest',
+            'phone' => '1234567890',
+            'phone_country_code' => '+20',
+        ],
+    ]);
+
+    $response->assertStatus(400);
+    $response->assertJsonPath('success', false);
+    expect(data_get($response->json(), 'errors.order'))->not->toBeEmpty();
+    expect((string) data_get($response->json(), 'errors.order.0'))->toContain('unavailable');
 });
 
 it('validates branch_id is required', function () {

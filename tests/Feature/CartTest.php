@@ -233,6 +233,24 @@ it('validates product_id is required when adding to cart', function () {
     $response->assertJsonValidationErrors(['product_id']);
 });
 
+it('cannot add inactive product to cart', function () {
+    $inactiveProduct = Product::factory()->create([
+        'is_active' => false,
+    ]);
+
+    $response = $this->postJson(route('cart.store'), [
+        'product_id' => $inactiveProduct->id,
+        'quantity' => '1',
+    ]);
+
+    $response->assertUnprocessable();
+    $response->assertJsonValidationErrors(['product_id']);
+
+    $this->assertDatabaseMissing('cart_items', [
+        'product_id' => $inactiveProduct->id,
+    ]);
+});
+
 it('validates quantity is required when adding to cart', function () {
     $product = Product::factory()->create();
 

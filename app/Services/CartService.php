@@ -8,9 +8,11 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\CartItemExtra;
 use App\Models\GuestUser;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\ValidationException;
 
 final class CartService
 {
@@ -41,6 +43,8 @@ final class CartService
         ?int $weightOptionValueId = null,
         int $weightMultiplier = 1
     ): array {
+        $this->ensureProductIsActive($productId);
+
         if ($user instanceof User) {
             return $this->addItemToDatabase($user, $productId, $variantId, $quantity, $extras, $weightOptionValueId, $weightMultiplier);
         }
@@ -480,5 +484,19 @@ final class CartService
     private function calculateTotal(array $items): float
     {
         return array_reduce($items, fn ($total, $item) => $total + ($item['subtotal'] ?? 0), 0);
+    }
+
+    private function ensureProductIsActive(int $productId): void
+    {
+        $isActive = Product::query()
+            ->whereKey($productId)
+            ->where('is_active', true)
+            ->exists();
+
+        if (! $isActive) {
+            throw ValidationException::withMessages([
+                'product_id' => ['Selected product is unavailable.'],
+            ]);
+        }
     }
 }

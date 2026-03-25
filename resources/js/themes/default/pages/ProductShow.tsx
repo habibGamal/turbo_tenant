@@ -52,6 +52,7 @@ export default function ProductShow({
 }: ProductShowProps) {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === "ar";
+    const isProductActive = product.is_active ?? true;
     const { settings } = usePage<PageProps>().props;
 
     const getText = (text: string, textAr?: string) => {
@@ -128,46 +129,58 @@ export default function ProductShow({
 
                         {/* Product Info & Options */}
                         <div className="space-y-6">
+                            {!isProductActive && (
+                                <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+                                    {t('unavailable')}
+                                </div>
+                            )}
+
                             <ProductInfo product={product} totalPrice={calculateTotalPrice()} />
 
-                            <ProductOptions
-                                product={product}
-                                selectedVariant={selectedVariant}
-                                setSelectedVariant={setSelectedVariant}
-                                selectedExtras={selectedExtras}
-                                handleExtraToggle={handleExtraToggle}
-                                handleExtraQuantityChange={handleExtraQuantityChange}
-                                quantity={quantity}
-                                handleQuantityChange={handleQuantityChange}
-                                selectedWeightValue={selectedWeightValue}
-                                setSelectedWeightValue={setSelectedWeightValue}
-                                setQuantity={setQuantity}
-                                handleAddToCart={() => {
-                                    handleAddToCart(() => {
-                                        let price = product.price_after_discount || product.base_price || product.price;
-                                        let contentId = product.id;
-
-                                        if (selectedVariant && product.variants) {
-                                            const variant = product.variants.find(v => v.id === selectedVariant);
-                                            if (variant) {
-                                                price = variant.price || price;
-                                                contentId = variant.id;
-                                            }
+                            <div className={!isProductActive ? 'opacity-60 pointer-events-none' : ''}>
+                                <ProductOptions
+                                    product={product}
+                                    selectedVariant={selectedVariant}
+                                    setSelectedVariant={setSelectedVariant}
+                                    selectedExtras={selectedExtras}
+                                    handleExtraToggle={handleExtraToggle}
+                                    handleExtraQuantityChange={handleExtraQuantityChange}
+                                    quantity={quantity}
+                                    handleQuantityChange={handleQuantityChange}
+                                    selectedWeightValue={selectedWeightValue}
+                                    setSelectedWeightValue={setSelectedWeightValue}
+                                    setQuantity={setQuantity}
+                                    handleAddToCart={() => {
+                                        if (!isProductActive) {
+                                            return;
                                         }
 
-                                        ReactPixel.track("AddToCart", {
-                                            content_ids: [contentId],
-                                            content_type: "product",
-                                            contents: [{ id: contentId, quantity: quantity }],
-                                            value: price,
-                                            currency: "EGP",
+                                        handleAddToCart(() => {
+                                            let price = product.price_after_discount || product.base_price || product.price;
+                                            let contentId = product.id;
+
+                                            if (selectedVariant && product.variants) {
+                                                const variant = product.variants.find(v => v.id === selectedVariant);
+                                                if (variant) {
+                                                    price = variant.price || price;
+                                                    contentId = variant.id;
+                                                }
+                                            }
+
+                                            ReactPixel.track("AddToCart", {
+                                                content_ids: [contentId],
+                                                content_type: "product",
+                                                contents: [{ id: contentId, quantity: quantity }],
+                                                value: price,
+                                                currency: "EGP",
+                                            });
                                         });
-                                    });
-                                }}
-                                isAddingToCart={isAddingToCart}
-                                isFavorite={isFavorite(product.id)}
-                                handleToggleFavorite={handleToggleFavorite}
-                            />
+                                    }}
+                                    isAddingToCart={isAddingToCart }
+                                    isFavorite={isFavorite(product.id)}
+                                    handleToggleFavorite={handleToggleFavorite}
+                                />
+                            </div>
                         </div>
                     </div>
 

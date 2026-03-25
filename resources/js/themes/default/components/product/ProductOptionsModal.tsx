@@ -41,6 +41,10 @@ export default function ProductOptionsModal({
     };
 
     const handleAddToCartWrapper = () => {
+        if (!(product.is_active ?? true)) {
+            return;
+        }
+
         handleAddToCart(() => {
             let price = product.price_after_discount || product.base_price || product.price;
             let contentId = product.id;
@@ -104,7 +108,7 @@ export default function ProductOptionsModal({
                             setSelectedWeightValue={setSelectedWeightValue}
                             setQuantity={setQuantity}
                             handleAddToCart={handleAddToCartWrapper}
-                            isAddingToCart={isAddingToCart}
+                            isAddingToCart={isAddingToCart || !(product.is_active ?? true)}
                             isFavorite={isFavorite}
                             handleToggleFavorite={handleToggleFavorite}
                         />

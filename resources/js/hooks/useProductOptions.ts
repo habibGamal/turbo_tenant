@@ -119,6 +119,10 @@ export function useProductOptions({ product }: UseProductOptionsProps) {
     };
 
     const handleAddToCart = async (onSuccess?: () => void) => {
+        if (!(product.is_active ?? true)) {
+            return;
+        }
+
         setIsAddingToCart(true);
 
         const extrasArray: ExtraWithQuantity[] = Array.from(selectedExtras.entries()).map(
