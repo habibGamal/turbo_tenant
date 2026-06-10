@@ -11,6 +11,7 @@ use App\Enums\PaymentStatus;
 use App\Enums\SettingKey;
 use App\Interfaces\PaymentGatewayInterface;
 use App\Models\Address;
+use App\Models\Area;
 use App\Models\Cart;
 use App\Models\Coupon;
 use App\Models\GuestUser;
@@ -65,18 +66,18 @@ final class PlaceOrderService
 
         $inactiveProductNames = $this->getInactiveCartProductNames($cart['items']);
 
-        if (! empty($inactiveProductNames)) {
+        if (!empty($inactiveProductNames)) {
             return [
                 'success' => false,
-                'error' => 'Some products are unavailable: '.implode(', ', $inactiveProductNames),
+                'error' => 'Some products are unavailable: ' . implode(', ', $inactiveProductNames),
             ];
         }
 
         // Check work times
-        if (! $this->isStoreOpen()) {
+        if (!$this->isStoreOpen()) {
             $acceptOrdersAfterWorkTimes = filter_var($this->settingService->get(SettingKey::ACCEPT_ORDERS_AFTER_WORK_TIMES, 'true'), FILTER_VALIDATE_BOOLEAN);
 
-            if (! $acceptOrdersAfterWorkTimes) {
+            if (!$acceptOrdersAfterWorkTimes) {
                 return [
                     'success' => false,
                     'error' => 'We are currently closed. Please try again during our work hours.',
@@ -91,7 +92,7 @@ final class PlaceOrderService
             $coupon = null;
             if ($couponId) {
                 $coupon = Coupon::find($couponId);
-                if (! $coupon) {
+                if (!$coupon) {
                     return [
                         'success' => false,
                         'error' => 'Invalid coupon',
@@ -104,7 +105,7 @@ final class PlaceOrderService
                 $governorateId = $address?->area?->governorate_id;
 
                 // Calculate subtotal for validation
-                $subTotal = array_reduce($cart['items'], fn ($total, $item) => $total + ($item['subtotal'] ?? 0), 0);
+                $subTotal = array_reduce($cart['items'], fn($total, $item) => $total + ($item['subtotal'] ?? 0), 0);
 
                 // Validate coupon
                 $validation = $this->couponService->validateCoupon(
@@ -117,7 +118,7 @@ final class PlaceOrderService
                     $governorateId
                 );
 
-                if (! $validation['valid']) {
+                if (!$validation['valid']) {
                     return [
                         'success' => false,
                         'error' => $validation['message'],
@@ -126,8 +127,7 @@ final class PlaceOrderService
             }
 
             // Calculate order totals
-            $totals = $this->calculateOrderTotals($cart['items'], $coupon, $addressId, $type, $paymentMethod);
-
+            $totals = $this->calculateOrderTotals($cart['items'], $coupon, $addressId, $type, $paymentMethod, $user);
             // Create order
             $order = $this->createOrder(
                 $user,
@@ -154,7 +154,7 @@ final class PlaceOrderService
             DB::commit();
 
             // For COD or Credit, no online payment required
-            if (! $paymentMethod->requiresOnlinePayment()) {
+            if (!$paymentMethod->requiresOnlinePayment()) {
                 $order->update([
                     'payment_status' => PaymentStatus::PENDING,
                     'status' => OrderStatus::PENDING,
@@ -176,7 +176,7 @@ final class PlaceOrderService
             // Create payment intention
             // Determine webhook URL based on active gateway
             $gatewayId = $this->paymentGateway->getGatewayId();
-            $redirectionUrl = url('/orders/'.$order->id.'/payment/callback');
+            $redirectionUrl = url('/orders/' . $order->id . '/payment/callback');
             $notificationUrl = url("/api/webhooks/{$gatewayId}");
 
             logger()->info('Creating payment intention', [
@@ -192,7 +192,7 @@ final class PlaceOrderService
                 $notificationUrl
             );
 
-            if (! $paymentResult['success']) {
+            if (!$paymentResult['success']) {
                 // Rollback order if payment creation fails
                 DB::transaction(function () use ($order) {
                     $order->update([
@@ -225,7 +225,7 @@ final class PlaceOrderService
 
             return [
                 'success' => false,
-                'error' => 'Failed to place order: '.$e->getMessage(),
+                'error' => 'Failed to place order: ' . $e->getMessage(),
             ];
         }
     }
@@ -256,7 +256,7 @@ final class PlaceOrderService
     public function handleWebhook(array $webhookData, string $hmac): array
     {
         // Validate HMAC
-        if (! $this->paymentGateway->validateHmac($webhookData['obj'] ?? $webhookData, $hmac)) {
+        if (!$this->paymentGateway->validateHmac($webhookData['obj'] ?? $webhookData, $hmac)) {
             return [
                 'success' => false,
                 'error' => 'Invalid webhook signature',
@@ -269,7 +269,7 @@ final class PlaceOrderService
         // Find order by merchant_order_id
         $order = Order::where('merchant_order_id', $processedData['merchant_order_id'])->first();
 
-        if (! $order) {
+        if (!$order) {
             return [
                 'success' => false,
                 'error' => 'Order not found',
@@ -309,7 +309,7 @@ final class PlaceOrderService
         $signature = $paymentData['signature'] ?? null;
 
         // Validate signature if provided
-        if ($signature && ! $this->paymentGateway->validateCallbackHmac($paymentData, $signature)) {
+        if ($signature && !$this->paymentGateway->validateCallbackHmac($paymentData, $signature)) {
             return [
                 'success' => false,
                 'error' => 'Invalid payment signature',
@@ -400,7 +400,7 @@ final class PlaceOrderService
         $dataMessage = $paymentData['data_message'] ?? null;
 
         // Validate HMAC if provided (use callback-specific validation)
-        if ($hmac && ! $this->paymentGateway->validateCallbackHmac($paymentData, $hmac)) {
+        if ($hmac && !$this->paymentGateway->validateCallbackHmac($paymentData, $hmac)) {
             return [
                 'success' => false,
                 'error' => 'Invalid payment signature',
@@ -409,7 +409,7 @@ final class PlaceOrderService
         }
 
         // Update order based on payment status
-        if ($success && ! $pending) {
+        if ($success && !$pending) {
             $order->update([
                 'payment_status' => 'completed',
                 'transaction_id' => $transactionId,
@@ -479,9 +479,9 @@ final class PlaceOrderService
     /**
      * Calculate order totals
      */
-    private function calculateOrderTotals(array $items, ?Coupon $coupon, ?int $addressId, string $type, PaymentMethod $paymentMethod): array
+    private function calculateOrderTotals(array $items, ?Coupon $coupon, ?int $addressId, string $type, PaymentMethod $paymentMethod, User|GuestUser $user): array
     {
-        $subTotal = array_reduce($items, fn ($total, $item) => $total + ($item['subtotal'] ?? 0), 0);
+        $subTotal = array_reduce($items, fn($total, $item) => $total + ($item['subtotal'] ?? 0), 0);
 
         // Calculate discount using CouponService
         $discount = 0;
@@ -498,8 +498,9 @@ final class PlaceOrderService
             $service += $codFee;
         }
 
+
         // Calculate base delivery fee
-        $baseDeliveryFee = $this->calculateDeliveryFee($addressId, $type);
+        $baseDeliveryFee = $this->calculateDeliveryFee($addressId, $type, $user);
 
         // Apply coupon to shipping fee if applicable
         $deliveryFee = $this->couponService->calculateShippingFee(
@@ -544,22 +545,26 @@ final class PlaceOrderService
     /**
      * Calculate delivery fee based on area shipping cost
      */
-    private function calculateDeliveryFee(?int $addressId, string $type): float
+    private function calculateDeliveryFee(?int $addressId, string $type, User|GuestUser $user): float
     {
         // No delivery fee for takeaway or POS orders
         if (in_array($type, ['web_takeaway', 'pos'])) {
             return 0;
         }
 
+        if ($user instanceof GuestUser) {
+            return Area::find($user->area_id)->shipping_cost ?? 0;
+        }
+
         // No delivery fee if no address provided
-        if (! $addressId) {
+        if (!$addressId) {
             return 0;
         }
 
         // Get the address with area relationship
         $address = Address::with('area')->find($addressId);
 
-        if (! $address || ! $address->area) {
+        if (!$address || !$address->area) {
             return 0;
         }
 
@@ -629,7 +634,7 @@ final class PlaceOrderService
             ]);
 
             // Create order item extras with quantities
-            if (! empty($cartItem['extras'])) {
+            if (!empty($cartItem['extras'])) {
                 foreach ($cartItem['extras'] as $extra) {
                     OrderItemExtra::create([
                         'order_item_id' => $orderItem->id,
@@ -650,7 +655,7 @@ final class PlaceOrderService
     private function generateOrderNumber(): string
     {
         do {
-            $orderNumber = 'ORD-'.mb_strtoupper(Str::random(8));
+            $orderNumber = 'ORD-' . mb_strtoupper(Str::random(8));
         } while (Order::where('order_number', $orderNumber)->exists());
 
         return $orderNumber;
@@ -716,7 +721,7 @@ final class PlaceOrderService
 
         foreach ($workTimes as $daySchedule) {
             if (($daySchedule['day'] ?? '') === $currentDay) {
-                if (! empty($daySchedule['closed'])) {
+                if (!empty($daySchedule['closed'])) {
                     return false;
                 }
 
@@ -735,7 +740,7 @@ final class PlaceOrderService
         $productIds = collect($cartItems)
             ->pluck('product_id')
             ->filter()
-            ->map(fn ($id) => (int) $id)
+            ->map(fn($id) => (int) $id)
             ->unique()
             ->values();
 
