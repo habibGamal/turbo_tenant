@@ -308,7 +308,7 @@ final class OrderPOSService
             'orderNumber' => $order->order_number,
             'subTotal' => $order->sub_total,
             'tax' => $order->tax,
-            'service' => $order->address ? $order->address->area->shipping_cost : 0,
+            'service' => $order->delivery_fee + $order->service,
             'discount' => $order->discount,
             'total' => $order->total,
             'items' => $orderItems,
