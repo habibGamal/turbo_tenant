@@ -186,7 +186,7 @@ final class OrderPOSService
                 'name' => $guestUser->name,
                 'phone' => $guestUser->full_phone ?? 'N/A',
                 'area' => $guestUser->area?->name ?? 'N/A',
-                'address' => $this->formatGuestAddress($guestUser),
+                'address' => $this->formatGuestAddress($guestUser)?? 'N/A',
             ];
         }
 
@@ -334,7 +334,7 @@ final class OrderPOSService
      */
     private function formatAddress($address): string
     {
-        $parts = [];
+        $parts = ["-"];
 
         if ($address->street) {
             $parts[] = $address->street;
