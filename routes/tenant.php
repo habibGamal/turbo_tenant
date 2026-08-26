@@ -58,16 +58,22 @@ Route::get('/storage/{path}', function (Illuminate\Http\Request $request, $path)
     if (! file_exists($fullCachePath)) {
         try {
             $image = Spatie\Image\Image::load($file)->optimize();
-            if ($request->has('w')) {
-                $image->width((int) $request->input('w'));
-            }
+            if (str_contains($path, 'products')) {
+                $image->width(480);
+                $image->quality(80);
+            } else {
 
-            if ($request->has('h')) {
-                $image->height((int) $request->input('h'));
-            }
+                if ($request->has('w')) {
+                    $image->width((int) $request->input('w'));
+                }
 
-            if ($request->has('fit')) {
-                $image->fit(Spatie\Image\Enums\Fit::tryFrom($request->input('fit')) ?? Spatie\Image\Enums\Fit::Contain);
+                if ($request->has('h')) {
+                    $image->height((int) $request->input('h'));
+                }
+
+                if ($request->has('fit')) {
+                    $image->fit(Spatie\Image\Enums\Fit::tryFrom($request->input('fit')) ?? Spatie\Image\Enums\Fit::Contain);
+                }
             }
 
             $image->save($fullCachePath);
