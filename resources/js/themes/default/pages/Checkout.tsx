@@ -4,6 +4,7 @@ import MainLayout from '@/themes/default/layouts/MainLayout';
 import { useTranslation } from "react-i18next";
 import { Address, Branch, Cart, Governorate, PageProps } from "@/types";
 import axios from "axios";
+import ReactPixel from "react-facebook-pixel";
 
 // Checkout Components
 import EmptyCart from "@/themes/default/components/checkout/EmptyCart";
@@ -186,6 +187,18 @@ export default function Checkout({
             if (response.data.success) {
                 // Save guest data to localStorage for future orders
                 saveGuestDataToLocalStorage();
+
+                ReactPixel.track("Purchase", {
+                    content_ids: cart?.items?.map((item) => item.product_id) || [],
+                    contents: cart?.items?.map((item) => ({
+                        id: item.product_id,
+                        quantity: parseFloat(item.quantity) || 1,
+                    })) || [],
+                    content_type: "product",
+                    value: totalAmount,
+                    currency: "EGP",
+                    num_items: cart?.items?.length || 0,
+                });
 
                 const { redirect_type, redirect_url, order_id } = response.data;
 
