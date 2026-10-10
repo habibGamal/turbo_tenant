@@ -23,7 +23,7 @@ final class SendOrderToPosJob implements ShouldQueue
      *
      * @var int
      */
-    public $backoff = 30;
+    public $backoff = 30 * 60; // 30 minutes
 
     /**
      * The number of times the job may be attempted.
@@ -34,7 +34,8 @@ final class SendOrderToPosJob implements ShouldQueue
 
     public function __construct(
         public Order $order
-    ) {}
+    ) {
+    }
 
     public function handle(OrderPOSService $orderPOSService): void
     {
@@ -43,7 +44,7 @@ final class SendOrderToPosJob implements ShouldQueue
                 'pos_status' => OrderPosStatus::SENDING,
             ]);
 
-            if (! $orderPOSService->canAcceptOrder($this->order->branch)) {
+            if (!$orderPOSService->canAcceptOrder($this->order->branch)) {
                 throw new Exception('POS system is not accepting orders at this time.');
             }
 

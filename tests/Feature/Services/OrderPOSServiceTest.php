@@ -22,7 +22,8 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->productImporter = mock(ProductPOSImporterService::class);
-    $this->service = new OrderPOSService($this->productImporter);
+    $this->app->instance(ProductPOSImporterService::class, $this->productImporter);
+    $this->service = app(OrderPOSService::class);
 });
 
 describe('getShiftId', function () {
@@ -42,8 +43,7 @@ describe('getShiftId', function () {
         expect($shiftId)->toBe(123);
 
         Http::assertSent(function ($request) {
-            return $request->url() === 'https://pos.example.com/api/get-shift-id'
-                && $request->hasOption('verify', false);
+            return $request->url() === 'https://pos.example.com/api/get-shift-id';
         });
     });
 
@@ -131,12 +131,12 @@ describe('placeOrder', function () {
 
         $user = User::factory()->create([
             'name' => 'Ahmed Ali',
-            'phone' => '01234567890',
         ]);
 
         $address = Address::factory()->create([
             'user_id' => $user->id,
             'area_id' => $area->id,
+            'phone_number' => '01234567890',
             'street' => '15 Street Name',
             'building' => '10',
             'apartment' => '5',
@@ -202,7 +202,7 @@ describe('placeOrder', function () {
                 && $data['order']['total'] === 109.0
                 && $data['order']['note'] === 'Please knock twice'
                 && count($data['order']['items']) === 1
-                && $data['order']['items'][0]['quantity'] === 2
+                && (float) $data['order']['items'][0]['quantity'] === 2.0
                 && $data['order']['items'][0]['notes'] === 'Extra cheese'
                 && count($data['order']['items'][0]['posRefObj']) === 1
                 && $data['order']['items'][0]['posRefObj'][0]['productRef'] === 'PROD-001';
@@ -218,12 +218,12 @@ describe('placeOrder', function () {
 
         $user = User::factory()->create([
             'name' => 'Ahmed Ali',
-            'phone' => '01234567890',
         ]);
 
         $address = Address::factory()->create([
             'user_id' => $user->id,
             'area_id' => $area->id,
+            'phone_number' => '01234567890',
         ]);
 
         $branch = Branch::factory()->create([
@@ -286,12 +286,12 @@ describe('placeOrder', function () {
 
         $user = User::factory()->create([
             'name' => 'Ahmed Ali',
-            'phone' => '01234567890',
         ]);
 
         $address = Address::factory()->create([
             'user_id' => $user->id,
             'area_id' => $area->id,
+            'phone_number' => '01234567890',
         ]);
 
         $branch = Branch::factory()->create([
@@ -347,6 +347,113 @@ describe('placeOrder', function () {
             ->and($result['message'])->toContain('Pizza Margherita');
     });
 
+    it('handles product not found according to CREATE_ORDER_API_DOC Scenario B', function () {
+        $branch = Branch::factory()->create([
+            'link' => 'https://pos.example.com',
+        ]);
+
+        $user = User::factory()->create();
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+            'branch_id' => $branch->id,
+            'shift_id' => 42,
+            'type' => 'delivery',
+        ]);
+
+        $product = Product::factory()->create();
+        ProductPosMapping::factory()->create([
+            'product_id' => $product->id,
+            'pos_item_id' => 'INVALID-REF-101',
+            'branch_id' => $branch->id,
+        ]);
+
+        OrderItem::factory()->create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+        ]);
+
+        Http::fake([
+            'https://pos.example.com/api/web-orders/place-order' => Http::response([
+                'message' => 'فشل في إنشاء الطلب',
+                'error' => 'منتجات غير موجودة: ["INVALID-REF-101"]',
+            ], 400),
+        ]);
+
+        $this->productImporter->shouldReceive('getProductsByReferences')
+            ->with(['INVALID-REF-101'])
+            ->andReturn([
+                ['name' => 'Burger Combo', 'posRef' => 'INVALID-REF-101'],
+            ]);
+
+        $result = $this->service->placeOrder($order);
+
+        expect($result['success'])->toBeFalse()
+            ->and($result['message'])->toContain('Burger Combo')
+            ->and($result['notFoundProducts'])->toBe(['INVALID-REF-101']);
+    });
+
+    it('places guest user order according to CREATE_ORDER_API_DOC schema', function () {
+        $governorate = Governorate::factory()->create(['name' => 'Alexandria']);
+        $area = Area::factory()->create([
+            'name' => 'Smouha',
+            'governorate_id' => $governorate->id,
+        ]);
+
+        $guest = App\Models\GuestUser::factory()->create([
+            'name' => 'Mona Guest',
+            'phone' => '01099887766',
+            'phone_country_code' => '+20',
+            'area_id' => $area->id,
+            'street' => 'Victor Emmanuel',
+            'building' => '5',
+            'city' => 'Alexandria',
+        ]);
+
+        $branch = Branch::factory()->create([
+            'link' => 'https://pos.example.com',
+        ]);
+
+        $product = Product::factory()->create();
+        ProductPosMapping::factory()->create([
+            'product_id' => $product->id,
+            'pos_item_id' => 'GUEST-PROD-1',
+            'branch_id' => $branch->id,
+        ]);
+
+        $order = Order::factory()->create([
+            'user_id' => null,
+            'guest_user_id' => $guest->id,
+            'branch_id' => $branch->id,
+            'order_number' => 'WEB-GUEST-99',
+            'shift_id' => 42,
+            'type' => 'delivery',
+        ]);
+
+        OrderItem::factory()->create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        Http::fake([
+            'https://pos.example.com/api/web-orders/place-order' => Http::response([], 200),
+        ]);
+
+        $result = $this->service->placeOrder($order);
+
+        expect($result['success'])->toBeTrue();
+
+        Http::assertSent(function ($request) {
+            $data = $request->data();
+
+            return $data['user']['name'] === 'Mona Guest'
+                && $data['user']['phone'] === '+2001099887766'
+                && $data['user']['area'] === 'Smouha'
+                && str_contains($data['user']['address'], 'Victor Emmanuel')
+                && $data['order']['type'] === 'web_delivery';
+        });
+    });
+
     it('converts takeaway order type correctly', function () {
         $governorate = Governorate::factory()->create(['name' => 'Cairo']);
         $area = Area::factory()->create([
@@ -399,7 +506,7 @@ describe('placeOrder', function () {
     });
 
     it('throws exception when order has no branch', function () {
-        $order = Order::factory()->create([
+        $order = Order::factory()->make([
             'branch_id' => null,
         ]);
 
@@ -432,8 +539,10 @@ describe('placeOrder', function () {
             'branch_id' => $branch->id,
         ]);
 
+        $extraOptionItem = App\Models\ExtraOptionItem::factory()->create();
+
         ProductPosMapping::factory()->create([
-            'extra_option_item_id' => 1,
+            'extra_option_item_id' => $extraOptionItem->id,
             'pos_item_id' => 'EXTRA-001',
             'branch_id' => $branch->id,
         ]);
@@ -453,7 +562,7 @@ describe('placeOrder', function () {
 
         OrderItemExtra::factory()->create([
             'order_item_id' => $orderItem->id,
-            'extra_option_item_id' => 1,
+            'extra_option_item_id' => $extraOptionItem->id,
             'quantity' => 2,
         ]);
 
@@ -470,7 +579,142 @@ describe('placeOrder', function () {
             return count($posRefs) === 2
                 && $posRefs[0]['productRef'] === 'PROD-001'
                 && $posRefs[1]['productRef'] === 'EXTRA-001'
-                && $posRefs[1]['quantity'] === 2;
+                && (float) $posRefs[1]['quantity'] === 2.0;
         });
+    });
+
+    it('can be resolved from the service container via app()', function () {
+        $resolved = app(OrderPOSService::class);
+
+        expect($resolved)->toBeInstanceOf(OrderPOSService::class);
+    });
+
+    it('supports pure SOLID dependency injection with mocked interfaces', function () {
+        $apiClient = mock(App\Services\POS\Contracts\POSApiClientInterface::class);
+        $payloadBuilder = mock(App\Services\POS\Contracts\OrderPOSPayloadBuilderInterface::class);
+        $errorHandler = mock(App\Services\POS\Contracts\POSErrorResponseHandlerInterface::class);
+
+        $branch = Branch::factory()->create();
+        $order = Order::factory()->create([
+            'branch_id' => $branch->id,
+            'shift_id' => 99,
+        ]);
+
+        $customService = new OrderPOSService($apiClient, $payloadBuilder, $errorHandler);
+
+        $payloadBuilder->shouldReceive('build')
+            ->once()
+            ->with(Mockery::on(fn ($arg) => $arg->id === $order->id))
+            ->andReturn([
+                'user' => ['name' => 'Custom'],
+                'order' => ['orderNumber' => 'CUSTOM-1'],
+            ]);
+
+        $apiClient->shouldReceive('sendOrder')
+            ->once()
+            ->andReturn([
+                'successful' => true,
+                'status' => 200,
+                'data' => [],
+            ]);
+
+        $result = $customService->placeOrder($order);
+
+        expect($result)->toBe(['success' => true]);
+    });
+
+    it('fetches shift ID automatically if order has no shift_id assigned', function () {
+        $branch = Branch::factory()->create([
+            'link' => 'https://pos.example.com',
+        ]);
+
+        $user = User::factory()->create();
+        $address = Address::factory()->create([
+            'user_id' => $user->id,
+            'phone_number' => '01234567890',
+        ]);
+
+        $product = Product::factory()->create();
+        ProductPosMapping::factory()->create([
+            'product_id' => $product->id,
+            'pos_item_id' => 'PROD-001',
+            'branch_id' => $branch->id,
+        ]);
+
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+            'branch_id' => $branch->id,
+            'address_id' => $address->id,
+            'shift_id' => null,
+            'type' => 'delivery',
+        ]);
+
+        OrderItem::factory()->create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        Http::fake([
+            'https://pos.example.com/api/get-shift-id' => Http::response([
+                'shift_id' => 999,
+            ], 200),
+            'https://pos.example.com/api/web-orders/place-order' => Http::response([], 200),
+        ]);
+
+        $result = $this->service->placeOrder($order);
+
+        expect($result['success'])->toBeTrue();
+
+        Http::assertSent(function ($request) {
+            if ($request->url() === 'https://pos.example.com/api/web-orders/place-order') {
+                return $request->data()['order']['shiftId'] === 999;
+            }
+
+            return true;
+        });
+    });
+
+    it('throws shift error exception for CREATE_ORDER_API_DOC Scenario A', function () {
+        $branch = Branch::factory()->create([
+            'link' => 'https://pos.example.com',
+        ]);
+
+        $user = User::factory()->create();
+        $address = Address::factory()->create([
+            'user_id' => $user->id,
+            'phone_number' => '01234567890',
+        ]);
+
+        $product = Product::factory()->create();
+        ProductPosMapping::factory()->create([
+            'product_id' => $product->id,
+            'pos_item_id' => 'PROD-001',
+            'branch_id' => $branch->id,
+        ]);
+
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+            'branch_id' => $branch->id,
+            'address_id' => $address->id,
+            'shift_id' => 42,
+            'type' => 'delivery',
+        ]);
+
+        OrderItem::factory()->create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        Http::fake([
+            'https://pos.example.com/api/web-orders/place-order' => Http::response([
+                'message' => 'فشل في إنشاء الطلب',
+                'error' => 'الوردية غير صحيحة',
+            ], 400),
+        ]);
+
+        expect(fn () => $this->service->placeOrder($order))
+            ->toThrow(Exception::class, 'الوردية غير صحيحة');
     });
 });

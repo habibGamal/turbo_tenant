@@ -21,7 +21,20 @@ final class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(\App\Services\POS\Contracts\POSApiClientInterface::class, \App\Services\POS\POSApiClient::class);
+        $this->app->singleton(\App\Services\POS\Contracts\POSProductResolverInterface::class, \App\Services\POS\POSProductResolver::class);
+        $this->app->singleton(\App\Services\POS\POSCustomerDataFormatter::class, \App\Services\POS\POSCustomerDataFormatter::class);
+        $this->app->singleton(\App\Services\POS\Contracts\OrderPOSPayloadBuilderInterface::class, \App\Services\POS\OrderPOSPayloadBuilder::class);
+        $this->app->bind(\App\Services\POS\Contracts\POSErrorResponseHandlerInterface::class, \App\Services\POS\POSErrorResponseHandler::class);
+        $this->app->bind(\App\Services\OrderPOSService::class, \App\Services\OrderPOSService::class);
+
+        // Cart domain bindings
+        $this->app->bind(\App\Services\Cart\Contracts\CartPriceCalculatorInterface::class, \App\Services\Cart\Calculators\CartPriceCalculator::class);
+        $this->app->bind(\App\Services\Cart\Contracts\CartItemFormatterInterface::class, \App\Services\Cart\Formatters\CartItemFormatter::class);
+        $this->app->bind(\App\Services\Cart\Contracts\CartContextResolverInterface::class, \App\Services\Cart\Resolvers\CartContextResolver::class);
+        $this->app->bind(\App\Services\Cart\Contracts\ProductValidatorInterface::class, \App\Services\Cart\Validators\ProductValidator::class);
+        $this->app->bind(\App\Services\Cart\Contracts\CartRepositoryInterface::class, \App\Services\Cart\Repositories\CartRepository::class);
+        $this->app->bind(\App\Services\Cart\Contracts\CartServiceInterface::class, \App\Services\CartService::class);
     }
 
     /**

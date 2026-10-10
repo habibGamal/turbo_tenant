@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Services\PlaceOrderService;
+use App\Services\Payment\Contracts\PaymentWebhookServiceInterface;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 final class KashierWebhookController extends Controller
 {
     public function __construct(
-        private readonly PlaceOrderService $placeOrderService
+        private readonly PaymentWebhookServiceInterface $webhookService
     ) {}
 
     /**
@@ -43,7 +43,7 @@ final class KashierWebhookController extends Controller
                 'transaction_id' => $webhookData['data']['transactionId'] ?? null,
             ]);
 
-            $result = $this->placeOrderService->handleWebhook($webhookData, $signature);
+            $result = $this->webhookService->handleWebhook($webhookData, $signature);
 
             if (! $result['success']) {
                 Log::error('Kashier webhook processing failed', [

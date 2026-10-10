@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-final class ProductPOSImporterService
+class ProductPOSImporterService
 {
     public function __construct(
         private readonly SettingService $settingService

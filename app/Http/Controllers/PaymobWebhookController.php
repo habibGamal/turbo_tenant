@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Services\PlaceOrderService;
+use App\Services\Payment\Contracts\PaymentWebhookServiceInterface;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 final class PaymobWebhookController extends Controller
 {
     public function __construct(
-        private readonly PlaceOrderService $placeOrderService
+        private readonly PaymentWebhookServiceInterface $webhookService
     ) {}
 
     /**
@@ -41,7 +41,7 @@ final class PaymobWebhookController extends Controller
                 'transaction_id' => $webhookData['obj']['id'] ?? null,
             ]);
 
-            $result = $this->placeOrderService->handleWebhook($webhookData, $hmac);
+            $result = $this->webhookService->handleWebhook($webhookData, $hmac);
 
             if (! $result['success']) {
                 Log::error('Paymob webhook processing failed', [

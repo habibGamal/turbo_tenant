@@ -7,4 +7,5 @@ return [
     App\Providers\TenancyServiceProvider::class,
     App\Providers\Filament\AdminPanelProvider::class,
     App\Providers\Filament\CentralPanelProvider::class,
+    App\Providers\OrderServiceProvider::class,
 ];

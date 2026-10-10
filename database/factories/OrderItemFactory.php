@@ -28,13 +28,28 @@ final class OrderItemFactory extends Factory
         return [
             'order_id' => Order::factory(),
             'product_id' => Product::factory(),
-            'variant_id' => fake()->boolean(50) ? ProductVariant::factory() : null,
+            'variant_id' => null,
             'product_name' => fake()->words(3, true),
-            'variant_name' => fake()->boolean(50) ? fake()->randomElement(['Small', 'Medium', 'Large']) : null,
-            'notes' => fake()->boolean(20) ? fake()->sentence() : null,
+            'variant_name' => null,
+            'notes' => null,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'total' => $total,
         ];
+    }
+
+    public function withVariant(?ProductVariant $variant = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'variant_id' => $variant?->id ?? ProductVariant::factory(),
+            'variant_name' => $variant?->name ?? 'Default Variant',
+        ]);
+    }
+
+    public function withNotes(string $notes = 'Special instructions'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'notes' => $notes,
+        ]);
     }
 }

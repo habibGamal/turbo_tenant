@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\DTOs\Order\PlaceOrderData;
 use App\Enums\PaymentMethod;
 use App\Models\GuestUser;
+use App\Models\Order;
 use App\Services\CartService;
 use App\Services\GuestUserService;
-use App\Services\PlaceOrderService;
+use App\Services\Order\Contracts\PlaceOrderServiceInterface;
+use App\Services\Payment\Contracts\PaymentCallbackServiceInterface;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,9 +24,10 @@ use Inertia\Response;
 final class OrderController extends Controller
 {
     public function __construct(
-        private readonly PlaceOrderService $placeOrderService,
+        private readonly PlaceOrderServiceInterface $placeOrderService,
         private readonly CartService $cartService,
-        private readonly GuestUserService $guestUserService
+        private readonly GuestUserService $guestUserService,
+        private readonly PaymentCallbackServiceInterface $paymentCallbackService
     ) {}
 
     /**
@@ -93,25 +97,27 @@ final class OrderController extends Controller
         try {
             $paymentMethod = PaymentMethod::from($request->input('payment_method'));
 
-            $result = $this->placeOrderService->placeOrder(
+            $orderData = new PlaceOrderData(
                 user: $user,
-                branchId: $request->input('branch_id'),
+                branchId: (int) $request->input('branch_id'),
                 paymentMethod: $paymentMethod,
-                addressId: $request->input('address_id'),
-                couponId: $request->input('coupon_id'),
+                addressId: $request->filled('address_id') ? (int) $request->input('address_id') : null,
+                couponId: $request->filled('coupon_id') ? (int) $request->input('coupon_id') : null,
                 note: $request->input('note'),
-                type: $request->input('type'),
-                billingData: $request->input('billing_data', [])
+                type: (string) $request->input('type'),
+                billingData: (array) $request->input('billing_data', [])
             );
 
-            if (! $result['success']) {
+            $result = $this->placeOrderService->placeOrder($orderData);
+
+            if (! $result->isSuccessful()) {
                 return response()->json([
                     'success' => false,
-                    'errors' => ['order' => [$result['error']]],
+                    'errors' => ['order' => [$result->errorMessage]],
                 ], 400);
             }
 
-            $order = $result['order'];
+            $order = $result->order;
 
             // Return response for frontend to handle redirection
             if ($paymentMethod === PaymentMethod::COD) {
@@ -140,11 +146,11 @@ final class OrderController extends Controller
             }
 
             // Online payment methods (CARD, WALLET, KIOSK, BANK_TRANSFER)
-            if (isset($result['checkout_url'])) {
+            if ($result->checkoutUrl) {
                 return response()->json([
                     'success' => true,
                     'redirect_type' => 'external',
-                    'redirect_url' => $result['checkout_url'],
+                    'redirect_url' => $result->checkoutUrl,
                     'order_id' => $order->id,
                 ]);
             }
@@ -175,7 +181,7 @@ final class OrderController extends Controller
         try {
             $callbackData = $request->all();
             logger()->info('Payment callback data', ['data' => $callbackData]);
-            $result = $this->placeOrderService->handlePaymentCallback($orderId, $callbackData);
+            $result = $this->paymentCallbackService->handleCallback($orderId, $callbackData);
 
             return Inertia::render('PaymentCallback', [
                 'success' => $result['success'],
@@ -242,7 +248,7 @@ final class OrderController extends Controller
             abort(401, 'User not authenticated');
         }
 
-        $order = \App\Models\Order::with(['items.extras', 'items.product.weightOption', 'items.weightOptionValue', 'user', 'branch', 'address.area'])
+        $order = Order::with(['items.extras', 'items.product.weightOption', 'items.weightOptionValue', 'user', 'branch', 'address.area'])
             ->where('id', $orderId)
             ->where('user_id', $user->id)
             ->firstOrFail();
@@ -284,7 +290,7 @@ final class OrderController extends Controller
         }
 
         // Find order
-        $order = \App\Models\Order::with(['items.extras', 'items.product.weightOption', 'items.weightOptionValue', 'branch', 'guestUser'])
+        $order = Order::with(['items.extras', 'items.product.weightOption', 'items.weightOptionValue', 'branch', 'guestUser'])
             ->where('order_number', $orderNumber)
             ->where('guest_user_id', $guestUser->id)
             ->first();
@@ -313,7 +319,7 @@ final class OrderController extends Controller
             abort(401, 'User not authenticated');
         }
 
-        $orders = \App\Models\Order::with(['items.product.weightOption', 'items.weightOptionValue', 'branch', 'address'])
+        $orders = Order::with(['items.product.weightOption', 'items.weightOptionValue', 'branch', 'address'])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
