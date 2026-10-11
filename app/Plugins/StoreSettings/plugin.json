@@ -1,0 +1,14 @@
+{
+  "id": "store-settings",
+  "name": "Store Settings & Configuration",
+  "version": "1.0.0",
+  "category": "foundation",
+  "description": "Modular plugin for Turbo Tenant",
+  "author": "Turbo Tenant Team",
+  "is_core": true,
+  "dependencies": [],
+  "providers": [
+    "App\\Plugins\\StoreSettings\\StoreSettingsServiceProvider"
+  ],
+  "filament": "App\\Plugins\\StoreSettings\\src\\Filament\\StoreSettingsFilamentPlugin"
+}

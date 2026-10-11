@@ -71,6 +71,7 @@ final class TenancyServiceProvider extends ServiceProvider
             Events\TenancyInitialized::class => [
                 Listeners\BootstrapTenancy::class,
                 \App\Listeners\ConfigureTenantMail::class,
+                \App\Core\Plugins\Listeners\BootTenantPluginsListener::class,
             ],
 
             Events\EndingTenancy::class => [],

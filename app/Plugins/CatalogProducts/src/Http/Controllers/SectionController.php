@@ -1,0 +1,33 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Plugins\CatalogProducts\src\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+use App\Plugins\CatalogProducts\src\Models\Section;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class SectionController extends Controller
+{
+    public function show(Request $request, Section $section): Response
+    {
+        $products = $section->products()
+            ->where('is_active', true)
+            ->cursorPaginate(12);
+
+        if ($request->wantsJson()) {
+            return Inertia::render('Section/Show', [
+                'section' => $section,
+                'products' => $products,
+            ]);
+        }
+
+        return Inertia::render('Section/Show', [
+            'section' => $section,
+            'products' => $products,
+        ]);
+    }
+}

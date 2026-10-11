@@ -236,6 +236,7 @@ When user's prompt is NOT in English:
 | `mobile-design` | Mobile UI patterns |
 | `plan-writing` | {task-slug}.md format |
 | `behavioral-modes` | Mode switching |
+| `plugin-builder` | Microkernel plugin scaffolding |
 
 ### Script Locations
 

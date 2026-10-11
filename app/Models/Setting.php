@@ -4,20 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\SettingKey;
-use Illuminate\Database\Eloquent\Model;
+use App\Plugins\StoreSettings\src\Models\Setting as PluginSetting;
 
-final class Setting extends Model
+class Setting extends PluginSetting
 {
-    protected $fillable = [
-        'key',
-        'value',
-    ];
-
-    protected function casts(): array
-    {
-        return [
-            'key' => SettingKey::class,
-        ];
-    }
 }
+

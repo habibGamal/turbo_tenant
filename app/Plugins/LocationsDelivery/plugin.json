@@ -1,0 +1,16 @@
+{
+  "id": "locations-delivery",
+  "name": "Locations, Branches & Delivery Areas",
+  "version": "1.0.0",
+  "category": "foundation",
+  "description": "Modular plugin for Turbo Tenant",
+  "author": "Turbo Tenant Team",
+  "is_core": false,
+  "dependencies": [
+    "store-settings"
+  ],
+  "providers": [
+    "App\\Plugins\\LocationsDelivery\\LocationsDeliveryServiceProvider"
+  ],
+  "filament": "App\\Plugins\\LocationsDelivery\\src\\Filament\\LocationsDeliveryFilamentPlugin"
+}

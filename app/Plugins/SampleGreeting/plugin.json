@@ -1,0 +1,12 @@
+{
+  "id": "sample-greeting",
+  "name": "Sample Greeting Feature",
+  "version": "1.0.0",
+  "category": "addon",
+  "description": "A sample plugin to test the Microkernel Plugin Engine.",
+  "is_core": false,
+  "dependencies": [],
+  "providers": [
+    "App\\Plugins\\SampleGreeting\\SampleGreetingServiceProvider"
+  ]
+}

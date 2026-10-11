@@ -4,20 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\Pivot;
+use App\Plugins\CatalogProducts\src\Models\SectionProduct as PluginSectionProduct;
 
-final class SectionProduct extends Pivot
+class SectionProduct extends PluginSectionProduct
 {
-    protected $fillable = [
-        'section_id',
-        'product_id',
-        'sort_order',
-    ];
-
-    protected function casts(): array
-    {
-        return [
-            'sort_order' => 'integer',
-        ];
-    }
 }
