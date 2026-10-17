@@ -15,6 +15,8 @@ final class CatalogProductsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Register events, routes, or pipeline pipes
+        if (file_exists(__DIR__.'/routes/tenant.php')) {
+            $this->loadRoutesFrom(__DIR__.'/routes/tenant.php');
+        }
     }
 }

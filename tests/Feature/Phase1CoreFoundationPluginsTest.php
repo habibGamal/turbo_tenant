@@ -13,7 +13,7 @@ use App\Models\TenantPlugin;
 use App\Plugins\CatalogProducts\src\Filament\CatalogProductsFilamentPlugin;
 use App\Plugins\LocationsDelivery\src\Filament\LocationsDeliveryFilamentPlugin;
 use App\Plugins\StoreSettings\src\Filament\StoreSettingsFilamentPlugin;
-use App\Services\SettingService;
+use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Support\Facades\Artisan;
 
 beforeEach(function () {

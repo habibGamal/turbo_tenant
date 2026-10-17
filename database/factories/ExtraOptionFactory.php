@@ -7,10 +7,12 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ExtraOption>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Plugins\CatalogProducts\src\Models\ExtraOption>
  */
 final class ExtraOptionFactory extends Factory
 {
+    protected $model = \App\Plugins\CatalogProducts\src\Models\ExtraOption::class;
+
     /**
      * Define the model's default state.
      *

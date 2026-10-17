@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Jobs;
 
-use App\Enums\OrderPosStatus;
-use App\Jobs\SendOrderToPosJob;
-use App\Models\Order;
-use App\Services\OrderPOSService;
+use App\Plugins\PosIntegration\src\Enums\OrderPosStatus;
+use App\Plugins\PosIntegration\src\Jobs\SendOrderToPosJob;
+use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\PosIntegration\src\Services\OrderPOSService;
 use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 

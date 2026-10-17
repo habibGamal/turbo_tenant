@@ -2,32 +2,8 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Forms\Components;
+use App\Plugins\PosIntegration\src\Filament\Components\PosItemSelect as PluginPosItemSelect;
 
-use App\Services\ProductPOSImporterService;
-use Filament\Forms\Components\Select;
-use Throwable;
-
-final class PosItemSelect extends Select
-{
-    public static function make(?string $name = null): static
-    {
-        return parent::make($name)
-            ->label('POS Item ID')
-            ->required()
-            ->options(function (): array {
-                try {
-                    $service = app(ProductPOSImporterService::class);
-                    $newProducts = collect($service->getAllProductReferences())->flatMap(fn ($item) => $item['products']);
-
-                    return $newProducts
-                        ->pluck('name', 'productRef')
-                        ->unique()
-                        ->toArray();
-                } catch (Throwable $e) {
-                    return [];
-                }
-            })
-            ->searchable();
-    }
+if (! class_exists('App\Filament\Forms\Components\PosItemSelect', false)) {
+    class_alias(PluginPosItemSelect::class, 'App\Filament\Forms\Components\PosItemSelect');
 }

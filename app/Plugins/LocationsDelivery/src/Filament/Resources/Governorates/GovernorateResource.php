@@ -9,7 +9,7 @@ use App\Plugins\LocationsDelivery\src\Filament\Resources\Governorates\Pages\Edit
 use App\Plugins\LocationsDelivery\src\Filament\Resources\Governorates\Pages\ListGovernorates;
 use App\Plugins\LocationsDelivery\src\Filament\Resources\Governorates\Schemas\GovernorateForm;
 use App\Plugins\LocationsDelivery\src\Filament\Resources\Governorates\Tables\GovernoratesTable;
-use App\Models\Governorate;
+use App\Plugins\LocationsDelivery\src\Models\Governorate;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

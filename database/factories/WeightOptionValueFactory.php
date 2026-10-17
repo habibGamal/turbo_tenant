@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\WeightOption;
+use App\Plugins\CatalogProducts\src\Models\WeightOption;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\WeightOptionValue>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Plugins\CatalogProducts\src\Models\WeightOptionValue>
  */
 final class WeightOptionValueFactory extends Factory
 {
+    protected $model = \App\Plugins\CatalogProducts\src\Models\WeightOptionValue::class;
+
     /**
      * Define the model's default state.
      *

@@ -9,7 +9,7 @@ use App\Plugins\LocationsDelivery\src\Filament\Resources\Addresses\Pages\EditAdd
 use App\Plugins\LocationsDelivery\src\Filament\Resources\Addresses\Pages\ListAddresses;
 use App\Plugins\LocationsDelivery\src\Filament\Resources\Addresses\Schemas\AddressForm;
 use App\Plugins\LocationsDelivery\src\Filament\Resources\Addresses\Tables\AddressesTable;
-use App\Models\Address;
+use App\Plugins\LocationsDelivery\src\Models\Address;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

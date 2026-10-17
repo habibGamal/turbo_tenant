@@ -3,18 +3,18 @@
 declare(strict_types=1);
 
 use App\Enums\PaymentMethod;
-use App\Models\Address;
-use App\Models\Area;
-use App\Models\Branch;
-use App\Models\Governorate;
-use App\Models\GuestUser;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Product;
+use App\Plugins\LocationsDelivery\src\Models\Address;
+use App\Plugins\LocationsDelivery\src\Models\Area;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\LocationsDelivery\src\Models\Governorate;
+use App\Plugins\GuestCheckout\src\Models\GuestUser;
+use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\OrderManagement\src\Models\OrderItem;
+use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Models\User;
-use App\Services\POS\Contracts\POSProductResolverInterface;
-use App\Services\POS\OrderPOSPayloadBuilder;
-use App\Services\POS\POSCustomerDataFormatter;
+use App\Plugins\PosIntegration\src\Services\POS\Contracts\POSProductResolverInterface;
+use App\Plugins\PosIntegration\src\Services\POS\OrderPOSPayloadBuilder;
+use App\Plugins\PosIntegration\src\Services\POS\POSCustomerDataFormatter;
 
 beforeEach(function () {
     $this->productResolver = mock(POSProductResolverInterface::class);

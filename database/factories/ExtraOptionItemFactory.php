@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\ExtraOption;
+use App\Plugins\CatalogProducts\src\Models\ExtraOption;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ExtraOptionItem>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Plugins\CatalogProducts\src\Models\ExtraOptionItem>
  */
 final class ExtraOptionItemFactory extends Factory
 {
+    protected $model = \App\Plugins\CatalogProducts\src\Models\ExtraOptionItem::class;
+
     /**
      * Define the model's default state.
      *

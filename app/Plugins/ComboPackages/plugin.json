@@ -1,0 +1,16 @@
+{
+    "id": "combo-packages",
+    "name": "Combo Meals & Packages",
+    "version": "1.0.0",
+    "category": "marketing",
+    "description": "Modular Combo Meals & Packages plugin for Turbo Tenant",
+    "author": "Turbo Tenant Team",
+    "is_core": false,
+    "dependencies": [
+        "catalog-products"
+    ],
+    "providers": [
+        "App\\Plugins\\ComboPackages\\ComboPackagesServiceProvider"
+    ],
+    "filament": "App\\Plugins\\ComboPackages\\src\\Filament\\ComboPackagesFilamentPlugin"
+}

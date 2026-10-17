@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\Cart;
-use App\Models\Product;
-use App\Models\ProductVariant;
+use App\Plugins\CartEngine\src\Models\Cart;
+use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\CatalogProducts\src\Models\ProductVariant;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\CartItem>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Plugins\CartEngine\src\Models\CartItem>
  */
 final class CartItemFactory extends Factory
 {
+    protected $model = \App\Plugins\CartEngine\src\Models\CartItem::class;
+
     /**
      * Define the model's default state.
      *

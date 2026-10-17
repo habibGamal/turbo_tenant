@@ -9,7 +9,7 @@ use App\Plugins\CatalogProducts\src\Filament\Resources\ExtraOptions\Pages\EditEx
 use App\Plugins\CatalogProducts\src\Filament\Resources\ExtraOptions\Pages\ListExtraOptions;
 use App\Plugins\CatalogProducts\src\Filament\Resources\ExtraOptions\Schemas\ExtraOptionForm;
 use App\Plugins\CatalogProducts\src\Filament\Resources\ExtraOptions\Tables\ExtraOptionsTable;
-use App\Models\ExtraOption;
+use App\Plugins\CatalogProducts\src\Models\ExtraOption;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

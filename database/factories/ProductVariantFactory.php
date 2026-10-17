@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\Product;
+use App\Plugins\CatalogProducts\src\Models\Product;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ProductVariant>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Plugins\CatalogProducts\src\Models\ProductVariant>
  */
 final class ProductVariantFactory extends Factory
 {
+    protected $model = \App\Plugins\CatalogProducts\src\Models\ProductVariant::class;
+
     /**
      * Define the model's default state.
      *

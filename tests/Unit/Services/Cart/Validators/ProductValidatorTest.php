@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Cart\Validators;
 
-use App\Models\Category;
-use App\Models\Product;
-use App\Services\Cart\Validators\ProductValidator;
+use App\Plugins\CatalogProducts\src\Models\Category;
+use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\CartEngine\src\Services\Validators\ProductValidator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;

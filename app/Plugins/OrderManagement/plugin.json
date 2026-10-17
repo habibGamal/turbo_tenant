@@ -1,0 +1,18 @@
+{
+  "id": "order-management",
+  "name": "Order Management & Checkout Core",
+  "version": "1.0.0",
+  "category": "foundation",
+  "description": "Order records, order placement pipeline, status state machine, and customer order history.",
+  "author": "Turbo Tenant Team",
+  "is_core": false,
+  "dependencies": [
+    "cart-engine",
+    "locations-delivery",
+    "catalog-products"
+  ],
+  "providers": [
+    "App\\Plugins\\OrderManagement\\OrderManagementServiceProvider"
+  ],
+  "filament": "App\\Plugins\\OrderManagement\\src\\Filament\\OrderManagementFilamentPlugin"
+}

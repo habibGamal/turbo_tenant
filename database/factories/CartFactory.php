@@ -8,10 +8,12 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Cart>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Plugins\CartEngine\src\Models\Cart>
  */
 final class CartFactory extends Factory
 {
+    protected $model = \App\Plugins\CartEngine\src\Models\Cart::class;
+
     /**
      * Define the model's default state.
      *

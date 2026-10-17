@@ -54,7 +54,7 @@ class Product extends Model
 
     public function posMappings(): HasMany
     {
-        return $this->hasMany(\App\Models\ProductPosMapping::class);
+        return $this->hasMany(\App\Plugins\PosIntegration\src\Models\ProductPosMapping::class);
     }
 
     public function sections(): BelongsToMany
@@ -67,19 +67,19 @@ class Product extends Model
 
     public function orderItems(): HasMany
     {
-        return $this->hasMany(\App\Models\OrderItem::class);
+        return $this->hasMany(\App\Plugins\OrderManagement\src\Models\OrderItem::class);
     }
 
     public function packages(): BelongsToMany
     {
-        return $this->belongsToMany(\App\Models\Package::class, 'package_product')
+        return $this->belongsToMany(\App\Plugins\ComboPackages\src\Models\Package::class, 'package_product')
             ->withPivot('quantity')
             ->withTimestamps();
     }
 
     public function reviews(): HasMany
     {
-        return $this->hasMany(\App\Models\Review::class);
+        return $this->hasMany(\App\Plugins\ProductReviews\src\Models\Review::class);
     }
 
     protected function casts(): array
@@ -95,5 +95,10 @@ class Product extends Model
     public function getPriceAttribute()
     {
         return $this->price_after_discount ?? $this->base_price;
+    }
+
+    protected static function newFactory(): \Database\Factories\ProductFactory
+    {
+        return \Database\Factories\ProductFactory::new();
     }
 }

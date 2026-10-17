@@ -4,17 +4,19 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\Address;
-use App\Models\Branch;
-use App\Models\Coupon;
+use App\Plugins\LocationsDelivery\src\Models\Address;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\CouponsPromotions\src\Models\Coupon;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Order>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Plugins\OrderManagement\src\Models\Order>
  */
 final class OrderFactory extends Factory
 {
+    protected $model = \App\Plugins\OrderManagement\src\Models\Order::class;
+
     /**
      * Define the model's default state.
      *

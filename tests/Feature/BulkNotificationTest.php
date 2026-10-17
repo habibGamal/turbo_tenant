@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Enums\BulkNotificationStatus;
-use App\Jobs\SendBulkNotificationJob;
-use App\Models\BulkNotification;
 use App\Models\User;
-use App\Notifications\BulkUserNotification;
+use App\Plugins\PushNotifications\src\Enums\BulkNotificationStatus;
+use App\Plugins\PushNotifications\src\Jobs\SendBulkNotificationJob;
+use App\Plugins\PushNotifications\src\Models\BulkNotification;
+use App\Plugins\PushNotifications\src\Notifications\BulkUserNotification;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use NotificationChannels\Expo\ExpoPushToken;
@@ -36,7 +37,7 @@ it('creates a scheduled bulk notification', function () {
         ->create(['scheduled_at' => $scheduledTime]);
 
     expect($notification->status)->toBe(BulkNotificationStatus::SCHEDULED)
-        ->and($notification->scheduled_at)->toBeInstanceOf(Illuminate\Support\Carbon::class);
+        ->and($notification->scheduled_at)->toBeInstanceOf(CarbonInterface::class);
 });
 
 it('sends notifications to all users with expo tokens', function () {
@@ -129,9 +130,10 @@ it('creates expo message with correct title and body', function () {
     $user = $this->users->first();
     $bulkUserNotification = new BulkUserNotification($notification);
     $expoMessage = $bulkUserNotification->toExpo($user);
+    $payload = $expoMessage->toArray();
 
-    expect($expoMessage->getTitle())->toBe('Test Title')
-        ->and($expoMessage->getBody())->toBe('Test Body Message');
+    expect($payload['title'])->toBe('Test Title')
+        ->and($payload['body'])->toBe('Test Body Message');
 });
 
 it('sets high priority and plays sound for expo message', function () {
@@ -140,14 +142,15 @@ it('sets high priority and plays sound for expo message', function () {
     $user = $this->users->first();
     $bulkUserNotification = new BulkUserNotification($notification);
     $expoMessage = $bulkUserNotification->toExpo($user);
+    $payload = $expoMessage->toArray();
 
-    expect($expoMessage->getPriority())->toBe('high')
-        ->and($expoMessage->getSound())->toBe('default');
+    expect($payload['priority'])->toBe('high')
+        ->and($payload['sound'])->toBe('default');
 });
 
 it('handles failed sends correctly', function () {
     Notification::fake();
-    Notification::shouldReceive('route')
+    Notification::shouldReceive('send')
         ->andThrow(new Exception('Expo API error'));
 
     // Create a user that will fail
@@ -165,6 +168,8 @@ it('handles failed sends correctly', function () {
     } catch (Exception $e) {
         // Expected to fail
     }
+
+    \Mockery::close();
 
     // The status should be FAILED or still have some failed count
     expect($notification->fresh()->status)->toBeIn([
@@ -212,5 +217,5 @@ it('records sent_at timestamp when notification is sent', function () {
     $job->handle();
 
     expect($notification->fresh()->sent_at)->not->toBeNull()
-        ->and($notification->fresh()->sent_at)->toBeInstanceOf(Illuminate\Support\Carbon::class);
+        ->and($notification->fresh()->sent_at)->toBeInstanceOf(CarbonInterface::class);
 });

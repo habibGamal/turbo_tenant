@@ -7,10 +7,12 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Section>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Plugins\CatalogProducts\src\Models\Section>
  */
 final class SectionFactory extends Factory
 {
+    protected $model = \App\Plugins\CatalogProducts\src\Models\Section::class;
+
     /**
      * Define the model's default state.
      *

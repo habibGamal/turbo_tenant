@@ -166,3 +166,10 @@ app/Plugins/Loyalty/
    - Frontend checkout slot mounts `<LoyaltyCheckoutWidget />` to allow point redemptions.
 4. **Uninstall / Purge:**
    - Tenant clicks "Uninstall" $\to$ Tenant migrations rolled back $\to$ `storage/.../loyalty` deleted $\to$ Pivot removed.
+
+---
+
+## 7. Related Specifications
+
+- **[Plugin Configuration Standard (Pattern 1)](file:///d:/turbo_tenant/docs/architecture/plugin-configuration-pattern.md):** Rules for typed DTO configuration and zero-coupling domain design.
+

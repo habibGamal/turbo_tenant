@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Order;
 
-use App\DTOs\Order\PlaceOrderData;
+use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
 use App\Enums\PaymentMethod;
 use App\Enums\SettingKey;
-use App\Models\Address;
-use App\Models\Area;
-use App\Models\Coupon;
-use App\Models\Governorate;
-use App\Models\GuestUser;
+use App\Plugins\LocationsDelivery\src\Models\Address;
+use App\Plugins\LocationsDelivery\src\Models\Area;
+use App\Plugins\CouponsPromotions\src\Models\Coupon;
+use App\Plugins\LocationsDelivery\src\Models\Governorate;
+use App\Plugins\GuestCheckout\src\Models\GuestUser;
 use App\Models\User;
-use App\Services\Order\Pricing\OrderPricingCalculator;
-use App\Services\SettingService;
+use App\Plugins\OrderManagement\src\Services\Pricing\OrderPricingCalculator;
+use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Tests\TestCase;

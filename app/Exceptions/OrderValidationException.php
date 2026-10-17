@@ -4,12 +4,8 @@ declare(strict_types=1);
 
 namespace App\Exceptions;
 
-use Exception;
+use App\Plugins\OrderManagement\src\Exceptions\OrderValidationException as PluginOrderValidationException;
 
-final class OrderValidationException extends Exception
+class OrderValidationException extends PluginOrderValidationException
 {
-    public static function withMessage(string $message): self
-    {
-        return new self($message);
-    }
 }

@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Order;
 
-use App\DTOs\Order\OrderTotals;
-use App\DTOs\Order\PlaceOrderData;
-use App\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\DTOs\OrderTotals;
+use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
+use App\Plugins\PosIntegration\src\Enums\OrderPosStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
-use App\Models\Branch;
-use App\Models\Order;
-use App\Models\Product;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Models\User;
-use App\Services\CartService;
-use App\Services\Order\Repositories\OrderRepository;
+use App\Plugins\CartEngine\src\Services\CartService;
+use App\Plugins\OrderManagement\src\Services\Repositories\OrderRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

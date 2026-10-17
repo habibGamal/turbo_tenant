@@ -37,6 +37,8 @@ app/Plugins/{StudlyName}/
 │   └── migrations/
 │       └── tenant/                           # Optional: Tenant-isolated migrations
 ├── src/
+│   ├── DTOs/
+│   │   └── {StudlyName}Config.php           # Required: Typed Config DTO (Pattern 1)
 │   ├── Services/                             # Domain business logic
 │   ├── Models/                               # Eloquent models
 │   ├── Listeners/                            # Event listeners
@@ -95,12 +97,24 @@ namespace App\Plugins\SampleFeature;
 
 use App\Core\Plugins\AbstractTenantPlugin;
 use App\Models\Tenant;
+use App\Plugins\OrderManagement\src\Pipelines\OrderPipelineRegistry;
+use App\Plugins\SampleFeature\src\Pipelines\Pipes\SamplePricingPipe;
 
 final class SampleFeaturePlugin extends AbstractTenantPlugin
 {
+    /**
+     * Boot runtime hooks for this active tenant.
+     * 
+     * ⚠️ STRICT ARCHITECTURAL RULE:
+     * Pipeline pipes (OrderPipelineRegistry), tenant-scoped middleware,
+     * and tenant-scoped event hooks MUST be registered here, NOT in the ServiceProvider.
+     * This guarantees tenant isolation and honors tenant feature entitlements.
+     */
     public function bootForTenant(Tenant $tenant): void
     {
-        // Boot runtime bindings, events, or pipeline pipes for this tenant
+        if (app()->bound(OrderPipelineRegistry::class)) {
+            app(OrderPipelineRegistry::class)->registerPricingPipe(SamplePricingPipe::class, 250);
+        }
     }
 
     public function onActivate(Tenant $tenant): void
@@ -124,7 +138,7 @@ final class SampleFeaturePlugin extends AbstractTenantPlugin
 
 ### 3.3 The Service Provider (`{StudlyName}ServiceProvider.php`)
 
-Registers dependency injection bindings, listeners, and routes:
+Registers dependency injection bindings, DTOs, and global framework relationships:
 
 ```php
 <?php
@@ -139,19 +153,95 @@ final class SampleFeatureServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Container bindings
+        // Container bindings: Composition root, Config DTO (Pattern 1), domain services
     }
 
     public function boot(): void
     {
-        // Register routes, observers, or listeners
+        // Global routes, observers, or dynamic relationships (resolveRelationUsing)
+        // ❌ NEVER register pipeline pipes here! ServiceProvider is global and leaks across tenants.
     }
 }
 ```
 
 ---
 
-### 3.4 The Filament Plugin (`{StudlyName}FilamentPlugin.php`)
+### 3.4 The Configuration Standard (Pattern 1: Typed Config DTO + Composition Root)
+
+**Strict Architecture Rule:** Domain services (API clients, calculators, handlers) must **NEVER** inject `SettingService` directly. Doing so couples domain logic to database schemas and magic strings.
+
+Instead, all configuration follows **Pattern 1**:
+
+1. **The Plugin defines its local Config DTO (`src/DTOs/{StudlyName}Config.php`):**
+```php
+namespace App\Plugins\SampleFeature\src\DTOs;
+
+final readonly class SampleFeatureConfig
+{
+    public function __construct(
+        public string $apiBaseUrl,
+        public ?string $apiToken = null,
+        public bool $autoSync = false,
+        public int $timeoutSeconds = 30
+    ) {}
+}
+```
+
+2. **The ServiceProvider acts as the Composition Root:**
+The ServiceProvider is the **only** class that bridges storage to domain:
+```php
+namespace App\Plugins\SampleFeature;
+
+use App\Plugins\SampleFeature\src\DTOs\SampleFeatureConfig;
+use App\Plugins\SampleFeature\src\Services\SampleService;
+use App\Plugins\StoreSettings\src\Services\SettingService;
+use Illuminate\Support\ServiceProvider;
+
+final class SampleFeatureServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        // 1. Build the typed config DTO
+        $this->app->singleton(SampleFeatureConfig::class, function ($app) {
+            $settings = $app->make(SettingService::class);
+
+            return new SampleFeatureConfig(
+                apiBaseUrl: (string) $settings->get('sample-feature.api_url', 'https://api.example.com'),
+                apiToken: $settings->get('sample-feature.api_token'),
+                autoSync: (bool) $settings->get('sample-feature.auto_sync', false)
+            );
+        });
+
+        // 2. Inject clean DTO into domain service
+        $this->app->singleton(SampleService::class, function ($app) {
+            return new SampleService($app->make(SampleFeatureConfig::class));
+        });
+    }
+}
+```
+
+3. **Domain Services depend purely on the Config DTO (0% database coupling):**
+```php
+namespace App\Plugins\SampleFeature\src\Services;
+
+use App\Plugins\SampleFeature\src\DTOs\SampleFeatureConfig;
+
+final class SampleService
+{
+    public function __construct(
+        private readonly SampleFeatureConfig $config
+    ) {}
+
+    public function execute(): void
+    {
+        $url = $this->config->apiBaseUrl; // 100% type-safe, zero magic strings
+    }
+}
+```
+
+---
+
+### 3.5 The Filament Plugin (`{StudlyName}FilamentPlugin.php`)
 
 If the plugin adds navigation, resources, or pages to the Admin Panel:
 
@@ -226,8 +316,9 @@ When asked to create or extract a new plugin:
    - Place services in `src/Services/`.
    - Place tenant migrations in `database/migrations/tenant/`.
 4. **Connect Hooks:**
-   - If listening to events: add listener in ServiceProvider.
-   - If intercepting pricing/validation: register pipe in ServiceProvider.
+   - If listening to global events: register listener or observer in `ServiceProvider`.
+   - If establishing dynamic Eloquent relationships: use `resolveRelationUsing()` in `ServiceProvider::boot()`.
+   - If intercepting pricing/validation pipeline: **register pipe strictly in `{StudlyName}Plugin::bootForTenant()`**. NEVER in the ServiceProvider.
 5. **Discover & Verify:**
    ```bash
    php artisan plugin:discover
@@ -241,7 +332,10 @@ When asked to create or extract a new plugin:
 
 ## 6. Strict Rules & Anti-Patterns
 
+- ❌ **NEVER register pipeline pipes in `ServiceProvider::boot()`.** Pipeline pipes must be registered strictly in `*Plugin::bootForTenant()` to prevent leaking across tenants and ensure that pipes only execute when the tenant has the plugin active.
+- ❌ **NEVER inject `SettingService` directly into domain services.** All domain logic must depend solely on its local `{StudlyName}Config` DTO (Pattern 1).
 - ❌ **NEVER modify Core Kernel files** when creating a plugin. Core files must remain agnostic.
 - ❌ **NEVER put migrations in central `database/migrations`** unless the plugin modifies central multi-tenant schemas.
 - ❌ **NEVER hardcode Filament resources in `AdminPanelProvider.php`**. All resources must be registered through the plugin's `FilamentPlugin` class.
 - ✅ **ALWAYS ensure tenant migrations are idempotent** using `Schema::hasTable()` guards where legacy tables might exist.
+- ✅ **ALWAYS use `*Plugin::bootForTenant()`** for all runtime pipeline pipes, tenant middleware, and tenant-scoped lifecycle hooks.

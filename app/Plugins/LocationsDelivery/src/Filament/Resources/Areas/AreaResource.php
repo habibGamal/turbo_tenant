@@ -9,7 +9,7 @@ use App\Plugins\LocationsDelivery\src\Filament\Resources\Areas\Pages\EditArea;
 use App\Plugins\LocationsDelivery\src\Filament\Resources\Areas\Pages\ListAreas;
 use App\Plugins\LocationsDelivery\src\Filament\Resources\Areas\Schemas\AreaForm;
 use App\Plugins\LocationsDelivery\src\Filament\Resources\Areas\Tables\AreasTable;
-use App\Models\Area;
+use App\Plugins\LocationsDelivery\src\Models\Area;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

@@ -1,0 +1,81 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Plugins\ComboPackages\src\Models;
+
+use App\Plugins\CatalogProducts\src\Models\Product;
+use Database\Factories\PackageFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+
+class Package extends Model
+{
+    /** @use HasFactory<PackageFactory> */
+    use HasFactory;
+
+    protected static function newFactory()
+    {
+        return \Database\Factories\PackageFactory::new();
+    }
+
+    protected $fillable = [
+        'name',
+        'name_ar',
+        'description',
+        'description_ar',
+        'price',
+        'original_price',
+        'discount_percentage',
+        'badge',
+        'badge_ar',
+        'icon',
+        'gradient',
+        'is_active',
+        'is_featured',
+        'sort_order',
+        'valid_from',
+        'valid_until',
+    ];
+
+    public function groups(): HasMany
+    {
+        return $this->hasMany(PackageGroup::class)->orderBy('sort_order');
+    }
+
+    public function items(): HasManyThrough
+    {
+        return $this->hasManyThrough(PackageItem::class, PackageGroup::class);
+    }
+
+    /**
+     * Legacy relationship for backward compatibility
+     *
+     * @deprecated Use groups() and items() instead
+     */
+    public function products(): BelongsToMany
+    {
+        $productClass = class_exists(\App\Plugins\CatalogProducts\src\Models\Product::class)
+            ? \App\Plugins\CatalogProducts\src\Models\Product::class
+            : Product::class;
+
+        return $this->belongsToMany($productClass, 'package_product')
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'price' => 'double',
+            'original_price' => 'double',
+            'is_active' => 'boolean',
+            'is_featured' => 'boolean',
+            'valid_from' => 'datetime',
+            'valid_until' => 'datetime',
+        ];
+    }
+}

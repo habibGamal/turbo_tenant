@@ -49,8 +49,9 @@ final class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Blue,
             ])
             ->viteTheme('resources/css/filament/admin/theme.css')
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
+            ->resources([
+                \App\Filament\Resources\Users\UserResource::class,
+            ])
             ->pages([
                 Dashboard::class,
             ])
@@ -84,5 +85,29 @@ final class AdminPanelProvider extends PanelProvider
                 Platform::Mac => '⌘ + K',
                 default => null,
             });
+
+        $panel->bootUsing(function (Panel $panel) {
+            if (function_exists('tenant') && tenant()) {
+                $activeFilamentPlugins = app(\App\Core\Plugins\Services\PluginManager::class)
+                    ->getActiveFilamentPluginsForTenant(tenant());
+                foreach ($activeFilamentPlugins as $filamentPlugin) {
+                    if (! $panel->hasPlugin($filamentPlugin->getId())) {
+                        $panel->plugin($filamentPlugin);
+                    }
+                }
+            }
+        });
+
+        if (function_exists('tenant') && tenant()) {
+            $activeFilamentPlugins = app(\App\Core\Plugins\Services\PluginManager::class)
+                ->getActiveFilamentPluginsForTenant(tenant());
+            foreach ($activeFilamentPlugins as $filamentPlugin) {
+                if (! $panel->hasPlugin($filamentPlugin->getId())) {
+                    $panel->plugin($filamentPlugin);
+                }
+            }
+        }
+
+        return $panel;
     }
 }

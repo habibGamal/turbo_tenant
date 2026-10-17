@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-use App\Models\Cart;
-use App\Models\CartItem;
-use App\Models\ExtraOptionItem;
-use App\Models\Product;
-use App\Models\ProductVariant;
+use App\Plugins\CartEngine\src\Models\Cart;
+use App\Plugins\CartEngine\src\Models\CartItem;
+use App\Plugins\CatalogProducts\src\Models\ExtraOptionItem;
+use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\CatalogProducts\src\Models\ProductVariant;
 use App\Models\User;
-use App\Services\CartService;
+use App\Plugins\CartEngine\src\Services\CartService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -374,12 +374,12 @@ it('can update cart item weight_multiplier', function () {
 it('can update cart item weight_option_value_id', function () {
     $user = User::factory()->create();
     $product = Product::factory()->create(['sell_by_weight' => true]);
-    $weightOption = App\Models\WeightOption::factory()->create();
-    $weightValue1 = App\Models\WeightOptionValue::factory()->create([
+    $weightOption = App\Plugins\CatalogProducts\src\Models\WeightOption::factory()->create();
+    $weightValue1 = App\Plugins\CatalogProducts\src\Models\WeightOptionValue::factory()->create([
         'weight_option_id' => $weightOption->id,
         'value' => '0.5',
     ]);
-    $weightValue2 = App\Models\WeightOptionValue::factory()->create([
+    $weightValue2 = App\Plugins\CatalogProducts\src\Models\WeightOptionValue::factory()->create([
         'weight_option_id' => $weightOption->id,
         'value' => '1.0',
     ]);
@@ -409,12 +409,12 @@ it('can update cart item weight_option_value_id', function () {
 it('can update multiple cart item properties at once', function () {
     $user = User::factory()->create();
     $product = Product::factory()->create(['sell_by_weight' => true]);
-    $weightOption = App\Models\WeightOption::factory()->create();
-    $weightValue1 = App\Models\WeightOptionValue::factory()->create([
+    $weightOption = App\Plugins\CatalogProducts\src\Models\WeightOption::factory()->create();
+    $weightValue1 = App\Plugins\CatalogProducts\src\Models\WeightOptionValue::factory()->create([
         'weight_option_id' => $weightOption->id,
         'value' => '0.5',
     ]);
-    $weightValue2 = App\Models\WeightOptionValue::factory()->create([
+    $weightValue2 = App\Plugins\CatalogProducts\src\Models\WeightOptionValue::factory()->create([
         'weight_option_id' => $weightOption->id,
         'value' => '1.0',
     ]);

@@ -1,0 +1,15 @@
+{
+  "id": "cart-engine",
+  "name": "Cart & Calculations Engine",
+  "version": "1.0.0",
+  "category": "foundation",
+  "description": "Cart storage, line-item modifiers, pricing calculation, and cart synchronization.",
+  "author": "Turbo Tenant Team",
+  "is_core": false,
+  "dependencies": [
+    "catalog-products"
+  ],
+  "providers": [
+    "App\\Plugins\\CartEngine\\CartEngineServiceProvider"
+  ]
+}

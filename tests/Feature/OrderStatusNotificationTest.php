@@ -3,10 +3,10 @@
 declare(strict_types=1);
 
 use App\Enums\OrderStatus;
-use App\Jobs\SendOrderStatusNotificationJob;
-use App\Models\Order;
 use App\Models\User;
-use App\Notifications\OrderStatusNotification;
+use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\PushNotifications\src\Jobs\SendOrderStatusNotificationJob;
+use App\Plugins\PushNotifications\src\Notifications\OrderStatusNotification;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use NotificationChannels\Expo\ExpoPushToken;
@@ -105,8 +105,9 @@ it('generates correct notification title for each status', function (OrderStatus
 
     $notification = new OrderStatusNotification($order);
     $message = $notification->toExpo($this->user);
+    $payload = $message->toArray();
 
-    expect($message->getTitle())->toBe($expectedTitle);
+    expect($payload['title'])->toBe($expectedTitle);
 })->with([
     [OrderStatus::PENDING, 'تم استلام طلبك'],
     [OrderStatus::PREPARING, 'جاري تحضير طلبك'],
@@ -124,8 +125,8 @@ it('includes order data in expo message', function () {
 
     $notification = new OrderStatusNotification($order);
     $message = $notification->toExpo($this->user);
-
-    $data = $message->getData();
+    $payload = $message->toArray();
+    $data = is_string($payload['data'] ?? null) ? json_decode($payload['data'], true) : ($payload['data'] ?? []);
 
     expect($data)
         ->toHaveKey('order_id', $order->id)
@@ -141,7 +142,8 @@ it('sets high priority and sound for expo message', function () {
 
     $notification = new OrderStatusNotification($order);
     $message = $notification->toExpo($this->user);
+    $payload = $message->toArray();
 
-    expect($message->getPriority())->toBe('high')
-        ->and($message->getSound())->toBe('default');
+    expect($payload['priority'])->toBe('high')
+        ->and($payload['sound'])->toBe('default');
 });

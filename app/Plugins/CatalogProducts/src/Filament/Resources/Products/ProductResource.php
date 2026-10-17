@@ -10,7 +10,7 @@ use App\Plugins\CatalogProducts\src\Filament\Resources\Products\Pages\ListProduc
 use App\Plugins\CatalogProducts\src\Filament\Resources\Products\RelationManagers\VariantsRelationManager;
 use App\Plugins\CatalogProducts\src\Filament\Resources\Products\Schemas\ProductForm;
 use App\Plugins\CatalogProducts\src\Filament\Resources\Products\Tables\ProductsTable;
-use App\Models\Product;
+use App\Plugins\CatalogProducts\src\Models\Product;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

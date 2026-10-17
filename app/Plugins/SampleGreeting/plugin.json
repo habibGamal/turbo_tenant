@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "category": "addon",
   "description": "A sample plugin to test the Microkernel Plugin Engine.",
+  "author": "Turbo Tenant Team",
   "is_core": false,
   "dependencies": [],
   "providers": [

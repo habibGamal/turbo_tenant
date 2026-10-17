@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Plugins\LocationsDelivery\src\Models;
 
-use App\Models\Order;
 use App\Models\User;
+use App\Plugins\OrderManagement\src\Models\Order;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +14,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Address extends Model
 {
     use HasFactory;
+
+    protected static function newFactory()
+    {
+        return \Database\Factories\AddressFactory::new();
+    }
 
     protected $fillable = [
         'user_id',

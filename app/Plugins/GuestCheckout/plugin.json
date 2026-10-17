@@ -1,0 +1,17 @@
+{
+  "id": "guest-checkout",
+  "name": "Guest Checkout & Order Tracking",
+  "version": "1.0.0",
+  "category": "commerce",
+  "description": "Modular plugin for Turbo Tenant",
+  "author": "Turbo Tenant Team",
+  "is_core": false,
+  "dependencies": [
+    "order-management",
+    "locations-delivery"
+  ],
+  "providers": [
+    "App\\Plugins\\GuestCheckout\\GuestCheckoutServiceProvider"
+  ],
+  "filament": "App\\Plugins\\GuestCheckout\\src\\Filament\\GuestCheckoutFilamentPlugin"
+}

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use App\Models\Branch;
-use App\Models\GuestUser;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Product;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\GuestCheckout\src\Models\GuestUser;
+use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\OrderManagement\src\Models\OrderItem;
+use App\Plugins\CatalogProducts\src\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

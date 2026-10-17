@@ -7,10 +7,12 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Package>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Plugins\ComboPackages\src\Models\Package>
  */
 final class PackageFactory extends Factory
 {
+    protected $model = \App\Plugins\ComboPackages\src\Models\Package::class;
+
     /**
      * Define the model's default state.
      *

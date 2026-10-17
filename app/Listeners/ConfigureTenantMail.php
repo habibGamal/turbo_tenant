@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Listeners;
 
 use App\Enums\SettingKey;
-use App\Services\SettingService;
+use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
 use Log;

@@ -63,7 +63,6 @@
     59 => 'App\\Providers\\Filament\\AdminPanelProvider',
     60 => 'App\\Providers\\Filament\\CentralPanelProvider',
     61 => 'App\\Providers\\PluginServiceProvider',
-    62 => 'App\\Providers\\OrderServiceProvider',
   ),
   'eager' => 
   array (
@@ -112,7 +111,6 @@
     42 => 'App\\Providers\\Filament\\AdminPanelProvider',
     43 => 'App\\Providers\\Filament\\CentralPanelProvider',
     44 => 'App\\Providers\\PluginServiceProvider',
-    45 => 'App\\Providers\\OrderServiceProvider',
   ),
   'deferred' => 
   array (

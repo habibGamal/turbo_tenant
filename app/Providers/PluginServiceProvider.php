@@ -42,6 +42,16 @@ final class PluginServiceProvider extends ServiceProvider
                 $app->make(PluginManager::class)
             );
         });
+
+        // Auto-register discovered plugin service providers
+        $registry = $this->app->make(PluginRegistry::class);
+        foreach ($registry->all() as $manifest) {
+            foreach ($manifest->providers as $providerClass) {
+                if (class_exists($providerClass)) {
+                    $this->app->register($providerClass);
+                }
+            }
+        }
     }
 
     public function boot(): void

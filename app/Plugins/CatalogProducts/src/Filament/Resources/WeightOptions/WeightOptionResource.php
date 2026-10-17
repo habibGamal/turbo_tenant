@@ -9,7 +9,7 @@ use App\Plugins\CatalogProducts\src\Filament\Resources\WeightOptions\Pages\EditW
 use App\Plugins\CatalogProducts\src\Filament\Resources\WeightOptions\Pages\ListWeightOptions;
 use App\Plugins\CatalogProducts\src\Filament\Resources\WeightOptions\Schemas\WeightOptionForm;
 use App\Plugins\CatalogProducts\src\Filament\Resources\WeightOptions\Tables\WeightOptionsTable;
-use App\Models\WeightOption;
+use App\Plugins\CatalogProducts\src\Models\WeightOption;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

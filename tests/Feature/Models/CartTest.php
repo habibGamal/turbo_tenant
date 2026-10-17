@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Models\Cart;
-use App\Models\CartItem;
-use App\Models\CartItemExtra;
-use App\Models\ExtraOptionItem;
-use App\Models\Product;
-use App\Models\ProductVariant;
+use App\Plugins\CartEngine\src\Models\Cart;
+use App\Plugins\CartEngine\src\Models\CartItem;
+use App\Plugins\CartEngine\src\Models\CartItemExtra;
+use App\Plugins\CatalogProducts\src\Models\ExtraOptionItem;
+use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\CatalogProducts\src\Models\ProductVariant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 

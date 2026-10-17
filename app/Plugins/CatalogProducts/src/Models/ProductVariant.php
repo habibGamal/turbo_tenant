@@ -29,12 +29,12 @@ class ProductVariant extends Model
 
     public function posMappings(): HasMany
     {
-        return $this->hasMany(\App\Models\ProductPosMapping::class, 'variant_id');
+        return $this->hasMany(\App\Plugins\PosIntegration\src\Models\ProductPosMapping::class, 'variant_id');
     }
 
     public function orderItems(): HasMany
     {
-        return $this->hasMany(\App\Models\OrderItem::class, 'variant_id');
+        return $this->hasMany(\App\Plugins\OrderManagement\src\Models\OrderItem::class, 'variant_id');
     }
 
     protected function casts(): array

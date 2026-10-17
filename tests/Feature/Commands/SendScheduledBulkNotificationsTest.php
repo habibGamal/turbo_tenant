@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Console\Commands\SendScheduledBulkNotifications;
-use App\Enums\BulkNotificationStatus;
-use App\Jobs\SendBulkNotificationJob;
-use App\Models\BulkNotification;
+use App\Plugins\PushNotifications\src\Console\Commands\SendScheduledBulkNotifications;
+use App\Plugins\PushNotifications\src\Enums\BulkNotificationStatus;
+use App\Plugins\PushNotifications\src\Jobs\SendBulkNotificationJob;
+use App\Plugins\PushNotifications\src\Models\BulkNotification;
 use Illuminate\Support\Facades\Queue;
 
 it('sends scheduled notifications that are due', function () {

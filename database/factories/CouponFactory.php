@@ -7,10 +7,12 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Coupon>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Plugins\CouponsPromotions\src\Models\Coupon>
  */
 final class CouponFactory extends Factory
 {
+    protected $model = \App\Plugins\CouponsPromotions\src\Models\Coupon::class;
+
     /**
      * Define the model's default state.
      *

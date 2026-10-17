@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Enums\SettingKey;
-use App\Services\CartService;
-use App\Services\SettingService;
+use App\Plugins\CartEngine\src\Services\CartService;
+use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
@@ -64,7 +64,9 @@ final class HandleInertiaRequests extends Middleware
                     'online_payments_enabled' => $this->settingService->get(SettingKey::ONLINE_PAYMENTS_ENABLED, 'true') === 'true',
                     'facebook_app_id' => $this->settingService->get(SettingKey::FACEBOOK_APP_ID),
                     'product_show_cards' => json_decode($this->settingService->get(SettingKey::PRODUCT_SHOW_CARDS, '[]'), true),
-                    'pages' => \App\Models\Page::where('is_active', true)->select('title', 'title_ar', 'slug')->get(),
+                    'pages' => class_exists(\App\Plugins\CmsPages\src\Models\Page::class)
+                        ? \App\Plugins\CmsPages\src\Models\Page::where('is_active', true)->select('title', 'title_ar', 'slug')->get()
+                        : collect(),
                 ],
             ];
         }

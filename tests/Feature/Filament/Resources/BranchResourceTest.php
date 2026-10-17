@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Filament\Resources\Branches\Pages\CreateBranch;
-use App\Filament\Resources\Branches\Pages\EditBranch;
-use App\Filament\Resources\Branches\Pages\ListBranches;
-use App\Models\Branch;
+use App\Plugins\LocationsDelivery\src\Filament\Resources\Branches\Pages\CreateBranch;
+use App\Plugins\LocationsDelivery\src\Filament\Resources\Branches\Pages\EditBranch;
+use App\Plugins\LocationsDelivery\src\Filament\Resources\Branches\Pages\ListBranches;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Models\User;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;

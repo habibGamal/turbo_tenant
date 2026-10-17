@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use App\Models\Category;
-use App\Models\ExtraOption;
-use App\Models\ExtraOptionItem;
-use App\Models\Product;
-use App\Models\ProductVariant;
+use App\Plugins\CatalogProducts\src\Models\Category;
+use App\Plugins\CatalogProducts\src\Models\ExtraOption;
+use App\Plugins\CatalogProducts\src\Models\ExtraOptionItem;
+use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\CatalogProducts\src\Models\ProductVariant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

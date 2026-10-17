@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\Area;
+use App\Plugins\LocationsDelivery\src\Models\Area;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\GuestUser>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Plugins\GuestCheckout\src\Models\GuestUser>
  */
 final class GuestUserFactory extends Factory
 {
+    protected $model = \App\Plugins\GuestCheckout\src\Models\GuestUser::class;
+
     /**
      * Define the model's default state.
      *

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Models\Branch;
-use App\Services\POS\POSErrorResponseHandler;
-use App\Services\ProductPOSImporterService;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\PosIntegration\src\Services\POS\POSErrorResponseHandler;
+use App\Plugins\PosIntegration\src\Services\ProductPOSImporterService;
 
 beforeEach(function () {
     $this->productImporter = mock(ProductPOSImporterService::class);

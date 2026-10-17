@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Order;
 
-use App\DTOs\Order\PlaceOrderData;
+use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
 use App\Enums\PaymentMethod;
 use App\Enums\SettingKey;
-use App\Exceptions\OrderValidationException;
-use App\Models\Branch;
-use App\Models\Coupon;
-use App\Models\Product;
+use App\Plugins\OrderManagement\src\Exceptions\OrderValidationException;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\CouponsPromotions\src\Models\Coupon;
+use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Models\User;
-use App\Services\Order\Validators\OrderValidator;
-use App\Services\SettingService;
+use App\Plugins\OrderManagement\src\Services\Validators\OrderValidator;
+use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

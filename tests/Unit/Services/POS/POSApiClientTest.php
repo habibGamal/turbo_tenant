@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Models\Branch;
-use App\Services\POS\POSApiClient;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\PosIntegration\src\Services\POS\POSApiClient;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {

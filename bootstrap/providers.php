@@ -8,5 +8,4 @@ return [
     App\Providers\Filament\AdminPanelProvider::class,
     App\Providers\Filament\CentralPanelProvider::class,
     App\Providers\PluginServiceProvider::class,
-    App\Providers\OrderServiceProvider::class,
 ];

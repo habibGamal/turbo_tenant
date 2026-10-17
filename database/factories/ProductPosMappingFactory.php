@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\Product;
+use App\Plugins\CatalogProducts\src\Models\Product;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ProductPosMapping>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Plugins\CatalogProducts\src\Models\ProductPosMapping>
  */
 final class ProductPosMappingFactory extends Factory
 {
+    protected $model = \App\Plugins\PosIntegration\src\Models\ProductPosMapping::class;
+
     /**
      * Define the model's default state.
      *

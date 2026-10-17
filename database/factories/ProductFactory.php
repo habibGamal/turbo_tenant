@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\Category;
-use App\Models\ExtraOption;
-use App\Models\WeightOption;
+use App\Plugins\CatalogProducts\src\Models\Category;
+use App\Plugins\CatalogProducts\src\Models\ExtraOption;
+use App\Plugins\CatalogProducts\src\Models\WeightOption;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Product>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Plugins\CatalogProducts\src\Models\Product>
  */
 final class ProductFactory extends Factory
 {
+    protected $model = \App\Plugins\CatalogProducts\src\Models\Product::class;
+
     /**
      * Define the model's default state.
      *

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\SettingKey;
 use App\Models\User;
-use App\Services\SettingService;
+use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;

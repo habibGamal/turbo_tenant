@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Filament\Resources\Orders\Pages\ListOrders;
-use App\Filament\Resources\Orders\Pages\ViewOrder;
-use App\Models\Order;
-use App\Models\OrderItem;
+use App\Plugins\OrderManagement\src\Filament\Resources\Orders\Pages\ListOrders;
+use App\Plugins\OrderManagement\src\Filament\Resources\Orders\Pages\ViewOrder;
+use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\OrderManagement\src\Models\OrderItem;
 
 use function Pest\Livewire\livewire;
 

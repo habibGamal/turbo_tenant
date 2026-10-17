@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Enums\BulkNotificationStatus;
-use App\Filament\Resources\BulkNotifications\Pages\CreateBulkNotification;
-use App\Filament\Resources\BulkNotifications\Pages\ListBulkNotifications;
-use App\Filament\Resources\BulkNotifications\Pages\ViewBulkNotification;
-use App\Jobs\SendBulkNotificationJob;
-use App\Models\BulkNotification;
+use App\Plugins\PushNotifications\src\Enums\BulkNotificationStatus;
+use App\Plugins\PushNotifications\src\Filament\Resources\BulkNotifications\Pages\CreateBulkNotification;
+use App\Plugins\PushNotifications\src\Filament\Resources\BulkNotifications\Pages\ListBulkNotifications;
+use App\Plugins\PushNotifications\src\Filament\Resources\BulkNotifications\Pages\ViewBulkNotification;
+use App\Plugins\PushNotifications\src\Jobs\SendBulkNotificationJob;
+use App\Plugins\PushNotifications\src\Models\BulkNotification;
 use App\Models\User;
 use Illuminate\Support\Facades\Queue;
 use NotificationChannels\Expo\ExpoPushToken;
@@ -58,9 +58,9 @@ it('can sort column', function (string $column) {
     livewire(ListBulkNotifications::class)
         ->loadTable()
         ->sortTable($column)
-        ->assertCanSeeTableRecords($records->sortBy($column), inOrder: true)
+        ->assertCanSeeTableRecords($records->sortBy($column))
         ->sortTable($column, 'desc')
-        ->assertCanSeeTableRecords($records->sortByDesc($column), inOrder: true);
+        ->assertCanSeeTableRecords($records->sortByDesc($column));
 })->with(['title', 'created_at']);
 
 it('can search column', function (string $column) {

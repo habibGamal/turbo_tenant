@@ -7,10 +7,12 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\WeightOption>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Plugins\CatalogProducts\src\Models\WeightOption>
  */
 final class WeightOptionFactory extends Factory
 {
+    protected $model = \App\Plugins\CatalogProducts\src\Models\WeightOption::class;
+
     /**
      * Define the model's default state.
      *

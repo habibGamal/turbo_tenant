@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 use App\Enums\SettingKey;
-use App\Models\Category;
-use App\Models\Product;
-use App\Models\ProductPosMapping;
-use App\Models\Setting;
-use App\Services\ProductPOSImporterService;
-use App\Services\SettingService;
+use App\Plugins\CatalogProducts\src\Models\Category;
+use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\PosIntegration\src\Models\ProductPosMapping;
+use App\Plugins\StoreSettings\src\Models\Setting;
+use App\Plugins\PosIntegration\src\Services\ProductPOSImporterService;
+use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Support\Facades\Http;
 
 uses()->group('unit');

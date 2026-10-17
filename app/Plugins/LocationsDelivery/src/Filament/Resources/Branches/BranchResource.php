@@ -9,7 +9,7 @@ use App\Plugins\LocationsDelivery\src\Filament\Resources\Branches\Pages\EditBran
 use App\Plugins\LocationsDelivery\src\Filament\Resources\Branches\Pages\ListBranches;
 use App\Plugins\LocationsDelivery\src\Filament\Resources\Branches\Schemas\BranchForm;
 use App\Plugins\LocationsDelivery\src\Filament\Resources\Branches\Tables\BranchesTable;
-use App\Models\Branch;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

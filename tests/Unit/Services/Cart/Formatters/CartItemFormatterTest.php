@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Cart\Formatters;
 
-use App\Models\Cart;
-use App\Models\CartItem;
-use App\Models\CartItemExtra;
-use App\Models\Category;
-use App\Models\ExtraOption;
-use App\Models\ExtraOptionItem;
-use App\Models\Product;
-use App\Models\ProductVariant;
-use App\Services\Cart\Calculators\CartPriceCalculator;
-use App\Services\Cart\Formatters\CartItemFormatter;
+use App\Plugins\CartEngine\src\Models\Cart;
+use App\Plugins\CartEngine\src\Models\CartItem;
+use App\Plugins\CartEngine\src\Models\CartItemExtra;
+use App\Plugins\CatalogProducts\src\Models\Category;
+use App\Plugins\CatalogProducts\src\Models\ExtraOption;
+use App\Plugins\CatalogProducts\src\Models\ExtraOptionItem;
+use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\CatalogProducts\src\Models\ProductVariant;
+use App\Plugins\CartEngine\src\Services\Calculators\CartPriceCalculator;
+use App\Plugins\CartEngine\src\Services\Formatters\CartItemFormatter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

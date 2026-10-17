@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
+use App\Plugins\CatalogProducts\src\Models\Category;
+use App\Plugins\CatalogProducts\src\Models\Section;
+use App\Plugins\HeroBanners\src\Models\HeroSlider;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,7 +19,7 @@ final class HomeController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'name_ar', 'description', 'image']);
 
-        $sections = \App\Models\Section::query()
+        $sections = Section::query()
             ->with([
                 'products' => function ($query) {
                     $query->where('is_active', true)
@@ -32,7 +34,7 @@ final class HomeController extends Controller
         // or just pass them as is and handle in frontend.
         // The Section model has 'products' relation.
 
-        $heroSlides = \App\Models\HeroSlider::query()
+        $heroSlides = HeroSlider::query()
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->get();

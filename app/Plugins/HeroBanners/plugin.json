@@ -1,0 +1,14 @@
+{
+    "id": "hero-banners",
+    "name": "Hero Banners & Promotional Carousel",
+    "version": "1.0.0",
+    "category": "storefront",
+    "description": "Modular Hero Banners & Promotional Carousel plugin for Turbo Tenant",
+    "author": "Turbo Tenant Team",
+    "is_core": false,
+    "dependencies": [],
+    "providers": [
+        "App\\Plugins\\HeroBanners\\HeroBannersServiceProvider"
+    ],
+    "filament": "App\\Plugins\\HeroBanners\\src\\Filament\\HeroBannersFilamentPlugin"
+}

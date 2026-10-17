@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Cart\Repositories;
 
-use App\Models\Cart;
-use App\Models\CartItem;
-use App\Models\CartItemExtra;
-use App\Models\Category;
-use App\Models\ExtraOption;
-use App\Models\ExtraOptionItem;
-use App\Models\Product;
+use App\Plugins\CartEngine\src\Models\Cart;
+use App\Plugins\CartEngine\src\Models\CartItem;
+use App\Plugins\CartEngine\src\Models\CartItemExtra;
+use App\Plugins\CatalogProducts\src\Models\Category;
+use App\Plugins\CatalogProducts\src\Models\ExtraOption;
+use App\Plugins\CatalogProducts\src\Models\ExtraOptionItem;
+use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Models\User;
-use App\Services\Cart\Repositories\CartRepository;
+use App\Plugins\CartEngine\src\Services\Repositories\CartRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

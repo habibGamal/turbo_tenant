@@ -9,7 +9,7 @@ use App\Plugins\CatalogProducts\src\Filament\Resources\Categories\Pages\EditCate
 use App\Plugins\CatalogProducts\src\Filament\Resources\Categories\Pages\ListCategories;
 use App\Plugins\CatalogProducts\src\Filament\Resources\Categories\Schemas\CategoryForm;
 use App\Plugins\CatalogProducts\src\Filament\Resources\Categories\Tables\CategoriesTable;
-use App\Models\Category;
+use App\Plugins\CatalogProducts\src\Models\Category;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

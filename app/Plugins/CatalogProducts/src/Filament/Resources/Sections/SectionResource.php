@@ -9,7 +9,7 @@ use App\Plugins\CatalogProducts\src\Filament\Resources\Sections\Pages\EditSectio
 use App\Plugins\CatalogProducts\src\Filament\Resources\Sections\Pages\ListSections;
 use App\Plugins\CatalogProducts\src\Filament\Resources\Sections\Schemas\SectionForm;
 use App\Plugins\CatalogProducts\src\Filament\Resources\Sections\Tables\SectionsTable;
-use App\Models\Section;
+use App\Plugins\CatalogProducts\src\Models\Section;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

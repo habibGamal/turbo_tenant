@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\User;
-use App\Models\UserNotification;
+use App\Plugins\PushNotifications\src\Models\UserNotification;
 use NotificationChannels\Expo\ExpoPushToken;
 
 use function Pest\Laravel\actingAs;

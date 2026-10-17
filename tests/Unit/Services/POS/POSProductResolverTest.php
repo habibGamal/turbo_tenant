@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-use App\Models\Branch;
-use App\Models\ExtraOptionItem;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\OrderItemExtra;
-use App\Models\Product;
-use App\Models\ProductPosMapping;
-use App\Models\ProductVariant;
-use App\Models\WeightOptionValue;
-use App\Services\POS\POSProductResolver;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\CatalogProducts\src\Models\ExtraOptionItem;
+use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\OrderManagement\src\Models\OrderItem;
+use App\Plugins\OrderManagement\src\Models\OrderItemExtra;
+use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\PosIntegration\src\Models\ProductPosMapping;
+use App\Plugins\CatalogProducts\src\Models\ProductVariant;
+use App\Plugins\CatalogProducts\src\Models\WeightOptionValue;
+use App\Plugins\PosIntegration\src\Services\POS\POSProductResolver;
 
 beforeEach(function () {
     $this->resolver = new POSProductResolver();

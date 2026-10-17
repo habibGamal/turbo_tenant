@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use App\Models\Area;
-use App\Models\GuestUser;
-use App\Models\Order;
+use App\Plugins\LocationsDelivery\src\Models\Area;
+use App\Plugins\GuestCheckout\src\Models\GuestUser;
+use App\Plugins\OrderManagement\src\Models\Order;
 use App\Models\User;
-use App\Services\GuestUserService;
+use App\Plugins\GuestCheckout\src\Services\GuestUserService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

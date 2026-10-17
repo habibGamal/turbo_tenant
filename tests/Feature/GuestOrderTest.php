@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
-use App\Models\Branch;
-use App\Models\Cart;
-use App\Models\CartItem;
-use App\Models\GuestUser;
-use App\Models\Product;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\CartEngine\src\Models\Cart;
+use App\Plugins\CartEngine\src\Models\CartItem;
+use App\Plugins\GuestCheckout\src\Models\GuestUser;
+use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Models\User;
-use App\Services\CartService;
+use App\Plugins\CartEngine\src\Services\CartService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    \Illuminate\Support\Facades\Auth::logout();
     $this->cartService = app(CartService::class);
 });
 
@@ -76,7 +77,7 @@ it('guest order creates GuestUser record', function () {
 
     expect(GuestUser::count())->toBe(0);
 
-    $this->postJson(route('orders.place'), [
+    $response = $this->postJson(route('orders.place'), [
         'branch_id' => $branch->id,
         'payment_method' => 'cod',
         'type' => 'web_takeaway',
@@ -178,7 +179,7 @@ it('guest with same phone finds existing GuestUser', function () {
     expect(GuestUser::count())->toBe(1);
 
     // Second order with same phone
-    $this->withSession([]); // Clear session to simulate new session
+    session()->flush();
     $this->postJson(route('cart.store'), [
         'product_id' => $product2->id,
         'quantity' => '1',
@@ -298,7 +299,7 @@ it('guest can place card payment order with billing data', function () {
     ];
 
     // Mock the payment gateway to avoid actual API calls
-    $this->mock(App\Interfaces\PaymentGatewayInterface::class, function ($mock) {
+    $this->mock(App\Plugins\PaymentProcessing\src\Contracts\PaymentGatewayInterface::class, function ($mock) {
         $mock->shouldReceive('getGatewayId')->andReturn('paymob');
         $mock->shouldReceive('createPaymentIntention')->andReturn([
             'success' => true,
@@ -351,7 +352,7 @@ it('billing data includes guest information for card payment', function () {
 
     // Capture the billing data passed to payment gateway
     $capturedBillingData = null;
-    $this->mock(App\Interfaces\PaymentGatewayInterface::class, function ($mock) use (&$capturedBillingData) {
+    $this->mock(App\Plugins\PaymentProcessing\src\Contracts\PaymentGatewayInterface::class, function ($mock) use (&$capturedBillingData) {
         $mock->shouldReceive('getGatewayId')->andReturn('paymob');
         $mock->shouldReceive('createPaymentIntention')
             ->andReturnUsing(function ($order, $billingData) use (&$capturedBillingData) {

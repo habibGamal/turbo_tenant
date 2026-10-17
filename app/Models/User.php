@@ -11,7 +11,6 @@ use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use NotificationChannels\Expo\ExpoPushToken;
@@ -88,19 +87,19 @@ final class User extends Authenticatable implements FilamentUser, HasAppAuthenti
         $this->save();
     }
 
-    public function addresses(): HasMany
+    public function addresses(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(Address::class);
+        return $this->hasMany(\App\Plugins\LocationsDelivery\src\Models\Address::class);
     }
 
-    public function notifications(): HasMany
+    public function notifications(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(UserNotification::class);
+        return $this->hasMany(\App\Plugins\PushNotifications\src\Models\UserNotification::class);
     }
 
-    public function unreadNotifications(): HasMany
+    public function unreadNotifications(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(UserNotification::class)->where('read', false);
+        return $this->hasMany(\App\Plugins\PushNotifications\src\Models\UserNotification::class)->where('read', false);
     }
 
     public function routeNotificationForExpo(): ?ExpoPushToken

@@ -1,14 +1,15 @@
 @php
-    use App\Services\SettingService;
+    use App\Plugins\StoreSettings\src\Services\SettingService;
     use App\Enums\SettingKey;
     use Illuminate\Support\Facades\Storage;
 
-    $settingService = app(SettingService::class);
     $isTenant = tenant() !== null;
+    $settingService = ($isTenant && app()->bound(SettingService::class)) ? app(SettingService::class) : null;
 
-    $siteName = $isTenant ? $settingService->get(SettingKey::SITE_NAME, config('app.name', 'Laravel')) : config('app.name', 'Laravel');
-    $siteDescription = $isTenant ? $settingService->get(SettingKey::SITE_DESCRIPTION) : null;
-    $favicon = $isTenant ? $settingService->get(SettingKey::SITE_FAVICON) : null;
+    $siteName = $settingService ? $settingService->get(SettingKey::SITE_NAME, config('app.name', 'Laravel')) : config('app.name', 'Laravel');
+    $siteDescription = $settingService ? $settingService->get(SettingKey::SITE_DESCRIPTION) : null;
+    $favicon = $settingService ? $settingService->get(SettingKey::SITE_FAVICON) : null;
+    $svgLogo = $settingService ? $settingService->get(SettingKey::SVG_LOGO) : null;
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -76,7 +77,7 @@
 <body class="font-sans antialiased">
     <div class="loading-container" id="loading_container">
         <div class="logo-svg">
-            <img id="section-logo-animation" src={{ "/storage/" . app(SettingService::class)->get(SettingKey::SVG_LOGO)}} alt="Logo" class="img-fade-in">
+            <img id="section-logo-animation" src="{{ $svgLogo ? '/storage/' . $svgLogo : '' }}" alt="Logo" class="img-fade-in">
         </div>
     </div>
     @inertia

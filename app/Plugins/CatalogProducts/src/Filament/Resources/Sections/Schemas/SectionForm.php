@@ -52,7 +52,7 @@ final class SectionForm
                     ->schema([
                         Select::make('category_id')
                             ->label('إضافة منتجات من فئة')
-                            ->options(\App\Models\Category::pluck('name', 'id'))
+                            ->options(\App\Plugins\CatalogProducts\src\Models\Category::pluck('name', 'id'))
                             ->searchable()
                             ->live()
                             ->dehydrated(false)
@@ -61,7 +61,7 @@ final class SectionForm
                                     return;
                                 }
 
-                                $categoryProducts = \App\Models\Product::where('category_id', $state)->pluck('id')->toArray();
+                                $categoryProducts = \App\Plugins\CatalogProducts\src\Models\Product::where('category_id', $state)->pluck('id')->toArray();
                                 $existingProducts = $get('products') ?? [];
 
                                 $set('products', array_unique(array_merge($existingProducts, $categoryProducts)));

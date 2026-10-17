@@ -44,6 +44,7 @@ final class MakePluginCommand extends Command
             return self::FAILURE;
         }
 
+        File::makeDirectory("{$targetDir}/src/DTOs", 0755, true);
         File::makeDirectory("{$targetDir}/src/Services", 0755, true);
         File::makeDirectory("{$targetDir}/src/Models", 0755, true);
 
@@ -68,7 +69,26 @@ final class MakePluginCommand extends Command
 
         File::put("{$targetDir}/plugin.json", json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
-        // 2. Service Provider
+        // 2. Config DTO (Pattern 1)
+        $dtoContent = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace App\Plugins\\{$studly}\\src\\DTOs;
+
+final readonly class {$studly}Config
+{
+    public function __construct(
+        public bool \$enabled = true
+        // Add your typed configuration properties here
+    ) {}
+}
+
+PHP;
+        File::put("{$targetDir}/src/DTOs/{$studly}Config.php", $dtoContent);
+
+        // 3. Service Provider (Composition Root)
         $spContent = <<<PHP
 <?php
 
@@ -76,13 +96,24 @@ declare(strict_types=1);
 
 namespace App\Plugins\\{$studly};
 
+use App\Plugins\\{$studly}\\src\\DTOs\\{$studly}Config;
+use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Support\ServiceProvider;
 
 final class {$studly}ServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Bind plugin services
+        // Composition Root: Bind typed Config DTO (Pattern 1)
+        \$this->app->singleton({$studly}Config::class, function (\$app) {
+            \$settings = \$app->make(SettingService::class);
+
+            return new {$studly}Config(
+                enabled: (bool) \$settings->get('{$slug}.enabled', true)
+            );
+        });
+
+        // Bind domain services
     }
 
     public function boot(): void

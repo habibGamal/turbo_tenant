@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\ExtraOptionItem;
-use App\Models\OrderItem;
-use App\Models\OrderItemExtra;
+use App\Plugins\CatalogProducts\src\Models\ExtraOptionItem;
+use App\Plugins\OrderManagement\src\Models\OrderItem;
+use App\Plugins\OrderManagement\src\Models\OrderItemExtra;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 final class OrderItemExtraFactory extends Factory
 {
+    protected $model = \App\Plugins\OrderManagement\src\Models\OrderItemExtra::class;
+
     /**
      * Define the model's default state.
      *

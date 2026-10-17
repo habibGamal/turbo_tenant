@@ -31,7 +31,7 @@ class ExtraOptionItem extends Model
 
     public function posMappings(): HasMany
     {
-        return $this->hasMany(\App\Models\ProductPosMapping::class, 'extra_option_item_id');
+        return $this->hasMany(\App\Plugins\PosIntegration\src\Models\ProductPosMapping::class, 'extra_option_item_id');
     }
 
     protected function casts(): array

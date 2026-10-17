@@ -3,18 +3,18 @@
 declare(strict_types=1);
 
 use App\Enums\PaymentMethod;
-use App\Models\Address;
-use App\Models\Area;
-use App\Models\Branch;
-use App\Models\Governorate;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\OrderItemExtra;
-use App\Models\Product;
-use App\Models\ProductPosMapping;
+use App\Plugins\LocationsDelivery\src\Models\Address;
+use App\Plugins\LocationsDelivery\src\Models\Area;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\LocationsDelivery\src\Models\Governorate;
+use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\OrderManagement\src\Models\OrderItem;
+use App\Plugins\OrderManagement\src\Models\OrderItemExtra;
+use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\PosIntegration\src\Models\ProductPosMapping;
 use App\Models\User;
-use App\Services\OrderPOSService;
-use App\Services\ProductPOSImporterService;
+use App\Plugins\PosIntegration\src\Services\OrderPOSService;
+use App\Plugins\PosIntegration\src\Services\ProductPOSImporterService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 
@@ -399,7 +399,7 @@ describe('placeOrder', function () {
             'governorate_id' => $governorate->id,
         ]);
 
-        $guest = App\Models\GuestUser::factory()->create([
+        $guest = App\Plugins\GuestCheckout\src\Models\GuestUser::factory()->create([
             'name' => 'Mona Guest',
             'phone' => '01099887766',
             'phone_country_code' => '+20',
@@ -539,7 +539,7 @@ describe('placeOrder', function () {
             'branch_id' => $branch->id,
         ]);
 
-        $extraOptionItem = App\Models\ExtraOptionItem::factory()->create();
+        $extraOptionItem = App\Plugins\CatalogProducts\src\Models\ExtraOptionItem::factory()->create();
 
         ProductPosMapping::factory()->create([
             'extra_option_item_id' => $extraOptionItem->id,
@@ -590,9 +590,9 @@ describe('placeOrder', function () {
     });
 
     it('supports pure SOLID dependency injection with mocked interfaces', function () {
-        $apiClient = mock(App\Services\POS\Contracts\POSApiClientInterface::class);
-        $payloadBuilder = mock(App\Services\POS\Contracts\OrderPOSPayloadBuilderInterface::class);
-        $errorHandler = mock(App\Services\POS\Contracts\POSErrorResponseHandlerInterface::class);
+        $apiClient = mock(\App\Plugins\PosIntegration\src\Services\POS\Contracts\POSApiClientInterface::class);
+        $payloadBuilder = mock(\App\Plugins\PosIntegration\src\Services\POS\Contracts\OrderPOSPayloadBuilderInterface::class);
+        $errorHandler = mock(\App\Plugins\PosIntegration\src\Services\POS\Contracts\POSErrorResponseHandlerInterface::class);
 
         $branch = Branch::factory()->create();
         $order = Order::factory()->create([

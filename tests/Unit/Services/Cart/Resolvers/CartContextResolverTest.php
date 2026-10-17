@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Cart\Resolvers;
 
-use App\Models\Cart;
-use App\Models\GuestUser;
+use App\Plugins\CartEngine\src\Models\Cart;
+use App\Plugins\GuestCheckout\src\Models\GuestUser;
 use App\Models\User;
-use App\Services\Cart\Resolvers\CartContextResolver;
+use App\Plugins\CartEngine\src\Services\Resolvers\CartContextResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Session;
 use Tests\TestCase;

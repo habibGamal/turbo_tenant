@@ -7,10 +7,12 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Branch>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Plugins\LocationsDelivery\src\Models\Branch>
  */
 final class BranchFactory extends Factory
 {
+    protected $model = \App\Plugins\LocationsDelivery\src\Models\Branch::class;
+
     /**
      * Define the model's default state.
      *

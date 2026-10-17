@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Filament\Resources\WeightOptions\Pages\CreateWeightOption;
-use App\Filament\Resources\WeightOptions\Pages\EditWeightOption;
-use App\Filament\Resources\WeightOptions\Pages\ListWeightOptions;
+use App\Plugins\CatalogProducts\src\Filament\Resources\WeightOptions\Pages\CreateWeightOption;
+use App\Plugins\CatalogProducts\src\Filament\Resources\WeightOptions\Pages\EditWeightOption;
+use App\Plugins\CatalogProducts\src\Filament\Resources\WeightOptions\Pages\ListWeightOptions;
 use App\Models\User;
-use App\Models\WeightOption;
-use App\Models\WeightOptionValue;
+use App\Plugins\CatalogProducts\src\Models\WeightOption;
+use App\Plugins\CatalogProducts\src\Models\WeightOptionValue;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\Testing\TestAction;

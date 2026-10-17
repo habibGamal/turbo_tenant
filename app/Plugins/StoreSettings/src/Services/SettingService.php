@@ -10,19 +10,25 @@ use Illuminate\Support\Collection;
 
 class SettingService
 {
-    public function get(SettingKey $key, mixed $default = null): mixed
+    public function get(SettingKey|string $key, mixed $default = null): mixed
     {
+        $keyValue = $key instanceof SettingKey ? $key->value : $key;
+
         $setting = Setting::query()
-            ->where('key', $key->value)
+            ->where('key', $keyValue)
             ->first();
 
-        return $setting?->value ?? $default ?? $key->defaultValue();
+        $fallback = $key instanceof SettingKey ? $key->defaultValue() : null;
+
+        return $setting?->value ?? $default ?? $fallback;
     }
 
-    public function set(SettingKey $key, mixed $value): void
+    public function set(SettingKey|string $key, mixed $value): void
     {
+        $keyValue = $key instanceof SettingKey ? $key->value : $key;
+
         Setting::query()->updateOrCreate(
-            ['key' => $key->value],
+            ['key' => $keyValue],
             ['value' => $value]
         );
     }
@@ -30,16 +36,7 @@ class SettingService
     public function setMultiple(array $settings): void
     {
         foreach ($settings as $key => $value) {
-            if ($key instanceof SettingKey) {
-                $settingKey = $key;
-            } else {
-                $settingKey = SettingKey::from($key);
-            }
-
-            Setting::query()->updateOrCreate(
-                ['key' => $settingKey->value],
-                ['value' => $value]
-            );
+            $this->set($key, $value);
         }
     }
 
@@ -59,17 +56,21 @@ class SettingService
         return $settings;
     }
 
-    public function has(SettingKey $key): bool
+    public function has(SettingKey|string $key): bool
     {
+        $keyValue = $key instanceof SettingKey ? $key->value : $key;
+
         return Setting::query()
-            ->where('key', $key->value)
+            ->where('key', $keyValue)
             ->exists();
     }
 
-    public function delete(SettingKey $key): bool
+    public function delete(SettingKey|string $key): bool
     {
+        $keyValue = $key instanceof SettingKey ? $key->value : $key;
+
         return (bool) Setting::query()
-            ->where('key', $key->value)
+            ->where('key', $keyValue)
             ->delete();
     }
 }

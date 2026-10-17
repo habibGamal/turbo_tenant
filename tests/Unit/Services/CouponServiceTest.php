@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\Models\Area;
-use App\Models\Category;
-use App\Models\Coupon;
-use App\Models\Governorate;
-use App\Models\Order;
-use App\Models\Product;
+use App\Plugins\LocationsDelivery\src\Models\Area;
+use App\Plugins\CatalogProducts\src\Models\Category;
+use App\Plugins\CouponsPromotions\src\Models\Coupon;
+use App\Plugins\LocationsDelivery\src\Models\Governorate;
+use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Models\User;
-use App\Services\CouponService;
+use App\Plugins\CouponsPromotions\src\Services\CouponService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

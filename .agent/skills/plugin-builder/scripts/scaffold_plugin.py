@@ -46,6 +46,7 @@ def main():
         sys.exit(1)
 
     os.makedirs(target_dir, exist_ok=True)
+    os.makedirs(os.path.join(target_dir, "src", "DTOs"), exist_ok=True)
     os.makedirs(os.path.join(target_dir, "src", "Services"), exist_ok=True)
     os.makedirs(os.path.join(target_dir, "src", "Models"), exist_ok=True)
 
@@ -72,25 +73,55 @@ def main():
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest_data, f, indent=2)
 
-    # 2. ServiceProvider
+    # 2. Config DTO (Pattern 1)
+    dto_content = f"""<?php
+
+declare(strict_types=1);
+
+namespace App\\Plugins\\{studly}\\src\\DTOs;
+
+final readonly class {studly}Config
+{{
+    public function __construct(
+        public bool $enabled = true
+        // Add your typed configuration properties here
+    ) {{}}
+}}
+"""
+    with open(os.path.join(target_dir, "src", "DTOs", f"{studly}Config.php"), "w", encoding="utf-8") as f:
+        f.write(dto_content)
+
+    # 3. ServiceProvider (Composition Root)
     sp_content = f"""<?php
 
 declare(strict_types=1);
 
 namespace App\\Plugins\\{studly};
 
+use App\\Plugins\\{studly}\\src\\DTOs\\{studly}Config;
+use App\\Plugins\\StoreSettings\\src\\Services\\SettingService;
 use Illuminate\\Support\\ServiceProvider;
 
 final class {studly}ServiceProvider extends ServiceProvider
 {{
     public function register(): void
     {{
-        // Bind plugin services
+        // Composition Root: Bind typed Config DTO (Pattern 1)
+        $this->app->singleton({studly}Config::class, function ($app) {{
+            $settings = $app->make(SettingService::class);
+
+            return new {studly}Config(
+                enabled: (bool) $settings->get('{slug}.enabled', true)
+            );
+        }});
+
+        // Bind domain services
     }}
 
     public function boot(): void
     {{
-        // Register events, routes, or pipeline pipes
+        // Register global routes or dynamic relationships (resolveRelationUsing)
+        // ❌ NEVER register pipeline pipes here! Register pipes in {studly}Plugin::bootForTenant()
     }}
 }}
 """
@@ -111,7 +142,8 @@ final class {studly}Plugin extends AbstractTenantPlugin
 {{
     public function bootForTenant(Tenant $tenant): void
     {{
-        // Runtime tenant initialization
+        // Runtime tenant initialization:
+        // Register pipeline pipes (OrderPipelineRegistry), tenant middleware, or tenant hooks here
     }}
 
     public function onActivate(Tenant $tenant): void

@@ -4,28 +4,29 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\DTOs\Order\PlaceOrderData;
-use App\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
+use App\Plugins\PosIntegration\src\Enums\OrderPosStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\SettingKey;
-use App\Interfaces\PaymentGatewayInterface;
-use App\Models\Address;
-use App\Models\Area;
-use App\Models\Branch;
-use App\Models\Coupon;
-use App\Models\ExtraOption;
-use App\Models\ExtraOptionItem;
-use App\Models\Governorate;
-use App\Models\GuestUser;
-use App\Models\Order;
-use App\Models\Product;
+use App\Plugins\PaymentProcessing\src\Contracts\PaymentGatewayInterface;
+use App\Plugins\LocationsDelivery\src\Models\Address;
+use App\Plugins\LocationsDelivery\src\Models\Area;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\CouponsPromotions\src\Models\Coupon;
+use App\Plugins\CatalogProducts\src\Models\ExtraOption;
+use App\Plugins\CatalogProducts\src\Models\ExtraOptionItem;
+use App\Plugins\LocationsDelivery\src\Models\Governorate;
+use App\Plugins\GuestCheckout\src\Models\GuestUser;
+use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Models\User;
-use App\Services\CartService;
-use App\Services\Order\Contracts\PlaceOrderServiceInterface;
-use App\Services\Payment\Contracts\PaymentCallbackServiceInterface;
-use App\Services\Payment\Contracts\PaymentWebhookServiceInterface;
-use App\Services\SettingService;
+use App\Plugins\OrderManagement\src\Pipelines\OrderPipelineRegistry;
+use App\Plugins\CartEngine\src\Services\CartService;
+use App\Plugins\OrderManagement\src\Services\Contracts\PlaceOrderServiceInterface;
+use App\Plugins\PaymentProcessing\src\Services\Contracts\PaymentCallbackServiceInterface;
+use App\Plugins\PaymentProcessing\src\Services\Contracts\PaymentWebhookServiceInterface;
+use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Session;
@@ -586,5 +587,71 @@ final class PlaceOrderServiceTest extends TestCase
         $this->assertSame('TXN-999', $order->fresh()->transaction_id);
         $this->assertSame('completed', $order->fresh()->payment_status->value ?? $order->fresh()->payment_status);
         $this->assertSame(OrderPosStatus::READY, $order->fresh()->pos_status);
+    }
+
+    public function test_pipeline_registry_deduplicates_pipes(): void
+    {
+        $registry = new OrderPipelineRegistry();
+        $registry->registerValidationPipe(\App\Plugins\OrderManagement\src\Pipelines\Pipes\Validation\ValidateCartNotEmptyPipe::class, 100);
+        $registry->registerValidationPipe(\App\Plugins\OrderManagement\src\Pipelines\Pipes\Validation\ValidateCartNotEmptyPipe::class, 100);
+
+        $this->assertCount(1, $registry->getValidationPipes());
+
+        $registry->registerPricingPipe(\App\Plugins\OrderManagement\src\Pipelines\Pipes\Pricing\CalculateSubtotalPipe::class, 100);
+        $registry->registerPricingPipe(\App\Plugins\OrderManagement\src\Pipelines\Pipes\Pricing\CalculateSubtotalPipe::class, 100);
+
+        $this->assertCount(1, $registry->getPricingPipes());
+    }
+
+    public function test_guest_checkout_validates_coupon_first_order_only(): void
+    {
+        $governorate = Governorate::factory()->create();
+        $area = Area::factory()->create([
+            'governorate_id' => $governorate->id,
+            'shipping_cost' => 10.00,
+        ]);
+
+        $guest = GuestUser::factory()->create([
+            'name' => 'Returning Guest',
+            'phone' => '01099998888',
+            'area_id' => $area->id,
+        ]);
+
+        // Prior completed order for this guest
+        Order::factory()->create([
+            'guest_user_id' => $guest->id,
+            'status' => 'completed',
+        ]);
+
+        $product = Product::factory()->create([
+            'base_price' => 50.00,
+            'is_active' => true,
+        ]);
+
+        $this->cartService->addItem(null, $product->id, null, '1');
+
+        $coupon = Coupon::factory()->create([
+            'code' => 'FIRSTORDER',
+            'is_active' => true,
+            'type' => 'percentage',
+            'value' => 10,
+            'conditions' => [
+                'usage_restrictions' => [
+                    'first_order_only' => true,
+                ],
+            ],
+        ]);
+
+        $data = new PlaceOrderData(
+            user: $guest,
+            branchId: $this->branch->id,
+            paymentMethod: PaymentMethod::COD,
+            couponId: $coupon->id
+        );
+
+        $result = $this->placeOrderService->placeOrder($data);
+
+        $this->assertFalse($result->isSuccessful());
+        $this->assertStringContainsString('not available for your account', (string) $result->errorMessage);
     }
 }

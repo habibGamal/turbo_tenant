@@ -8,10 +8,12 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<\App\Models\UserNotification>
+ * @extends Factory<\App\Plugins\PushNotifications\src\Models\UserNotification>
  */
 final class UserNotificationFactory extends Factory
 {
+    protected $model = \App\Plugins\PushNotifications\src\Models\UserNotification::class;
+
     /**
      * Define the model's default state.
      *
