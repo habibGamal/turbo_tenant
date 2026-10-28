@@ -15,7 +15,10 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
@@ -25,210 +28,185 @@ final class CouponForm
     {
         return $schema
             ->components([
-                Section::make('معلومات أساسية')
-                    ->schema([
-                        TextInput::make('code')
-                            ->label('الرمز')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(255)
-                            ->columnSpan(1),
-                        TextInput::make('name')
-                            ->label('الاسم')
-                            ->maxLength(255)
-                            ->columnSpan(1),
-                        Textarea::make('description')
-                            ->label('الوصف')
-                            ->rows(2)
-                            ->maxLength(65535)
-                            ->columnSpanFull(),
-                    ])
-                    ->columns(2),
+                Tabs::make('بيانات الكوبون')
+                    ->tabs([
+                        Tab::make('الخصم والرمز')
+                            ->icon('heroicon-o-ticket')
+                            ->schema([
+                                Grid::make(2)->schema([
+                                    TextInput::make('code')
+                                        ->label('رمز الكوبون (البروموكود)')
+                                        ->required()
+                                        ->unique(ignoreRecord: true)
+                                        ->maxLength(255),
+                                    TextInput::make('name')
+                                        ->label('اسم الحملة الترويجية')
+                                        ->maxLength(255),
+                                    Select::make('type')
+                                        ->label('نوع الخصم')
+                                        ->required()
+                                        ->options([
+                                            'percentage' => 'نسبة مئوية (%)',
+                                            'fixed' => 'مبلغ ثابت',
+                                        ])
+                                        ->default('percentage')
+                                        ->live(),
+                                    TextInput::make('value')
+                                        ->label('قيمة الخصم')
+                                        ->required()
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->suffix(fn (Get $get) => $get('type') === 'percentage' ? '%' : 'EGP'),
+                                    DateTimePicker::make('expiry_date')
+                                        ->label('تاريخ ووقت الانتهاء')
+                                        ->required()
+                                        ->minDate(now()),
+                                    TextInput::make('max_usage')
+                                        ->label('الحد الأقصى لمرات الاستخدام')
+                                        ->numeric()
+                                        ->minValue(1)
+                                        ->helperText('اتركه فارغاً للاستخدام غير المحدود'),
+                                    Toggle::make('is_active')
+                                        ->label('كوبون نشط')
+                                        ->default(true),
+                                ]),
+                                Textarea::make('description')
+                                    ->label('وصف الكوبون وشروطه للعملاء')
+                                    ->rows(2)
+                                    ->maxLength(65535)
+                                    ->columnSpanFull(),
+                                Section::make('إحصائيات الاستخدام')
+                                    ->schema([
+                                        TextInput::make('usage_count')
+                                            ->label('عدد مرات الاستخدام')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->disabled()
+                                            ->columnSpan(1),
+                                        TextInput::make('total_consumed')
+                                            ->label('إجمالي الخصم الممنوح')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->disabled()
+                                            ->suffix('EGP')
+                                            ->columnSpan(1),
+                                    ])
+                                    ->columns(2)
+                                    ->collapsible()
+                                    ->collapsed(),
+                            ]),
 
-                Section::make('إعدادات الخصم')
-                    ->schema([
-                        Select::make('type')
-                            ->label('النوع')
-                            ->required()
-                            ->options([
-                                'percentage' => 'نسبة مئوية',
-                                'fixed' => 'مبلغ ثابت',
-                            ])
-                            ->default('percentage')
-                            ->live()
-                            ->columnSpan(1),
-                        TextInput::make('value')
-                            ->label('القيمة')
-                            ->required()
-                            ->numeric()
-                            ->minValue(0)
-                            ->suffix(fn (Get $get) => $get('type') === 'percentage' ? '%' : 'EGP')
-                            ->columnSpan(1),
-                        DateTimePicker::make('expiry_date')
-                            ->label('تاريخ الانتهاء')
-                            ->required()
-                            ->minDate(now())
-                            ->columnSpan(1),
-                        Toggle::make('is_active')
-                            ->label('نشط')
-                            ->default(true)
-                            ->columnSpan(1),
-                        TextInput::make('max_usage')
-                            ->numeric()
-                            ->minValue(1)
-                            ->label('عدد مرات الاستخدام الأقصى')
-                            ->hint('اتركه فارغاً للاستخدام غير المحدود')
-                            ->columnSpan(1),
-                    ])
-                    ->columns(2),
+                        Tab::make('شروط الطلب والمنتجات')
+                            ->icon('heroicon-o-shopping-bag')
+                            ->schema([
+                                Grid::make(2)->schema([
+                                    TextInput::make('conditions.min_order_total')
+                                        ->label('الحد الأدنى لقيمة الطلب')
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->suffix('EGP')
+                                        ->helperText('أقل مبلغ سلة مطلوب لتفعيل الكوبون'),
+                                    TextInput::make('conditions.max_order_total')
+                                        ->label('الحد الأقصى لقيمة الطلب')
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->suffix('EGP'),
+                                ]),
+                                Select::make('conditions.applicable_to.type')
+                                    ->label('نطاق تطبيق الكوبون')
+                                    ->options([
+                                        'all' => 'جميع منتجات المتجر',
+                                        'products' => 'منتجات محددة فقط',
+                                        'categories' => 'فئات معينة فقط',
+                                    ])
+                                    ->default('all')
+                                    ->live()
+                                    ->required(),
+                                Select::make('conditions.applicable_to.product_ids')
+                                    ->label('اختر المنتجات المشمولة')
+                                    ->multiple()
+                                    ->searchable()
+                                    ->options(Product::where('is_active', true)->pluck('name', 'id'))
+                                    ->visible(fn (Get $get) => $get('conditions.applicable_to.type') === 'products'),
+                                Select::make('conditions.applicable_to.category_ids')
+                                    ->label('اختر الفئات المشمولة')
+                                    ->multiple()
+                                    ->searchable()
+                                    ->options(Category::where('is_active', true)->pluck('name', 'id'))
+                                    ->visible(fn (Get $get) => $get('conditions.applicable_to.type') === 'categories'),
+                            ]),
 
-                Section::make('قيود قيمة الطلب')
-                    ->schema([
-                        TextInput::make('conditions.min_order_total')
-                            ->numeric()
-                            ->minValue(0)
-                            ->label('إجمالي الطلب الأدنى')
-                            ->suffix('EGP')
-                            ->hint('اتركه فارغاً بدون حد أدنى')
-                            ->columnSpan(1),
-                        TextInput::make('conditions.max_order_total')
-                            ->numeric()
-                            ->minValue(0)
-                            ->label('إجمالي الطلب الأقصى')
-                            ->suffix('EGP')
-                            ->hint('اتركه فارغاً بدون حد أقصى')
-                            ->columnSpan(1),
-                    ])
-                    ->columns(2)
-                    ->collapsible(),
+                        Tab::make('القيود والشحن والتوقيت')
+                            ->icon('heroicon-o-clock')
+                            ->schema([
+                                Section::make('قيود الشحن')->schema([
+                                    Toggle::make('conditions.shipping.free_shipping')
+                                        ->label('يمنح شحن مجاني')
+                                        ->live(),
+                                    TextInput::make('conditions.shipping.free_shipping_threshold')
+                                        ->label('الحد الأدنى للشحن المجاني')
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->suffix('EGP')
+                                        ->visible(fn (Get $get) => (bool) $get('conditions.shipping.free_shipping')),
+                                    Select::make('conditions.shipping.applicable_governorates')
+                                        ->label('المحافظات القابلة للتطبيق')
+                                        ->multiple()
+                                        ->searchable()
+                                        ->options(Governorate::where('is_active', true)->pluck('name', 'id'))
+                                        ->hint('اتركه فارغاً لجميع المحافظات')
+                                        ->columnSpanFull(),
+                                    Select::make('conditions.shipping.applicable_areas')
+                                        ->label('المناطق القابلة للتطبيق')
+                                        ->multiple()
+                                        ->searchable()
+                                        ->options(Area::where('is_active', true)->pluck('name', 'id'))
+                                        ->hint('اتركه فارغاً لجميع المناطق')
+                                        ->columnSpanFull(),
+                                ])->collapsible(),
 
-                Section::make('المنتجات والفئات القابلة للتطبيق')
-                    ->schema([
-                        Select::make('conditions.applicable_to.type')
-                            ->label('تطبيق على')
-                            ->options([
-                                'all' => 'جميع المنتجات',
-                                'products' => 'منتجات محددة',
-                                'categories' => 'فئات محددة',
-                            ])
-                            ->default('all')
-                            ->live()
-                            ->required(),
-                        Select::make('conditions.applicable_to.product_ids')
-                            ->label('اختر المنتجات')
-                            ->multiple()
-                            ->searchable()
-                            ->options(Product::where('is_active', true)->pluck('name', 'id'))
-                            ->visible(fn (Get $get) => $get('conditions.applicable_to.type') === 'products'),
-                        Select::make('conditions.applicable_to.category_ids')
-                            ->label('اختر الفئات')
-                            ->multiple()
-                            ->searchable()
-                            ->options(Category::where('is_active', true)->pluck('name', 'id'))
-                            ->visible(fn (Get $get) => $get('conditions.applicable_to.type') === 'categories'),
-                    ])
-                    ->collapsible(),
+                                Section::make('قيود الاستخدام للعملاء')->schema([
+                                    Toggle::make('conditions.usage_restrictions.first_order_only')
+                                        ->label('صالح للطلب الأول للعميل فقط'),
+                                    Toggle::make('conditions.usage_restrictions.user_specific')
+                                        ->label('لمستخدمين محددين فقط')
+                                        ->live(),
+                                    Select::make('conditions.usage_restrictions.user_ids')
+                                        ->label('اختر المستخدمين')
+                                        ->multiple()
+                                        ->searchable()
+                                        ->options(User::all()->pluck('name', 'id'))
+                                        ->visible(fn (Get $get) => (bool) $get('conditions.usage_restrictions.user_specific'))
+                                        ->columnSpanFull(),
+                                ])->collapsible(),
 
-                Section::make('شروط الشحن')
-                    ->schema([
-                        Toggle::make('conditions.shipping.free_shipping')
-                            ->label('تفعيل الشحن المجاني')
-                            ->live()
-                            ->columnSpan(1),
-                        TextInput::make('conditions.shipping.free_shipping_threshold')
-                            ->label('حد الشحن المجاني')
-                            ->numeric()
-                            ->minValue(0)
-                            ->suffix('EGP')
-                            ->hint('إجمالي الطلب المطلوب للشحن المجاني')
-                            ->visible(fn (Get $get) => $get('conditions.shipping.free_shipping'))
-                            ->columnSpan(1),
-                        Select::make('conditions.shipping.applicable_governorates')
-                            ->label('المحافظات القابلة للتطبيق')
-                            ->multiple()
-                            ->searchable()
-                            ->options(Governorate::where('is_active', true)->pluck('name', 'id'))
-                            ->hint('اتركه فارغاً لجميع المحافظات')
-                            ->columnSpanFull(),
-                        Select::make('conditions.shipping.applicable_areas')
-                            ->label('المناطق القابلة للتطبيق')
-                            ->multiple()
-                            ->searchable()
-                            ->options(Area::where('is_active', true)->pluck('name', 'id'))
-                            ->hint('اتركه فارغاً لجميع المناطق')
-                            ->columnSpanFull(),
+                                Section::make('قيود الوقت')->schema([
+                                    Select::make('conditions.valid_days')
+                                        ->label('أيام الأسبوع الصالحة')
+                                        ->multiple()
+                                        ->options([
+                                            0 => 'الأحد',
+                                            1 => 'الاثنين',
+                                            2 => 'الثلاثاء',
+                                            3 => 'الأربعاء',
+                                            4 => 'الخميس',
+                                            5 => 'الجمعة',
+                                            6 => 'السبت',
+                                        ])
+                                        ->hint('اتركه فارغاً لجميع الأيام')
+                                        ->columnSpanFull(),
+                                    Grid::make(2)->schema([
+                                        TimePicker::make('conditions.valid_hours.start')
+                                            ->label('صالح من الساعة')
+                                            ->seconds(false),
+                                        TimePicker::make('conditions.valid_hours.end')
+                                            ->label('صالح حتى الساعة')
+                                            ->seconds(false),
+                                    ]),
+                                ])->collapsible(),
+                            ]),
                     ])
-                    ->columns(2)
-                    ->collapsible(),
-
-                Section::make('قيود المستخدمين')
-                    ->schema([
-                        Toggle::make('conditions.usage_restrictions.first_order_only')
-                            ->label('للطلب الأول فقط')
-                            ->hint('الكوبون صالح فقط للمستخدمين الذين لم يطلبوا من قبل')
-                            ->columnSpan(1),
-                        Toggle::make('conditions.usage_restrictions.user_specific')
-                            ->label('لمستخدمين محددين فقط')
-                            ->live()
-                            ->columnSpan(1),
-                        Select::make('conditions.usage_restrictions.user_ids')
-                            ->label('اختر المستخدمين')
-                            ->multiple()
-                            ->searchable()
-                            ->options(User::all()->pluck('name', 'id'))
-                            ->visible(fn (Get $get) => $get('conditions.usage_restrictions.user_specific'))
-                            ->columnSpanFull(),
-                    ])
-                    ->columns(2)
-                    ->collapsible(),
-
-                Section::make('قيود الوقت')
-                    ->schema([
-                        Select::make('conditions.valid_days')
-                            ->label('أيام الأسبوع الصالحة')
-                            ->multiple()
-                            ->options([
-                                0 => 'الأحد',
-                                1 => 'الاثنين',
-                                2 => 'الثلاثاء',
-                                3 => 'الأربعاء',
-                                4 => 'الخميس',
-                                5 => 'الجمعة',
-                                6 => 'السبت',
-                            ])
-                            ->hint('اتركه فارغاً لجميع الأيام')
-                            ->columnSpanFull(),
-                        TimePicker::make('conditions.valid_hours.start')
-                            ->label('صالح من الساعة')
-                            ->seconds(false)
-                            ->columnSpan(1),
-                        TimePicker::make('conditions.valid_hours.end')
-                            ->label('صالح حتى الساعة')
-                            ->seconds(false)
-                            ->columnSpan(1),
-                    ])
-                    ->columns(2)
-                    ->collapsible(),
-
-                Section::make('إحصائيات الاستخدام')
-                    ->schema([
-                        TextInput::make('usage_count')
-                            ->label('عدد مرات الاستخدام')
-                            ->numeric()
-                            ->default(0)
-                            ->disabled()
-                            ->columnSpan(1),
-                        TextInput::make('total_consumed')
-                            ->label('إجمالي الخصم الممنوح')
-                            ->numeric()
-                            ->default(0)
-                            ->disabled()
-                            ->suffix('EGP')
-                            ->columnSpan(1),
-                    ])
-                    ->columns(2)
-                    ->collapsible()
-                    ->collapsed(),
+                    ->columnSpanFull(),
             ]);
     }
 }

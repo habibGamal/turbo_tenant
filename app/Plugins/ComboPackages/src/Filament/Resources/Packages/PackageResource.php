@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 final class PackageResource extends Resource
 {
@@ -24,13 +25,15 @@ final class PackageResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArchiveBox;
 
-    protected static ?string $navigationLabel = 'الباقات';
+    protected static string|UnitEnum|null $navigationGroup = 'العروض والخصومات';
+
+    protected static ?string $navigationLabel = 'باقات التوفير';
 
     protected static ?string $modelLabel = 'باقة';
 
-    protected static ?string $pluralModelLabel = 'الباقات';
+    protected static ?string $pluralModelLabel = 'باقات التوفير';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {

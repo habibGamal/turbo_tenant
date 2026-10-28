@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Enums\BulkNotificationStatus;
+use App\Plugins\PushNotifications\src\Enums\BulkNotificationStatus;
 use App\Plugins\PushNotifications\src\Models\BulkNotification;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 final class BulkNotificationFactory extends Factory
 {
-    protected $model = \App\Plugins\PushNotifications\src\Models\BulkNotification::class;
+    protected $model = BulkNotification::class;
 
     /**
      * Define the model's default state.

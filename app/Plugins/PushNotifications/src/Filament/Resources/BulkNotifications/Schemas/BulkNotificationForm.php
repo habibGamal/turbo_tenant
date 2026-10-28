@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Plugins\PushNotifications\src\Filament\Resources\BulkNotifications\Schemas;
 
 use App\Models\User;
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -84,18 +84,22 @@ final class BulkNotificationForm
                                     $set('target_user_ids', null);
                                 }
                             }),
-                        CheckboxList::make('target_user_ids')
-                            ->label('اختر المستخدمين')
-                            ->visible(fn ($get) => ! $get('send_to_all'))
-                            ->options(
-                                User::whereNotNull('expo_token')
-                                    ->pluck('name', 'id')
-                                    ->toArray()
-                            )
+                        Select::make('target_user_ids')
+                            ->label('اختر المستخدمين المستهدفين')
+                            ->multiple()
                             ->searchable()
-                            ->bulkToggleable()
-                            ->columns(2)
-                            ->required(fn ($get) => ! $get('send_to_all')),
+                            ->visible(fn ($get) => ! $get('send_to_all'))
+                            ->required(fn ($get) => ! $get('send_to_all'))
+                            ->getSearchResultsUsing(fn (string $search) => User::whereNotNull('expo_token')
+                                ->where(function ($q) use ($search) {
+                                    $q->where('name', 'like', "%{$search}%")
+                                        ->orWhere('email', 'like', "%{$search}%");
+                                })
+                                ->limit(30)
+                                ->pluck('name', 'id')
+                            )
+                            ->getOptionLabelsUsing(fn (array $values) => User::whereIn('id', $values)->pluck('name', 'id')
+                            ),
                     ])
                     ->columnSpanFull(),
             ]);

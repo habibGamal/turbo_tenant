@@ -16,6 +16,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 final class BulkNotificationResource extends Resource
 {
@@ -23,13 +24,17 @@ final class BulkNotificationResource extends Resource
 
     protected static ?string $model = BulkNotification::class;
 
+    protected static string|UnitEnum|null $navigationGroup = 'المحتوى والتسويق';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBell;
 
-    protected static ?string $navigationLabel = 'إشعارات جماعية';
+    protected static ?string $navigationLabel = 'إشعارات Push';
 
     protected static ?string $modelLabel = 'إشعار جماعي';
 
-    protected static ?string $pluralModelLabel = 'إشعارات جماعية';
+    protected static ?string $pluralModelLabel = 'إشعارات Push';
+
+    protected static ?int $navigationSort = 3;
 
     public static function form(Schema $schema): Schema
     {

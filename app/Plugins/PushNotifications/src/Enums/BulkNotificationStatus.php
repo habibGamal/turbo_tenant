@@ -4,13 +4,26 @@ declare(strict_types=1);
 
 namespace App\Plugins\PushNotifications\src\Enums;
 
-enum BulkNotificationStatus: string
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
+
+enum BulkNotificationStatus: string implements HasColor, HasLabel
 {
     case DRAFT = 'draft';
     case SCHEDULED = 'scheduled';
     case SENDING = 'sending';
     case SENT = 'sent';
     case FAILED = 'failed';
+
+    public function getLabel(): ?string
+    {
+        return $this->label();
+    }
+
+    public function getColor(): string|array|null
+    {
+        return $this->color();
+    }
 
     public function label(): string
     {

@@ -17,6 +17,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 final class PageResource extends Resource
 {
@@ -24,13 +25,17 @@ final class PageResource extends Resource
 
     protected static ?string $model = Page::class;
 
+    protected static string|UnitEnum|null $navigationGroup = 'المحتوى والتسويق';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
-    protected static ?string $navigationLabel = 'الصفحات';
+    protected static ?string $navigationLabel = 'صفحات CMS';
 
     protected static ?string $modelLabel = 'صفحة';
 
-    protected static ?string $pluralModelLabel = 'الصفحات';
+    protected static ?string $pluralModelLabel = 'صفحات CMS';
+
+    protected static ?int $navigationSort = 2;
 
     protected static ?string $recordTitleAttribute = 'title';
 

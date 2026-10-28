@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 final class CouponResource extends Resource
 {
@@ -24,11 +25,22 @@ final class CouponResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTicket;
 
+    protected static string|UnitEnum|null $navigationGroup = 'العروض والخصومات';
+
+    protected static ?int $navigationSort = 1;
+
     protected static ?string $navigationLabel = 'الكوبونات';
 
     protected static ?string $modelLabel = 'كوبون';
 
     protected static ?string $pluralModelLabel = 'الكوبونات';
+
+    protected static ?string $recordTitleAttribute = 'code';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['code', 'name'];
+    }
 
     public static function form(Schema $schema): Schema
     {
