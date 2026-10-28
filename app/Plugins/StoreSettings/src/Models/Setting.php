@@ -14,10 +14,17 @@ final class Setting extends Model
         'value',
     ];
 
-    protected function casts(): array
+    public function getKeyAttribute(mixed $value): SettingKey|string|null
     {
-        return [
-            'key' => SettingKey::class,
-        ];
+        if ($value === null) {
+            return null;
+        }
+
+        return SettingKey::tryFrom((string) $value) ?? (string) $value;
+    }
+
+    public function setKeyAttribute(mixed $value): void
+    {
+        $this->attributes['key'] = $value instanceof SettingKey ? $value->value : (string) $value;
     }
 }

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\PosIntegration\src\Services\POS\POSApiClient;
+use App\Support\Network\InvalidEndpointException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 beforeEach(function () {
     $this->client = new POSApiClient();
@@ -57,6 +59,19 @@ describe('POSApiClient - getShiftId', function () {
 
         expect(fn () => $this->client->getShiftId($branch))
             ->toThrow(Exception::class, 'حدث خطاء اثناء الاستعلام عن رقم الوردية');
+    });
+
+    it('rejects private loopback host before sending request', function () {
+        $branch = Branch::factory()->make([
+            'link' => 'http://127.0.0.1:8000',
+        ]);
+
+        Http::fake();
+
+        expect(fn () => $this->client->getShiftId($branch))
+            ->toThrow(InvalidEndpointException::class);
+
+        Http::assertNothingSent();
     });
 });
 
@@ -151,5 +166,48 @@ describe('POSApiClient - sendOrder', function () {
         expect($result['successful'])->toBeFalse()
             ->and($result['status'])->toBe(400)
             ->and($result['data']['notFoundProducts'])->toBe(['REF-999']);
+    });
+
+    it('no longer logs the payload or response body and only logs metadata', function () {
+        Log::spy();
+
+        $branch = Branch::factory()->make([
+            'id' => 99,
+            'link' => 'https://pos.example.com',
+        ]);
+
+        $payload = [
+            'sensitive_credit_card' => '4111-2222-3333-4444',
+            'order' => ['orderNumber' => 'WEB-9999'],
+        ];
+
+        Http::fake([
+            'https://pos.example.com/api/web-orders/place-order' => Http::response([
+                'secret_pos_key' => 'very_confidential',
+                'message' => 'Accepted',
+            ], 200),
+        ]);
+
+        $this->client->sendOrder($branch, $payload);
+
+        Log::shouldHaveReceived('info')->withArgs(function (string $message, array $context): bool {
+            if ($message !== 'POS request completed') {
+                return false;
+            }
+
+            // Assert metadata fields exist
+            expect($context)->toHaveKeys(['branch_id', 'endpoint', 'order_number', 'status', 'duration_ms'])
+                ->and($context['branch_id'])->toBe(99)
+                ->and($context['endpoint'])->toBe('/api/web-orders/place-order')
+                ->and($context['order_number'])->toBe('WEB-9999')
+                ->and($context['status'])->toBe(200);
+
+            // Assert sensitive content is omitted
+            expect($context)->not->toHaveKey('payload')
+                ->and($context)->not->toHaveKey('response')
+                ->and($context)->not->toHaveKey('url');
+
+            return true;
+        });
     });
 });

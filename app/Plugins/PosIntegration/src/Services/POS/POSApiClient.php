@@ -6,13 +6,21 @@ namespace App\Plugins\PosIntegration\src\Services\POS;
 
 use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\POSApiClientInterface;
+use App\Support\Network\PublicEndpointGuard;
 use Exception;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 final class POSApiClient implements POSApiClientInterface
 {
     private const TIMEOUT_SECONDS = 30;
+
+    private const CONNECT_TIMEOUT_SECONDS = 3;
+
+    public function __construct(
+        private readonly PublicEndpointGuard $endpointGuard = new PublicEndpointGuard()
+    ) {}
 
     /**
      * Get the current shift ID from the POS system.
@@ -21,33 +29,19 @@ final class POSApiClient implements POSApiClientInterface
      */
     public function getShiftId(Branch $branch): int
     {
-        $url = $this->getBranchUrl($branch, '/api/get-shift-id');
+        $response = $this->request($branch, 'get', '/api/get-shift-id');
 
-        try {
-            $response = Http::withOptions([
-                'verify' => false,
-            ])->timeout(self::TIMEOUT_SECONDS)->get($url);
-
-            if (! $response->successful()) {
-                throw new Exception('حدث خطاء اثناء الاستعلام عن رقم الوردية');
-            }
-
-            $data = $response->json();
-
-            if (! is_array($data) || empty($data['shift_id'])) {
-                throw new Exception('حدث خطاء اثناء الاستعلام عن رقم الوردية');
-            }
-
-            return (int) $data['shift_id'];
-        } catch (Exception $e) {
-            Log::error('Failed to get shift ID from POS', [
-                'branch_id' => $branch->id,
-                'branch_name' => $branch->name,
-                'error' => $e->getMessage(),
-            ]);
-
+        if (! $response->successful()) {
             throw new Exception('حدث خطاء اثناء الاستعلام عن رقم الوردية');
         }
+
+        $data = $response->json();
+
+        if (! is_array($data) || ! isset($data['shift_id']) || $data['shift_id'] === null) {
+            throw new Exception('حدث خطاء اثناء الاستعلام عن رقم الوردية');
+        }
+
+        return (int) $data['shift_id'];
     }
 
     /**
@@ -57,33 +51,19 @@ final class POSApiClient implements POSApiClientInterface
      */
     public function canAcceptOrder(Branch $branch): bool
     {
-        $url = $this->getBranchUrl($branch, '/api/can-accept-order');
+        $response = $this->request($branch, 'get', '/api/can-accept-order');
 
-        try {
-            $response = Http::withOptions([
-                'verify' => false,
-            ])->timeout(self::TIMEOUT_SECONDS)->get($url);
-
-            if (! $response->successful()) {
-                throw new Exception('حدث خطاء اثناء الاستعلام عن قبول الطلبات');
-            }
-
-            $data = $response->json();
-
-            if (! is_array($data)) {
-                return false;
-            }
-
-            return (bool) ($data['can_accept'] ?? false);
-        } catch (Exception $e) {
-            Log::error('Failed to check if branch can accept orders', [
-                'branch_id' => $branch->id,
-                'branch_name' => $branch->name,
-                'error' => $e->getMessage(),
-            ]);
-
+        if (! $response->successful()) {
             throw new Exception('حدث خطاء اثناء الاستعلام عن قبول الطلبات');
         }
+
+        $data = $response->json();
+
+        if (! is_array($data)) {
+            return false;
+        }
+
+        return (bool) ($data['can_accept'] ?? false);
     }
 
     /**
@@ -96,35 +76,77 @@ final class POSApiClient implements POSApiClientInterface
      */
     public function sendOrder(Branch $branch, array $payload): array
     {
-        $url = $this->getBranchUrl($branch, '/api/web-orders/place-order');
+        $response = $this->request($branch, 'post', '/api/web-orders/place-order', $payload);
+
+        $data = $response->json() ?? [];
+
+        return [
+            'successful' => $response->successful(),
+            'status' => $response->status(),
+            'data' => is_array($data) ? $data : [],
+        ];
+    }
+
+    /**
+     * Execute HTTP request against branch POS endpoint with guard, options, timing, and logging.
+     *
+     * @param  array<string, mixed>  $payload
+     *
+     * @throws Exception
+     */
+    private function request(Branch $branch, string $method, string $endpoint, array $payload = []): Response
+    {
+        $url = $this->getBranchUrl($branch, $endpoint);
+        $this->endpointGuard->guard($url);
+
+        $orderNumber = $this->extractOrderNumber($payload);
+        $startTime = microtime(true);
 
         try {
-            Log::info('Sending order to POS', ['url' => $url, 'payload' => $payload]);
-
-            $response = Http::withOptions([
+            $pendingRequest = Http::withOptions([
                 'verify' => false,
-            ])->withHeaders([
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-            ])->timeout(self::TIMEOUT_SECONDS)->post($url, $payload);
+                'allow_redirects' => false,
+                'connect_timeout' => self::CONNECT_TIMEOUT_SECONDS,
+            ])->timeout(self::TIMEOUT_SECONDS);
 
-            $data = $response->json() ?? [];
+            $response = mb_strtolower($method) === 'post'
+                ? $pendingRequest->withHeaders([
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ])->post($url, $payload)
+                : $pendingRequest->get($url);
 
-            Log::info('POS response received', ['status' => $response->status(), 'response' => $data]);
+            $durationMs = (int) round((microtime(true) - $startTime) * 1000);
 
-            return [
-                'successful' => $response->successful(),
-                'status' => $response->status(),
-                'data' => is_array($data) ? $data : [],
-            ];
-        } catch (Exception $e) {
-            Log::error('Failed to communicate with POS endpoint', [
-                'url' => $url,
+            $logContext = [
                 'branch_id' => $branch->id,
-                'error' => $e->getMessage(),
-            ]);
+                'endpoint' => $endpoint,
+                'status' => $response->status(),
+                'duration_ms' => $durationMs,
+            ];
+            if ($orderNumber !== null) {
+                $logContext['order_number'] = $orderNumber;
+            }
 
-            throw new Exception('لا يمكن التواصل مع الفرع في الوقت الحالي');
+            Log::info('POS request completed', $logContext);
+
+            return $response;
+        } catch (Exception $e) {
+            $durationMs = (int) round((microtime(true) - $startTime) * 1000);
+
+            $logContext = [
+                'branch_id' => $branch->id,
+                'endpoint' => $endpoint,
+                'status' => null,
+                'duration_ms' => $durationMs,
+            ];
+            if ($orderNumber !== null) {
+                $logContext['order_number'] = $orderNumber;
+            }
+
+            Log::error('POS request failed', $logContext);
+
+            throw $e;
         }
     }
 
@@ -136,5 +158,27 @@ final class POSApiClient implements POSApiClientInterface
         $baseUrl = mb_rtrim((string) $branch->link, '/');
 
         return $baseUrl.$endpoint;
+    }
+
+    /**
+     * Extract order number from payload if present.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function extractOrderNumber(array $payload): ?string
+    {
+        if (isset($payload['order']['orderNumber']) && is_string($payload['order']['orderNumber'])) {
+            return $payload['order']['orderNumber'];
+        }
+
+        if (isset($payload['order_number']) && is_string($payload['order_number'])) {
+            return $payload['order_number'];
+        }
+
+        if (isset($payload['orderNumber']) && is_string($payload['orderNumber'])) {
+            return $payload['orderNumber'];
+        }
+
+        return null;
     }
 }
