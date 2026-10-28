@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import MainLayout from "@/themes/default/layouts/MainLayout";
 import ProductCard from "./components/ProductCard";
+import MenuItemRow from "./components/MenuItemRow";
+import CategoryScrollBar from "./components/CategoryScrollBar";
+import ProductOptionsModal from "./components/ProductOptionsModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -16,7 +19,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { ImageWithFallback } from "@/components/ui/image";
 import { ProductCardSkeleton } from "@/components/ui/page-skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Head } from "@/components/Head";
@@ -26,8 +28,8 @@ import {
     ProductSummary,
     Category,
 } from "@/plugins/catalog-products";
+import { apiClient } from "@/core/api/client";
 import {
-    Search,
     Filter,
     X,
     RotateCcw,
@@ -38,6 +40,7 @@ import {
 export default function ThemedMenuPage() {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === "ar";
+    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
 
     const getText = useCallback(
@@ -59,8 +62,8 @@ export default function ThemedMenuPage() {
 
     const urlMinPrice = searchParams.get("min_price") || "";
     const urlMaxPrice = searchParams.get("max_price") || "";
-    const urlSortBy = searchParams.get("sort_by") || "name";
-    const urlSortOrder = searchParams.get("sort_order") || "asc";
+    const urlSortBy = searchParams.get("sort_by") || "";
+    const urlSortOrder = searchParams.get("sort_order") || "";
 
     // Local form states synced with URL
     const [selectedCategories, setSelectedCategories] = useState<string[]>(urlCategories);
@@ -69,6 +72,10 @@ export default function ThemedMenuPage() {
     const [sortBy, setSortBy] = useState(urlSortBy);
     const [sortOrder, setSortOrder] = useState(urlSortOrder);
     const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
+    // Modal state for products with options
+    const [modalProduct, setModalProduct] = useState<any | null>(null);
+    const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
 
     // Keep local state in sync when URL changes externally (e.g. Back/Forward button)
     useEffect(() => {
@@ -82,9 +89,12 @@ export default function ThemedMenuPage() {
     // Query parameters for products
     const queryParams = useMemo(() => {
         const params: Record<string, any> = {
-            sort_by: urlSortBy,
-            sort_order: urlSortOrder,
+            per_page: 50,
         };
+        if (urlSortBy) {
+            params.sort_by = urlSortBy;
+            params.sort_order = urlSortOrder || "asc";
+        }
         if (urlSearch.trim()) params.search = urlSearch.trim();
         if (urlCategories.length > 0) params.category = urlCategories;
         if (urlMinPrice) params.min_price = urlMinPrice;
@@ -103,16 +113,202 @@ export default function ThemedMenuPage() {
         refetch,
     } = useInfiniteCatalogProducts(queryParams);
 
-    // Fetch categories for sidebar filters
+    // Fetch categories for sidebar filters and grouping
     const { data: categoriesResponse } = useCatalogCategories();
     const categories: Category[] = categoriesResponse?.data || [];
 
+    // Sort categories client-side by admin sort_order, then id
+    const sortedCategories = useMemo(() => {
+        return [...categories].sort((a, b) => {
+            const orderA = a.sort_order ?? 0;
+            const orderB = b.sort_order ?? 0;
+            if (orderA !== orderB) return orderA - orderB;
+            return a.id - b.id;
+        });
+    }, [categories]);
+
     // Flatten all pages
-    const products: ProductSummary[] = useMemo(() => {
+    const rawProducts: ProductSummary[] = useMemo(() => {
         return productsData?.pages.flatMap((page) => page.data) || [];
     }, [productsData]);
 
-    const totalProducts = productsData?.pages[0]?.meta?.total ?? products.length;
+    const totalProducts = productsData?.pages[0]?.meta?.total ?? rawProducts.length;
+
+    // Helper for product availability
+    const isAvailable = useCallback((p: ProductSummary) => {
+        return (p.is_active ?? true) && (p as any).is_available !== false;
+    }, []);
+
+    // Push unavailable products to the end of a list and sort by sort_order
+    const sortProductList = useCallback((list: ProductSummary[]) => {
+        const available = list.filter(isAvailable);
+        const unavailable = list.filter((p) => !isAvailable(p));
+
+        const sortByOrder = (a: ProductSummary, b: ProductSummary) => {
+            const orderA = (a as any).sort_order;
+            const orderB = (b as any).sort_order;
+            if (typeof orderA === "number" && typeof orderB === "number" && orderA !== orderB) {
+                return orderA - orderB;
+            }
+            return 0;
+        };
+
+        available.sort(sortByOrder);
+        unavailable.sort(sortByOrder);
+
+        return [...available, ...unavailable];
+    }, [isAvailable]);
+
+    // Group products by category for mobile view (sorted by category sort_order)
+    const categoryGroups = useMemo(() => {
+        if (!rawProducts.length) return [];
+
+        const groups: Array<{
+            category: {
+                id: number;
+                name: string;
+                name_ar?: string;
+                description?: string;
+                sort_order?: number;
+            };
+            products: ProductSummary[];
+        }> = [];
+
+        const assignedProductIds = new Set<number>();
+
+        sortedCategories.forEach((cat) => {
+            const matching = rawProducts.filter(
+                (p) => p.category?.id === cat.id || p.category?.name === cat.name
+            );
+            if (matching.length > 0) {
+                matching.forEach((p) => assignedProductIds.add(p.id));
+                groups.push({
+                    category: {
+                        id: cat.id,
+                        name: cat.name,
+                        name_ar: cat.name_ar,
+                        description: cat.description,
+                        sort_order: cat.sort_order,
+                    },
+                    products: sortProductList(matching),
+                });
+            }
+        });
+
+        // Collect any uncategorized products
+        const uncategorized = rawProducts.filter((p) => !assignedProductIds.has(p.id));
+        if (uncategorized.length > 0) {
+            groups.push({
+                category: {
+                    id: -1,
+                    name: "Other",
+                    name_ar: "أخرى",
+                    sort_order: 9999,
+                },
+                products: sortProductList(uncategorized),
+            });
+        }
+
+        return groups;
+    }, [rawProducts, sortedCategories, sortProductList]);
+
+    // Categories list for horizontal scrollbar (only categories with matching products)
+    const scrollBarCategories = useMemo(() => {
+        return categoryGroups.map((g) => ({
+            id: g.category.id,
+            name: g.category.name,
+            name_ar: g.category.name_ar,
+            count: g.products.length,
+            sort_order: g.category.sort_order,
+        }));
+    }, [categoryGroups]);
+
+    // Desktop products: preserve grid and push unavailable products to the end
+    const desktopProducts = useMemo(() => {
+        return sortProductList(rawProducts);
+    }, [rawProducts, sortProductList]);
+
+    // Active category tracking for IntersectionObserver
+    const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
+    const isManualScrolling = useRef(false);
+    const manualScrollTimer = useRef<NodeJS.Timeout | null>(null);
+    const sectionRefs = useRef<Record<number, HTMLElement | null>>({});
+
+    // Set first category active by default
+    useEffect(() => {
+        if (scrollBarCategories.length > 0) {
+            if (activeCategoryId === null || !scrollBarCategories.some((c) => c.id === activeCategoryId)) {
+                setActiveCategoryId(scrollBarCategories[0].id);
+            }
+        }
+    }, [scrollBarCategories, activeCategoryId]);
+
+    // IntersectionObserver to highlight category currently in view on mobile
+    useEffect(() => {
+        if (categoryGroups.length === 0) return;
+
+        const visibleMap = new Map<number, boolean>();
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (isManualScrolling.current) return;
+
+                entries.forEach((entry) => {
+                    const catId = Number(entry.target.getAttribute("data-category-id"));
+                    if (!Number.isNaN(catId)) {
+                        visibleMap.set(catId, entry.isIntersecting);
+                    }
+                });
+
+                // Pick the first visible category in DOM order
+                const firstVisible = categoryGroups.find((g) => visibleMap.get(g.category.id));
+                if (firstVisible) {
+                    setActiveCategoryId(firstVisible.category.id);
+                }
+            },
+            {
+                rootMargin: "-100px 0px -50% 0px",
+                threshold: [0, 0.1, 0.5],
+            }
+        );
+
+        categoryGroups.forEach((group) => {
+            const el = sectionRefs.current[group.category.id];
+            if (el) observer.observe(el);
+        });
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [categoryGroups]);
+
+    // Scroll to category on tap
+    const handleSelectCategoryFromBar = (catId: number) => {
+        setActiveCategoryId(catId);
+        isManualScrolling.current = true;
+        if (manualScrollTimer.current) clearTimeout(manualScrollTimer.current);
+        manualScrollTimer.current = setTimeout(() => {
+            isManualScrolling.current = false;
+        }, 800);
+
+        const targetEl = document.getElementById(`category-section-${catId}`);
+        if (targetEl) {
+            targetEl.scrollIntoView({ behavior: "smooth" });
+        }
+    };
+
+    // Open product options modal for products with options
+    const handleOpenOptions = async (productSummary: ProductSummary) => {
+        try {
+            const response = await apiClient.get<any>(`/api/catalog-products/${productSummary.id}`);
+            const full = response.data.product || response.data.data;
+            setModalProduct(full);
+            setIsOptionsModalOpen(true);
+        } catch (error) {
+            console.error("Failed to load product details", error);
+            navigate(`/products/${productSummary.id}`);
+        }
+    };
 
     // Push new params to URL
     const updateUrlParams = useCallback(
@@ -139,7 +335,7 @@ export default function ThemedMenuPage() {
             }
             if (minVal) nextParams.set("min_price", minVal);
             if (maxVal) nextParams.set("max_price", maxVal);
-            if (sortVal && (sortVal !== "name" || (orderVal && orderVal !== "asc"))) {
+            if (sortVal) {
                 nextParams.set("sort_by", sortVal);
                 nextParams.set("sort_order", orderVal || "asc");
             }
@@ -149,7 +345,7 @@ export default function ThemedMenuPage() {
         [urlSearch, urlCategories, urlMinPrice, urlMaxPrice, urlSortBy, urlSortOrder, setSearchParams]
     );
 
-    // Category toggle
+    // Category toggle in filter panel
     const handleCategoryToggle = (categoryName: string) => {
         const nextCategories = selectedCategories.includes(categoryName)
             ? selectedCategories.filter((c) => c !== categoryName)
@@ -186,8 +382,8 @@ export default function ThemedMenuPage() {
         setSelectedCategories([]);
         setMinPriceInput("");
         setMaxPriceInput("");
-        setSortBy("name");
-        setSortOrder("asc");
+        setSortBy("");
+        setSortOrder("");
         setSearchParams(new URLSearchParams(), { replace: true });
         setMobileFilterOpen(false);
     };
@@ -241,11 +437,11 @@ export default function ThemedMenuPage() {
         urlCategories.length > 0 ||
         urlMinPrice ||
         urlMaxPrice ||
-        urlSortBy !== "name" ||
-        urlSortOrder !== "asc"
+        urlSortBy ||
+        urlSortOrder
     );
 
-    // Shared Filter Panel Component
+    // Filter Panel Component: Hides price-range on mobile (< md) per item B8
     const renderFilterPanel = (panelId: "desktop" | "mobile") => (
         <div className="space-y-6" data-testid={`${panelId}-filter-panel`}>
             {/* Categories */}
@@ -259,7 +455,7 @@ export default function ThemedMenuPage() {
                     )}
                 </div>
                 <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
-                    {categories.length === 0 ? (
+                    {sortedCategories.length === 0 ? (
                         <div className="space-y-2 py-2">
                             {[1, 2, 3, 4].map((i) => (
                                 <div key={i} className="flex items-center space-x-3 rtl:space-x-reverse p-2">
@@ -269,7 +465,7 @@ export default function ThemedMenuPage() {
                             ))}
                         </div>
                     ) : (
-                        categories.map((category) => {
+                        sortedCategories.map((category) => {
                             const isChecked = selectedCategories.includes(category.name);
                             return (
                                 <div
@@ -298,58 +494,66 @@ export default function ThemedMenuPage() {
                 </div>
             </div>
 
-            {/* Price Range */}
-            <div className="space-y-3 pt-4 border-t border-border/50">
-                <label className="text-sm font-semibold tracking-tight">{t("priceRange", "Price Range")}</label>
-                <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                        <span className="text-xs text-muted-foreground">{t("min", "Min")}</span>
-                        <Input
-                            type="number"
-                            placeholder="0"
-                            value={minPriceInput}
-                            onChange={(e) => setMinPriceInput(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    handleApplyFilters();
-                                }
-                            }}
-                            min="0"
-                            step="1"
-                            className="h-9"
-                            data-testid={`${panelId}-min-price`}
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <span className="text-xs text-muted-foreground">{t("max", "Max")}</span>
-                        <Input
-                            type="number"
-                            placeholder="1000"
-                            value={maxPriceInput}
-                            onChange={(e) => setMaxPriceInput(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    handleApplyFilters();
-                                }
-                            }}
-                            min="0"
-                            step="1"
-                            className="h-9"
-                            data-testid={`${panelId}-max-price`}
-                        />
+            {/* Price Range: Hidden on mobile (< md) per requirement */}
+            {panelId === "desktop" && (
+                <div className="space-y-3 pt-4 border-t border-border/50">
+                    <label className="text-sm font-semibold tracking-tight">{t("priceRange", "Price Range")}</label>
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                            <span className="text-xs text-muted-foreground">{t("min", "Min")}</span>
+                            <Input
+                                type="number"
+                                placeholder="0"
+                                value={minPriceInput}
+                                onChange={(e) => setMinPriceInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        handleApplyFilters();
+                                    }
+                                }}
+                                min="0"
+                                step="1"
+                                className="h-9"
+                                data-testid={`${panelId}-min-price`}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <span className="text-xs text-muted-foreground">{t("max", "Max")}</span>
+                            <Input
+                                type="number"
+                                placeholder="1000"
+                                value={maxPriceInput}
+                                onChange={(e) => setMaxPriceInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        handleApplyFilters();
+                                    }
+                                }}
+                                min="0"
+                                step="1"
+                                className="h-9"
+                                data-testid={`${panelId}-max-price`}
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Sorting */}
             <div className="space-y-3 pt-4 border-t border-border/50">
                 <label className="text-sm font-semibold tracking-tight">{t("sortBy", "Sort By")}</label>
                 <div className="space-y-2">
                     <Select
-                        value={`${sortBy}_${sortOrder}`}
+                        value={sortBy && sortOrder ? `${sortBy}_${sortOrder}` : "default"}
                         onValueChange={(val) => {
+                            if (val === "default") {
+                                setSortBy("");
+                                setSortOrder("");
+                                updateUrlParams({ sortBy: "", sortOrder: "" });
+                                return;
+                            }
                             const lastUnderscore = val.lastIndexOf("_");
                             const by = val.substring(0, lastUnderscore);
                             const order = val.substring(lastUnderscore + 1);
@@ -362,6 +566,7 @@ export default function ThemedMenuPage() {
                             <SelectValue placeholder={t("sortBy", "Sort by")} />
                         </SelectTrigger>
                         <SelectContent>
+                            <SelectItem value="default">{t("defaultOrder", "Default (Menu Order)")}</SelectItem>
                             <SelectItem value="name_asc" data-testid="sort-name-asc">{t("nameAsc", "Name: A to Z")}</SelectItem>
                             <SelectItem value="name_desc" data-testid="sort-name-desc">{t("nameDesc", "Name: Z to A")}</SelectItem>
                             <SelectItem value="base_price_asc" data-testid="sort-price-asc">{t("priceAsc", "Price: Low to High")}</SelectItem>
@@ -405,8 +610,8 @@ export default function ThemedMenuPage() {
 
             <div className="container mx-auto px-4 py-8" data-testid="menu-page">
                 {/* Header Section */}
-                <div className="mb-8">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div className="mb-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                         <div>
                             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
                                 {t("menu", "Store Menu")}
@@ -509,7 +714,7 @@ export default function ThemedMenuPage() {
                     </div>
                 )}
 
-                {/* Main Content Layout: Sidebar + Grid */}
+                {/* Main Content Layout: Sidebar + Products Content */}
                 <div className="flex gap-8 items-start">
                     {/* Desktop Filters Sidebar */}
                     <aside className="hidden lg:block w-72 shrink-0">
@@ -538,14 +743,30 @@ export default function ThemedMenuPage() {
                         </div>
                     </aside>
 
-                    {/* Products Grid */}
+                    {/* Products Display Area */}
                     <div className="flex-1 min-w-0">
                         {isLoading ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {[...Array(6)].map((_, i) => (
-                                    <ProductCardSkeleton key={i} />
-                                ))}
-                            </div>
+                            <>
+                                {/* Mobile loading skeleton */}
+                                <div className="block md:hidden space-y-3">
+                                    {[...Array(6)].map((_, i) => (
+                                        <div key={i} className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-border/40 bg-card">
+                                            <div className="flex-1 space-y-2">
+                                                <Skeleton className="h-4 w-32 rounded" />
+                                                <Skeleton className="h-3 w-48 rounded" />
+                                                <Skeleton className="h-4 w-16 rounded mt-2" />
+                                            </div>
+                                            <Skeleton className="w-20 h-20 rounded-xl" />
+                                        </div>
+                                    ))}
+                                </div>
+                                {/* Desktop loading skeleton */}
+                                <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {[...Array(6)].map((_, i) => (
+                                        <ProductCardSkeleton key={i} />
+                                    ))}
+                                </div>
+                            </>
                         ) : isError ? (
                             <div className="py-16 text-center space-y-4">
                                 <p className="text-destructive font-medium">
@@ -555,7 +776,7 @@ export default function ThemedMenuPage() {
                                     {t("tryAgain", "Try Again")}
                                 </Button>
                             </div>
-                        ) : products.length === 0 ? (
+                        ) : rawProducts.length === 0 ? (
                             <div className="py-16 text-center rounded-2xl border border-dashed border-border p-8 bg-muted/10 space-y-4">
                                 <div className="w-14 h-14 mx-auto rounded-full bg-muted flex items-center justify-center text-muted-foreground">
                                     <ShoppingBag className="w-7 h-7" />
@@ -577,15 +798,69 @@ export default function ThemedMenuPage() {
                             </div>
                         ) : (
                             <div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {products.map((product) => (
-                                        <div key={product.id} data-testid="menu-product-card">
-                                            <ProductCard
-                                                product={product as any}
-                                                showFavorite={true}
+                                {/* Mobile View (< md): Sticky Category Bar + Compact MenuItemRows Grouped by Category */}
+                                <div className="block md:hidden">
+                                    {scrollBarCategories.length > 0 && (
+                                        <div className="sticky top-16 z-30 -mx-4 px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/40 py-2 mb-6">
+                                            <CategoryScrollBar
+                                                categories={scrollBarCategories}
+                                                activeCategoryId={activeCategoryId}
+                                                onSelectCategory={handleSelectCategoryFromBar}
                                             />
                                         </div>
-                                    ))}
+                                    )}
+
+                                    <div className="space-y-8">
+                                        {categoryGroups.map((group) => (
+                                            <section
+                                                key={group.category.id}
+                                                id={`category-section-${group.category.id}`}
+                                                data-category-id={group.category.id}
+                                                ref={(el) => {
+                                                    sectionRefs.current[group.category.id] = el;
+                                                }}
+                                                className="scroll-mt-32 space-y-3"
+                                            >
+                                                <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                                                    <h2 className="text-base font-bold tracking-tight text-foreground">
+                                                        {getText(group.category.name, group.category.name_ar)}
+                                                    </h2>
+                                                    <Badge variant="secondary" className="text-xs font-normal">
+                                                        {group.products.length} {t("items", "items")}
+                                                    </Badge>
+                                                </div>
+                                                {group.category.description && (
+                                                    <p className="text-xs text-muted-foreground -mt-1">
+                                                        {group.category.description}
+                                                    </p>
+                                                )}
+                                                <div className="space-y-2.5">
+                                                    {group.products.map((product) => (
+                                                        <MenuItemRow
+                                                            key={product.id}
+                                                            product={product}
+                                                            onOpenOptions={handleOpenOptions}
+                                                            formatPrice={formatPrice}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </section>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Desktop View (>= md): Existing Card Grid */}
+                                <div className="hidden md:block">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {desktopProducts.map((product) => (
+                                            <div key={product.id} data-testid="menu-product-card">
+                                                <ProductCard
+                                                    product={product as any}
+                                                    showFavorite={true}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 {/* Infinite Scroll Sentinel */}
@@ -624,6 +899,18 @@ export default function ThemedMenuPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Modal for Products with Options / Variants / Extras */}
+            {modalProduct && (
+                <ProductOptionsModal
+                    product={modalProduct}
+                    isOpen={isOptionsModalOpen}
+                    onClose={() => {
+                        setIsOptionsModalOpen(false);
+                        setModalProduct(null);
+                    }}
+                />
+            )}
         </MainLayout>
     );
 }
