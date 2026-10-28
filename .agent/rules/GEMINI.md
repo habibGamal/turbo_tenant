@@ -237,6 +237,7 @@ When user's prompt is NOT in English:
 | `plan-writing` | {task-slug}.md format |
 | `behavioral-modes` | Mode switching |
 | `plugin-builder` | Microkernel plugin scaffolding |
+| `e2e-test` | Universal live E2E testing framework & theme contracts |
 
 ### Script Locations
 

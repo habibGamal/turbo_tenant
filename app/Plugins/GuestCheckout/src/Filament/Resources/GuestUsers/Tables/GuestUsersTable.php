@@ -12,7 +12,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-class GuestUsersTable
+final class GuestUsersTable
 {
     public static function configure(Table $table): Table
     {

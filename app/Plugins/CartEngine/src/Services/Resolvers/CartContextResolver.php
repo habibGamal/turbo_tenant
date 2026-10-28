@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Plugins\CartEngine\src\Services\Resolvers;
 
+use App\Core\Plugins\Contracts\GuestCustomer;
 use App\Models\User;
-use App\Plugins\GuestCheckout\src\Models\GuestUser;
 use App\Plugins\CartEngine\src\Models\Cart;
 use App\Plugins\CartEngine\src\Services\Contracts\CartContextResolverInterface;
 use Illuminate\Support\Facades\Session;
@@ -21,7 +21,7 @@ final class CartContextResolver implements CartContextResolverInterface
         return (string) Session::get('guest_cart_id');
     }
 
-    public function resolveCart(User|GuestUser|null $user): ?Cart
+    public function resolveCart(User|GuestCustomer|null $user): ?Cart
     {
         if ($user instanceof User) {
             return Cart::where('user_id', $user->id)->first();
@@ -32,7 +32,7 @@ final class CartContextResolver implements CartContextResolverInterface
         return Cart::where('session_id', $sessionId)->first();
     }
 
-    public function resolveOrCreateCart(User|GuestUser|null $user): Cart
+    public function resolveOrCreateCart(User|GuestCustomer|null $user): Cart
     {
         if ($user instanceof User) {
             return Cart::firstOrCreate(

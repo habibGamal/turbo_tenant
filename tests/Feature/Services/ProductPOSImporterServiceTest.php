@@ -6,9 +6,8 @@ use App\Enums\SettingKey;
 use App\Plugins\CatalogProducts\src\Models\Category;
 use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Plugins\PosIntegration\src\Models\ProductPosMapping;
-use App\Plugins\StoreSettings\src\Models\Setting;
 use App\Plugins\PosIntegration\src\Services\ProductPOSImporterService;
-use App\Plugins\StoreSettings\src\Services\SettingService;
+use App\Plugins\StoreSettings\src\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 
@@ -21,7 +20,7 @@ beforeEach(function () {
         ['value' => 'https://master.example.com']
     );
 
-    $this->service = new ProductPOSImporterService(new \App\Plugins\PosIntegration\src\DTOs\PosIntegrationConfig(
+    $this->service = new ProductPOSImporterService(new App\Plugins\PosIntegration\src\DTOs\PosIntegrationConfig(
         masterRepoUrl: 'https://master.example.com'
     ));
 });
@@ -413,8 +412,8 @@ describe('updateProductPrices', function () {
 
         $product->refresh();
 
-        expect($product->base_price)->toBe(150.0)
-            ->and($product->price_after_discount)->toBe(140.0);
+        expect((float) $product->base_price)->toBe(150.0)
+            ->and((float) $product->price_after_discount)->toBe(140.0);
     });
 
     it('handles missing product mappings', function () {

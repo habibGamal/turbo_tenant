@@ -1,6 +1,8 @@
-import React, { FormEvent, useEffect } from "react";
-import MainLayout from '@/themes/default/layouts/MainLayout';
-import { Head, Link, useForm } from "@inertiajs/react";
+import React, { FormEvent, useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import MainLayout from "@/themes/default/layouts/MainLayout";
+import { Head } from "@/components/Head";
+import { useAuth } from "@/core/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,36 +18,72 @@ import {
 import { LogIn, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 interface LoginProps {
-    canResetPassword: boolean;
+    canResetPassword?: boolean;
     status?: string;
 }
 
-export default function Login({ canResetPassword, status }: LoginProps) {
+function getSafeRedirect(redirectParam: string | null): string {
+    if (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")) {
+        return redirectParam;
+    }
+    return "/";
+}
+
+export default function Login({ canResetPassword = true, status: initialStatus }: LoginProps) {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === "ar";
-    const [showPassword, setShowPassword] = React.useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
-    const { data, setData, post, processing, errors, reset } = useForm({
-        email: "",
-        password: "",
-        remember: false,
-        expo_token: "",
-    });
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [remember, setRemember] = useState(false);
+    const [expoToken, setExpoToken] = useState("");
+    const [processing, setProcessing] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const location = useLocation();
+    const { login } = useAuth();
+
+    const status = initialStatus || (location.state as any)?.status || searchParams.get("status");
 
     useEffect(() => {
-        const token = window.localStorage.getItem('expoPushToken') || window.pushToken;
+        const token = window.localStorage.getItem("expoPushToken") || (window as any).pushToken;
         if (token) {
-            setData("expo_token", token);
+            setExpoToken(token);
         }
-
-        return () => {
-            reset("password");
-        };
     }, []);
 
-    const submit = (e: FormEvent) => {
+    const submit = async (e: FormEvent) => {
         e.preventDefault();
-        post(route("login"));
+        setProcessing(true);
+        setErrors({});
+
+        try {
+            await login({
+                email,
+                password,
+                remember,
+                ...(expoToken ? { expo_token: expoToken } : {}),
+            });
+            const redirectUrl = getSafeRedirect(searchParams.get("redirect"));
+            navigate(redirectUrl, { replace: true });
+        } catch (err: any) {
+            if (err.response?.status === 422 && err.response?.data?.errors) {
+                const apiErrors: Record<string, string> = {};
+                for (const [key, msgs] of Object.entries<any>(err.response.data.errors)) {
+                    apiErrors[key] = Array.isArray(msgs) ? msgs[0] : String(msgs);
+                }
+                setErrors(apiErrors);
+            } else if (err.response?.data?.message) {
+                setErrors({ email: err.response.data.message });
+            } else {
+                setErrors({ email: t("somethingWentWrong", "An error occurred. Please try again.") });
+            }
+        } finally {
+            setProcessing(false);
+        }
     };
 
     return (
@@ -96,19 +134,18 @@ export default function Login({ canResetPassword, status }: LoginProps) {
                                     </Label>
                                     <div className="relative">
                                         <Mail
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${isRTL ? "right-3" : "left-3"
-                                                }`}
+                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
+                                                isRTL ? "right-3" : "left-3"
+                                            }`}
                                         />
                                         <Input
                                             id="email"
                                             type="email"
                                             name="email"
-                                            value={data.email}
+                                            value={email}
                                             autoComplete="username"
                                             autoFocus
-                                            onChange={(e) =>
-                                                setData("email", e.target.value)
-                                            }
+                                            onChange={(e) => setEmail(e.target.value)}
                                             className={`${isRTL ? "pr-10" : "pl-10"}`}
                                             placeholder={t("emailPlaceholder")}
                                         />
@@ -127,26 +164,26 @@ export default function Login({ canResetPassword, status }: LoginProps) {
                                     </Label>
                                     <div className="relative">
                                         <Lock
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${isRTL ? "right-3" : "left-3"
-                                                }`}
+                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
+                                                isRTL ? "right-3" : "left-3"
+                                            }`}
                                         />
                                         <Input
                                             id="password"
                                             type={showPassword ? "text" : "password"}
                                             name="password"
-                                            value={data.password}
+                                            value={password}
                                             autoComplete="current-password"
-                                            onChange={(e) =>
-                                                setData("password", e.target.value)
-                                            }
+                                            onChange={(e) => setPassword(e.target.value)}
                                             className={`${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                                             placeholder={t("passwordPlaceholder")}
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? "left-3" : "right-3"
-                                                } text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors`}
+                                            className={`absolute top-1/2 -translate-y-1/2 ${
+                                                isRTL ? "left-3" : "right-3"
+                                            } text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors`}
                                         >
                                             {showPassword ? (
                                                 <EyeOff className="w-5 h-5" />
@@ -168,10 +205,8 @@ export default function Login({ canResetPassword, status }: LoginProps) {
                                         <input
                                             type="checkbox"
                                             name="remember"
-                                            checked={data.remember}
-                                            onChange={(e) =>
-                                                setData("remember", e.target.checked)
-                                            }
+                                            checked={remember}
+                                            onChange={(e) => setRemember(e.target.checked)}
                                             className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary dark:focus:ring-primary dark:bg-gray-700 dark:border-gray-600"
                                         />
                                         <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -181,7 +216,7 @@ export default function Login({ canResetPassword, status }: LoginProps) {
 
                                     {canResetPassword && (
                                         <Link
-                                            href={route("password.request")}
+                                            to="/forgot-password"
                                             className="text-sm text-primary hover:text-primary/90 font-medium transition-colors"
                                         >
                                             {t("forgotPassword")}
@@ -218,7 +253,7 @@ export default function Login({ canResetPassword, status }: LoginProps) {
                                 </div>
 
                                 <a
-                                    href={`${route("auth.google")}${data.expo_token ? `?expo_token=${data.expo_token}` : ''}`}
+                                    href={`/auth/google${expoToken ? `?expo_token=${expoToken}` : ""}`}
                                     className="w-full"
                                 >
                                     <Button
@@ -254,7 +289,11 @@ export default function Login({ canResetPassword, status }: LoginProps) {
                                 <div className="text-center text-sm text-gray-600 dark:text-gray-400">
                                     {t("dontHaveAccount")}{" "}
                                     <Link
-                                        href={route("register")}
+                                        to={`/register${
+                                            searchParams.get("redirect")
+                                                ? `?redirect=${encodeURIComponent(searchParams.get("redirect")!)}`
+                                                : ""
+                                        }`}
                                         className="text-primary hover:text-primary/90 font-semibold transition-colors"
                                     >
                                         {t("signUp")}

@@ -4,22 +4,21 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Services\Repositories;
 
-use App\Plugins\PosIntegration\src\Enums\OrderPosStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Plugins\CartEngine\src\Services\CartService;
 use App\Plugins\OrderManagement\src\DTOs\OrderTotals;
 use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
-use App\Plugins\OrderManagement\src\Events\OrderCreated;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
 use App\Plugins\OrderManagement\src\Models\OrderItemExtra;
 use App\Plugins\OrderManagement\src\Pipelines\Context\OrderValidationContext;
 use App\Plugins\OrderManagement\src\Services\Contracts\OrderRepositoryInterface;
+use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-class OrderRepository implements OrderRepositoryInterface
+final class OrderRepository implements OrderRepositoryInterface
 {
     public function __construct(
         private CartService $cartService
@@ -38,6 +37,30 @@ class OrderRepository implements OrderRepositoryInterface
             $isGuest = $data->isGuest();
             $couponId = $validationContext?->get('coupon_id') ?? $data->couponId;
 
+            $deliveryAddress = null;
+            $address = null;
+            if ($data->addressId && class_exists(\App\Plugins\LocationsDelivery\src\Models\Address::class)) {
+                $address = \App\Plugins\LocationsDelivery\src\Models\Address::with(['area.governorate'])->find($data->addressId);
+                if ($address) {
+                    $deliveryAddress = $address->toArray();
+                    if ($address->area) {
+                        $deliveryAddress['area_name'] = $address->area->name;
+                        if ($address->area->governorate) {
+                            $deliveryAddress['governorate_name'] = $address->area->governorate->name;
+                        }
+                    }
+                }
+            }
+
+            $customerName = $data->user?->name ?? null;
+            $customerPhone = $data->user?->phone ?? $address?->phone_number ?? null;
+
+            $appliedCoupon = $validationContext?->get('applied_coupon');
+            if (! $appliedCoupon && $couponId && class_exists(\App\Plugins\CouponsPromotions\src\Models\Coupon::class)) {
+                $appliedCoupon = \App\Plugins\CouponsPromotions\src\Models\Coupon::find($couponId);
+            }
+            $couponCode = $appliedCoupon?->code ?? null;
+
             $order = Order::create([
                 'order_number' => $this->generateOrderNumber(),
                 'user_id' => $isGuest ? null : $data->user->id,
@@ -45,6 +68,10 @@ class OrderRepository implements OrderRepositoryInterface
                 'branch_id' => $data->branchId,
                 'address_id' => $data->addressId,
                 'coupon_id' => $couponId,
+                'customer_name' => $customerName,
+                'customer_phone' => $customerPhone,
+                'delivery_address' => $deliveryAddress,
+                'coupon_code' => $couponCode,
                 'note' => $data->note,
                 'type' => $data->type,
                 'status' => 'pending',
@@ -97,6 +124,20 @@ class OrderRepository implements OrderRepositoryInterface
             $variant = $cartItem['variant'] ?? null;
             $weightOptionValue = $cartItem['weight_option_value'] ?? null;
 
+            $weightLabel = null;
+            if (! empty($weightOptionValue)) {
+                $weightLabel = $weightOptionValue['label'] ?? (isset($weightOptionValue['value']) ? (string) $weightOptionValue['value'] : null);
+            }
+
+            $extrasUnitTotal = 0.0;
+            if (! empty($cartItem['extras'])) {
+                foreach ($cartItem['extras'] as $extra) {
+                    $extraPrice = (float) ($extra['price'] ?? 0);
+                    $extraQty = (int) ($extra['quantity'] ?? 1);
+                    $extrasUnitTotal += $extraPrice * $extraQty;
+                }
+            }
+
             $orderItem = OrderItem::create([
                 'order_id' => $order->id,
                 'product_id' => $product['id'],
@@ -108,6 +149,8 @@ class OrderRepository implements OrderRepositoryInterface
                 'variant_name' => $variant['name'] ?? null,
                 'variant_name_ar' => $variant['name_ar'] ?? null,
                 'notes' => $cartItem['notes'] ?? null,
+                'weight_label' => $weightLabel,
+                'extras_unit_total' => $extrasUnitTotal,
                 'quantity' => $cartItem['quantity'],
                 'unit_price' => $cartItem['price'],
                 'total' => $cartItem['subtotal'],

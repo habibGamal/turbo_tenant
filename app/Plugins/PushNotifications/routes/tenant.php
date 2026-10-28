@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Plugins\PushNotifications\src\Http\Controllers\NotificationController;
+use App\Plugins\PushNotifications\src\Http\Controllers\Api\NotificationController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -11,6 +11,7 @@ Route::middleware([
     'web',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
+    'plugin.active:push-notifications',
     'auth',
 ])->prefix('api/notifications')->name('api.notifications.')->group(function () {
     Route::get('/', [NotificationController::class, 'index'])->name('index');

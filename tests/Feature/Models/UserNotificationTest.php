@@ -29,7 +29,7 @@ it('user has many notifications', function () {
         'user_id' => $this->user->id,
     ]);
 
-    expect($this->user->notifications)->toHaveCount(5);
+    expect($this->user->userNotifications)->toHaveCount(5);
 });
 
 it('can mark notification as read', function () {
@@ -105,7 +105,7 @@ it('user has unread notifications relationship', function () {
         'user_id' => $this->user->id,
     ]);
 
-    expect($this->user->unreadNotifications)->toHaveCount(3);
+    expect($this->user->unreadUserNotifications)->toHaveCount(3);
 });
 
 it('can store notification data as json', function () {

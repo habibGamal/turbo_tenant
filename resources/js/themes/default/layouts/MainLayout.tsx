@@ -1,6 +1,7 @@
 import React from 'react';
 import Navigation from '@/themes/default/components/Navigation';
 import Footer from '@/themes/default/components/Footer';
+import { PageTransition } from '@/components/PageTransition';
 import { cn } from '@/lib/utils';
 
 interface MainLayoutProps {
@@ -12,17 +13,18 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children, categories = [], cartItemsCount = 0, className }: MainLayoutProps) {
     return (
-        <div className={cn("min-h-screen bg-background", className)}>
+        <div className={cn("min-h-screen bg-background pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0", className)}>
             {/* Navigation */}
             <Navigation categories={categories} cartItemsCount={cartItemsCount} />
 
-            {/* Main Content */}
-            <main className="pb-0 md:pb-0">
-                {children}
-            </main>
+            {/* Main Content with Page Transition */}
+            <div>
+                <PageTransition>
+                    {children}
+                </PageTransition>
+            </div>
 
             {/* Footer */}
-            <div className="md-hidden h-[70px]"></div>
             <Footer />
         </div>
     );

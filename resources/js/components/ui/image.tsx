@@ -1,27 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { usePage } from '@inertiajs/react';
+import { useTenantSafe } from '@/core/context/TenantContext';
 
 interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElement> {
     src?: string;
     alt: string;
     fallback?: string;
     className?: string;
+    forceWidth?: 20 | 480 | 1920;
     w?: number;
     h?: number;
     fit?: 'contain' | 'max' | 'fill' | 'stretch' | 'crop';
     fm?: 'jpg' | 'pjpg' | 'png' | 'gif' | 'webp' | 'avif' | 'tiff';
 }
 
-const GENERATED_WIDTHS = [320, 480, 640, 768, 960, 1280, 1920, 2560];
-
 export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFallbackProps>(
-    ({ src, alt, fallback, className, w, h, fit, fm, sizes = '100vw', ...props }, ref) => {
-        const { settings } = usePage().props;
-        const defaultFallback = settings.image_placeholder || '/images/placeholder-food.svg';
+    ({ src, alt, fallback, className, forceWidth, w, h, fit, fm, sizes, ...props }, ref) => {
+        const tenant = useTenantSafe();
+        const settings = tenant?.settings;
+        const defaultFallback = settings?.image_placeholder || '/images/placeholder-food.svg';
         const finalFallback = fallback || defaultFallback;
 
-        const [imgSrc, setImgSrc] = useState(src || finalFallback);
+        const [imgSrc, setImgSrc] = useState<string>(src || finalFallback);
         const [isLoading, setIsLoading] = useState(true);
         const [hasError, setHasError] = useState(false);
 
@@ -43,79 +43,77 @@ export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFal
             setIsLoading(false);
         };
 
-        const getOptimizedUrl = (url: string, width?: number, quality?: number) => {
-            if (!url || url.startsWith('http') || url.startsWith('data:')) return url;
-
-            const params = new URLSearchParams();
-            if (width) {
-                params.append('w', width.toString());
-            } else if (w) {
-                params.append('w', w.toString());
+        // Determine variant URLs if using Ahead-of-Time 1920w WebP structure
+        const isExternalOrStatic = !imgSrc || imgSrc.startsWith('http') || imgSrc.startsWith('data:') || imgSrc === finalFallback;
+        
+        let normalizedSrc = imgSrc;
+        if (!isExternalOrStatic) {
+            let path = imgSrc.startsWith('/') ? imgSrc.slice(1) : imgSrc;
+            // Strip leading "storage/" if present
+            if (path.startsWith('storage/')) {
+                path = path.slice('storage/'.length);
             }
+            // Ensure path starts with images/
+            if (!path.startsWith('images/')) {
+                path = `images/${path}`;
+            }
+            normalizedSrc = `/${path}`;
+        }
 
-            if (h && !width) params.append('h', h.toString()); // Only use height if not generating srcset width
-            if (fit) params.append('fit', fit);
-            if (fm) params.append('fm', fm);
-            if (quality) params.append('q', quality.toString());
+        const isOptimizedVariant = !isExternalOrStatic && /\.1920\.webp$/i.test(normalizedSrc);
 
-            const queryString = params.toString();
-            return `/storage/${url}${queryString ? `?${queryString}` : ''}`;
-        };
+        let displaySrc = normalizedSrc;
+        let placeholderUrl: string | null = null;
+        let srcSet: string | undefined = undefined;
+        let computedSizes = sizes || '(max-width: 768px) 480px, 1920px';
 
-        const displaySrc = imgSrc === finalFallback ? imgSrc : getOptimizedUrl(imgSrc);
+        if (isOptimizedVariant) {
+            const basePath = normalizedSrc.replace(/\.1920\.webp$/i, '');
+            const url20 = `${basePath}.20.webp`;
+            const url480 = `${basePath}.480.webp`;
+            const url1920 = normalizedSrc;
 
-        const srcSet = imgSrc !== finalFallback && !imgSrc.startsWith('http') && !imgSrc.startsWith('data:')
-            ? GENERATED_WIDTHS.map(width => {
-                const url = getOptimizedUrl(imgSrc, width);
-                const finalUrl = url.startsWith('/') ? url : `/storage/${url}`;
-                return `${finalUrl} ${width}w`;
-            }).join(', ')
-            : undefined;
+            placeholderUrl = url20;
 
-        // Tiny blurred placeholder URL
-        const placeholderUrl = imgSrc !== finalFallback && !imgSrc.startsWith('http') && !imgSrc.startsWith('data:')
-            ? getOptimizedUrl(imgSrc, 20) // Tiny width for blur
-            : null;
-
-        const finalPlaceholderUrl = placeholderUrl && (placeholderUrl.startsWith('/') ? placeholderUrl : `/storage/${placeholderUrl}`);
-
+            if (forceWidth === 20) {
+                displaySrc = url20;
+            } else if (forceWidth === 480) {
+                displaySrc = url480;
+            } else if (forceWidth === 1920) {
+                displaySrc = url1920;
+            } else {
+                // Adaptive / Viewport-dependent
+                displaySrc = url1920;
+                srcSet = `${url480} 480w, ${url1920} 1920w`;
+            }
+        } else if (!isExternalOrStatic) {
+            // Legacy / unmigrated fallback
+            displaySrc = normalizedSrc;
+        }
 
         return (
             <div className={cn("relative overflow-hidden", className)}>
-                {/* Blurred Placeholder */}
-                {isLoading && finalPlaceholderUrl && !hasError && (
+                {/* Step 1: 20w Blurred Placeholder (LQIP) */}
+                {isLoading && placeholderUrl && !hasError && (
                     <img
-                        src={finalPlaceholderUrl}
+                        src={placeholderUrl}
                         alt={alt}
-                        className={cn(
-                            "absolute inset-0 w-full h-full object-cover blur-lg scale-110 transition-opacity duration-500",
-                            // If loading is done, we fade this out, but we handle that by unmounting or opacity on the main image
-                            // Actually, better to keep it behind and let the main image fade in on top
-                        )}
+                        className="absolute inset-0 w-full h-full object-cover blur-lg scale-110 transition-opacity duration-500"
                         style={{ filter: 'blur(20px)' }}
                         aria-hidden="true"
                     />
                 )}
 
+                {/* Step 2 & 3: Main Responsive / Forced Width Image */}
                 <img
                     ref={ref}
-                    src={displaySrc.startsWith('/') ? displaySrc : `/storage/${displaySrc}`}
+                    src={displaySrc}
                     srcSet={srcSet}
-                    sizes={sizes}
+                    sizes={srcSet ? computedSizes : undefined}
                     alt={alt}
                     className={cn(
-                        'transition-opacity duration-500 relative z-10', // Ensure it's above placeholder
-                        isLoading ? 'opacity-0' : 'opacity-100',
-                        // We remove className from here because we applied it to the wrapper div. 
-                        // Wait, usually className is for the img. 
-                        // If we wrap it, we might break layout if the parent expects an img.
-                        // But for the placeholder to work effectively as a background, a wrapper is safest.
-                        // However, if the user passes classes like 'w-10 h-10 rounded-full', applying them to the wrapper is correct.
-                        // But object-cover etc should be on the img.
-                        // Let's apply className to BOTH, but be careful.
-                        // Actually, the best way for a drop-in replacement is to put the wrapper with the same classes, 
-                        // and the img with w-full h-full.
-                        "w-full h-full object-cover"
+                        'transition-opacity duration-500 relative z-10 w-full h-full object-cover',
+                        isLoading && placeholderUrl ? 'opacity-0' : 'opacity-100'
                     )}
                     onError={handleError}
                     onLoad={handleLoad}

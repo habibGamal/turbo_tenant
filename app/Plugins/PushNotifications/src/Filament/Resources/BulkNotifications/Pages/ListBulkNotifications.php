@@ -8,7 +8,7 @@ use App\Plugins\PushNotifications\src\Filament\Resources\BulkNotifications\BulkN
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
-class ListBulkNotifications extends ListRecords
+final class ListBulkNotifications extends ListRecords
 {
     protected static string $resource = BulkNotificationResource::class;
 

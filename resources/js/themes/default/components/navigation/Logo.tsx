@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "@inertiajs/react";
+import { Link } from "react-router-dom";
 import { ScrollText } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -15,7 +15,7 @@ export function Logo({ siteLogo, siteName, siteNameAr }: LogoProps) {
     const displayName = i18n.language === 'ar' && siteNameAr ? siteNameAr : siteName;
 
     return (
-        <Link href="/" className="flex items-center gap-2 shrink-0">
+        <Link to="/" className="flex items-center gap-2 shrink-0">
             {siteLogo ? (
                 <img
                     src={siteLogo}

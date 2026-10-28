@@ -299,7 +299,7 @@ it('guest can place card payment order with billing data', function () {
     ];
 
     // Mock the payment gateway to avoid actual API calls
-    $this->mock(App\Plugins\PaymentProcessing\src\Contracts\PaymentGatewayInterface::class, function ($mock) {
+    $this->mock(App\Plugins\OrderManagement\src\Contracts\PaymentGatewayInterface::class, function ($mock) {
         $mock->shouldReceive('getGatewayId')->andReturn('paymob');
         $mock->shouldReceive('createPaymentIntention')->andReturn([
             'success' => true,
@@ -352,7 +352,7 @@ it('billing data includes guest information for card payment', function () {
 
     // Capture the billing data passed to payment gateway
     $capturedBillingData = null;
-    $this->mock(App\Plugins\PaymentProcessing\src\Contracts\PaymentGatewayInterface::class, function ($mock) use (&$capturedBillingData) {
+    $this->mock(App\Plugins\OrderManagement\src\Contracts\PaymentGatewayInterface::class, function ($mock) use (&$capturedBillingData) {
         $mock->shouldReceive('getGatewayId')->andReturn('paymob');
         $mock->shouldReceive('createPaymentIntention')
             ->andReturnUsing(function ($order, $billingData) use (&$capturedBillingData) {

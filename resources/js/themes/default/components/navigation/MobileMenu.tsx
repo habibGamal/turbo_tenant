@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "@inertiajs/react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -53,14 +53,14 @@ export function MobileMenu({
             <SheetContent side="right" className="w-[300px] overflow-y-auto">
                 <nav className="flex flex-col gap-4 mt-8">
                     <Link
-                        href="/"
+                        to="/"
                         className="flex items-center gap-2 text-lg font-medium hover:text-primary transition-colors"
                     >
                         <Home className="h-5 w-5" />
                         {t("home")}
                     </Link>
                     <Link
-                        href="/menu"
+                        to="/menu"
                         className="flex items-center gap-2 text-lg font-medium hover:text-primary transition-colors"
                     >
                         <ScrollText className="h-5 w-5" />
@@ -76,7 +76,7 @@ export function MobileMenu({
                             {categories.slice(0, 5).map((category) => (
                                 <Link
                                     key={category.id}
-                                    href={`/menu?category=${encodeURIComponent(category.name)}`}
+                                    to={`/menu?category=${encodeURIComponent(category.name)}`}
                                     className="ltr:pl-4 rtl:pr-4 text-sm hover:text-primary transition-colors"
                                 >
                                     {getText(category.name, category.name_ar)}
@@ -99,7 +99,7 @@ export function MobileMenu({
                                 {section.links.map((link, linkIndex) => (
                                     <li key={linkIndex}>
                                         <Link
-                                            href={link.href}
+                                            to={link.href}
                                             className="text-sm text-muted-foreground hover:text-primary transition-colors"
                                         >
                                             {getText(link.label, link.labelAr)}

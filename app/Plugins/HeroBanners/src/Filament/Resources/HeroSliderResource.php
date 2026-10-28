@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Plugins\HeroBanners\src\Filament\Resources;
 
-use App\Plugins\HeroBanners\src\Filament\Resources\Pages;
 use App\Plugins\HeroBanners\src\Models\HeroSlider;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -25,8 +24,10 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class HeroSliderResource extends Resource
+final class HeroSliderResource extends Resource
 {
+    use \App\Core\Plugins\Concerns\BelongsToPlugin;
+
     protected static ?string $model = HeroSlider::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPhoto;
@@ -94,7 +95,7 @@ class HeroSliderResource extends Resource
                             ->maxLength(255),
                         FileUpload::make('image')
                             ->image()
-                            ->directory('hero-sliders'),
+                            ->optimizeForWeb('hero-sliders'),
                         TextInput::make('gradient')
                             ->default('from-orange-500/20 via-red-500/10 to-pink-500/20')
                             ->required()

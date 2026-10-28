@@ -25,7 +25,7 @@ final class ProductVariantFactory extends Factory
             'product_id' => Product::factory(),
             'name' => fake()->randomElement(['Small', 'Medium', 'Large', 'Extra Large']),
             'price' => fake()->randomFloat(2, 5, 100),
-            'is_available' => fake()->boolean(90),
+            'is_available' => true,
             'sort_order' => fake()->numberBetween(0, 10),
         ];
     }

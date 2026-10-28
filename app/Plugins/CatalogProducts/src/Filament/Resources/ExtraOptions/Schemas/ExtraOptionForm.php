@@ -58,7 +58,7 @@ final class ExtraOptionForm
                                     ->label('السعر')
                                     ->numeric()
                                     ->default(0)
-                                    ->prefix('$')
+                                    ->prefix('EGP')
                                     ->required(),
                                 Toggle::make('is_default')
                                     ->default(false)

@@ -1,5 +1,6 @@
 import React from "react";
-import { Head, Link } from "@inertiajs/react";
+import { Link } from "react-router-dom";
+import { Head } from "@/components/Head";
 import MainLayout from '@/themes/default/layouts/MainLayout';
 import { Button } from "@/components/ui/button";
 import {
@@ -23,18 +24,50 @@ import {
     ArrowLeft,
     ArrowRight,
 } from "lucide-react";
+import { OrderShowSkeleton } from "@/components/ui/page-skeletons";
 import { useTranslation } from "react-i18next";
 import { Order, PageProps } from "@/types";
 import { getPaymentMethodLabel } from "@/lib/payment";
+import { useOrderDetails } from "@/plugins/order-management";
 
-interface OrderShowPageProps extends PageProps {
-    order: Order;
+interface OrderShowPageProps extends Partial<PageProps> {
+    order?: Order;
+    orderId?: number | string;
 }
 
-export default function OrderShow({ order, auth }: OrderShowPageProps) {
+export default function OrderShow({ order: initialOrder, orderId, auth }: OrderShowPageProps) {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === "ar";
     const BackArrowIcon = isRTL ? ArrowRight : ArrowLeft;
+
+    const resolvedId = orderId || initialOrder?.id || (typeof window !== 'undefined' ? window.location.pathname.split('/').filter(Boolean).pop() : undefined);
+    const { data: fetchedOrder, isLoading, error } = useOrderDetails(resolvedId);
+
+    const order = fetchedOrder || initialOrder;
+
+    if (isLoading && !order) {
+        return (
+            <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5">
+                <OrderShowSkeleton />
+            </MainLayout>
+        );
+    }
+
+    if ((error || !order) && !isLoading) {
+        return (
+            <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5">
+                <div className="container mx-auto px-4 py-24 text-center">
+                    <XCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+                    <h2 className="text-xl font-semibold mb-2">{t("orderNotFound", "Order not found")}</h2>
+                    <Link to="/orders">
+                        <Button variant="outline">{t("backToOrders", "Back to My Orders")}</Button>
+                    </Link>
+                </div>
+            </MainLayout>
+        );
+    }
+
+    if (!order) return null;
 
     const getText = (text: string, textAr?: string) => {
         return i18n.language === 'ar' && textAr ? textAr : text;
@@ -132,15 +165,15 @@ export default function OrderShow({ order, auth }: OrderShowPageProps) {
         <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5 dark:from-background dark:via-background dark:to-primary/10">
             <Head title={`${t("order")} #${order.order_number}`} />
 
-            <div className="container mx-auto px-4 py-8 md:py-12">
+            <div className="container mx-auto px-4 py-8 md:py-12" data-testid="order-details-container">
                 <div className="flex items-center gap-4 mb-8">
-                    <Link href={route("orders.index")}>
+                    <Link to="/orders">
                         <Button variant="ghost" size="icon">
                             <BackArrowIcon className="h-5 w-5" />
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-3xl md:text-4xl font-bold mb-2">
+                        <h1 className="text-3xl md:text-4xl font-bold mb-2" data-testid="order-number-display">
                             {t("order")} #{order.order_number}
                         </h1>
                         <p className="text-muted-foreground">
@@ -158,6 +191,7 @@ export default function OrderShow({ order, auth }: OrderShowPageProps) {
                                 <CardTitle className="flex items-center justify-between">
                                     <span>{t("orderStatus")}</span>
                                     <Badge
+                                        data-testid="order-status-badge"
                                         className={`flex items-center gap-1 ${getStatusColor(
                                             order.status
                                         )}`}
@@ -169,7 +203,7 @@ export default function OrderShow({ order, auth }: OrderShowPageProps) {
                             </CardHeader>
                             <CardContent>
                                 {order.status !== "cancelled" && (
-                                    <div className="relative">
+                                    <div className="relative" data-testid="order-status-timeline">
                                         <div className="flex justify-between mb-4">
                                             {orderTimeline.map(
                                                 (item, index) => {
@@ -250,7 +284,7 @@ export default function OrderShow({ order, auth }: OrderShowPageProps) {
                                     {t("orderItems")} ({order.items.length})
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-4" data-testid="order-items-list">
                                 {order.items.map((item, index) => (
                                     <div key={item.id}>
                                         {index > 0 && <Separator />}
@@ -391,7 +425,7 @@ export default function OrderShow({ order, auth }: OrderShowPageProps) {
                                     <span className="font-semibold text-lg">
                                         {t("total")}
                                     </span>
-                                    <span className="font-bold text-2xl text-primary">
+                                    <span className="font-bold text-2xl text-primary" data-testid="order-total-display">
                                         {formatCurrency(order.total)}
                                     </span>
                                 </div>

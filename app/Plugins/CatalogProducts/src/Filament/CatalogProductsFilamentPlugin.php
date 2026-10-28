@@ -11,7 +11,7 @@ final class CatalogProductsFilamentPlugin implements Plugin
 {
     public static function make(): static
     {
-        return app(static::class);
+        return app(self::class);
     }
 
     public function getId(): string
@@ -23,11 +23,11 @@ final class CatalogProductsFilamentPlugin implements Plugin
     {
         $panel
             ->resources([
-                \App\Plugins\CatalogProducts\src\Filament\Resources\Categories\CategoryResource::class,
-                \App\Plugins\CatalogProducts\src\Filament\Resources\Products\ProductResource::class,
-                \App\Plugins\CatalogProducts\src\Filament\Resources\WeightOptions\WeightOptionResource::class,
-                \App\Plugins\CatalogProducts\src\Filament\Resources\ExtraOptions\ExtraOptionResource::class,
-                \App\Plugins\CatalogProducts\src\Filament\Resources\Sections\SectionResource::class,
+                Resources\Categories\CategoryResource::class,
+                Resources\Products\ProductResource::class,
+                Resources\WeightOptions\WeightOptionResource::class,
+                Resources\ExtraOptions\ExtraOptionResource::class,
+                Resources\Sections\SectionResource::class,
             ])
             ->pages([
                 //

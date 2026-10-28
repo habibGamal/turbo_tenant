@@ -9,7 +9,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
-class OrderInfolist
+final class OrderInfolist
 {
     public static function configure(Schema $schema): Schema
     {
@@ -84,15 +84,15 @@ class OrderInfolist
                         TextEntry::make('pos_status')
                             ->badge()
                             ->color(fn ($state): string => match ($state) {
-                                \App\Plugins\PosIntegration\src\Enums\OrderPosStatus::NOT_READY => 'gray',
-                                \App\Plugins\PosIntegration\src\Enums\OrderPosStatus::READY => 'info',
-                                \App\Plugins\PosIntegration\src\Enums\OrderPosStatus::SENDING => 'warning',
-                                \App\Plugins\PosIntegration\src\Enums\OrderPosStatus::SENT => 'success',
-                                \App\Plugins\PosIntegration\src\Enums\OrderPosStatus::FAILED => 'danger',
+                                \App\Plugins\OrderManagement\src\Enums\OrderPosStatus::NOT_READY => 'gray',
+                                \App\Plugins\OrderManagement\src\Enums\OrderPosStatus::READY => 'info',
+                                \App\Plugins\OrderManagement\src\Enums\OrderPosStatus::SENDING => 'warning',
+                                \App\Plugins\OrderManagement\src\Enums\OrderPosStatus::SENT => 'success',
+                                \App\Plugins\OrderManagement\src\Enums\OrderPosStatus::FAILED => 'danger',
                                 default => 'gray',
                             }),
                         TextEntry::make('pos_failure_reason')
-                            ->visible(fn ($record) => $record->pos_status === \App\Plugins\PosIntegration\src\Enums\OrderPosStatus::FAILED)
+                            ->visible(fn ($record) => $record->pos_status === \App\Plugins\OrderManagement\src\Enums\OrderPosStatus::FAILED)
                             ->columnSpanFull()
                             ->color('danger'),
                     ])

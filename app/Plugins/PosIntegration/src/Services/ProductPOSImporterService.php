@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Plugins\PosIntegration\src\Services;
 
-use App\Enums\SettingKey;
 use App\Plugins\CatalogProducts\src\Models\Category;
 use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Plugins\PosIntegration\src\DTOs\PosIntegrationConfig;
@@ -352,11 +351,14 @@ class ProductPOSImporterService
                     'sell_by_weight' => false,
                 ]);
 
-                // Create POS mapping (without branch_id for now)
-                ProductPosMapping::query()->create([
+                // Create or update POS mapping (without branch_id for now)
+                ProductPosMapping::query()->updateOrCreate([
                     'product_id' => $product->id,
-                    'pos_item_id' => $masterProduct['productRef'] ?? $masterProduct['posRef'],
+                    'variant_id' => null,
+                    'extra_option_item_id' => null,
                     'branch_id' => null,
+                ], [
+                    'pos_item_id' => $masterProduct['productRef'] ?? $masterProduct['posRef'],
                 ]);
 
                 $imported++;

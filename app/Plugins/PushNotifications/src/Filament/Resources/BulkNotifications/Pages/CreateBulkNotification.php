@@ -9,7 +9,7 @@ use App\Plugins\PushNotifications\src\Filament\Resources\BulkNotifications\BulkN
 use App\Plugins\PushNotifications\src\Jobs\SendBulkNotificationJob;
 use Filament\Resources\Pages\CreateRecord;
 
-class CreateBulkNotification extends CreateRecord
+final class CreateBulkNotification extends CreateRecord
 {
     protected static string $resource = BulkNotificationResource::class;
 

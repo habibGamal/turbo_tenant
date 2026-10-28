@@ -26,6 +26,8 @@ use UnitEnum;
  */
 final class ManifestSettings extends Page
 {
+    use \App\Core\Plugins\Concerns\BelongsToPlugin;
+
     /**
      * @var array<string, mixed> | null
      */
@@ -128,7 +130,7 @@ final class ManifestSettings extends Page
                                     FileUpload::make('src')
                                         ->label('Icon Source')
                                         ->image()
-                                        ->directory('pwa-icons')
+                                        ->directory('images/pwa-icons')
                                         ->required(),
                                     TextInput::make('sizes')
                                         ->label('Sizes')

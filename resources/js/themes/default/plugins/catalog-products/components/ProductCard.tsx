@@ -1,0 +1,259 @@
+import React, { useRef } from 'react';
+import ReactPixel from 'react-facebook-pixel';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ImageWithFallback } from '@/components/ui/image';
+import { ShoppingCart, Star, Heart, Flame, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { apiClient } from '@/core/api/client';
+
+import { Product } from '@/types';
+import ProductOptionsModal from './ProductOptionsModal';
+import { useFavoritesStorage } from '@/plugins/customer-favorites';
+import { hasActiveDiscount, getEffectivePrice, getDiscountPercent } from '@/lib/pricing';
+
+interface ProductCardProps {
+    product: Product;
+    onAddToCart?: (e: React.MouseEvent, productId: number) => void;
+    addingToCart?: boolean;
+    showFavorite?: boolean;
+    onClick?: () => void;
+}
+
+export default function ProductCard({
+    product,
+    onAddToCart,
+    addingToCart = false,
+    showFavorite = false,
+    onClick,
+}: ProductCardProps) {
+    const { t, i18n } = useTranslation();
+    const navigate = useNavigate();
+    const { isFavorite, toggleFavorite } = useFavoritesStorage();
+    const isProductActive = product.is_active ?? true;
+
+    const handleCardClick = () => {
+        if (!isProductActive) {
+            return;
+        }
+
+        if (onClick) {
+            onClick();
+        } else {
+            navigate(`/products/${product.id}`);
+        }
+    };
+
+    const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [isLoading, setIsLoading] = React.useState(false);
+    const fullProduct = useRef<Product | null>(null);
+
+    const hasOptions = Boolean(
+        (product as any).has_options ||
+        (product as any).has_variants ||
+        (product as any).has_extras ||
+        product.sell_by_weight ||
+        (product.variants && product.variants.length > 0) ||
+        (product as any).extra_option_id ||
+        (product as any).extraOption
+    );
+
+    const handleAddToCartClick = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        if (!isProductActive) {
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const response = await apiClient.get<any>(`/api/catalog-products/${product.id}`);
+            fullProduct.current = response.data.product || response.data.data;
+            setIsModalOpen(true);
+        } catch (error) {
+            console.error("Failed to fetch product details", error);
+            // Fallback to navigation if fetch fails
+            navigate(`/products/${product.id}`);
+        } finally {
+            setIsLoading(false);
+        }
+        return;
+    };
+
+    const handleButtonClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!isProductActive) return;
+        if (hasOptions) {
+            handleAddToCartClick(e);
+        } else if (onAddToCart) {
+            onAddToCart(e, product.id);
+        } else {
+            handleAddToCartClick(e);
+        }
+    };
+
+    const formatPrice = (price?: number) => {
+        return `${Number(price || 0).toFixed(2)} ${t("currency")}`;
+    };
+
+    const getText = (text: string, textAr?: string) => {
+        return i18n.language === 'ar' && textAr ? textAr : text;
+    };
+
+    const getCategoryName = () => {
+        if (!product.category) return null;
+        if (typeof product.category === 'string') {
+            return getText(product.category, product.categoryAr);
+        }
+
+        return getText(product.category.name, product.category.name_ar);
+    };
+
+    const hasDiscount = hasActiveDiscount(product);
+    const displayPrice = getEffectivePrice(product);
+    const discountPercent = getDiscountPercent(product);
+
+    return (
+        <>
+            <Card
+                data-testid="product-card"
+                className={`group transition-all duration-300 ${isProductActive ? 'hover:shadow-lg hover:-translate-y-1 cursor-pointer' : 'opacity-70 grayscale cursor-not-allowed'}`}
+                onClick={handleCardClick}
+                aria-disabled={!isProductActive}
+            >
+                {/* Product Image */}
+                <div className="relative aspect-square overflow-hidden rounded-t-lg">
+                    <ImageWithFallback
+                        src={product.image}
+                        alt={getText(product.name, product.name_ar)}
+                        className={`w-full h-full object-cover transition-transform duration-300 ${isProductActive ? 'group-hover:scale-105' : ''}`}
+                    />
+
+                    {/* Badges */}
+                    <div className="absolute z-10 top-2 ltr:left-2 rtl:right-2 flex flex-col gap-2">
+                        {!isProductActive && (
+                            <Badge variant="secondary" className="bg-muted text-muted-foreground shadow-lg">
+                                {t('unavailable')}
+                            </Badge>
+                        )}
+                        {product.badge && (
+                            <Badge className="backdrop-blur-sm bg-primary/90 shadow-lg">
+                                {getText(product.badge, product.badgeAr)}
+                            </Badge>
+                        )}
+                        {hasDiscount && (
+                            <Badge variant="destructive" className="flex items-center gap-1 shadow-lg">
+                                <Flame className="h-3 w-3" />
+                                -{discountPercent}%
+                            </Badge>
+                        )}
+                    </div>
+
+                    {/* Favorite Button */}
+                    {showFavorite && (
+                        <Button
+                            data-testid="product-favorite-toggle"
+                            variant="secondary"
+                            size="icon"
+                            className="absolute top-2 ltr:right-2 rtl:left-2 h-9 w-9 rounded-full bg-white/90 dark:bg-card/90 backdrop-blur-sm hover:bg-white dark:hover:bg-card shadow-md transition-transform active:scale-95 z-20"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite(product.id);
+                            }}
+                        >
+                            <Heart
+                                className={`h-5 w-5 transition-colors ${
+                                    isFavorite(product.id)
+                                        ? 'fill-red-500 text-red-500'
+                                        : 'text-foreground hover:text-red-500'
+                                }`}
+                            />
+                        </Button>
+                    )}
+                </div>
+
+                <CardHeader className="p-4 pb-2">
+                    {/* Category */}
+                    {getCategoryName() && (
+                        <p className="text-xs text-muted-foreground mb-1">
+                            {getCategoryName()}
+                        </p>
+                    )}
+
+                    {/* Product Name */}
+                    <h3 data-testid="product-card-title" className="font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors">
+                        {getText(product.name, product.name_ar)}
+                    </h3>
+
+                    {/* Rating */}
+                    {product.rating && (
+                        <div className="flex items-center gap-1 mt-1">
+                            <Star className="h-4 w-4 fill-primary text-primary" />
+                            <span className="text-xs font-medium">{product.rating}</span>
+                            {product.reviewsCount && (
+                                <span className="text-xs text-muted-foreground">
+                                    ({product.reviewsCount})
+                                </span>
+                            )}
+                        </div>
+                    )}
+                </CardHeader>
+
+                <CardContent className="p-4 pt-0">
+                    {/* Description */}
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4 h-10">
+                        {getText(product.description, product.descriptionAr)}
+                    </p>
+
+                    {/* Price and Add to Cart */}
+                    <div className="flex items-center justify-between gap-2">
+                        <div>
+                            <div className="flex items-baseline gap-2">
+                                <span data-testid="product-card-price" className="text-xl font-bold text-primary">
+                                    {formatPrice(displayPrice)}
+                                </span>
+                                {hasDiscount && (
+                                    <span className="text-xs text-muted-foreground line-through">
+                                        {formatPrice(product.base_price)}
+                                    </span>
+                                )}
+                            </div>
+                            {product.sell_by_weight && (
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    {t('perKg')}
+                                </p>
+                            )}
+                        </div>
+
+                        <Button
+                            data-testid="product-add-to-cart"
+                            size="sm"
+                            className="rounded-full shadow-sm hover:shadow transition-all"
+                            onClick={handleButtonClick}
+                            disabled={isLoading || addingToCart || !isProductActive}
+                        >
+                            {isLoading || addingToCart ? (
+                                <Loader2 className="h-4 w-4 animate-spin ltr:mr-1 rtl:ml-1" />
+                            ) : (
+                                <ShoppingCart className="h-4 w-4 ltr:mr-1 rtl:ml-1" />
+                            )}
+                            {t('addToCart')}
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {fullProduct.current && (
+                <ProductOptionsModal
+                    product={fullProduct.current}
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                />
+            )}
+        </>
+    );
+}

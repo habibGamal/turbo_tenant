@@ -17,8 +17,10 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class BulkNotificationResource extends Resource
+final class BulkNotificationResource extends Resource
 {
+    use \App\Core\Plugins\Concerns\BelongsToPlugin;
+
     protected static ?string $model = BulkNotification::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBell;

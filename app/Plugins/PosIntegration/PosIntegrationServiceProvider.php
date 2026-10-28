@@ -67,5 +67,10 @@ final class PosIntegrationServiceProvider extends ServiceProvider
         \App\Plugins\CatalogProducts\src\Models\Product::resolveRelationUsing('posMappings', function ($product) {
             return $product->hasMany(\App\Plugins\PosIntegration\src\Models\ProductPosMapping::class);
         });
+
+        // Dynamic relationship on Branch
+        \App\Plugins\LocationsDelivery\src\Models\Branch::resolveRelationUsing('posMappings', function ($branch) {
+            return $branch->hasMany(\App\Plugins\PosIntegration\src\Models\ProductPosMapping::class);
+        });
     }
 }

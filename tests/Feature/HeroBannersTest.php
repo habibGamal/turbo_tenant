@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Plugins\HeroBanners\src\Models\HeroSlider as LegacyHeroSlider;
 use App\Plugins\HeroBanners\src\Filament\Resources\HeroSliderResource;
 use App\Plugins\HeroBanners\src\Models\HeroSlider;
+use App\Plugins\HeroBanners\src\Models\HeroSlider as LegacyHeroSlider;
 use App\Plugins\HeroBanners\src\Services\HeroBannerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -40,10 +40,10 @@ it('resolves legacy model alias to plugin hero slider model', function () {
 });
 
 it('resolves legacy filament resource alias to plugin hero slider resource', function () {
-    expect(class_exists(\App\Filament\Resources\HeroSliderResource::class))->toBeTrue();
+    expect(class_exists(App\Filament\Resources\HeroSliderResource::class))->toBeTrue();
 
-    expect(is_subclass_of(\App\Filament\Resources\HeroSliderResource::class, \Filament\Resources\Resource::class))->toBeTrue();
-    expect((new ReflectionClass(\App\Filament\Resources\HeroSliderResource::class))->getName())
+    expect(is_subclass_of(App\Filament\Resources\HeroSliderResource::class, Filament\Resources\Resource::class))->toBeTrue();
+    expect((new ReflectionClass(App\Filament\Resources\HeroSliderResource::class))->getName())
         ->toBe(HeroSliderResource::class);
 });
 
@@ -73,6 +73,17 @@ it('serves active hero sliders via api endpoint', function () {
     $response->assertSuccessful()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.title', 'Promo 1');
+});
+
+it('serves active hero banners via decoupled rest api endpoint', function () {
+    HeroSlider::factory()->create(['title' => 'Decoupled Promo', 'sort_order' => 1, 'is_active' => true]);
+
+    $response = $this->getJson(route('api.hero-banners.index'));
+
+    $response->assertSuccessful()
+        ->assertJsonPath('status', 'success')
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.title', 'Decoupled Promo');
 });
 
 it('configures filament resource methods properly', function () {

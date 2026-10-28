@@ -11,8 +11,6 @@ use App\Models\Tenant;
 use App\Models\TenantPlugin;
 use Filament\Contracts\Plugin as FilamentPluginContract;
 use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Support\Collection;
-use RuntimeException;
 
 final class PluginManager
 {
@@ -69,8 +67,9 @@ final class PluginManager
             $pluginInstance = $this->resolvePluginInstance($manifest);
             if ($pluginInstance !== null) {
                 $pluginInstance->bootForTenant($tenant);
-                $booted[$manifest->id] = $pluginInstance;
             }
+
+            $booted[$manifest->id] = $pluginInstance ?? true;
         }
 
         $this->bootedTenantPlugins[$tenantId] = $booted;
@@ -92,7 +91,7 @@ final class PluginManager
         $tenantId = (string) $tenant->id;
 
         if (isset($this->bootedTenantPlugins[$tenantId])) {
-            return isset($this->bootedTenantPlugins[$tenantId][$pluginId]);
+            return array_key_exists($pluginId, $this->bootedTenantPlugins[$tenantId]);
         }
 
         return TenantPlugin::query()
@@ -131,8 +130,14 @@ final class PluginManager
      *
      * @return array<FilamentPluginContract>
      */
-    public function getActiveFilamentPluginsForTenant(Tenant $tenant): array
+    public function getActiveFilamentPluginsForTenant(?Tenant $tenant = null): array
     {
+        $tenant = $tenant ?? (function_exists('tenant') ? tenant() : null);
+
+        if (! $tenant) {
+            return [];
+        }
+
         $activeIds = $this->getActivePluginIds($tenant);
         $filamentPlugins = [];
 
@@ -162,5 +167,4 @@ final class PluginManager
 
         return null;
     }
-
 }

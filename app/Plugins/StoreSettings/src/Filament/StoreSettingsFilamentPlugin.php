@@ -11,7 +11,7 @@ final class StoreSettingsFilamentPlugin implements Plugin
 {
     public static function make(): static
     {
-        return app(static::class);
+        return app(self::class);
     }
 
     public function getId(): string
@@ -26,12 +26,11 @@ final class StoreSettingsFilamentPlugin implements Plugin
                 //
             ])
             ->pages([
-                \App\Plugins\StoreSettings\src\Filament\Pages\Settings::class,
-                \App\Plugins\StoreSettings\src\Filament\Pages\ManifestSettings::class,
+                Pages\Settings::class,
+                Pages\ManifestSettings::class,
             ]);
 
     }
-
 
     public function boot(Panel $panel): void
     {

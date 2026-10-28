@@ -1,6 +1,8 @@
-import React, { FormEvent } from "react";
-import MainLayout from '@/themes/default/layouts/MainLayout';
-import { Head, Link, useForm } from "@inertiajs/react";
+import React, { FormEvent, useState } from "react";
+import { Link } from "react-router-dom";
+import MainLayout from "@/themes/default/layouts/MainLayout";
+import { Head } from "@/components/Head";
+import { apiClient } from "@/core/api/client";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,17 +21,39 @@ interface ForgotPasswordProps {
     status?: string;
 }
 
-export default function ForgotPassword({ status }: ForgotPasswordProps) {
+export default function ForgotPassword({ status: initialStatus }: ForgotPasswordProps) {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === "ar";
 
-    const { data, setData, post, processing, errors } = useForm({
-        email: "",
-    });
+    const [email, setEmail] = useState("");
+    const [status, setStatus] = useState(initialStatus || "");
+    const [processing, setProcessing] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
-    const submit = (e: FormEvent) => {
+    const submit = async (e: FormEvent) => {
         e.preventDefault();
-        post(route("password.email"));
+        setProcessing(true);
+        setErrors({});
+        setStatus("");
+
+        try {
+            const res = await apiClient.post("/api/tenant/auth/forgot-password", { email });
+            setStatus(res.data.message || t("passwordResetLinkSent", "Password reset link sent!"));
+        } catch (err: any) {
+            if (err.response?.status === 422 && err.response?.data?.errors) {
+                const apiErrors: Record<string, string> = {};
+                for (const [key, msgs] of Object.entries<any>(err.response.data.errors)) {
+                    apiErrors[key] = Array.isArray(msgs) ? msgs[0] : String(msgs);
+                }
+                setErrors(apiErrors);
+            } else if (err.response?.data?.message) {
+                setErrors({ email: err.response.data.message });
+            } else {
+                setErrors({ email: t("somethingWentWrong", "An error occurred. Please try again.") });
+            }
+        } finally {
+            setProcessing(false);
+        }
     };
 
     return (
@@ -81,19 +105,18 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
                                     </Label>
                                     <div className="relative">
                                         <Mail
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${isRTL ? "right-3" : "left-3"
-                                                }`}
+                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
+                                                isRTL ? "right-3" : "left-3"
+                                            }`}
                                         />
                                         <Input
                                             id="email"
                                             type="email"
                                             name="email"
-                                            value={data.email}
+                                            value={email}
                                             autoComplete="username"
                                             autoFocus
-                                            onChange={(e) =>
-                                                setData("email", e.target.value)
-                                            }
+                                            onChange={(e) => setEmail(e.target.value)}
                                             className={`${isRTL ? "pr-10" : "pl-10"}`}
                                             placeholder={t("emailPlaceholder")}
                                         />
@@ -131,7 +154,7 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
 
                                 <div className="text-center">
                                     <Link
-                                        href={route("login")}
+                                        to="/login"
                                         className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors inline-flex items-center gap-2"
                                     >
                                         {isRTL ? (

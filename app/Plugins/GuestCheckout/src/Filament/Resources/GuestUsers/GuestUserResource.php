@@ -15,11 +15,13 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class GuestUserResource extends Resource
+final class GuestUserResource extends Resource
 {
+    use \App\Core\Plugins\Concerns\BelongsToPlugin;
+
     protected static ?string $model = GuestUser::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserCircle;
 
     protected static ?string $navigationLabel = 'الزوار';
 

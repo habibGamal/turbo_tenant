@@ -1,4 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -10,6 +11,7 @@ import { Globe } from 'lucide-react';
 
 export function LanguageSwitcher() {
     const { currentLanguage, changeLanguage } = useLanguage();
+    const { t } = useTranslation();
 
     const languages = [
         { code: 'ar', label: 'العربية' },
@@ -21,7 +23,7 @@ export function LanguageSwitcher() {
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
                     <Globe className="h-5 w-5" />
-                    <span className="sr-only">Switch language</span>
+                    <span className="sr-only">{t('switchLanguage', 'Switch language')}</span>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

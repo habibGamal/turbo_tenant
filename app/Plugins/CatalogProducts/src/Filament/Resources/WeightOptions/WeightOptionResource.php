@@ -18,9 +18,11 @@ use Filament\Tables\Table;
 
 final class WeightOptionResource extends Resource
 {
+    use \App\Core\Plugins\Concerns\BelongsToPlugin;
+
     protected static ?string $model = WeightOption::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedScale;
 
     protected static ?string $navigationLabel = 'خيارات الوزن';
 

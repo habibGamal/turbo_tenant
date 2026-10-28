@@ -11,7 +11,7 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
-class ViewBulkNotification extends ViewRecord
+final class ViewBulkNotification extends ViewRecord
 {
     protected static string $resource = BulkNotificationResource::class;
 

@@ -18,9 +18,11 @@ use Filament\Tables\Table;
 
 final class ExtraOptionResource extends Resource
 {
+    use \App\Core\Plugins\Concerns\BelongsToPlugin;
+
     protected static ?string $model = ExtraOption::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPlusCircle;
 
     protected static ?string $navigationLabel = 'الخيارات الإضافية';
 

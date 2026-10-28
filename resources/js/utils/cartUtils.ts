@@ -1,4 +1,5 @@
-import axios from 'axios';
+import { apiClient } from '@/core/api/client';
+import { queryClient } from '@/core/api/query-client';
 
 export interface ExtraWithQuantity {
     id: number;
@@ -27,10 +28,14 @@ export interface CartOperationCallbacks {
 }
 
 /**
- * Helper to dispatch cart updated event
+ * Helper to dispatch cart updated event & sync TanStack Query cache
  */
 const dispatchCartUpdated = (cart: any) => {
-    const count = cart.items.length;
+    const count = cart?.items?.length ?? 0;
+    if (cart) {
+        queryClient.setQueryData(['cart'], cart);
+    }
+    queryClient.invalidateQueries({ queryKey: ['cart'] });
     window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count } }));
 };
 
@@ -42,7 +47,7 @@ export const addToCart = async (
     callbacks?: CartOperationCallbacks
 ) => {
     try {
-        const response = await axios.post(route('cart.store'), {
+        const response = await apiClient.post('/api/cart/items', {
             product_id: params.product_id,
             variant_id: params.variant_id ?? null,
             weight_option_value_id: params.weight_option_value_id ?? null,
@@ -71,8 +76,8 @@ export const updateCartItem = async (
     callbacks?: CartOperationCallbacks
 ) => {
     try {
-        const response = await axios.patch(
-            route('cart.update', { itemId: itemId.toString() }),
+        const response = await apiClient.patch(
+            `/api/cart/items/${itemId}`,
             {
                 quantity: params.quantity,
                 weight_multiplier: params.weight_multiplier,
@@ -99,9 +104,7 @@ export const removeCartItem = async (
     callbacks?: CartOperationCallbacks
 ) => {
     try {
-        const response = await axios.delete(
-            route('cart.destroy', { itemId: itemId.toString() })
-        );
+        const response = await apiClient.delete(`/api/cart/items/${itemId}`);
 
         dispatchCartUpdated(response.data.cart);
         callbacks?.onSuccess?.(response.data);
@@ -119,7 +122,7 @@ export const removeCartItem = async (
  */
 export const clearCart = async (callbacks?: CartOperationCallbacks) => {
     try {
-        const response = await axios.delete(route('cart.clear'));
+        const response = await apiClient.delete('/api/cart');
 
         dispatchCartUpdated(response.data.cart);
         callbacks?.onSuccess?.(response.data);
@@ -137,7 +140,7 @@ export const clearCart = async (callbacks?: CartOperationCallbacks) => {
  */
 export const getCart = async (callbacks?: CartOperationCallbacks) => {
     try {
-        const response = await axios.get(route('cart.index'));
+        const response = await apiClient.get('/api/cart');
 
         callbacks?.onSuccess?.(response.data);
         return response.data;

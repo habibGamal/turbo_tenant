@@ -52,6 +52,25 @@ final class CartRepository implements CartRepositoryInterface
         int $weightMultiplier = 1
     ): CartItem {
         return DB::transaction(function () use ($cart, $productId, $variantId, $quantity, $extras, $weightOptionValueId, $weightMultiplier) {
+            if (empty($extras)) {
+                $existingItem = CartItem::where('cart_id', $cart->id)
+                    ->where('product_id', $productId)
+                    ->where('variant_id', $variantId)
+                    ->where('weight_option_value_id', $weightOptionValueId)
+                    ->doesntHave('extras')
+                    ->first();
+
+                if ($existingItem) {
+                    $newQuantity = (string) ((float) ($existingItem->quantity) + (float) $quantity);
+                    $existingItem->update([
+                        'quantity' => $newQuantity,
+                    ]);
+                    $cart->update(['last_activity_at' => now()]);
+
+                    return $existingItem;
+                }
+            }
+
             $cartItem = CartItem::create([
                 'cart_id' => $cart->id,
                 'product_id' => $productId,

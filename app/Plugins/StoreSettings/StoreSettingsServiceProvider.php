@@ -14,10 +14,10 @@ final class StoreSettingsServiceProvider extends ServiceProvider
         $this->app->singleton(SettingService::class, fn () => new SettingService());
         $this->app->alias(SettingService::class, 'setting.service');
 
-        $this->app->singleton(\App\Plugins\StoreSettings\src\DTOs\StoreConfig::class, function ($app) {
+        $this->app->singleton(src\DTOs\StoreConfig::class, function ($app) {
             $settings = $app->make(SettingService::class);
 
-            return new \App\Plugins\StoreSettings\src\DTOs\StoreConfig(
+            return new src\DTOs\StoreConfig(
                 siteName: (string) ($settings->get(\App\Enums\SettingKey::SITE_NAME) ?? 'Restaurant'),
                 siteNameAr: $settings->get(\App\Enums\SettingKey::SITE_NAME_AR),
                 currency: (string) ($settings->get(\App\Enums\SettingKey::CURRENCY) ?? 'EGP'),
@@ -30,6 +30,9 @@ final class StoreSettingsServiceProvider extends ServiceProvider
                 contactAddress: $settings->get(\App\Enums\SettingKey::CONTACT_ADDRESS)
             );
         });
+
+        $this->app->singleton(src\Bootstrap\StoreSettingsBootstrapContributor::class);
+        $this->app->tag([src\Bootstrap\StoreSettingsBootstrapContributor::class], 'tenant.bootstrap.contributors');
     }
 
     public function boot(): void
@@ -37,4 +40,3 @@ final class StoreSettingsServiceProvider extends ServiceProvider
         //
     }
 }
-

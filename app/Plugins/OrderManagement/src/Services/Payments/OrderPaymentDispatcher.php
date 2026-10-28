@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Services\Payments;
 
-use App\Plugins\PaymentProcessing\src\Contracts\PaymentGatewayInterface;
 use App\Plugins\LocationsDelivery\src\Models\Address;
+use App\Plugins\OrderManagement\src\Contracts\PaymentGatewayInterface;
 use App\Plugins\OrderManagement\src\DTOs\OrderPlacementResult;
 use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
 use App\Plugins\OrderManagement\src\Models\Order;

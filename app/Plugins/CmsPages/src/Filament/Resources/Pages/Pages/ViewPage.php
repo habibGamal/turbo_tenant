@@ -8,7 +8,7 @@ use App\Plugins\CmsPages\src\Filament\Resources\Pages\PageResource;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
-class ViewPage extends ViewRecord
+final class ViewPage extends ViewRecord
 {
     protected static string $resource = PageResource::class;
 

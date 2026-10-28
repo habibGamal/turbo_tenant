@@ -4,29 +4,32 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Filament\Resources\Orders\Pages;
 
-use App\Plugins\PosIntegration\src\Enums\OrderPosStatus;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\OrderResource;
+use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use Filament\Actions\Action;
-use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
-class ViewOrder extends ViewRecord
+final class ViewOrder extends ViewRecord
 {
     protected static string $resource = OrderResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
-            EditAction::make(),
             Action::make('resend_to_pos')
-                ->label('Resend to POS')
+                ->label('إعادة الإرسال لنقطة البيع')
+                ->icon('heroicon-o-arrow-path')
+                ->color('warning')
                 ->requiresConfirmation()
+                ->modalHeading('إعادة الإرسال لنقطة البيع')
+                ->modalDescription('هل أنت متأكد من إعادة إرسال هذا الطلب لنقطة البيع؟')
+                ->modalSubmitActionLabel('تأكيد')
                 ->action(function ($record) {
-                    $record->update(['pos_status' => OrderPosStatus::READY]);
-                    Notification::make()->title('Order sent to POS')->success()->send();
+                    $record->update(['pos_status' => class_exists(OrderPosStatus::class) ? OrderPosStatus::READY : 'ready']);
+                    Notification::make()->title('تم إعادة إرسال الطلب لنقطة البيع')->success()->send();
                 })
-                ->visible(fn ($record) => $record->pos_status === OrderPosStatus::FAILED),
+                ->visible(fn ($record) => class_exists(OrderPosStatus::class) && ($record->pos_status === OrderPosStatus::FAILED || $record->pos_status === 'failed')),
         ];
     }
 }

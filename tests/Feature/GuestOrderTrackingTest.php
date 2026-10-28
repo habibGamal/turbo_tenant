@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Plugins\GuestCheckout\src\Models\GuestUser;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
-use App\Plugins\CatalogProducts\src\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -23,7 +23,7 @@ it('can successfully track guest order with correct credentials', function () {
         'user_id' => null,
     ]);
 
-    $response = $this->postJson(route('orders.track'), [
+    $response = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-TEST123',
         'phone' => '1234567890',
         'phone_country_code' => '+20',
@@ -59,7 +59,7 @@ it('tracking fails with wrong phone number', function () {
         'user_id' => null,
     ]);
 
-    $response = $this->postJson(route('orders.track'), [
+    $response = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-TEST123',
         'phone' => '9999999999', // Wrong phone
         'phone_country_code' => '+20',
@@ -84,7 +84,7 @@ it('tracking fails with wrong order number', function () {
         'user_id' => null,
     ]);
 
-    $response = $this->postJson(route('orders.track'), [
+    $response = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-WRONG999',
         'phone' => '1234567890',
         'phone_country_code' => '+20',
@@ -119,7 +119,7 @@ it('tracking returns order with relationships', function () {
         'product_id' => $product->id,
     ]);
 
-    $response = $this->postJson(route('orders.track'), [
+    $response = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-REL123',
         'phone' => '1234567890',
         'phone_country_code' => '+20',
@@ -164,7 +164,7 @@ it('prevents cross-guest access to orders', function () {
     ]);
 
     // Guest 2 tries to access Guest 1's order
-    $response = $this->postJson(route('orders.track'), [
+    $response = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-GUEST1',
         'phone' => '2222222222', // Guest 2's phone
         'phone_country_code' => '+20',
@@ -177,7 +177,7 @@ it('prevents cross-guest access to orders', function () {
     ]);
 
     // Verify Guest 1 can still access their order
-    $response2 = $this->postJson(route('orders.track'), [
+    $response2 = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-GUEST1',
         'phone' => '1111111111',
         'phone_country_code' => '+20',
@@ -199,7 +199,7 @@ it('uses default country code +20 when not provided', function () {
         'user_id' => null,
     ]);
 
-    $response = $this->postJson(route('orders.track'), [
+    $response = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-DEFAULT',
         'phone' => '1234567890',
         // phone_country_code not provided
@@ -210,7 +210,7 @@ it('uses default country code +20 when not provided', function () {
 });
 
 it('validates order_number is required', function () {
-    $response = $this->postJson(route('orders.track'), [
+    $response = $this->postJson(route('api.guest-checkout.track'), [
         // Missing order_number
         'phone' => '1234567890',
         'phone_country_code' => '+20',
@@ -221,7 +221,7 @@ it('validates order_number is required', function () {
 });
 
 it('validates phone is required', function () {
-    $response = $this->postJson(route('orders.track'), [
+    $response = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-TEST123',
         // Missing phone
         'phone_country_code' => '+20',
@@ -253,7 +253,7 @@ it('can track order with different country codes correctly', function () {
     ]);
 
     // Track Egyptian order
-    $response1 = $this->postJson(route('orders.track'), [
+    $response1 = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-EGYPT',
         'phone' => '1234567890',
         'phone_country_code' => '+20',
@@ -263,7 +263,7 @@ it('can track order with different country codes correctly', function () {
     expect($response1->json('order.id'))->toBe($egyptianOrder->id);
 
     // Track Saudi order
-    $response2 = $this->postJson(route('orders.track'), [
+    $response2 = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-SAUDI',
         'phone' => '1234567890',
         'phone_country_code' => '+966',
@@ -273,7 +273,7 @@ it('can track order with different country codes correctly', function () {
     expect($response2->json('order.id'))->toBe($saudiOrder->id);
 
     // Egyptian guest cannot access Saudi order
-    $response3 = $this->postJson(route('orders.track'), [
+    $response3 = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-SAUDI',
         'phone' => '1234567890',
         'phone_country_code' => '+20',
@@ -301,7 +301,7 @@ it('can track multiple orders for same guest', function () {
     ]);
 
     // Track first order
-    $response1 = $this->postJson(route('orders.track'), [
+    $response1 = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-FIRST',
         'phone' => '1234567890',
         'phone_country_code' => '+20',
@@ -311,7 +311,7 @@ it('can track multiple orders for same guest', function () {
     expect($response1->json('order.id'))->toBe($order1->id);
 
     // Track second order
-    $response2 = $this->postJson(route('orders.track'), [
+    $response2 = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-SECOND',
         'phone' => '1234567890',
         'phone_country_code' => '+20',
@@ -331,7 +331,7 @@ it('cannot track user orders as guest', function () {
     ]);
 
     // Try to track with any phone
-    $response = $this->postJson(route('orders.track'), [
+    $response = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-USER',
         'phone' => '9999999999',
         'phone_country_code' => '+20',
@@ -358,7 +358,7 @@ it('returns order with correct status information', function () {
         'total' => 150.50,
     ]);
 
-    $response = $this->postJson(route('orders.track'), [
+    $response = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-STATUS',
         'phone' => '1234567890',
         'phone_country_code' => '+20',
@@ -368,11 +368,4 @@ it('returns order with correct status information', function () {
     expect($response->json('order.status'))->toBe('processing');
     expect($response->json('order.payment_status'))->toBe('completed');
     expect($response->json('order.total'))->toBe(150.50);
-});
-
-it('tracking page is accessible', function () {
-    $response = $this->get(route('orders.track.page'));
-
-    $response->assertSuccessful();
-    $response->assertInertia(fn ($page) => $page->component('Track'));
 });

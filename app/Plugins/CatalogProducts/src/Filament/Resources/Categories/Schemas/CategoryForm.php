@@ -35,7 +35,7 @@ final class CategoryForm
                             ->label('الصورة')
                             ->image()
                             ->imageEditor()
-                            ->directory('categories'),
+                            ->optimizeForWeb('categories'),
                         TextInput::make('sort_order')
                             ->label('ترتيب العرض')
                             ->numeric()

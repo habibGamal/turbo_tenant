@@ -1,10 +1,37 @@
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
-        Options -MultiViews -Indexes
+        Options -MultiViews -Indexes +FollowSymLinks
     </IfModule>
 
     RewriteEngine On
 
+    # -------------------------------------------------------------
+    # 1. Block direct public access to sensitive storage directories
+    # -------------------------------------------------------------
+    RewriteCond %{THE_REQUEST} \s/tenant-storage [NC]
+    RewriteRule ^ - [F]
+
+    # -------------------------------------------------------------
+    # 2. Direct static serving for tenant images & storage (bypasses PHP)
+    # -------------------------------------------------------------
+    # Images: /images/{path} -> tenant-storage/tenant{subdomain}/app/images/{path}
+    RewriteCond %{HTTP_HOST} ^([^.]+)\. [NC]
+    RewriteCond %{DOCUMENT_ROOT}/tenant-storage/tenant%1/app/images/$1 -f
+    RewriteRule ^images/(.+)$ tenant-storage/tenant%1/app/images/$1 [L]
+
+    # Support /storage/images/{path}
+    RewriteCond %{HTTP_HOST} ^([^.]+)\. [NC]
+    RewriteCond %{DOCUMENT_ROOT}/tenant-storage/tenant%1/app/images/$1 -f
+    RewriteRule ^storage/images/(.+)$ tenant-storage/tenant%1/app/images/$1 [L]
+
+    # Legacy storage: /storage/{path} -> tenant-storage/tenant{subdomain}/app/{path}
+    RewriteCond %{HTTP_HOST} ^([^.]+)\. [NC]
+    RewriteCond %{DOCUMENT_ROOT}/tenant-storage/tenant%1/app/$1 -f
+    RewriteRule ^storage/(.+)$ tenant-storage/tenant%1/app/$1 [L]
+
+    # -------------------------------------------------------------
+    # Standard Laravel Routing (Handles non-existing files & app)
+    # -------------------------------------------------------------
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -22,5 +49,11 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+</IfModule>
 
+# Caching headers for direct static assets
+<IfModule mod_headers.c>
+    <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
 </IfModule>

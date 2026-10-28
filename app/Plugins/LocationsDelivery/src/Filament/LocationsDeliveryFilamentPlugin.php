@@ -11,7 +11,7 @@ final class LocationsDeliveryFilamentPlugin implements Plugin
 {
     public static function make(): static
     {
-        return app(static::class);
+        return app(self::class);
     }
 
     public function getId(): string
@@ -23,17 +23,16 @@ final class LocationsDeliveryFilamentPlugin implements Plugin
     {
         $panel
             ->resources([
-                \App\Plugins\LocationsDelivery\src\Filament\Resources\Branches\BranchResource::class,
-                \App\Plugins\LocationsDelivery\src\Filament\Resources\Governorates\GovernorateResource::class,
-                \App\Plugins\LocationsDelivery\src\Filament\Resources\Areas\AreaResource::class,
-                \App\Plugins\LocationsDelivery\src\Filament\Resources\Addresses\AddressResource::class,
+                Resources\Branches\BranchResource::class,
+                Resources\Governorates\GovernorateResource::class,
+                Resources\Areas\AreaResource::class,
+                Resources\Addresses\AddressResource::class,
             ])
 
             ->pages([
                 //
             ]);
     }
-
 
     public function boot(Panel $panel): void
     {

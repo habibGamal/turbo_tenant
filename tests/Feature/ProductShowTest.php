@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('displays product details page', function () {
+it('displays product details page via REST API', function () {
     $category = Category::factory()->create(['name' => 'Pizza']);
     $product = Product::factory()->create([
         'name' => 'Margherita Pizza',
@@ -21,136 +21,132 @@ it('displays product details page', function () {
         'is_active' => true,
     ]);
 
-    $response = $this->get(route('products.show', $product));
+    $response = $this->getJson(route('api.catalog-products.show', $product->id));
 
     $response->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->component('ProductShow')
-            ->has('product')
-            ->where('product.id', $product->id)
-            ->where('product.name', 'Margherita Pizza')
-            ->where('product.base_price', 12.99)
-        );
+        ->assertJson([
+            'status' => 'success',
+            'data' => [
+                'id' => $product->id,
+                'name' => 'Margherita Pizza',
+                'base_price' => 12.99,
+            ],
+        ]);
 });
 
-it('loads product with category relationship', function () {
+it('loads product with category relationship via REST API', function () {
     $category = Category::factory()->create(['name' => 'Burgers']);
     $product = Product::factory()->create([
         'category_id' => $category->id,
+        'is_active' => true,
     ]);
 
-    $response = $this->get(route('products.show', $product));
+    $response = $this->getJson(route('api.catalog-products.show', $product->id));
 
     $response->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->has('product.category')
-            ->where('product.category.name', 'Burgers')
-        );
+        ->assertJsonPath('data.category.name', 'Burgers');
 });
 
-it('loads product with variants', function () {
-    $product = Product::factory()->create();
-    $smallVariant = ProductVariant::factory()->create([
+it('loads product with variants via REST API', function () {
+    $category = Category::factory()->create();
+    $product = Product::factory()->create(['category_id' => $category->id, 'is_active' => true]);
+    ProductVariant::factory()->create([
         'product_id' => $product->id,
         'name' => 'Small',
         'price' => 8.99,
         'is_available' => true,
     ]);
-    $largeVariant = ProductVariant::factory()->create([
+    ProductVariant::factory()->create([
         'product_id' => $product->id,
         'name' => 'Large',
         'price' => 12.99,
         'is_available' => true,
     ]);
 
-    $response = $this->get(route('products.show', $product));
+    $response = $this->getJson(route('api.catalog-products.show', $product->id));
 
-    $response->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->has('product.variants', 2)
-        );
+    $response->assertSuccessful();
+    expect($response->json('data.variants'))->toHaveCount(2);
 });
 
-it('loads product with extra options and items', function () {
+it('loads product with extra options and items via REST API', function () {
+    $category = Category::factory()->create();
     $extraOption = ExtraOption::factory()->create(['name' => 'Toppings']);
     $product = Product::factory()->create([
+        'category_id' => $category->id,
         'extra_option_id' => $extraOption->id,
+        'is_active' => true,
     ]);
 
-    $extraItem1 = ExtraOptionItem::factory()->create([
+    ExtraOptionItem::factory()->create([
         'extra_option_id' => $extraOption->id,
         'name' => 'Extra Cheese',
         'price' => 2.00,
     ]);
-    $extraItem2 = ExtraOptionItem::factory()->create([
+    ExtraOptionItem::factory()->create([
         'extra_option_id' => $extraOption->id,
         'name' => 'Olives',
         'price' => 1.50,
     ]);
 
-    $response = $this->get(route('products.show', $product));
+    $response = $this->getJson(route('api.catalog-products.show', $product->id));
 
     $response->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->has('product.extraOption')
-            ->where('product.extraOption.name', 'Toppings')
-            ->has('product.extraOption.items', 2)
-        );
+        ->assertJsonPath('data.extra_option.name', 'Toppings');
+    expect($response->json('data.extra_option.items'))->toHaveCount(2);
 });
 
-it('displays reviews for the product', function () {
-    $product = Product::factory()->create();
+it('displays reviews for the product via REST API', function () {
+    $category = Category::factory()->create();
+    $product = Product::factory()->create(['category_id' => $category->id, 'is_active' => true]);
 
-    $response = $this->get(route('products.show', $product));
+    $response = $this->getJson(route('api.catalog-products.show', $product->id));
 
     $response->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->has('reviews')
-        );
+        ->assertJsonStructure(['status', 'reviews']);
 });
 
-it('loads related products from the same category', function () {
+it('loads related products from the same category via REST API', function () {
     $category = Category::factory()->create();
     $product = Product::factory()->create([
         'category_id' => $category->id,
         'is_active' => true,
     ]);
 
-    // Create related products in the same category
-    $relatedProducts = Product::factory()->count(3)->create([
+    Product::factory()->count(3)->create([
         'category_id' => $category->id,
         'is_active' => true,
     ]);
 
-    $response = $this->get(route('products.show', $product));
+    $response = $this->getJson(route('api.catalog-products.show', $product->id));
 
     $response->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->has('relatedProducts')
-        );
+        ->assertJsonStructure(['status', 'related_products']);
+    expect($response->json('related_products'))->toHaveCount(3);
 });
 
-it('loads promotional products with discounts', function () {
+it('loads promotional products with discounts via REST API', function () {
+    $category = Category::factory()->create();
     $product = Product::factory()->create([
+        'category_id' => $category->id,
         'is_active' => true,
     ]);
 
-    // Create promotional products with discounts
-    $promoProducts = Product::factory()->count(2)->create([
+    Product::factory()->count(2)->create([
+        'category_id' => $category->id,
         'base_price' => 20.00,
         'price_after_discount' => 15.00,
         'is_active' => true,
     ]);
 
-    $response = $this->get(route('products.show', $product));
+    $response = $this->getJson(route('api.catalog-products.show', $product->id));
 
     $response->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->has('promotionalProducts')
-        );
+        ->assertJsonStructure(['status', 'promotional_products']);
+    expect($response->json('promotional_products'))->toHaveCount(2);
 });
 
-it('excludes current product from related products', function () {
+it('excludes current product from related products via REST API', function () {
     $category = Category::factory()->create();
     $product = Product::factory()->create([
         'category_id' => $category->id,
@@ -158,27 +154,21 @@ it('excludes current product from related products', function () {
         'is_active' => true,
     ]);
 
-    // Create related products in the same category
     Product::factory()->count(3)->create([
         'category_id' => $category->id,
         'is_active' => true,
     ]);
 
-    $response = $this->get(route('products.show', $product));
+    $response = $this->getJson(route('api.catalog-products.show', $product->id));
 
-    $response->assertSuccessful()
-        ->assertInertia(function ($page) use ($product) {
-            $relatedProducts = $page->toArray()['props']['relatedProducts'];
-            $relatedProductIds = array_column($relatedProducts, 'id');
-
-            expect($relatedProductIds)->not->toContain($product->id);
-
-            return $page;
-        });
+    $response->assertSuccessful();
+    $relatedProductIds = array_column($response->json('related_products'), 'id');
+    expect($relatedProductIds)->not->toContain($product->id);
 });
 
-it('only shows available variants', function () {
-    $product = Product::factory()->create();
+it('only shows available variants via REST API', function () {
+    $category = Category::factory()->create();
+    $product = Product::factory()->create(['category_id' => $category->id, 'is_active' => true]);
 
     ProductVariant::factory()->create([
         'product_id' => $product->id,
@@ -192,47 +182,36 @@ it('only shows available variants', function () {
         'is_available' => false,
     ]);
 
-    $response = $this->get(route('products.show', $product));
+    $response = $this->getJson(route('api.catalog-products.show', $product->id));
 
-    $response->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->has('product.variants', 1)
-        );
+    $response->assertSuccessful();
+    expect($response->json('data.variants'))->toHaveCount(1);
+    expect($response->json('data.variants.0.name'))->toBe('Available');
 });
 
-it('returns 404 for non-existent product', function () {
-    $response = $this->get('/products/99999');
+it('returns 404 for non-existent product via REST API', function () {
+    $response = $this->getJson('/api/catalog-products/99999');
 
-    $response->assertNotFound();
+    $response->assertNotFound()
+        ->assertJson([
+            'status' => 'error',
+            'message' => 'Product not found or unavailable.',
+        ]);
 });
 
-it('handles product without category gracefully', function () {
+it('displays discounted price when available via REST API', function () {
+    $category = Category::factory()->create();
     $product = Product::factory()->create([
-        'category_id' => null,
-        'is_active' => true,
-    ]);
-
-    $response = $this->get(route('products.show', $product));
-
-    $response->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->where('product.category', null)
-        );
-});
-
-it('displays discounted price when available', function () {
-    $product = Product::factory()->create([
+        'category_id' => $category->id,
         'base_price' => 20.00,
         'price_after_discount' => 15.00,
         'is_active' => true,
     ]);
 
-    $response = $this->get(route('products.show', $product));
+    $response = $this->getJson(route('api.catalog-products.show', $product->id));
 
-    $response->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->where('product.base_price', 20.00)
-            ->where('product.price_after_discount', 15.00)
-            ->where('product.price', 15.00)
-        );
+    $response->assertSuccessful();
+    expect((float) $response->json('data.base_price'))->toBe(20.00)
+        ->and((float) $response->json('data.price_after_discount'))->toBe(15.00)
+        ->and((float) $response->json('data.price'))->toBe(15.00);
 });

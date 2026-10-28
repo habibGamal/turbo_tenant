@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\PaymentProcessing\src\Services;
 
-use App\Plugins\PaymentProcessing\src\Contracts\PaymentGatewayInterface;
+use App\Plugins\OrderManagement\src\Contracts\PaymentGatewayInterface;
 use App\Plugins\PaymentProcessing\src\DTOs\PaymentProcessingConfig;
 use InvalidArgumentException;
 

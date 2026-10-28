@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Plugins\PosIntegration\src\Services\POS;
 
 use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\PosIntegration\src\Models\ProductPosMapping;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\OrderPOSPayloadBuilderInterface;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\POSProductResolverInterface;
+use Illuminate\Support\Collection;
 
 final class OrderPOSPayloadBuilder implements OrderPOSPayloadBuilderInterface
 {
@@ -28,11 +30,23 @@ final class OrderPOSPayloadBuilder implements OrderPOSPayloadBuilderInterface
         $userData = $this->customerFormatter->format($order);
         $orderItems = [];
 
-        foreach ($order->items as $item) {
-            $resolvedItem = $this->productResolver->resolveOrderItem($item, $order->branch_id);
+        // Preload all mappings for the whole order in ONE query
+        $mappings = $this->loadMappingsForOrder($order);
+        if (method_exists($this->productResolver, 'setMappings')) {
+            $this->productResolver->setMappings($mappings);
+        }
 
-            if ($resolvedItem !== null) {
-                $orderItems[] = $resolvedItem;
+        try {
+            foreach ($order->items as $item) {
+                $resolvedItem = $this->productResolver->resolveOrderItem($item, $order->branch_id);
+
+                if ($resolvedItem !== null) {
+                    $orderItems[] = $resolvedItem;
+                }
+            }
+        } finally {
+            if (method_exists($this->productResolver, 'setMappings')) {
+                $this->productResolver->setMappings(null);
             }
         }
 
@@ -62,6 +76,50 @@ final class OrderPOSPayloadBuilder implements OrderPOSPayloadBuilderInterface
             'user' => $userData,
             'order' => $orderData,
         ];
+    }
+
+    /**
+     * Load all mappings for an order in a single database query.
+     *
+     * @return Collection<int, ProductPosMapping>
+     */
+    public function loadMappingsForOrder(Order $order): Collection
+    {
+        if (method_exists($this->productResolver, 'loadMappingsForOrder')) {
+            return $this->productResolver->loadMappingsForOrder($order);
+        }
+
+        $productIds = $order->items->pluck('product_id')->filter()->unique()->values()->all();
+        $extraOptionItemIds = $order->items->flatMap->extras->pluck('extra_option_item_id')->filter()->unique()->values()->all();
+
+        if (empty($productIds) && empty($extraOptionItemIds)) {
+            return collect();
+        }
+
+        return ProductPosMapping::query()
+            ->where(function ($query) use ($order) {
+                if ($order->branch_id !== null) {
+                    $query->where('branch_id', $order->branch_id)
+                        ->orWhereNull('branch_id');
+                } else {
+                    $query->whereNull('branch_id');
+                }
+            })
+            ->where(function ($query) use ($productIds, $extraOptionItemIds) {
+                $hasCondition = false;
+                if (! empty($productIds)) {
+                    $query->whereIn('product_id', $productIds);
+                    $hasCondition = true;
+                }
+                if (! empty($extraOptionItemIds)) {
+                    if ($hasCondition) {
+                        $query->orWhereIn('extra_option_item_id', $extraOptionItemIds);
+                    } else {
+                        $query->whereIn('extra_option_item_id', $extraOptionItemIds);
+                    }
+                }
+            })
+            ->get();
     }
 
     /**

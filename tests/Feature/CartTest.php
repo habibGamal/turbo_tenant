@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Models\User;
 use App\Plugins\CartEngine\src\Models\Cart;
 use App\Plugins\CartEngine\src\Models\CartItem;
+use App\Plugins\CartEngine\src\Services\CartService;
 use App\Plugins\CatalogProducts\src\Models\ExtraOptionItem;
 use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Plugins\CatalogProducts\src\Models\ProductVariant;
-use App\Models\User;
-use App\Plugins\CartEngine\src\Services\CartService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -17,17 +17,18 @@ beforeEach(function () {
     $this->cartService = app(CartService::class);
 });
 
-it('can view cart page', function () {
-    $response = $this->get(route('cart.index'));
+it('can view cart page via api', function () {
+    $response = $this->getJson(route('api.cart.index'));
 
     $response->assertSuccessful();
-    $response->assertInertia(fn ($page) => $page->component('Cart'));
+    $response->assertJsonStructure(['status', 'cart']);
 });
 
 it('can add item to cart as guest', function () {
-    $product = Product::factory()->create(['base_price' => 10.00]);
+    auth()->logout();
+    $product = Product::factory()->create(['base_price' => 10.00, 'is_active' => true]);
 
-    $response = $this->postJson(route('cart.store'), [
+    $response = $this->postJson(route('api.cart.store'), [
         'product_id' => $product->id,
         'quantity' => '2',
     ]);
@@ -51,10 +52,10 @@ it('can add item to cart as guest', function () {
 
 it('can add item to cart as authenticated user', function () {
     $user = User::factory()->create();
-    $product = Product::factory()->create(['base_price' => 15.00]);
+    $product = Product::factory()->create(['base_price' => 15.00, 'is_active' => true]);
 
     $response = $this->actingAs($user)
-        ->postJson(route('cart.store'), [
+        ->postJson(route('api.cart.store'), [
             'product_id' => $product->id,
             'quantity' => '1',
         ]);
@@ -80,7 +81,7 @@ it('can add item with variant to cart', function () {
     ]);
 
     $response = $this->actingAs($user)
-        ->postJson(route('cart.store'), [
+        ->postJson(route('api.cart.store'), [
             'product_id' => $product->id,
             'variant_id' => $variant->id,
             'quantity' => '1',
@@ -96,11 +97,11 @@ it('can add item with variant to cart', function () {
 
 it('can add item with extras to cart', function () {
     $user = User::factory()->create();
-    $product = Product::factory()->create();
     $extra = ExtraOptionItem::factory()->create(['price' => 2.50]);
+    $product = Product::factory()->create(['extra_option_id' => $extra->extra_option_id]);
 
     $response = $this->actingAs($user)
-        ->postJson(route('cart.store'), [
+        ->postJson(route('api.cart.store'), [
             'product_id' => $product->id,
             'quantity' => '1',
             'extras' => [$extra->id],
@@ -128,7 +129,7 @@ it('can update cart item quantity', function () {
     ]);
 
     $response = $this->actingAs($user)
-        ->patchJson(route('cart.update', $cartItem->id), [
+        ->patchJson(route('api.cart.update', $cartItem->id), [
             'quantity' => '3',
         ]);
 
@@ -150,7 +151,7 @@ it('can remove item from cart', function () {
     ]);
 
     $response = $this->actingAs($user)
-        ->deleteJson(route('cart.destroy', $cartItem->id));
+        ->deleteJson(route('api.cart.destroy', $cartItem->id));
 
     $response->assertSuccessful();
 
@@ -174,7 +175,7 @@ it('can clear entire cart', function () {
     ]);
 
     $response = $this->actingAs($user)
-        ->deleteJson(route('cart.clear'));
+        ->deleteJson(route('api.cart.clear'));
 
     $response->assertSuccessful();
 
@@ -184,11 +185,12 @@ it('can clear entire cart', function () {
 });
 
 it('syncs guest cart to user cart on login', function () {
+    auth()->logout();
     // Create a product
-    $product = Product::factory()->create(['base_price' => 10.00]);
+    $product = Product::factory()->create(['base_price' => 10.00, 'is_active' => true]);
 
     // Add item to guest cart
-    $this->postJson(route('cart.store'), [
+    $this->postJson(route('api.cart.store'), [
         'product_id' => $product->id,
         'quantity' => '2',
     ]);
@@ -202,7 +204,7 @@ it('syncs guest cart to user cart on login', function () {
 
     // Sync cart
     $response = $this->actingAs($user)
-        ->postJson(route('cart.sync'));
+        ->postJson(route('api.cart.sync'));
 
     $response->assertSuccessful();
 
@@ -225,7 +227,7 @@ it('syncs guest cart to user cart on login', function () {
 });
 
 it('validates product_id is required when adding to cart', function () {
-    $response = $this->postJson(route('cart.store'), [
+    $response = $this->postJson(route('api.cart.store'), [
         'quantity' => '1',
     ]);
 
@@ -238,7 +240,7 @@ it('cannot add inactive product to cart', function () {
         'is_active' => false,
     ]);
 
-    $response = $this->postJson(route('cart.store'), [
+    $response = $this->postJson(route('api.cart.store'), [
         'product_id' => $inactiveProduct->id,
         'quantity' => '1',
     ]);
@@ -254,7 +256,7 @@ it('cannot add inactive product to cart', function () {
 it('validates quantity is required when adding to cart', function () {
     $product = Product::factory()->create();
 
-    $response = $this->postJson(route('cart.store'), [
+    $response = $this->postJson(route('api.cart.store'), [
         'product_id' => $product->id,
     ]);
 
@@ -265,7 +267,7 @@ it('validates quantity is required when adding to cart', function () {
 it('validates quantity minimum value', function () {
     $product = Product::factory()->create();
 
-    $response = $this->postJson(route('cart.store'), [
+    $response = $this->postJson(route('api.cart.store'), [
         'product_id' => $product->id,
         'quantity' => '0',
     ]);
@@ -277,7 +279,7 @@ it('validates quantity minimum value', function () {
 it('validates extras must be array', function () {
     $product = Product::factory()->create();
 
-    $response = $this->postJson(route('cart.store'), [
+    $response = $this->postJson(route('api.cart.store'), [
         'product_id' => $product->id,
         'quantity' => '1',
         'extras' => 'not-an-array',
@@ -290,7 +292,7 @@ it('validates extras must be array', function () {
 it('validates extra option items exist', function () {
     $product = Product::factory()->create();
 
-    $response = $this->postJson(route('cart.store'), [
+    $response = $this->postJson(route('api.cart.store'), [
         'product_id' => $product->id,
         'quantity' => '1',
         'extras' => [999999],
@@ -311,7 +313,7 @@ it('updates cart last_activity_at when adding items', function () {
     $oldActivityTime = $cart->last_activity_at;
 
     $this->actingAs($user)
-        ->postJson(route('cart.store'), [
+        ->postJson(route('api.cart.store'), [
             'product_id' => $product->id,
             'quantity' => '1',
         ]);
@@ -323,18 +325,18 @@ it('updates cart last_activity_at when adding items', function () {
 
 it('increments quantity when adding same item again', function () {
     $user = User::factory()->create();
-    $product = Product::factory()->create();
+    $product = Product::factory()->create(['is_active' => true]);
 
     // Add item first time
     $this->actingAs($user)
-        ->postJson(route('cart.store'), [
+        ->postJson(route('api.cart.store'), [
             'product_id' => $product->id,
             'quantity' => '2',
         ]);
 
     // Add same item again
     $this->actingAs($user)
-        ->postJson(route('cart.store'), [
+        ->postJson(route('api.cart.store'), [
             'product_id' => $product->id,
             'quantity' => '3',
         ]);
@@ -359,7 +361,7 @@ it('can update cart item weight_multiplier', function () {
     ]);
 
     $response = $this->actingAs($user)
-        ->patchJson(route('cart.update', $cartItem->id), [
+        ->patchJson(route('api.cart.update', $cartItem->id), [
             'weight_multiplier' => 3,
         ]);
 
@@ -373,8 +375,8 @@ it('can update cart item weight_multiplier', function () {
 
 it('can update cart item weight_option_value_id', function () {
     $user = User::factory()->create();
-    $product = Product::factory()->create(['sell_by_weight' => true]);
     $weightOption = App\Plugins\CatalogProducts\src\Models\WeightOption::factory()->create();
+    $product = Product::factory()->create(['sell_by_weight' => true, 'weight_options_id' => $weightOption->id]);
     $weightValue1 = App\Plugins\CatalogProducts\src\Models\WeightOptionValue::factory()->create([
         'weight_option_id' => $weightOption->id,
         'value' => '0.5',
@@ -394,7 +396,7 @@ it('can update cart item weight_option_value_id', function () {
     ]);
 
     $response = $this->actingAs($user)
-        ->patchJson(route('cart.update', $cartItem->id), [
+        ->patchJson(route('api.cart.update', $cartItem->id), [
             'weight_option_value_id' => $weightValue2->id,
         ]);
 
@@ -408,8 +410,8 @@ it('can update cart item weight_option_value_id', function () {
 
 it('can update multiple cart item properties at once', function () {
     $user = User::factory()->create();
-    $product = Product::factory()->create(['sell_by_weight' => true]);
     $weightOption = App\Plugins\CatalogProducts\src\Models\WeightOption::factory()->create();
+    $product = Product::factory()->create(['sell_by_weight' => true, 'weight_options_id' => $weightOption->id]);
     $weightValue1 = App\Plugins\CatalogProducts\src\Models\WeightOptionValue::factory()->create([
         'weight_option_id' => $weightOption->id,
         'value' => '0.5',
@@ -429,7 +431,7 @@ it('can update multiple cart item properties at once', function () {
     ]);
 
     $response = $this->actingAs($user)
-        ->patchJson(route('cart.update', $cartItem->id), [
+        ->patchJson(route('api.cart.update', $cartItem->id), [
             'quantity' => '2.000',
             'weight_multiplier' => 3,
             'weight_option_value_id' => $weightValue2->id,

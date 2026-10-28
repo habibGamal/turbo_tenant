@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\PosIntegration\src\Filament;
 
+use App\Plugins\PosIntegration\src\Filament\Widgets\PosFailedOrdersTable;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 
@@ -11,7 +12,7 @@ final class PosIntegrationFilamentPlugin implements Plugin
 {
     public static function make(): static
     {
-        return app(static::class);
+        return app(self::class);
     }
 
     public function getId(): string
@@ -26,8 +27,11 @@ final class PosIntegrationFilamentPlugin implements Plugin
                 //
             ])
             ->pages([
-                \App\Plugins\PosIntegration\src\Filament\Pages\ImportPOSProducts::class,
-                \App\Plugins\PosIntegration\src\Filament\Pages\SyncPOSPrices::class,
+                Pages\ImportPOSProducts::class,
+                Pages\SyncPOSPrices::class,
+            ])
+            ->widgets([
+                PosFailedOrdersTable::class,
             ]);
     }
 

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "@inertiajs/react";
 import { addToCart } from "@/utils/cartUtils";
-import ProductCard from "@/themes/default/components/ProductCard";
+import ProductCard from "@/themes/default/plugins/catalog-products/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Star, TrendingUp, Flame } from "lucide-react";

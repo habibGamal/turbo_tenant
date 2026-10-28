@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace App\Plugins\LocationsDelivery\src\Models;
 
 use App\Models\User;
-use App\Plugins\OrderManagement\src\Models\Order;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Address extends Model
 {
@@ -41,11 +39,6 @@ class Address extends Model
     public function area(): BelongsTo
     {
         return $this->belongsTo(Area::class);
-    }
-
-    public function orders(): HasMany
-    {
-        return $this->hasMany(Order::class);
     }
 
     protected function casts(): array

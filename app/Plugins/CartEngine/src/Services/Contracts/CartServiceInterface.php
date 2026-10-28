@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\Plugins\CartEngine\src\Services\Contracts;
 
+use App\Core\Plugins\Contracts\GuestCustomer;
 use App\Models\User;
-use App\Plugins\GuestCheckout\src\Models\GuestUser;
 
 interface CartServiceInterface
 {
-    public function getCartCount(User|GuestUser|null $user): int;
+    public function getCartCount(User|GuestCustomer|null $user): int;
 
-    public function getCart(User|GuestUser|null $user): array;
+    public function getCart(User|GuestCustomer|null $user): array;
 
     public function addItem(
-        User|GuestUser|null $user,
+        User|GuestCustomer|null $user,
         int $productId,
         ?int $variantId,
         string $quantity,
@@ -24,16 +24,16 @@ interface CartServiceInterface
     ): array;
 
     public function updateItem(
-        User|GuestUser|null $user,
+        User|GuestCustomer|null $user,
         string|int $itemId,
         ?string $quantity = null,
         ?int $weightMultiplier = null,
         ?int $weightOptionValueId = null
     ): array;
 
-    public function removeItem(User|GuestUser|null $user, string|int $itemId): array;
+    public function removeItem(User|GuestCustomer|null $user, string|int $itemId): array;
 
-    public function clearCart(User|GuestUser|null $user): array;
+    public function clearCart(User|GuestCustomer|null $user): array;
 
     public function syncGuestCartToUser(User $user): void;
 }

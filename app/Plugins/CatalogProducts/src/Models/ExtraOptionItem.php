@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class ExtraOptionItem extends Model
+final class ExtraOptionItem extends Model
 {
     use HasFactory;
 
@@ -37,7 +37,7 @@ class ExtraOptionItem extends Model
     protected function casts(): array
     {
         return [
-            'price' => 'double',
+            'price' => 'float',
             'is_default' => 'boolean',
             'sort_order' => 'integer',
             'allow_quantity' => 'boolean',

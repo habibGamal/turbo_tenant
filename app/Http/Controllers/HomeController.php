@@ -4,49 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Plugins\CatalogProducts\src\Models\Category;
-use App\Plugins\CatalogProducts\src\Models\Section;
-use App\Plugins\HeroBanners\src\Models\HeroSlider;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Contracts\View\View;
 
 final class HomeController extends Controller
 {
-    public function index(): Response
+    public function index(): View
     {
-        // Get categories with their products
-        $categories = Category::query()
-            ->orderBy('name')
-            ->get(['id', 'name', 'name_ar', 'description', 'image']);
-
-        $sections = Section::query()
-            ->with([
-                'products' => function ($query) {
-                    $query->where('is_active', true)
-                        ->with('category:id,name,name_ar');
-                },
-            ])
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->get();
-
-        // Transform sections to match frontend expectations if needed,
-        // or just pass them as is and handle in frontend.
-        // The Section model has 'products' relation.
-
-        $heroSlides = HeroSlider::query()
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->get();
-
-        return Inertia::render('HomePage', [
-            'categories' => $categories,
-            'sections' => $sections,
-            'heroSlides' => $heroSlides,
-            'tenant' => [
-                'name' => tenant('id'),
-                'theme' => 'default',
-            ],
-        ]);
+        return view('app');
     }
 }

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Plugins\CartEngine\src\Services;
 
+use App\Core\Plugins\Contracts\GuestCustomer;
 use App\Models\User;
-use App\Plugins\GuestCheckout\src\Models\GuestUser;
 use App\Plugins\CartEngine\src\Services\Contracts\CartContextResolverInterface;
 use App\Plugins\CartEngine\src\Services\Contracts\CartItemFormatterInterface;
 use App\Plugins\CartEngine\src\Services\Contracts\CartRepositoryInterface;
 use App\Plugins\CartEngine\src\Services\Contracts\CartServiceInterface;
 use App\Plugins\CartEngine\src\Services\Contracts\ProductValidatorInterface;
 
-class CartService implements CartServiceInterface
+final class CartService implements CartServiceInterface
 {
     public function __construct(
         private readonly CartRepositoryInterface $repository,
@@ -21,14 +21,14 @@ class CartService implements CartServiceInterface
         private readonly ProductValidatorInterface $validator
     ) {}
 
-    public function getCartCount(User|GuestUser|null $user): int
+    public function getCartCount(User|GuestCustomer|null $user): int
     {
         $cart = $this->contextResolver->resolveCart($user);
 
         return $this->repository->countCartItems($cart);
     }
 
-    public function getCart(User|GuestUser|null $user): array
+    public function getCart(User|GuestCustomer|null $user): array
     {
         if ($user instanceof User) {
             $cart = $this->repository->findCartWithRelations('user_id', $user->id);
@@ -41,7 +41,7 @@ class CartService implements CartServiceInterface
     }
 
     public function addItem(
-        User|GuestUser|null $user,
+        User|GuestCustomer|null $user,
         int $productId,
         ?int $variantId,
         string $quantity,
@@ -50,6 +50,7 @@ class CartService implements CartServiceInterface
         int $weightMultiplier = 1
     ): array {
         $this->validator->ensureProductIsActive($productId);
+        $this->validator->validateOptions($productId, $variantId, $weightOptionValueId, $extras);
 
         $cart = $this->contextResolver->resolveOrCreateCart($user);
 
@@ -67,13 +68,25 @@ class CartService implements CartServiceInterface
     }
 
     public function updateItem(
-        User|GuestUser|null $user,
+        User|GuestCustomer|null $user,
         string|int $itemId,
         ?string $quantity = null,
         ?int $weightMultiplier = null,
         ?int $weightOptionValueId = null
     ): array {
+        $cart = $this->contextResolver->resolveCart($user);
+        if (! $cart) {
+            abort(404, 'Cart item not found');
+        }
+
         $cartItem = $this->repository->findCartItemOrFail((int) $itemId);
+        if ($cartItem->cart_id !== $cart->id) {
+            abort(404, 'Cart item not found');
+        }
+
+        if ($weightOptionValueId !== null) {
+            $this->validator->validateUpdateWeightOption((int) $cartItem->product_id, $weightOptionValueId);
+        }
 
         $updateData = [];
 
@@ -98,9 +111,18 @@ class CartService implements CartServiceInterface
         return $this->getCart($targetUser);
     }
 
-    public function removeItem(User|GuestUser|null $user, string|int $itemId): array
+    public function removeItem(User|GuestCustomer|null $user, string|int $itemId): array
     {
+        $cart = $this->contextResolver->resolveCart($user);
+        if (! $cart) {
+            abort(404, 'Cart item not found');
+        }
+
         $cartItem = $this->repository->findCartItemOrFail((int) $itemId);
+        if ($cartItem->cart_id !== $cart->id) {
+            abort(404, 'Cart item not found');
+        }
+
         $targetUser = $user ?? $cartItem->cart->user;
 
         $this->repository->deleteCartItem($cartItem);
@@ -108,7 +130,7 @@ class CartService implements CartServiceInterface
         return $this->getCart($targetUser);
     }
 
-    public function clearCart(User|GuestUser|null $user): array
+    public function clearCart(User|GuestCustomer|null $user): array
     {
         $cart = $this->contextResolver->resolveCart($user);
 

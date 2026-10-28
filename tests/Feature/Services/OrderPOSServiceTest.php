@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 use App\Enums\PaymentMethod;
+use App\Models\User;
+use App\Plugins\CatalogProducts\src\Models\ExtraOptionItem;
+use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\CatalogProducts\src\Models\ProductVariant;
 use App\Plugins\LocationsDelivery\src\Models\Address;
 use App\Plugins\LocationsDelivery\src\Models\Area;
 use App\Plugins\LocationsDelivery\src\Models\Branch;
@@ -10,12 +14,13 @@ use App\Plugins\LocationsDelivery\src\Models\Governorate;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
 use App\Plugins\OrderManagement\src\Models\OrderItemExtra;
-use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Plugins\PosIntegration\src\Models\ProductPosMapping;
-use App\Models\User;
 use App\Plugins\PosIntegration\src\Services\OrderPOSService;
+use App\Plugins\PosIntegration\src\Services\POS\OrderPOSPayloadBuilder;
+use App\Plugins\PosIntegration\src\Services\POS\POSProductResolver;
 use App\Plugins\PosIntegration\src\Services\ProductPOSImporterService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
@@ -352,7 +357,7 @@ describe('placeOrder', function () {
             'link' => 'https://pos.example.com',
         ]);
 
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'pos_order_user_'.uniqid().'@example.com']);
         $order = Order::factory()->create([
             'user_id' => $user->id,
             'branch_id' => $branch->id,
@@ -461,7 +466,7 @@ describe('placeOrder', function () {
             'governorate_id' => $governorate->id,
         ]);
 
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'pos_order_user_'.uniqid().'@example.com']);
         $address = Address::factory()->create([
             'user_id' => $user->id,
             'area_id' => $area->id,
@@ -521,7 +526,7 @@ describe('placeOrder', function () {
             'governorate_id' => $governorate->id,
         ]);
 
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'pos_order_user_'.uniqid().'@example.com']);
         $address = Address::factory()->create([
             'user_id' => $user->id,
             'area_id' => $area->id,
@@ -539,7 +544,7 @@ describe('placeOrder', function () {
             'branch_id' => $branch->id,
         ]);
 
-        $extraOptionItem = App\Plugins\CatalogProducts\src\Models\ExtraOptionItem::factory()->create();
+        $extraOptionItem = ExtraOptionItem::factory()->create();
 
         ProductPosMapping::factory()->create([
             'extra_option_item_id' => $extraOptionItem->id,
@@ -590,9 +595,9 @@ describe('placeOrder', function () {
     });
 
     it('supports pure SOLID dependency injection with mocked interfaces', function () {
-        $apiClient = mock(\App\Plugins\PosIntegration\src\Services\POS\Contracts\POSApiClientInterface::class);
-        $payloadBuilder = mock(\App\Plugins\PosIntegration\src\Services\POS\Contracts\OrderPOSPayloadBuilderInterface::class);
-        $errorHandler = mock(\App\Plugins\PosIntegration\src\Services\POS\Contracts\POSErrorResponseHandlerInterface::class);
+        $apiClient = mock(App\Plugins\PosIntegration\src\Services\POS\Contracts\POSApiClientInterface::class);
+        $payloadBuilder = mock(App\Plugins\PosIntegration\src\Services\POS\Contracts\OrderPOSPayloadBuilderInterface::class);
+        $errorHandler = mock(App\Plugins\PosIntegration\src\Services\POS\Contracts\POSErrorResponseHandlerInterface::class);
 
         $branch = Branch::factory()->create();
         $order = Order::factory()->create([
@@ -628,7 +633,7 @@ describe('placeOrder', function () {
             'link' => 'https://pos.example.com',
         ]);
 
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'pos_order_user_'.uniqid().'@example.com']);
         $address = Address::factory()->create([
             'user_id' => $user->id,
             'phone_number' => '01234567890',
@@ -680,7 +685,7 @@ describe('placeOrder', function () {
             'link' => 'https://pos.example.com',
         ]);
 
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'pos_order_user_'.uniqid().'@example.com']);
         $address = Address::factory()->create([
             'user_id' => $user->id,
             'phone_number' => '01234567890',
@@ -716,5 +721,241 @@ describe('placeOrder', function () {
 
         expect(fn () => $this->service->placeOrder($order))
             ->toThrow(Exception::class, 'الوردية غير صحيحة');
+    });
+});
+
+describe('POS Mapping enhancements (Groups 3.a - 3.d)', function () {
+    it('prevents duplicate mapping entries even when some columns are NULL', function () {
+        $product = Product::factory()->create();
+
+        ProductPosMapping::create([
+            'product_id' => $product->id,
+            'variant_id' => null,
+            'extra_option_item_id' => null,
+            'branch_id' => null,
+            'pos_item_id' => 'POS-1',
+        ]);
+
+        expect(function () use ($product) {
+            ProductPosMapping::create([
+                'product_id' => $product->id,
+                'variant_id' => null,
+                'extra_option_item_id' => null,
+                'branch_id' => null,
+                'pos_item_id' => 'POS-2',
+            ]);
+        })->toThrow(Illuminate\Database\QueryException::class);
+    });
+
+    it('loads all POS mappings for an order in a single database query', function () {
+        $branch = Branch::factory()->create(['link' => 'https://pos.example.com']);
+        $user = User::factory()->create(['email' => 'pos_order_user_'.uniqid().'@example.com']);
+        $address = Address::factory()->create(['user_id' => $user->id]);
+
+        $product1 = Product::factory()->create();
+        $product2 = Product::factory()->create();
+        $extraItem1 = ExtraOptionItem::factory()->create();
+        $extraItem2 = ExtraOptionItem::factory()->create();
+
+        ProductPosMapping::create([
+            'product_id' => $product1->id,
+            'branch_id' => $branch->id,
+            'pos_item_id' => 'POS-P1',
+        ]);
+        ProductPosMapping::create([
+            'product_id' => $product2->id,
+            'branch_id' => $branch->id,
+            'pos_item_id' => 'POS-P2',
+        ]);
+        ProductPosMapping::create([
+            'extra_option_item_id' => $extraItem1->id,
+            'branch_id' => $branch->id,
+            'pos_item_id' => 'POS-E1',
+        ]);
+        ProductPosMapping::create([
+            'extra_option_item_id' => $extraItem2->id,
+            'branch_id' => $branch->id,
+            'pos_item_id' => 'POS-E2',
+        ]);
+
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+            'branch_id' => $branch->id,
+            'address_id' => $address->id,
+            'shift_id' => 1,
+            'type' => 'delivery',
+        ]);
+
+        $item1 = OrderItem::factory()->create([
+            'order_id' => $order->id,
+            'product_id' => $product1->id,
+            'quantity' => 1,
+        ]);
+        OrderItemExtra::factory()->create([
+            'order_item_id' => $item1->id,
+            'extra_option_item_id' => $extraItem1->id,
+            'quantity' => 1,
+        ]);
+
+        $item2 = OrderItem::factory()->create([
+            'order_id' => $order->id,
+            'product_id' => $product2->id,
+            'quantity' => 2,
+        ]);
+        OrderItemExtra::factory()->create([
+            'order_item_id' => $item2->id,
+            'extra_option_item_id' => $extraItem2->id,
+            'quantity' => 1,
+        ]);
+
+        $order->load(['items.extras.extraOptionItem']);
+
+        $builder = app(OrderPOSPayloadBuilder::class);
+
+        // Count queries executed on product_pos_mappings during payload building
+        DB::connection('tenant')->enableQueryLog();
+        DB::connection('tenant')->flushQueryLog();
+
+        $payload = $builder->build($order);
+
+        $queries = DB::connection('tenant')->getQueryLog();
+        $mappingQueries = array_filter($queries, fn ($q) => str_contains($q['query'], 'product_pos_mappings'));
+
+        expect(count($mappingQueries))->toBe(1)
+            ->and(count($payload['order']['items']))->toBe(2)
+            ->and($payload['order']['items'][0]['posRefObj'][0]['productRef'])->toBe('POS-P1')
+            ->and($payload['order']['items'][0]['posRefObj'][1]['productRef'])->toBe('POS-E1')
+            ->and($payload['order']['items'][1]['posRefObj'][0]['productRef'])->toBe('POS-P2')
+            ->and($payload['order']['items'][1]['posRefObj'][1]['productRef'])->toBe('POS-E2');
+    });
+
+    it('uses snapshot extra_name and variant_name in notes, falling back only when empty', function () {
+        $branch = Branch::factory()->create();
+        $product = Product::factory()->create();
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'name' => 'Live Variant Name',
+        ]);
+        $extraItem = ExtraOptionItem::factory()->create([
+            'name' => 'Live Extra Name',
+        ]);
+
+        // Base product mapping only so variant name appears in notes
+        ProductPosMapping::create([
+            'product_id' => $product->id,
+            'branch_id' => $branch->id,
+            'pos_item_id' => 'POS-BASE',
+        ]);
+
+        $resolver = new POSProductResolver();
+
+        $item = OrderItem::factory()->create([
+            'product_id' => $product->id,
+            'variant_id' => $variant->id,
+            'variant_name' => 'Snapshot Variant Name',
+            'quantity' => 1,
+        ]);
+
+        OrderItemExtra::factory()->create([
+            'order_item_id' => $item->id,
+            'extra_option_item_id' => $extraItem->id,
+            'extra_name' => 'Snapshot Extra Name',
+            'quantity' => 1,
+        ]);
+
+        $item->load(['extras.extraOptionItem', 'variant']);
+
+        $resolved = $resolver->resolveOrderItem($item, $branch->id);
+
+        expect($resolved['notes'])->toContain('Snapshot Variant Name')
+            ->and($resolved['notes'])->not->toContain('Live Variant Name')
+            ->and($resolved['notes'])->toContain('Snapshot Extra Name')
+            ->and($resolved['notes'])->not->toContain('Live Extra Name');
+
+        // Test fallback when snapshot names are empty
+        $itemFallback = OrderItem::factory()->create([
+            'product_id' => $product->id,
+            'variant_id' => $variant->id,
+            'variant_name' => null,
+            'quantity' => 1,
+        ]);
+
+        OrderItemExtra::factory()->create([
+            'order_item_id' => $itemFallback->id,
+            'extra_option_item_id' => $extraItem->id,
+            'extra_name' => '',
+            'quantity' => 1,
+        ]);
+
+        $itemFallback->load(['extras.extraOptionItem', 'variant']);
+
+        $resolvedFallback = $resolver->resolveOrderItem($itemFallback, $branch->id);
+
+        expect($resolvedFallback['notes'])->toContain('Live Variant Name')
+            ->and($resolvedFallback['notes'])->toContain('Live Extra Name');
+    });
+
+    it('respects extra_option_items pos_mapping_type for notes vs pos_item', function () {
+        $branch = Branch::factory()->create();
+        $product = Product::factory()->create();
+
+        $extraPosItem = ExtraOptionItem::factory()->create([
+            'name' => 'Extra Onion',
+            'pos_mapping_type' => 'pos_item',
+        ]);
+        $extraNotes = ExtraOptionItem::factory()->create([
+            'name' => 'Extra Hot Sauce',
+            'pos_mapping_type' => 'notes',
+        ]);
+
+        ProductPosMapping::create([
+            'product_id' => $product->id,
+            'branch_id' => $branch->id,
+            'pos_item_id' => 'POS-BURGER',
+        ]);
+        ProductPosMapping::create([
+            'extra_option_item_id' => $extraPosItem->id,
+            'branch_id' => $branch->id,
+            'pos_item_id' => 'POS-ONION',
+        ]);
+        ProductPosMapping::create([
+            'extra_option_item_id' => $extraNotes->id,
+            'branch_id' => $branch->id,
+            'pos_item_id' => 'POS-SAUCE',
+        ]);
+
+        $resolver = new POSProductResolver();
+
+        $item = OrderItem::factory()->create([
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        OrderItemExtra::factory()->create([
+            'order_item_id' => $item->id,
+            'extra_option_item_id' => $extraPosItem->id,
+            'extra_name' => 'Extra Onion',
+            'quantity' => 1,
+        ]);
+        OrderItemExtra::factory()->create([
+            'order_item_id' => $item->id,
+            'extra_option_item_id' => $extraNotes->id,
+            'extra_name' => 'Extra Hot Sauce',
+            'quantity' => 1,
+        ]);
+
+        $item->load(['extras.extraOptionItem']);
+
+        $resolved = $resolver->resolveOrderItem($item, $branch->id);
+
+        // Both extras must be present in notes
+        expect($resolved['notes'])->toContain('Extra Onion')
+            ->and($resolved['notes'])->toContain('Extra Hot Sauce');
+
+        // Only pos_item must be present in posRefObj (POS-SAUCE must be absent)
+        $posRefs = array_column($resolved['posRefObj'], 'productRef');
+        expect($posRefs)->toContain('POS-BURGER')
+            ->and($posRefs)->toContain('POS-ONION')
+            ->and($posRefs)->not->toContain('POS-SAUCE');
     });
 });

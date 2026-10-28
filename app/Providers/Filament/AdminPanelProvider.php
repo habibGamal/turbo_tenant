@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\Login;
+use App\Filament\Pages\ManagePlugins;
 use App\Models\Tenant;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
@@ -16,8 +17,6 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Platform;
-use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -31,7 +30,7 @@ final class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel
+        $panel
             ->default()
             ->id('admin')
             ->path('admin')
@@ -44,6 +43,8 @@ final class AdminPanelProvider extends PanelProvider
             //         ->recoverable(),
             // )
             ->sidebarCollapsibleOnDesktop()
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             //            ->topNavigation()
             ->colors([
                 'primary' => Color::Blue,
@@ -54,11 +55,10 @@ final class AdminPanelProvider extends PanelProvider
             ])
             ->pages([
                 Dashboard::class,
+                ManagePlugins::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-                AccountWidget::class,
-                FilamentInfoWidget::class,
             ])
             // ->tenant(Tenant::class)
             // ->tenantDomain('{tenant:id}.localhost')
@@ -86,24 +86,12 @@ final class AdminPanelProvider extends PanelProvider
                 default => null,
             });
 
-        $panel->bootUsing(function (Panel $panel) {
-            if (function_exists('tenant') && tenant()) {
-                $activeFilamentPlugins = app(\App\Core\Plugins\Services\PluginManager::class)
-                    ->getActiveFilamentPluginsForTenant(tenant());
-                foreach ($activeFilamentPlugins as $filamentPlugin) {
-                    if (! $panel->hasPlugin($filamentPlugin->getId())) {
-                        $panel->plugin($filamentPlugin);
-                    }
-                }
-            }
-        });
-
-        if (function_exists('tenant') && tenant()) {
-            $activeFilamentPlugins = app(\App\Core\Plugins\Services\PluginManager::class)
-                ->getActiveFilamentPluginsForTenant(tenant());
-            foreach ($activeFilamentPlugins as $filamentPlugin) {
-                if (! $panel->hasPlugin($filamentPlugin->getId())) {
-                    $panel->plugin($filamentPlugin);
+        $registry = app(\App\Core\Plugins\Services\PluginRegistry::class);
+        foreach ($registry->all() as $manifest) {
+            if ($manifest->filamentPlugin && class_exists($manifest->filamentPlugin)) {
+                $class = $manifest->filamentPlugin;
+                if (is_subclass_of($class, \Filament\Contracts\Plugin::class)) {
+                    $panel->plugin($class::make());
                 }
             }
         }

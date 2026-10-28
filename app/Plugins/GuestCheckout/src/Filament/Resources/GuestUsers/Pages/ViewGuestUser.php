@@ -8,7 +8,7 @@ use App\Plugins\GuestCheckout\src\Filament\Resources\GuestUsers\GuestUserResourc
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\ViewRecord;
 
-class ViewGuestUser extends ViewRecord
+final class ViewGuestUser extends ViewRecord
 {
     protected static string $resource = GuestUserResource::class;
 

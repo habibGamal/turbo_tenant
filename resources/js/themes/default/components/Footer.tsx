@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, usePage } from '@inertiajs/react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { PLATFORM_ICONS } from '@/themes/default/components/icons/social-icons';
 import { useTranslation } from 'react-i18next';
+import { useTenantSafe } from '@/core/context/TenantContext';
 
 interface FooterLink {
     label: string;
@@ -31,8 +32,8 @@ interface FooterProps {
 
 export default function Footer({ sections, showNewsletter = true }: FooterProps) {
     const { t, i18n } = useTranslation();
-
-    const { settings } = usePage<any>().props;
+    const tenantContext = useTenantSafe();
+    const settings = tenantContext?.settings || {};
     const pages = settings?.pages || [];
 
     const defaultSections: FooterSection[] = [
@@ -87,7 +88,7 @@ export default function Footer({ sections, showNewsletter = true }: FooterProps)
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8">
                     {/* Brand Section */}
                     <div className="lg:col-span-4 space-y-4">
-                        <Link href="/" className="flex items-center gap-2">
+                        <Link to="/" className="flex items-center gap-2">
                             {settings?.site_logo ? (
                                 <img
                                     src={settings.site_logo}
@@ -130,7 +131,7 @@ export default function Footer({ sections, showNewsletter = true }: FooterProps)
                                 {section.links.map((link, linkIndex) => (
                                     <li key={linkIndex}>
                                         <Link
-                                            href={link.href}
+                                            to={link.href}
                                             className="text-muted-foreground hover:text-foreground transition-colors"
                                         >
                                             {getText(link.label, link.labelAr)}

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Filament\Resources\Orders;
 
+use App\Enums\OrderStatus;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\Pages\ListOrders;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\Schemas\OrderForm;
@@ -16,11 +17,13 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class OrderResource extends Resource
+final class OrderResource extends Resource
 {
+    use \App\Core\Plugins\Concerns\BelongsToPlugin;
+
     protected static ?string $model = Order::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingCart;
 
     protected static ?string $navigationLabel = 'الطلبات';
 
@@ -71,5 +74,22 @@ class OrderResource extends Resource
     public static function canDelete($record): bool
     {
         return false;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = self::getModel()::where('status', OrderStatus::PENDING)->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'طلبات قيد الانتظار';
     }
 }

@@ -105,7 +105,7 @@ it('marks all notifications as read', function () {
             'message' => 'All notifications marked as read',
         ]);
 
-    expect($this->user->notifications()->unread()->count())->toBe(0);
+    expect($this->user->userNotifications()->unread()->count())->toBe(0);
 });
 
 it('deletes a notification', function () {
@@ -149,8 +149,8 @@ it('clears all read notifications', function () {
             'message' => 'Read notifications cleared',
         ]);
 
-    expect($this->user->notifications()->count())->toBe(2)
-        ->and($this->user->notifications()->read()->count())->toBe(0);
+    expect($this->user->userNotifications()->count())->toBe(2)
+        ->and($this->user->userNotifications()->read()->count())->toBe(0);
 });
 
 it('requires authentication for all endpoints', function () {

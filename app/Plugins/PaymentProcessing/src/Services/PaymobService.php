@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Plugins\PaymentProcessing\src\Services;
 
+use App\Plugins\OrderManagement\src\Contracts\PaymentGatewayInterface;
 use App\Plugins\OrderManagement\src\Models\Order;
-use App\Plugins\PaymentProcessing\src\Contracts\PaymentGatewayInterface;
 use App\Plugins\PaymentProcessing\src\DTOs\PaymentProcessingConfig;
 use Exception;
 use Illuminate\Support\Facades\Http;
@@ -23,6 +23,8 @@ final class PaymobService implements PaymentGatewayInterface
 
     private string $hmacSecret;
 
+    private string $currency;
+
     public function __construct(
         PaymentProcessingConfig $config
     ) {
@@ -31,6 +33,7 @@ final class PaymobService implements PaymentGatewayInterface
         $this->publicKey = $config->paymobPublicKey;
         $this->integrationIds = $config->paymobIntegrationIds;
         $this->hmacSecret = $config->paymobHmacSecret;
+        $this->currency = $config->paymobCurrency ?? 'EGP';
     }
 
     /**
@@ -50,7 +53,7 @@ final class PaymobService implements PaymentGatewayInterface
         logger()->info('$this->integrationIds', ['integration_ids' => $this->integrationIds]);
         $payload = [
             'amount' => $this->convertToSmallestUnit($order->total),
-            'currency' => $this->settingService->get(SettingKey::PAYMOB_CURRENCY, 'EGP'),
+            'currency' => $this->currency,
             'payment_methods' => $this->integrationIds,
             // 'payment_methods' => [4874920],
             'items' => [],

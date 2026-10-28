@@ -4,41 +4,21 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Models;
 
-use App\Plugins\PosIntegration\src\Enums\OrderPosStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\User;
 use App\Plugins\LocationsDelivery\src\Models\Address;
 use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Order extends Model
+final class Order extends Model
 {
     use HasFactory;
-
-    protected static function newFactory()
-    {
-        return \Database\Factories\OrderFactory::new();
-    }
-
-    protected static function booted(): void
-    {
-        static::created(function (self $order) {
-            \App\Plugins\OrderManagement\src\Events\OrderCreated::dispatch($order);
-        });
-
-        static::updated(function (self $order) {
-            if ($order->wasChanged('status')) {
-                $previous = $order->getOriginal('status');
-                $previousStatus = $previous instanceof OrderStatus ? $previous : ($previous ? OrderStatus::tryFrom((string) $previous) : null);
-                \App\Plugins\OrderManagement\src\Events\OrderStatusUpdated::dispatch($order, $previousStatus);
-            }
-        });
-    }
 
     protected $fillable = [
         'order_number',
@@ -63,6 +43,10 @@ class Order extends Model
         'coupon_id',
         'branch_id',
         'address_id',
+        'customer_name',
+        'customer_phone',
+        'delivery_address',
+        'coupon_code',
         'pos_status',
         'pos_failure_reason',
     ];
@@ -100,7 +84,7 @@ class Order extends Model
      */
     public function getCustomerName(): string
     {
-        return $this->user?->name ?? $this->guestUser?->name ?? 'Unknown';
+        return $this->customer_name ?? $this->user?->name ?? $this->guestUser?->name ?? 'Unknown';
     }
 
     /**
@@ -108,7 +92,7 @@ class Order extends Model
      */
     public function getCustomerPhone(): ?string
     {
-        return $this->user?->phone ?? $this->guestUser?->phone;
+        return $this->customer_phone ?? $this->user?->phone ?? $this->guestUser?->phone;
     }
 
     /**
@@ -119,6 +103,26 @@ class Order extends Model
         return $this->user?->email ?? $this->guestUser?->email;
     }
 
+    protected static function newFactory()
+    {
+        return \Database\Factories\OrderFactory::new();
+    }
+
+    protected static function booted(): void
+    {
+        self::created(function (self $order) {
+            \App\Plugins\OrderManagement\src\Events\OrderCreated::dispatch($order);
+        });
+
+        self::updated(function (self $order) {
+            if ($order->wasChanged('status')) {
+                $previous = $order->getOriginal('status');
+                $previousStatus = $previous instanceof OrderStatus ? $previous : ($previous ? OrderStatus::tryFrom((string) $previous) : null);
+                \App\Plugins\OrderManagement\src\Events\OrderStatusUpdated::dispatch($order, $previousStatus);
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [
@@ -127,12 +131,13 @@ class Order extends Model
             'payment_method' => PaymentMethod::class,
             'pos_status' => class_exists(OrderPosStatus::class) ? OrderPosStatus::class : 'string',
             'payment_data' => 'array',
-            'sub_total' => 'double',
-            'tax' => 'double',
-            'service' => 'double',
-            'delivery_fee' => 'double',
-            'discount' => 'double',
-            'total' => 'double',
+            'delivery_address' => 'array',
+            'sub_total' => 'float',
+            'tax' => 'float',
+            'service' => 'float',
+            'delivery_fee' => 'float',
+            'discount' => 'float',
+            'total' => 'float',
         ];
     }
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import ReactPixel from 'react-facebook-pixel';
 import { Head, Link, usePage } from "@inertiajs/react";
 import MainLayout from '@/themes/default/layouts/MainLayout';
+import { PluginSlot } from "@/core/slots/PluginSlot";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -10,11 +11,10 @@ import { useTranslation } from "react-i18next";
 import { Product, Review, ExtraOptionItem, ProductVariant, PageProps } from "@/types";
 import { addToCart, ExtraWithQuantity } from "@/utils/cartUtils";
 import { useProductOptions } from "@/hooks/useProductOptions";
-import ProductImage from "@/themes/default/components/product/ProductImage";
-import ProductInfo from "@/themes/default/components/product/ProductInfo";
-import ProductOptions from "@/themes/default/components/product/ProductOptions";
-import ReviewsSection from "@/themes/default/components/product/ReviewsSection";
-import ProductCard from "@/themes/default/components/ProductCard";
+import ProductImage from "@/themes/default/plugins/catalog-products/components/ProductImage";
+import ProductInfo from "@/themes/default/plugins/catalog-products/components/ProductInfo";
+import ProductOptions from "@/themes/default/plugins/catalog-products/components/ProductOptions";
+import ProductCard from "@/themes/default/plugins/catalog-products/components/ProductCard";
 import { useFavorites } from "@/hooks/useFavorites";
 
 interface RelatedProduct {
@@ -73,6 +73,8 @@ export default function ProductShow({
         calculateTotalPrice,
         handleAddToCart,
         isAddingToCart,
+        canAddToCart,
+        missingRequiredSelections,
     } = useProductOptions({ product });
 
     const { isFavorite, toggleFavorite } = useFavorites();
@@ -179,10 +181,19 @@ export default function ProductShow({
                                     isAddingToCart={isAddingToCart }
                                     isFavorite={isFavorite(product.id)}
                                     handleToggleFavorite={handleToggleFavorite}
+                                    canAddToCart={canAddToCart}
+                                    missingRequiredSelections={missingRequiredSelections}
                                 />
                             </div>
                         </div>
                     </div>
+
+                    {/* Product Extension Slot */}
+                    <PluginSlot
+                        name="product.details.after"
+                        pluginId="catalog-products"
+                        context={{ productId: product.id }}
+                    />
 
                     {/* Tabs Section */}
                     <Tabs
@@ -201,10 +212,10 @@ export default function ProductShow({
 
                         {/* Reviews Tab */}
                         <TabsContent value="reviews" className="mt-8">
-                            <ReviewsSection
-                                productId={product.id}
-                                reviews={reviews}
-                                averageRating={product.rating || 0}
+                            <PluginSlot
+                                name="product.reviews"
+                                pluginId="product-reviews"
+                                context={{ productId: product.id }}
                             />
                         </TabsContent>
 

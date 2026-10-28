@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Product } from '@/types';
 import { addToCart, ExtraWithQuantity } from '@/utils/cartUtils';
+import { getEffectivePrice } from '@/lib/pricing';
 
 interface UseProductOptionsProps {
     product: Product;
@@ -27,10 +28,19 @@ export function useProductOptions({ product }: UseProductOptionsProps) {
         )
     );
     const [isAddingToCart, setIsAddingToCart] = useState(false);
+    const [limitReachedFor, setLimitReachedFor] = useState<number | null>(null);
+
+    const minSelections = product.extraOption?.min_selections ?? 0;
+    const missingRequiredSelections = Boolean(
+        product.extraOption &&
+        minSelections > 0 &&
+        selectedExtras.size < minSelections
+    );
+    const canAddToCart = (product.is_active ?? true) && !missingRequiredSelections;
 
     // Calculate total price
     const calculateTotalPrice = () => {
-        let basePrice = product.price_after_discount ?? product.base_price ?? 0;
+        let basePrice = getEffectivePrice(product);
 
         // Add variant price if selected
         if (selectedVariant && product.variants) {
@@ -83,27 +93,39 @@ export function useProductOptions({ product }: UseProductOptionsProps) {
         }
     };
 
-    const handleExtraToggle = (extraId: number) => {
-        if (!product.extraOption) return;
+    const handleExtraToggle = (extraId: number): boolean => {
+        if (!product.extraOption) return false;
 
         const newExtras = new Map(selectedExtras);
 
         if (newExtras.has(extraId)) {
             newExtras.delete(extraId);
+            setLimitReachedFor(null);
+            setSelectedExtras(newExtras);
+            return true;
         } else {
-            // Check if max selections is reached
-            if (product.extraOption.max_selections && newExtras.size >= product.extraOption.max_selections) {
-                // If not allow_multiple, replace the existing selection
-                if (!product.extraOption.allow_multiple) {
+            const max = product.extraOption.max_selections;
+            const isSingleChoice = !product.extraOption.allow_multiple;
+            if ((max && newExtras.size >= max) || (isSingleChoice && newExtras.size >= 1)) {
+                if (isSingleChoice) {
                     newExtras.clear();
                     newExtras.set(extraId, 1);
+                    setSelectedExtras(newExtras);
+                    setLimitReachedFor(null);
+                    return true;
                 }
-                return;
+                setLimitReachedFor(product.extraOption.id);
+                return false;
+            }
+
+            if (isSingleChoice) {
+                newExtras.clear();
             }
             newExtras.set(extraId, 1);
+            setLimitReachedFor(null);
+            setSelectedExtras(newExtras);
+            return true;
         }
-
-        setSelectedExtras(newExtras);
     };
 
     const handleExtraQuantityChange = (extraId: number, delta: number) => {
@@ -119,7 +141,7 @@ export function useProductOptions({ product }: UseProductOptionsProps) {
     };
 
     const handleAddToCart = async (onSuccess?: () => void) => {
-        if (!(product.is_active ?? true)) {
+        if (!(product.is_active ?? true) || missingRequiredSelections) {
             return;
         }
 
@@ -152,6 +174,7 @@ export function useProductOptions({ product }: UseProductOptionsProps) {
                                 .map((item) => [item.id, 1]) || []
                         )
                     );
+                    setLimitReachedFor(null);
                     if (onSuccess) onSuccess();
                 },
                 onFinally: () => {
@@ -175,5 +198,8 @@ export function useProductOptions({ product }: UseProductOptionsProps) {
         calculateTotalPrice,
         handleAddToCart,
         isAddingToCart,
+        limitReachedFor,
+        canAddToCart,
+        missingRequiredSelections,
     };
 }

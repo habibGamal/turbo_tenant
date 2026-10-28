@@ -12,6 +12,10 @@ export default defineConfig({
         hmr: {
             host: 'localhost',
             protocol: 'ws', // Use 'wss' if you are using a local SSL cert
+            overlay: false,
+        },
+        watch: {
+            ignored: ['**/test-results/**', '**/playwright-report/**', '**/storage/**', '**/.git/**'],
         },
     },
     plugins: [

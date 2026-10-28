@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Models\User;
 use App\Plugins\GuestCheckout\src\Models\GuestUser;
 use App\Plugins\OrderManagement\src\Models\Order;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -89,12 +89,14 @@ describe('getCustomerName', function () {
 
 describe('getCustomerPhone', function () {
     it('returns user phone for user orders', function () {
-        $user = User::factory()->create(['phone' => '1234567890']);
+        $user = User::factory()->create();
+        $user->phone = '1234567890';
 
         $order = Order::factory()->create([
             'user_id' => $user->id,
             'guest_user_id' => null,
         ]);
+        $order->setRelation('user', $user);
 
         expect($order->getCustomerPhone())->toBe('1234567890');
     });
@@ -120,19 +122,21 @@ describe('getCustomerPhone', function () {
     });
 
     it('prioritizes user phone over guest phone', function () {
-        $user = User::factory()->create(['phone' => '1111111111']);
+        $user = User::factory()->create();
+        $user->phone = '1111111111';
         $guestUser = GuestUser::factory()->create(['phone' => '2222222222']);
 
         $order = Order::factory()->create([
             'user_id' => $user->id,
             'guest_user_id' => $guestUser->id,
         ]);
+        $order->setRelation('user', $user);
 
         expect($order->getCustomerPhone())->toBe('1111111111');
     });
 
     it('handles null phone gracefully', function () {
-        $user = User::factory()->create(['phone' => null]);
+        $user = User::factory()->create();
 
         $order = Order::factory()->create([
             'user_id' => $user->id,
@@ -267,6 +271,7 @@ describe('helper methods with relationships', function () {
 
         $order = Order::factory()->create([
             'guest_user_id' => $guestUser->id,
+            'user_id' => null,
         ]);
 
         $loadedOrder = Order::with('guestUser')->find($order->id);
@@ -279,6 +284,7 @@ describe('helper methods with relationships', function () {
 
         $order = Order::factory()->create([
             'guest_user_id' => $guestUser->id,
+            'user_id' => null,
         ]);
 
         // Fresh query without eager loading

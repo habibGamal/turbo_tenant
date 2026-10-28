@@ -11,7 +11,7 @@ final class CmsPagesFilamentPlugin implements Plugin
 {
     public static function make(): static
     {
-        return app(static::class);
+        return app(self::class);
     }
 
     public function getId(): string
@@ -23,7 +23,7 @@ final class CmsPagesFilamentPlugin implements Plugin
     {
         $panel
             ->resources([
-                \App\Plugins\CmsPages\src\Filament\Resources\Pages\PageResource::class,
+                Resources\Pages\PageResource::class,
             ])
             ->pages([
                 // Register Filament Pages here

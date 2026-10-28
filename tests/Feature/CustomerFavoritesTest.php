@@ -2,26 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Models\User;
 use App\Plugins\CustomerFavorites\src\DTOs\CustomerFavoritesConfig;
-use App\Plugins\CustomerFavorites\src\Http\Controllers\FavoritesController;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-uses(RefreshDatabase::class);
-
-beforeEach(function () {
-    config()->set('inertia.testing.page_paths', array_merge(
-        config('inertia.testing.page_paths', []),
-        [resource_path('js/themes/default/pages')]
-    ));
-});
-
-it('resolves legacy controller alias to plugin favorites controller', function () {
-    expect(class_exists(\App\Http\Controllers\FavoritesController::class))->toBeTrue();
-
-    $controller = app(\App\Http\Controllers\FavoritesController::class);
-    expect($controller)->toBeInstanceOf(FavoritesController::class);
-});
 
 it('binds CustomerFavoritesConfig DTO via composition root', function () {
     $config = app(CustomerFavoritesConfig::class);
@@ -30,22 +11,45 @@ it('binds CustomerFavoritesConfig DTO via composition root', function () {
         ->and($config->enabled)->toBeTrue();
 });
 
-it('renders favorites page via inertia for guests', function () {
-    $response = $this->get(route('favorites.index'));
+it('returns customer favorites api response via rest endpoint', function () {
+    $response = $this->getJson(route('api.customer-favorites.index'));
 
     $response->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->component('Favorites')
-        );
+        ->assertJsonStructure([
+            'status',
+            'data' => [
+                'enabled',
+                'count',
+                'products',
+            ],
+        ]);
 });
 
-it('renders favorites page via inertia for authenticated users', function () {
-    $user = User::factory()->create();
-
-    $response = $this->actingAs($user)->get(route('favorites.index'));
+it('syncs customer favorites via rest api', function () {
+    $response = $this->postJson(route('api.customer-favorites.sync'), [
+        'ids' => [1, 2, 3],
+    ]);
 
     $response->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->component('Favorites')
-        );
+        ->assertJson([
+            'status' => 'success',
+            'message' => 'Favorites synced successfully.',
+            'data' => [
+                'synced_ids' => [1, 2, 3],
+            ],
+        ]);
+});
+
+it('stores favorite item via rest api', function () {
+    $response = $this->postJson(route('api.customer-favorites.store'), [
+        'product_id' => 42,
+    ]);
+
+    $response->assertStatus(201)
+        ->assertJson([
+            'status' => 'success',
+            'data' => [
+                'product_id' => 42,
+            ],
+        ]);
 });

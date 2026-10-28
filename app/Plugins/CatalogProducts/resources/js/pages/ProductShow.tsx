@@ -10,11 +10,11 @@ import { useTranslation } from "react-i18next";
 import { Product, Review, ExtraOptionItem, ProductVariant, PageProps } from "@/types";
 import { addToCart, ExtraWithQuantity } from "@/utils/cartUtils";
 import { useProductOptions } from "@/hooks/useProductOptions";
-import ProductImage from "@/themes/default/components/product/ProductImage";
-import ProductInfo from "@/themes/default/components/product/ProductInfo";
-import ProductOptions from "@/themes/default/components/product/ProductOptions";
-import ReviewsSection from "@/themes/default/components/product/ReviewsSection";
-import ProductCard from "@/themes/default/components/ProductCard";
+import ProductImage from "@/themes/default/plugins/catalog-products/components/ProductImage";
+import ProductInfo from "@/themes/default/plugins/catalog-products/components/ProductInfo";
+import ProductOptions from "@/themes/default/plugins/catalog-products/components/ProductOptions";
+import ReviewsSection from "@/themes/default/plugins/catalog-products/components/ReviewsSection";
+import ProductCard from "@/themes/default/plugins/catalog-products/components/ProductCard";
 import { useFavorites } from "@/hooks/useFavorites";
 
 interface RelatedProduct {

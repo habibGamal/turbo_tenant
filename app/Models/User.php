@@ -92,12 +92,12 @@ final class User extends Authenticatable implements FilamentUser, HasAppAuthenti
         return $this->hasMany(\App\Plugins\LocationsDelivery\src\Models\Address::class);
     }
 
-    public function notifications(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function userNotifications(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(\App\Plugins\PushNotifications\src\Models\UserNotification::class);
     }
 
-    public function unreadNotifications(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function unreadUserNotifications(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(\App\Plugins\PushNotifications\src\Models\UserNotification::class)->where('read', false);
     }

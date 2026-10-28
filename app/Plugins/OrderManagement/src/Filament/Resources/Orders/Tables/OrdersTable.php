@@ -9,11 +9,12 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class OrdersTable
+final class OrdersTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+            ->poll('30s')
             ->columns([
                 TextColumn::make('order_number')
                     ->label('رقم الطلب')
@@ -79,11 +80,12 @@ class OrdersTable
                     ->sortable(),
                 TextColumn::make('total')
                     ->label('الإجمالي')
-                    ->money('USD')
+                    ->money('EGP')
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->label('تاريخ الطلب')
-                    ->dateTime()
+                    ->since()
+                    ->dateTimeTooltip()
                     ->sortable(),
             ])
             ->filters([

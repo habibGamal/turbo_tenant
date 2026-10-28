@@ -6,7 +6,7 @@ namespace App\Plugins\OrderManagement\src\Filament\Resources\Orders\Schemas;
 
 use Filament\Schemas\Schema;
 
-class OrderForm
+final class OrderForm
 {
     public static function configure(Schema $schema): Schema
     {

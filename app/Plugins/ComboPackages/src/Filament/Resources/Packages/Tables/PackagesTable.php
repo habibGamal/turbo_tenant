@@ -28,14 +28,14 @@ final class PackagesTable
 
                 TextColumn::make('price')
                     ->label('السعر')
-                    ->money('USD')
+                    ->money('EGP')
                     ->sortable()
                     ->badge()
                     ->color('success'),
 
                 TextColumn::make('original_price')
                     ->label('السعر الأصلي')
-                    ->money('USD')
+                    ->money('EGP')
                     ->sortable()
                     ->toggleable()
                     ->color('gray'),

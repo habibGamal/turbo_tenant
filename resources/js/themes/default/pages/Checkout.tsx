@@ -1,41 +1,54 @@
 import React, { useState, useEffect } from "react";
-import { Head, router, useForm } from "@inertiajs/react";
+import { useNavigate } from "react-router-dom";
+import { Head } from "@/components/Head";
 import MainLayout from '@/themes/default/layouts/MainLayout';
 import { useTranslation } from "react-i18next";
 import { Address, Branch, Cart, Governorate, PageProps } from "@/types";
-import axios from "axios";
+import { PluginSlot } from "@/core/slots/PluginSlot";
 import ReactPixel from "react-facebook-pixel";
+import { CheckoutSkeleton } from "@/components/ui/page-skeletons";
+import { useCheckoutData, usePlaceOrder } from "@/plugins/order-management";
 
-// Checkout Components
-import EmptyCart from "@/themes/default/components/checkout/EmptyCart";
-import OrderTypeSelection from "@/themes/default/components/checkout/OrderTypeSelection";
-import BranchSelection from "@/themes/default/components/checkout/BranchSelection";
-import GuestInformationForm from "@/themes/default/components/checkout/GuestInformationForm";
-import DeliveryAddressSection from "@/themes/default/components/checkout/DeliveryAddressSection";
-import PaymentMethodSelection from "@/themes/default/components/checkout/PaymentMethodSelection";
-import OrderNotesSection from "@/themes/default/components/checkout/OrderNotesSection";
-import CouponCodeSection from "@/themes/default/components/checkout/CouponCodeSection";
-import OrderSummary from "@/themes/default/components/checkout/OrderSummary";
+// Checkout Components (Colocated within respective theme plugin directories)
+import EmptyCart from "@/themes/default/plugins/cart-engine/components/EmptyCart";
+import OrderTypeSelection from "@/themes/default/plugins/order-management/components/OrderTypeSelection";
+import BranchSelection from "@/themes/default/plugins/locations-delivery/components/BranchSelection";
+import GuestInformationForm from "@/themes/default/plugins/guest-checkout/components/GuestInformationForm";
+import DeliveryAddressSection from "@/themes/default/plugins/locations-delivery/components/DeliveryAddressSection";
+import PaymentMethodSelection from "@/themes/default/plugins/order-management/components/PaymentMethodSelection";
+import OrderNotesSection from "@/themes/default/plugins/order-management/components/OrderNotesSection";
+import CouponCodeSection from "@/themes/default/plugins/order-management/components/CouponCodeSection";
+import OrderSummary from "@/themes/default/plugins/order-management/components/OrderSummary";
 
-interface CheckoutPageProps extends PageProps {
-    cart: Cart;
-    addresses: Address[];
-    branches: Branch[];
-    governorates: Governorate[];
+interface CheckoutPageProps extends Partial<PageProps> {
+    cart?: Cart;
+    addresses?: Address[];
+    branches?: Branch[];
+    governorates?: Governorate[];
     is_guest?: boolean;
 }
 
 export default function Checkout({
-    cart,
-    addresses,
-    branches,
-    governorates,
+    cart: initialCart,
+    addresses: initialAddresses,
+    branches: initialBranches,
+    governorates: initialGovernorates,
     auth,
     settings,
-    is_guest = false,
+    is_guest: initialIsGuest,
 }: CheckoutPageProps) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const { data: bootstrapData, isLoading } = useCheckoutData();
+    const placeOrderMutation = usePlaceOrder();
+
+    const cart = bootstrapData?.cart || initialCart;
+    const addresses = bootstrapData?.addresses || initialAddresses || [];
+    const branches = bootstrapData?.branches || initialBranches || [];
+    const governorates = bootstrapData?.governorates || initialGovernorates || [];
+    const is_guest = bootstrapData ? bootstrapData.is_guest : (initialIsGuest ?? !auth?.user);
 
     // Coupon State
     type AppliedCoupon = {
@@ -65,7 +78,7 @@ export default function Checkout({
 
     const savedGuestData = getSavedGuestData();
 
-    const { data, setData, post, processing, errors } = useForm({
+    const [data, setFormData] = useState({
         branch_id: branches[0]?.id || 0,
         payment_method: "cod",
         address_id:
@@ -90,6 +103,26 @@ export default function Checkout({
             area_id: savedGuestData?.area_id || null,
         } : undefined,
     });
+
+    const setData = (field: string, value: any) => {
+        setFormData((prev) => ({
+            ...prev,
+            [field]: value,
+        }));
+    };
+
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // Auto-select initial branch and address once bootstrap data loads
+    useEffect(() => {
+        if (branches.length > 0 && !data.branch_id) {
+            setData("branch_id", branches[0].id);
+        }
+        if (addresses.length > 0 && !data.address_id) {
+            const defaultAddr = addresses.find((a) => a.is_default)?.id || addresses[0].id;
+            setData("address_id", defaultAddr);
+        }
+    }, [branches, addresses]);
 
     // Save guest data to localStorage
     const saveGuestDataToLocalStorage = () => {
@@ -131,7 +164,7 @@ export default function Checkout({
     const calculateService = (amount: number) => {
         let service = 0;
         if (data.payment_method === 'cod') {
-            service += settings.cod_fee || 0;
+            service += settings?.cod_fee || 0;
         }
         return service;
     };
@@ -182,9 +215,14 @@ export default function Checkout({
         setIsSubmitting(true);
 
         try {
-            const response = await axios.post(route("orders.place"), data);
+            const payload = {
+                ...data,
+                guest_data: is_guest ? data.guest_data : null,
+            };
 
-            if (response.data.success) {
+            const responseData = await placeOrderMutation.mutateAsync(payload as any);
+
+            if (responseData.success) {
                 // Save guest data to localStorage for future orders
                 saveGuestDataToLocalStorage();
 
@@ -200,19 +238,18 @@ export default function Checkout({
                     num_items: cart?.items?.length || 0,
                 });
 
-                const { redirect_type, redirect_url, order_id } = response.data;
+                const { redirect_type, redirect_url, order_id } = responseData;
 
                 if (redirect_type === "external") {
                     // Redirect to external payment gateway
                     window.location.href = redirect_url;
                 } else if (redirect_type === "internal") {
-                    // Navigate to order show page using Inertia
-                    router.visit(redirect_url);
+                    navigate(redirect_url);
                 }
             } else {
                 // Handle errors from response
-                const errorMessages = response.data.errors
-                    ? Object.values(response.data.errors).flat().join(", ")
+                const errorMessages = responseData.errors
+                    ? Object.values(responseData.errors).flat().join(", ")
                     : t("failedToPlaceOrder");
                 alert(errorMessages);
             }
@@ -235,6 +272,15 @@ export default function Checkout({
         }
     };
 
+    if (isLoading && !cart) {
+        return (
+            <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5">
+                <Head title={t("checkout")} />
+                <CheckoutSkeleton />
+            </MainLayout>
+        );
+    }
+
     if (!cart || cart.items.length === 0) {
         return (
             <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5">
@@ -250,7 +296,7 @@ export default function Checkout({
         <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5 dark:from-background dark:via-background dark:to-primary/10">
             <Head title={t("checkout")} />
 
-            <main className="container mx-auto px-4 py-8 md:py-12">
+            <main className="container mx-auto px-4 py-8 md:py-12" data-testid="checkout-form">
                 <div className="mb-8">
                     <h1 className="text-3xl md:text-4xl font-bold mb-2">
                         {t("checkout")}
@@ -275,17 +321,34 @@ export default function Checkout({
                         />
 
                         {is_guest && (
-                            <GuestInformationForm
-                                guestData={data.guest_data!}
-                                onChange={(updates) =>
-                                    setData("guest_data", {
-                                        ...data.guest_data!,
-                                        ...updates,
-                                    })
+                            <PluginSlot
+                                name="checkout.guest.form"
+                                pluginId="guest-checkout"
+                                context={{
+                                    guestData: data.guest_data!,
+                                    onChange: (updates: any) =>
+                                        setData("guest_data", {
+                                            ...data.guest_data!,
+                                            ...updates,
+                                        }),
+                                    governorates,
+                                    orderType: data.type,
+                                    errors,
+                                }}
+                                fallback={
+                                    <GuestInformationForm
+                                        guestData={data.guest_data!}
+                                        onChange={(updates) =>
+                                            setData("guest_data", {
+                                                ...data.guest_data!,
+                                                ...updates,
+                                            })
+                                        }
+                                        governorates={governorates}
+                                        orderType={data.type}
+                                        errors={errors as Record<string, string>}
+                                    />
                                 }
-                                governorates={governorates}
-                                orderType={data.type}
-                                errors={errors as Record<string, string>}
                             />
                         )}
 
@@ -303,7 +366,7 @@ export default function Checkout({
                         <PaymentMethodSelection
                             value={data.payment_method}
                             onChange={(value) => setData("payment_method", value)}
-                            onlinePaymentsEnabled={settings.online_payments_enabled}
+                            onlinePaymentsEnabled={Boolean(settings?.online_payments_enabled)}
                         />
 
                         <OrderNotesSection

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Plugins\PosIntegration\src\Jobs;
 
+use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use App\Plugins\OrderManagement\src\Models\Order;
-use App\Plugins\PosIntegration\src\Enums\OrderPosStatus;
 use App\Plugins\PosIntegration\src\Services\OrderPOSService;
 use Exception;
 use Illuminate\Bus\Queueable;

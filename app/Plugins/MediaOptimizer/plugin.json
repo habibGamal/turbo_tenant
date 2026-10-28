@@ -1,0 +1,13 @@
+{
+  "id": "media-optimizer",
+  "name": "Media Optimizer",
+  "version": "1.0.0",
+  "category": "foundation",
+  "description": "Core media optimization engine converting uploads to WebP variants (1920w, 480w, 20w).",
+  "author": "Turbo Tenant Team",
+  "is_core": true,
+  "dependencies": [],
+  "providers": [
+    "App\\Plugins\\MediaOptimizer\\MediaOptimizerServiceProvider"
+  ]
+}

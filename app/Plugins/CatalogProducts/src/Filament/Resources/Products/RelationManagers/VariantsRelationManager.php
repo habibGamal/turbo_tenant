@@ -36,7 +36,7 @@ final class VariantsRelationManager extends RelationManager
                     ->maxLength(255),
                 TextInput::make('price')
                     ->numeric()
-                    ->prefix('$')
+                    ->prefix('EGP')
                     ->maxValue(99999.99),
                 Toggle::make('is_available')
                     ->default(true),

@@ -6,7 +6,7 @@ namespace Tests\Unit\Services\Order;
 
 use App\Plugins\OrderManagement\src\DTOs\OrderTotals;
 use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
-use App\Plugins\PosIntegration\src\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;

@@ -15,6 +15,11 @@ final class PluginRegistry
      */
     private Collection $manifests;
 
+    /**
+     * @var array<string, string|null>
+     */
+    private array $classToPluginIdMap = [];
+
     public function __construct(
         private readonly PluginManifestLoader $loader,
         private readonly string $pluginsPath
@@ -49,6 +54,28 @@ final class PluginRegistry
     public function has(string $id): bool
     {
         return $this->all()->has($id);
+    }
+
+    /**
+     * Map a class name (e.g. Filament Resource or Page) to its owner plugin ID.
+     */
+    public function getPluginIdForClass(string $className): ?string
+    {
+        if (array_key_exists($className, $this->classToPluginIdMap)) {
+            return $this->classToPluginIdMap[$className];
+        }
+
+        if (preg_match('/^App\\\\Plugins\\\\([^\\\\]+)/', $className, $matches)) {
+            $folder = $matches[1];
+
+            foreach ($this->all() as $manifest) {
+                if (basename($manifest->basePath) === $folder) {
+                    return $this->classToPluginIdMap[$className] = $manifest->id;
+                }
+            }
+        }
+
+        return $this->classToPluginIdMap[$className] = null;
     }
 
     /**

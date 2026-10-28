@@ -15,7 +15,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
-class BulkNotificationForm
+final class BulkNotificationForm
 {
     public static function configure(Schema $schema): Schema
     {

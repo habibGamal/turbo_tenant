@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useForm, router } from "@inertiajs/react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +11,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
 import {
     Select,
@@ -23,46 +21,31 @@ import {
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
 import { Plus, Pencil, Trash2, MapPin, Loader2 } from "lucide-react";
-import axios from "axios";
-import { useEffect } from "react";
+import {
+    useAddresses,
+    useGovernorates,
+    useSaveAddress,
+    useDeleteAddress,
+} from "@/plugins/locations-delivery/api/useLocationsDelivery";
+import { Address, AddressPayload } from "@/plugins/locations-delivery/types";
 
-interface Address {
-    id: number;
-    area_id: number;
-    phone_number: string;
-    street: string;
-    building: string;
-    floor: string;
-    apartment: string;
-    notes: string | null;
-    is_default: boolean;
-    area: {
-        id: number;
-        name: string;
-        governorate: {
-            id: number;
-            name: string;
-        };
-    };
-}
-
-interface Governorate {
-    id: number;
-    name: string;
-    areas: {
-        id: number;
-        name: string;
-    }[];
-}
-
-export default function AddressManager({ addresses }: { addresses: Address[] }) {
+export default function AddressManager({ addresses: initialAddresses }: { addresses?: Address[] }) {
     const { t, i18n } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
-    const [governorates, setGovernorates] = useState<Governorate[]>([]);
     const [selectedGovernorateId, setSelectedGovernorateId] = useState<string>("");
+    const [processing, setProcessing] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
-    const { data, setData, post, patch, delete: destroy, processing, reset, errors } = useForm({
+    const { data: addressesRes, isLoading: isLoadingAddresses } = useAddresses();
+    const { data: governoratesRes } = useGovernorates();
+    const saveMutation = useSaveAddress();
+    const deleteMutation = useDeleteAddress();
+
+    const addresses: Address[] = addressesRes?.data ?? initialAddresses ?? [];
+    const governorates = governoratesRes?.data ?? [];
+
+    const [formData, setFormData] = useState<AddressPayload>({
         area_id: "",
         phone_number: "",
         street: "",
@@ -74,55 +57,68 @@ export default function AddressManager({ addresses }: { addresses: Address[] }) 
     });
 
     useEffect(() => {
-        axios.get(route("governorates-areas.index")).then((response) => {
-            if (response.data.success) {
-                setGovernorates(response.data.governorates);
-            }
-        });
-    }, []);
-
-    useEffect(() => {
         if (editingAddress) {
-            setData({
-                area_id: editingAddress.area_id.toString(),
-                phone_number: editingAddress.phone_number,
-                street: editingAddress.street,
-                building: editingAddress.building,
-                floor: editingAddress.floor,
-                apartment: editingAddress.apartment,
+            setFormData({
+                area_id: editingAddress.area_id?.toString() || "",
+                phone_number: editingAddress.phone_number || "",
+                street: editingAddress.street || "",
+                building: editingAddress.building || "",
+                floor: editingAddress.floor || "",
+                apartment: editingAddress.apartment || "",
                 notes: editingAddress.notes || "",
-                is_default: editingAddress.is_default,
+                is_default: editingAddress.is_default || false,
             });
-            setSelectedGovernorateId(editingAddress.area.governorate.id.toString());
+            setSelectedGovernorateId(editingAddress.area?.governorate?.id?.toString() || "");
         } else {
-            reset();
+            setFormData({
+                area_id: "",
+                phone_number: "",
+                street: "",
+                building: "",
+                floor: "",
+                apartment: "",
+                notes: "",
+                is_default: false,
+            });
             setSelectedGovernorateId("");
         }
     }, [editingAddress]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingAddress) {
-            patch(route("addresses.update", editingAddress.id), {
-                onSuccess: () => {
-                    setIsOpen(false);
-                    setEditingAddress(null);
-                    reset();
+        setProcessing(true);
+        setErrors({});
+
+        try {
+            await saveMutation.mutateAsync({
+                id: editingAddress?.id,
+                payload: {
+                    ...formData,
+                    area_id: Number(formData.area_id),
                 },
             });
-        } else {
-            post(route("addresses.store"), {
-                onSuccess: () => {
-                    setIsOpen(false);
-                    reset();
-                },
-            });
+            setIsOpen(false);
+            setEditingAddress(null);
+        } catch (err: any) {
+            if (err.response?.status === 422 && err.response?.data?.errors) {
+                const apiErrors: Record<string, string> = {};
+                for (const [key, msgs] of Object.entries<any>(err.response.data.errors)) {
+                    apiErrors[key] = Array.isArray(msgs) ? msgs[0] : String(msgs);
+                }
+                setErrors(apiErrors);
+            }
+        } finally {
+            setProcessing(false);
         }
     };
 
-    const handleDelete = (id: number) => {
-        if (confirm(t("confirmDeleteAddress"))) {
-            destroy(route("addresses.destroy", id));
+    const handleDelete = async (id: number) => {
+        if (confirm(t("confirmDeleteAddress", "Are you sure you want to delete this address?"))) {
+            try {
+                await deleteMutation.mutateAsync(id);
+            } catch (err) {
+                console.error("Failed to delete address:", err);
+            }
         }
     };
 
@@ -150,54 +146,60 @@ export default function AddressManager({ addresses }: { addresses: Address[] }) 
                 </Button>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-                {addresses.map((address) => (
-                    <div
-                        key={address.id}
-                        className="border rounded-lg p-4 relative hover:border-primary transition-colors"
-                    >
-                        {address.is_default && (
-                            <span className="absolute top-2 ltr:right-2 rtl:left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
-                                {t("default")}
-                            </span>
-                        )}
-                        <div className="flex items-start gap-3">
-                            <MapPin className="h-5 w-5 text-muted-foreground mt-1" />
-                            <div className="space-y-1">
-                                <p className="font-medium">
-                                    {address.street}, {address.building}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    {t("floor")}: {address.floor}, {t("apartment")}:{" "}
-                                    {address.apartment}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    {address.area.name}, {address.area.governorate.name}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    {address.phone_number}
-                                </p>
+            {isLoadingAddresses && addresses.length === 0 ? (
+                <div className="flex justify-center p-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+            ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                    {addresses.map((address) => (
+                        <div
+                            key={address.id}
+                            className="border rounded-lg p-4 relative hover:border-primary transition-colors"
+                        >
+                            {address.is_default && (
+                                <span className="absolute top-2 ltr:right-2 rtl:left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+                                    {t("default")}
+                                </span>
+                            )}
+                            <div className="flex items-start gap-3">
+                                <MapPin className="h-5 w-5 text-muted-foreground mt-1" />
+                                <div className="space-y-1">
+                                    <p className="font-medium">
+                                        {address.street}, {address.building}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {t("floor")}: {address.floor}, {t("apartment")}:{" "}
+                                        {address.apartment}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {address.area?.name}, {address.area?.governorate?.name}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {address.phone_number}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 mt-4">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => openEditModal(address)}
+                                >
+                                    <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    size="icon"
+                                    onClick={() => handleDelete(address.id)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
                             </div>
                         </div>
-                        <div className="flex justify-end gap-2 mt-4">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => openEditModal(address)}
-                            >
-                                <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="destructive"
-                                size="icon"
-                                onClick={() => handleDelete(address.id)}
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent className="sm:max-w-[500px]">
@@ -235,15 +237,17 @@ export default function AddressManager({ addresses }: { addresses: Address[] }) 
                             <div className="space-y-2">
                                 <Label>{t("area")}</Label>
                                 <Select
-                                    value={data.area_id}
-                                    onValueChange={(val) => setData("area_id", val)}
+                                    value={formData.area_id ? formData.area_id.toString() : ""}
+                                    onValueChange={(val) =>
+                                        setFormData((prev) => ({ ...prev, area_id: val }))
+                                    }
                                     disabled={!selectedGovernorateId}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder={t("selectArea")} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {selectedGovernorate?.areas.map((area) => (
+                                        {selectedGovernorate?.areas?.map((area) => (
                                             <SelectItem
                                                 key={area.id}
                                                 value={area.id.toString()}
@@ -262,8 +266,10 @@ export default function AddressManager({ addresses }: { addresses: Address[] }) 
                         <div className="space-y-2">
                             <Label>{t("street")}</Label>
                             <Input
-                                value={data.street}
-                                onChange={(e) => setData("street", e.target.value)}
+                                value={formData.street}
+                                onChange={(e) =>
+                                    setFormData((prev) => ({ ...prev, street: e.target.value }))
+                                }
                                 required
                             />
                             {errors.street && (
@@ -274,8 +280,10 @@ export default function AddressManager({ addresses }: { addresses: Address[] }) 
                         <div className="space-y-2">
                             <Label>{t("building")}</Label>
                             <Input
-                                value={data.building}
-                                onChange={(e) => setData("building", e.target.value)}
+                                value={formData.building}
+                                onChange={(e) =>
+                                    setFormData((prev) => ({ ...prev, building: e.target.value }))
+                                }
                                 required
                             />
                             {errors.building && (
@@ -286,10 +294,12 @@ export default function AddressManager({ addresses }: { addresses: Address[] }) 
                         <div className="space-y-2">
                             <Label dir="rtl">{t("phoneNumber")}</Label>
                             <PhoneInput
-                                value={data.phone_number}
-                                onChange={(value) => setData("phone_number", value || "")}
+                                value={formData.phone_number}
+                                onChange={(value) =>
+                                    setFormData((prev) => ({ ...prev, phone_number: value || "" }))
+                                }
                                 defaultCountry="EG"
-                                countries={['EG']}
+                                countries={["EG"]}
                                 placeholder={t("phoneNumberPlaceholder")}
                                 dir="ltr"
                             />
@@ -304,8 +314,10 @@ export default function AddressManager({ addresses }: { addresses: Address[] }) 
                             <div className="space-y-2">
                                 <Label>{t("floor")}</Label>
                                 <Input
-                                    value={data.floor}
-                                    onChange={(e) => setData("floor", e.target.value)}
+                                    value={formData.floor}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({ ...prev, floor: e.target.value }))
+                                    }
                                     required
                                 />
                                 {errors.floor && (
@@ -315,8 +327,13 @@ export default function AddressManager({ addresses }: { addresses: Address[] }) 
                             <div className="space-y-2">
                                 <Label>{t("apartment")}</Label>
                                 <Input
-                                    value={data.apartment}
-                                    onChange={(e) => setData("apartment", e.target.value)}
+                                    value={formData.apartment}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            apartment: e.target.value,
+                                        }))
+                                    }
                                     required
                                 />
                                 {errors.apartment && (
@@ -330,8 +347,10 @@ export default function AddressManager({ addresses }: { addresses: Address[] }) 
                         <div className="space-y-2">
                             <Label>{t("notes")}</Label>
                             <Textarea
-                                value={data.notes}
-                                onChange={(e) => setData("notes", e.target.value)}
+                                value={formData.notes || ""}
+                                onChange={(e) =>
+                                    setFormData((prev) => ({ ...prev, notes: e.target.value }))
+                                }
                             />
                         </div>
 
@@ -339,8 +358,13 @@ export default function AddressManager({ addresses }: { addresses: Address[] }) 
                             <input
                                 type="checkbox"
                                 id="is_default"
-                                checked={data.is_default}
-                                onChange={(e) => setData("is_default", e.target.checked)}
+                                checked={formData.is_default}
+                                onChange={(e) =>
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        is_default: e.target.checked,
+                                    }))
+                                }
                                 className="rounded border-gray-300 text-primary focus:ring-primary"
                             />
                             <Label htmlFor="is_default">{t("setAsDefaultAddress")}</Label>

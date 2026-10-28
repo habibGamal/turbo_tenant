@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, router } from "@inertiajs/react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -11,17 +11,20 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Heart, Package, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/core/context/AuthContext";
 
 interface UserMenuProps {
     user?: {
         name: string;
         email: string;
         avatar?: string;
-    };
+    } | null;
 }
 
 export function UserMenu({ user }: UserMenuProps) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const { logout } = useAuth();
 
     if (!user) {
         return (
@@ -29,13 +32,22 @@ export function UserMenu({ user }: UserMenuProps) {
                 variant="default"
                 size="sm"
                 className="gap-2"
-                onClick={() => router.get("/login")}
+                onClick={() => navigate("/login")}
             >
                 <User className="h-4 w-4" />
                 <span className="hidden sm:inline">{t("login")}</span>
             </Button>
         );
     }
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            navigate("/");
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
+    };
 
     return (
         <DropdownMenu>
@@ -66,34 +78,30 @@ export function UserMenu({ user }: UserMenuProps) {
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                    <Link href={route("profile.edit")} className="cursor-pointer">
+                    <Link to="/profile" className="cursor-pointer">
                         <User className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                         {t("profile")}
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                    <Link href={route("favorites.index")} className="cursor-pointer">
+                    <Link to="/favorites" data-testid="favorites-trigger" className="cursor-pointer">
                         <Heart className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                         {t("myFavorites")}
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                    <Link href="/orders" className="cursor-pointer">
+                    <Link to="/orders" data-testid="orders-history-trigger" className="cursor-pointer">
                         <Package className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                         {t("myOrders")}
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                    <Link
-                        href="/logout"
-                        method="post"
-                        as="button"
-                        className="w-full cursor-pointer"
-                    >
-                        <LogOut className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
-                        {t("logout")}
-                    </Link>
+                <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="w-full cursor-pointer text-destructive focus:text-destructive"
+                >
+                    <LogOut className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                    {t("logout")}
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>

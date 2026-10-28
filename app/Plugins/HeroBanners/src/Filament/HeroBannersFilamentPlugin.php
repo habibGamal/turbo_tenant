@@ -11,7 +11,7 @@ final class HeroBannersFilamentPlugin implements Plugin
 {
     public static function make(): static
     {
-        return app(static::class);
+        return app(self::class);
     }
 
     public function getId(): string
@@ -23,7 +23,7 @@ final class HeroBannersFilamentPlugin implements Plugin
     {
         $panel
             ->resources([
-                \App\Plugins\HeroBanners\src\Filament\Resources\HeroSliderResource::class,
+                Resources\HeroSliderResource::class,
             ])
             ->pages([
                 // Register Filament Pages here

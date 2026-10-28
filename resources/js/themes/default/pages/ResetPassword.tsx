@@ -1,6 +1,8 @@
-import React, { FormEvent, useEffect } from "react";
-import MainLayout from '@/themes/default/layouts/MainLayout';
-import { Head, Link, useForm } from "@inertiajs/react";
+import React, { FormEvent, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import MainLayout from "@/themes/default/layouts/MainLayout";
+import { Head } from "@/components/Head";
+import { apiClient } from "@/core/api/client";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,33 +18,67 @@ import {
 import { Lock, Mail, Eye, EyeOff, ShieldCheck } from "lucide-react";
 
 interface ResetPasswordProps {
-    token: string;
-    email: string;
+    token?: string;
+    email?: string;
 }
 
-export default function ResetPassword({ token, email }: ResetPasswordProps) {
+export default function ResetPassword({
+    token: propToken,
+    email: propEmail,
+}: ResetPasswordProps) {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === "ar";
-    const [showPassword, setShowPassword] = React.useState(false);
-    const [showPasswordConfirmation, setShowPasswordConfirmation] =
-        React.useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
-    const { data, setData, post, processing, errors, reset } = useForm({
-        token: token,
-        email: email,
-        password: "",
-        password_confirmation: "",
-    });
+    const params = useParams<{ token: string }>();
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
 
-    useEffect(() => {
-        return () => {
-            reset("password", "password_confirmation");
-        };
-    }, []);
+    const token = propToken || params.token || "";
+    const [email, setEmail] = useState(propEmail || searchParams.get("email") || "");
+    const [password, setPassword] = useState("");
+    const [passwordConfirmation, setPasswordConfirmation] = useState("");
+    const [processing, setProcessing] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
-    const submit = (e: FormEvent) => {
+    const submit = async (e: FormEvent) => {
         e.preventDefault();
-        post(route("password.store"));
+        setProcessing(true);
+        setErrors({});
+
+        try {
+            const res = await apiClient.post("/api/tenant/auth/reset-password", {
+                token,
+                email,
+                password,
+                password_confirmation: passwordConfirmation,
+            });
+            navigate("/login", {
+                replace: true,
+                state: {
+                    status:
+                        res.data?.message ||
+                        t("passwordResetSuccess", "Your password has been reset."),
+                },
+            });
+        } catch (err: any) {
+            if (err.response?.status === 422 && err.response?.data?.errors) {
+                const apiErrors: Record<string, string> = {};
+                for (const [key, msgs] of Object.entries<any>(err.response.data.errors)) {
+                    apiErrors[key] = Array.isArray(msgs) ? msgs[0] : String(msgs);
+                }
+                setErrors(apiErrors);
+            } else if (err.response?.data?.message) {
+                setErrors({ email: err.response.data.message });
+            } else {
+                setErrors({
+                    email: t("somethingWentWrong", "An error occurred. Please try again."),
+                });
+            }
+        } finally {
+            setProcessing(false);
+        }
     };
 
     return (
@@ -85,20 +121,19 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                                     </Label>
                                     <div className="relative">
                                         <Mail
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${isRTL ? "right-3" : "left-3"
-                                                }`}
+                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
+                                                isRTL ? "right-3" : "left-3"
+                                            }`}
                                         />
                                         <Input
                                             id="email"
                                             type="email"
                                             name="email"
-                                            value={data.email}
+                                            value={email}
                                             autoComplete="username"
-                                            onChange={(e) =>
-                                                setData("email", e.target.value)
-                                            }
+                                            onChange={(e) => setEmail(e.target.value)}
                                             className={`${isRTL ? "pr-10" : "pl-10"} bg-gray-50 dark:bg-gray-900`}
-                                            readOnly
+                                            readOnly={Boolean(propEmail || searchParams.get("email"))}
                                         />
                                     </div>
                                     {errors.email && (
@@ -115,27 +150,27 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                                     </Label>
                                     <div className="relative">
                                         <Lock
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${isRTL ? "right-3" : "left-3"
-                                                }`}
+                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
+                                                isRTL ? "right-3" : "left-3"
+                                            }`}
                                         />
                                         <Input
                                             id="password"
                                             type={showPassword ? "text" : "password"}
                                             name="password"
-                                            value={data.password}
+                                            value={password}
                                             autoComplete="new-password"
                                             autoFocus
-                                            onChange={(e) =>
-                                                setData("password", e.target.value)
-                                            }
+                                            onChange={(e) => setPassword(e.target.value)}
                                             className={`${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                                             placeholder={t("passwordPlaceholder")}
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? "left-3" : "right-3"
-                                                } text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors`}
+                                            className={`absolute top-1/2 -translate-y-1/2 ${
+                                                isRTL ? "left-3" : "right-3"
+                                            } text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors`}
                                         >
                                             {showPassword ? (
                                                 <EyeOff className="w-5 h-5" />
@@ -161,8 +196,9 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                                     </Label>
                                     <div className="relative">
                                         <Lock
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${isRTL ? "right-3" : "left-3"
-                                                }`}
+                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
+                                                isRTL ? "right-3" : "left-3"
+                                            }`}
                                         />
                                         <Input
                                             id="password_confirmation"
@@ -172,13 +208,10 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                                                     : "password"
                                             }
                                             name="password_confirmation"
-                                            value={data.password_confirmation}
+                                            value={passwordConfirmation}
                                             autoComplete="new-password"
                                             onChange={(e) =>
-                                                setData(
-                                                    "password_confirmation",
-                                                    e.target.value
-                                                )
+                                                setPasswordConfirmation(e.target.value)
                                             }
                                             className={`${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                                             placeholder={t("confirmPasswordPlaceholder")}
@@ -190,8 +223,9 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                                                     !showPasswordConfirmation
                                                 )
                                             }
-                                            className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? "left-3" : "right-3"
-                                                } text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors`}
+                                            className={`absolute top-1/2 -translate-y-1/2 ${
+                                                isRTL ? "left-3" : "right-3"
+                                            } text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors`}
                                         >
                                             {showPasswordConfirmation ? (
                                                 <EyeOff className="w-5 h-5" />
@@ -239,7 +273,7 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                                 <div className="text-center text-sm text-gray-600 dark:text-gray-400">
                                     {t("rememberPassword")}{" "}
                                     <Link
-                                        href={route("login")}
+                                        to="/login"
                                         className="text-primary hover:text-primary/90 font-semibold transition-colors"
                                     >
                                         {t("signIn")}

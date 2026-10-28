@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Plugins\CmsPages;
 
 use App\Plugins\CmsPages\src\DTOs\CmsPagesConfig;
+use App\Plugins\CmsPages\src\Filament\Resources\Pages\PageResource;
 use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,7 +22,10 @@ final class CmsPagesServiceProvider extends ServiceProvider
             );
         });
 
-        // Bind domain services
+        // Register legacy class alias for backward compatibility
+        if (! class_exists('App\Filament\Resources\Pages\PageResource', false)) {
+            class_alias(PageResource::class, 'App\Filament\Resources\Pages\PageResource');
+        }
     }
 
     public function boot(): void

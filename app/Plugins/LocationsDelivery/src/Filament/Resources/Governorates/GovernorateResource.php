@@ -18,9 +18,11 @@ use Filament\Tables\Table;
 
 final class GovernorateResource extends Resource
 {
+    use \App\Core\Plugins\Concerns\BelongsToPlugin;
+
     protected static ?string $model = Governorate::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::AdjustmentsHorizontal;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMap;
 
     protected static ?string $navigationLabel = 'المحافظات';
 

@@ -11,7 +11,7 @@ final class GuestCheckoutFilamentPlugin implements Plugin
 {
     public static function make(): static
     {
-        return app(static::class);
+        return app(self::class);
     }
 
     public function getId(): string
@@ -23,7 +23,7 @@ final class GuestCheckoutFilamentPlugin implements Plugin
     {
         $panel
             ->resources([
-                \App\Plugins\GuestCheckout\src\Filament\Resources\GuestUsers\GuestUserResource::class,
+                Resources\GuestUsers\GuestUserResource::class,
             ])
             ->pages([
                 // Register Filament Pages here

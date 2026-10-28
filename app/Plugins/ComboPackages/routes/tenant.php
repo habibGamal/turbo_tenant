@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Plugins\ComboPackages\src\Http\Controllers\PackageController;
+use App\Plugins\ComboPackages\src\Http\Controllers\Api\PackageApiController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -11,7 +11,8 @@ Route::middleware([
     'web',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
+    'plugin.active:combo-packages',
 ])->prefix('api/packages')->name('api.packages.')->group(function () {
-    Route::get('/', [PackageController::class, 'index'])->name('index');
-    Route::get('/{id}', [PackageController::class, 'show'])->name('show');
+    Route::get('/', [PackageApiController::class, 'index'])->name('index');
+    Route::get('/{id}', [PackageApiController::class, 'show'])->name('show');
 });

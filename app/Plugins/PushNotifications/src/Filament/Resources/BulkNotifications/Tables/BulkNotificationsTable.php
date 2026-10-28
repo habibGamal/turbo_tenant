@@ -10,7 +10,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class BulkNotificationsTable
+final class BulkNotificationsTable
 {
     public static function configure(Table $table): Table
     {

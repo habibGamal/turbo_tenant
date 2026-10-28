@@ -7,7 +7,8 @@
   "author": "Turbo Tenant Team",
   "is_core": false,
   "dependencies": [
-    "order-management"
+    "order-management",
+    "store-settings"
   ],
   "providers": [
     "App\\Plugins\\PaymentProcessing\\PaymentProcessingServiceProvider"

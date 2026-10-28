@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace App\Plugins\LocationsDelivery\src\Models;
 
-use App\Plugins\OrderManagement\src\Models\Order;
-use App\Plugins\PosIntegration\src\Models\ProductPosMapping;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Branch extends Model
 {
@@ -19,16 +16,6 @@ class Branch extends Model
         'link',
         'is_active',
     ];
-
-    public function posMappings(): HasMany
-    {
-        return $this->hasMany(ProductPosMapping::class);
-    }
-
-    public function orders(): HasMany
-    {
-        return $this->hasMany(Order::class);
-    }
 
     protected function casts(): array
     {

@@ -9,7 +9,8 @@
   "dependencies": [
     "cart-engine",
     "locations-delivery",
-    "catalog-products"
+    "catalog-products",
+    "store-settings"
   ],
   "providers": [
     "App\\Plugins\\OrderManagement\\OrderManagementServiceProvider"

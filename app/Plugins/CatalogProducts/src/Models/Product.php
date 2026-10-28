@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Product extends Model
+final class Product extends Model
 {
     use HasFactory;
 
@@ -82,16 +82,6 @@ class Product extends Model
         return $this->hasMany(\App\Plugins\ProductReviews\src\Models\Review::class);
     }
 
-    protected function casts(): array
-    {
-        return [
-            'base_price' => 'double',
-            'price_after_discount' => 'double',
-            'is_active' => 'boolean',
-            'sell_by_weight' => 'boolean',
-        ];
-    }
-
     public function getPriceAttribute()
     {
         return $this->price_after_discount ?? $this->base_price;
@@ -100,5 +90,15 @@ class Product extends Model
     protected static function newFactory(): \Database\Factories\ProductFactory
     {
         return \Database\Factories\ProductFactory::new();
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'base_price' => 'float',
+            'price_after_discount' => 'float',
+            'is_active' => 'boolean',
+            'sell_by_weight' => 'boolean',
+        ];
     }
 }

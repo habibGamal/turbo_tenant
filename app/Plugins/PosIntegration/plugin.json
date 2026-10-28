@@ -9,7 +9,8 @@
     "dependencies": [
         "order-management",
         "catalog-products",
-        "locations-delivery"
+        "locations-delivery",
+        "store-settings"
     ],
     "providers": [
         "App\\Plugins\\PosIntegration\\PosIntegrationServiceProvider"

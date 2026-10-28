@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Plugins\OrderManagement;
 
 use App\Plugins\OrderManagement\src\DTOs\OrderManagementConfig;
+use App\Plugins\OrderManagement\src\Events\OrderCreated;
+use App\Plugins\OrderManagement\src\Listeners\NotifyAdminsOfNewOrder;
 use App\Plugins\OrderManagement\src\Pipelines\OrderPipelineRegistry;
 use App\Plugins\OrderManagement\src\Pipelines\OrderValidationPipeline;
 use App\Plugins\OrderManagement\src\Pipelines\PricingCalculationPipeline;
@@ -14,11 +16,12 @@ use App\Plugins\OrderManagement\src\Services\Contracts\OrderRepositoryInterface;
 use App\Plugins\OrderManagement\src\Services\Contracts\OrderValidatorInterface;
 use App\Plugins\OrderManagement\src\Services\Contracts\PlaceOrderServiceInterface;
 use App\Plugins\OrderManagement\src\Services\Payments\OrderPaymentDispatcher;
+use App\Plugins\OrderManagement\src\Services\PlaceOrderService;
 use App\Plugins\OrderManagement\src\Services\Pricing\OrderPricingCalculator;
 use App\Plugins\OrderManagement\src\Services\Repositories\OrderRepository;
 use App\Plugins\OrderManagement\src\Services\Validators\OrderValidator;
-use App\Plugins\OrderManagement\src\Services\PlaceOrderService;
 use App\Plugins\StoreSettings\src\Services\SettingService;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 final class OrderManagementServiceProvider extends ServiceProvider
@@ -43,15 +46,25 @@ final class OrderManagementServiceProvider extends ServiceProvider
         $this->app->bind(OrderPricingCalculatorInterface::class, OrderPricingCalculator::class);
         $this->app->bind(OrderValidatorInterface::class, OrderValidator::class);
         $this->app->bind(PlaceOrderServiceInterface::class, PlaceOrderService::class);
-        $this->app->singleton(PlaceOrderService::class);
+        $this->app->bind(PlaceOrderService::class);
 
     }
 
     public function boot(): void
     {
         \App\Models\User::resolveRelationUsing('orders', function (\App\Models\User $user) {
-            return $user->hasMany(\App\Plugins\OrderManagement\src\Models\Order::class);
+            return $user->hasMany(src\Models\Order::class);
         });
+
+        \App\Plugins\LocationsDelivery\src\Models\Address::resolveRelationUsing('orders', function (\App\Plugins\LocationsDelivery\src\Models\Address $address) {
+            return $address->hasMany(src\Models\Order::class);
+        });
+
+        \App\Plugins\LocationsDelivery\src\Models\Branch::resolveRelationUsing('orders', function (\App\Plugins\LocationsDelivery\src\Models\Branch $branch) {
+            return $branch->hasMany(src\Models\Order::class);
+        });
+
+        Event::listen(OrderCreated::class, NotifyAdminsOfNewOrder::class);
 
         if (file_exists(__DIR__.'/routes/tenant.php')) {
             $this->loadRoutesFrom(__DIR__.'/routes/tenant.php');

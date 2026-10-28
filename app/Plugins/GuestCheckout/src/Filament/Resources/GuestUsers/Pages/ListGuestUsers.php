@@ -7,7 +7,7 @@ namespace App\Plugins\GuestCheckout\src\Filament\Resources\GuestUsers\Pages;
 use App\Plugins\GuestCheckout\src\Filament\Resources\GuestUsers\GuestUserResource;
 use Filament\Resources\Pages\ListRecords;
 
-class ListGuestUsers extends ListRecords
+final class ListGuestUsers extends ListRecords
 {
     protected static string $resource = GuestUserResource::class;
 

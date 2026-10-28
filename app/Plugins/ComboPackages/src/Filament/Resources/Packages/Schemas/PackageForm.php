@@ -19,12 +19,12 @@ final class PackageForm
 {
     public static function configure(Schema $schema): Schema
     {
-        $productClass = class_exists(\App\Plugins\CatalogProducts\src\Models\Product::class)
-            ? \App\Plugins\CatalogProducts\src\Models\Product::class
+        $productClass = class_exists(Product::class)
+            ? Product::class
             : Product::class;
 
-        $variantClass = class_exists(\App\Plugins\CatalogProducts\src\Models\ProductVariant::class)
-            ? \App\Plugins\CatalogProducts\src\Models\ProductVariant::class
+        $variantClass = class_exists(ProductVariant::class)
+            ? ProductVariant::class
             : ProductVariant::class;
 
         return $schema
@@ -72,13 +72,13 @@ final class PackageForm
                         TextInput::make('price')
                             ->required()
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix('EGP')
                             ->minValue(0)
                             ->label('السعر'),
 
                         TextInput::make('original_price')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix('EGP')
                             ->minValue(0)
                             ->label('السعر الأصلي'),
 
@@ -209,7 +209,7 @@ final class PackageForm
                                         TextInput::make('price_adjustment')
                                             ->numeric()
                                             ->default(0)
-                                            ->prefix('$')
+                                            ->prefix('EGP')
                                             ->label('تعديل السعر')
                                             ->helperText('رسوم إضافية لهذا الخيار'),
 

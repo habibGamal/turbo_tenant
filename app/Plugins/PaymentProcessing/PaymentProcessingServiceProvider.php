@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace App\Plugins\PaymentProcessing;
 
-use App\Plugins\OrderManagement\src\Pipelines\OrderPipelineRegistry;
+use App\Plugins\OrderManagement\src\Contracts\PaymentGatewayInterface;
 use App\Plugins\PaymentProcessing\src\Contracts\PaymentCallbackServiceInterface;
-use App\Plugins\PaymentProcessing\src\Contracts\PaymentGatewayInterface;
 use App\Plugins\PaymentProcessing\src\Contracts\PaymentWebhookServiceInterface;
 use App\Plugins\PaymentProcessing\src\DTOs\PaymentProcessingConfig;
-use App\Plugins\PaymentProcessing\src\Pipelines\Pipes\ApplyCodFeePipe;
 use App\Plugins\PaymentProcessing\src\Services\KashierService;
 use App\Plugins\PaymentProcessing\src\Services\PaymentCallbackService;
 use App\Plugins\PaymentProcessing\src\Services\PaymentGatewayFactory;
@@ -38,6 +36,7 @@ final class PaymentProcessingServiceProvider extends ServiceProvider
                 paymobPublicKey: (string) $settings->get(\App\Enums\SettingKey::PAYMOB_PUBLIC_KEY, ''),
                 paymobIntegrationIds: $integrationIds,
                 paymobHmacSecret: (string) $settings->get(\App\Enums\SettingKey::PAYMOB_HMAC_SECRET, ''),
+                paymobCurrency: (string) $settings->get(\App\Enums\SettingKey::PAYMOB_CURRENCY, 'EGP'),
                 kashierMerchantId: (string) $settings->get(\App\Enums\SettingKey::KASHIER_MERCHANT_ID, ''),
                 kashierApiKey: (string) $settings->get(\App\Enums\SettingKey::KASHIER_API_KEY, ''),
                 kashierSecretKey: (string) $settings->get(\App\Enums\SettingKey::KASHIER_SECRET_KEY, ''),

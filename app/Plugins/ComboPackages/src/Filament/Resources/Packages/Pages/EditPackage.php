@@ -8,7 +8,7 @@ use App\Plugins\ComboPackages\src\Filament\Resources\Packages\PackageResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
-class EditPackage extends EditRecord
+final class EditPackage extends EditRecord
 {
     protected static string $resource = PackageResource::class;
 

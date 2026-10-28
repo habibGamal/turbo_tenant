@@ -24,6 +24,7 @@ use UnitEnum;
 
 final class SyncPOSPrices extends Page implements HasForms, HasTable
 {
+    use \App\Core\Plugins\Concerns\BelongsToPlugin;
     use InteractsWithForms;
     use InteractsWithTable;
 

@@ -18,7 +18,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title inertia>{{ $siteName }}</title>
+    <title>{{ $siteName }}</title>
     @if($siteDescription)
         <meta name="description" content="{{ $siteDescription }}">
     @endif
@@ -69,9 +69,8 @@
     <!-- Scripts -->
     @routes
     @viteReactRefresh
-    @vite(['resources/js/app.tsx', "resources/js/themes/default/pages/{$page['component']}.tsx"])
+    @vite(['resources/js/app.tsx'])
     <link rel="stylesheet" href="/theme.css">
-    @inertiaHead
 </head>
 
 <body class="font-sans antialiased">
@@ -80,7 +79,7 @@
             <img id="section-logo-animation" src="{{ $svgLogo ? '/storage/' . $svgLogo : '' }}" alt="Logo" class="img-fade-in">
         </div>
     </div>
-    @inertia
+    <div id="app"></div>
 </body>
 
 </html>

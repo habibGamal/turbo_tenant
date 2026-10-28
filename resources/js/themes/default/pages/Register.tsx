@@ -1,6 +1,8 @@
-import React, { FormEvent, useEffect } from "react";
-import MainLayout from '@/themes/default/layouts/MainLayout';
-import { Head, Link, useForm } from "@inertiajs/react";
+import React, { FormEvent, useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import MainLayout from "@/themes/default/layouts/MainLayout";
+import { Head } from "@/components/Head";
+import { useAuth } from "@/core/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,35 +17,68 @@ import {
 } from "@/components/ui/card";
 import { UserPlus, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 
+function getSafeRedirect(redirectParam: string | null): string {
+    if (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")) {
+        return redirectParam;
+    }
+    return "/";
+}
+
 export default function Register() {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === "ar";
-    const [showPassword, setShowPassword] = React.useState(false);
-    const [showPasswordConfirmation, setShowPasswordConfirmation] =
-        React.useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
-    const { data, setData, post, processing, errors, reset } = useForm({
-        name: "",
-        email: "",
-        password: "",
-        password_confirmation: "",
-        expo_token: "",
-    });
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [passwordConfirmation, setPasswordConfirmation] = useState("");
+    const [expoToken, setExpoToken] = useState("");
+    const [processing, setProcessing] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const { register } = useAuth();
 
     useEffect(() => {
-        const token = window.localStorage.getItem('expoPushToken') || window.pushToken;
+        const token = window.localStorage.getItem("expoPushToken") || (window as any).pushToken;
         if (token) {
-            setData("expo_token", token);
+            setExpoToken(token);
         }
-
-        return () => {
-            reset("password", "password_confirmation");
-        };
     }, []);
 
-    const submit = (e: FormEvent) => {
+    const submit = async (e: FormEvent) => {
         e.preventDefault();
-        post(route("register"));
+        setProcessing(true);
+        setErrors({});
+
+        try {
+            await register({
+                name,
+                email,
+                password,
+                password_confirmation: passwordConfirmation,
+                ...(expoToken ? { expo_token: expoToken } : {}),
+            });
+            const redirectUrl = getSafeRedirect(searchParams.get("redirect"));
+            navigate(redirectUrl, { replace: true });
+        } catch (err: any) {
+            if (err.response?.status === 422 && err.response?.data?.errors) {
+                const apiErrors: Record<string, string> = {};
+                for (const [key, msgs] of Object.entries<any>(err.response.data.errors)) {
+                    apiErrors[key] = Array.isArray(msgs) ? msgs[0] : String(msgs);
+                }
+                setErrors(apiErrors);
+            } else if (err.response?.data?.message) {
+                setErrors({ email: err.response.data.message });
+            } else {
+                setErrors({ email: t("somethingWentWrong", "An error occurred. Please try again.") });
+            }
+        } finally {
+            setProcessing(false);
+        }
     };
 
     return (
@@ -86,19 +121,18 @@ export default function Register() {
                                     </Label>
                                     <div className="relative">
                                         <User
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${isRTL ? "right-3" : "left-3"
-                                                }`}
+                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
+                                                isRTL ? "right-3" : "left-3"
+                                            }`}
                                         />
                                         <Input
                                             id="name"
                                             type="text"
                                             name="name"
-                                            value={data.name}
+                                            value={name}
                                             autoComplete="name"
                                             autoFocus
-                                            onChange={(e) =>
-                                                setData("name", e.target.value)
-                                            }
+                                            onChange={(e) => setName(e.target.value)}
                                             className={`${isRTL ? "pr-10" : "pl-10"}`}
                                             placeholder={t("namePlaceholder")}
                                         />
@@ -117,18 +151,17 @@ export default function Register() {
                                     </Label>
                                     <div className="relative">
                                         <Mail
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${isRTL ? "right-3" : "left-3"
-                                                }`}
+                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
+                                                isRTL ? "right-3" : "left-3"
+                                            }`}
                                         />
                                         <Input
                                             id="email"
                                             type="email"
                                             name="email"
-                                            value={data.email}
+                                            value={email}
                                             autoComplete="username"
-                                            onChange={(e) =>
-                                                setData("email", e.target.value)
-                                            }
+                                            onChange={(e) => setEmail(e.target.value)}
                                             className={`${isRTL ? "pr-10" : "pl-10"}`}
                                             placeholder={t("emailPlaceholder")}
                                         />
@@ -147,26 +180,26 @@ export default function Register() {
                                     </Label>
                                     <div className="relative">
                                         <Lock
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${isRTL ? "right-3" : "left-3"
-                                                }`}
+                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
+                                                isRTL ? "right-3" : "left-3"
+                                            }`}
                                         />
                                         <Input
                                             id="password"
                                             type={showPassword ? "text" : "password"}
                                             name="password"
-                                            value={data.password}
+                                            value={password}
                                             autoComplete="new-password"
-                                            onChange={(e) =>
-                                                setData("password", e.target.value)
-                                            }
+                                            onChange={(e) => setPassword(e.target.value)}
                                             className={`${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                                             placeholder={t("passwordPlaceholder")}
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? "left-3" : "right-3"
-                                                } text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors`}
+                                            className={`absolute top-1/2 -translate-y-1/2 ${
+                                                isRTL ? "left-3" : "right-3"
+                                            } text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors`}
                                         >
                                             {showPassword ? (
                                                 <EyeOff className="w-5 h-5" />
@@ -192,8 +225,9 @@ export default function Register() {
                                     </Label>
                                     <div className="relative">
                                         <Lock
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${isRTL ? "right-3" : "left-3"
-                                                }`}
+                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
+                                                isRTL ? "right-3" : "left-3"
+                                            }`}
                                         />
                                         <Input
                                             id="password_confirmation"
@@ -203,13 +237,10 @@ export default function Register() {
                                                     : "password"
                                             }
                                             name="password_confirmation"
-                                            value={data.password_confirmation}
+                                            value={passwordConfirmation}
                                             autoComplete="new-password"
                                             onChange={(e) =>
-                                                setData(
-                                                    "password_confirmation",
-                                                    e.target.value
-                                                )
+                                                setPasswordConfirmation(e.target.value)
                                             }
                                             className={`${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                                             placeholder={t("confirmPasswordPlaceholder")}
@@ -221,8 +252,9 @@ export default function Register() {
                                                     !showPasswordConfirmation
                                                 )
                                             }
-                                            className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? "left-3" : "right-3"
-                                                } text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors`}
+                                            className={`absolute top-1/2 -translate-y-1/2 ${
+                                                isRTL ? "left-3" : "right-3"
+                                            } text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors`}
                                         >
                                             {showPasswordConfirmation ? (
                                                 <EyeOff className="w-5 h-5" />
@@ -267,7 +299,7 @@ export default function Register() {
                                 </div>
 
                                 <a
-                                    href={`${route("auth.google")}${data.expo_token ? `?expo_token=${data.expo_token}` : ''}`}
+                                    href={`/auth/google${expoToken ? `?expo_token=${expoToken}` : ""}`}
                                     className="w-full"
                                 >
                                     <Button
@@ -303,7 +335,11 @@ export default function Register() {
                                 <div className="text-center text-sm text-gray-600 dark:text-gray-400">
                                     {t("alreadyHaveAccount")}{" "}
                                     <Link
-                                        href={route("login")}
+                                        to={`/login${
+                                            searchParams.get("redirect")
+                                                ? `?redirect=${encodeURIComponent(searchParams.get("redirect")!)}`
+                                                : ""
+                                        }`}
                                         className="text-primary hover:text-primary/90 font-semibold transition-colors"
                                     >
                                         {t("signIn")}

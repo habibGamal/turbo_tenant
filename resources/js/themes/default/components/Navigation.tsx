@@ -1,16 +1,18 @@
 import React, { useState } from "react";
-import { Link, usePage } from "@inertiajs/react";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Search, Home, ScrollText, X } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import { Logo } from "./navigation/Logo";
 import { SearchBar } from "./navigation/SearchBar";
-import { NotificationDropdown } from "./navigation/NotificationDropdown";
 import { CartButton } from "./navigation/CartButton";
 import { UserMenu } from "./navigation/UserMenu";
 import { MobileMenu } from "./navigation/MobileMenu";
 import { MobileBottomNav } from "./navigation/MobileBottomNav";
+import { PluginSlot } from "@/core/slots/PluginSlot";
+import { useTenantSafe } from "@/core/context/TenantContext";
+import { useAuth } from "@/core/context/AuthContext";
 
 interface NavigationProps {
     categories?: Array<{ id: number; name: string; name_ar?: string }>;
@@ -33,8 +35,13 @@ export default function Navigation({
     categories = [],
     cartItemsCount = 0,
 }: NavigationProps) {
-    const { auth, settings } = usePage().props as any;
+    const { user } = useAuth();
+    const tenantContext = useTenantSafe();
+    const settings = tenantContext?.settings || {};
+    const activeCartCount = cartItemsCount || tenantContext?.cartCount || 0;
     const { t, i18n } = useTranslation();
+    const location = useLocation();
+    const isMenuPage = location.pathname === "/menu";
     const [searchOpen, setSearchOpen] = useState(false);
 
     const getText = (text: string, textAr?: string) => {
@@ -97,7 +104,7 @@ export default function Navigation({
     return (
         <>
             {/* Desktop & Tablet Header */}
-            <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <header data-testid="theme-header" className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="container mx-auto px-4">
                     <div className="flex h-16 items-center justify-between gap-4">
                         {/* Logo */}
@@ -109,20 +116,20 @@ export default function Navigation({
 
                         {/* Desktop Navigation Links - Hidden on Mobile */}
                         <nav className="hidden md:flex items-center gap-1">
-                            <Link href="/">
+                            <Link to="/">
                                 <Button variant="ghost" className="gap-2">
                                     <Home className="h-4 w-4" />
                                     {t("home")}
                                 </Button>
                             </Link>
-                            <Link href="/menu">
+                            <Link to="/menu">
                                 <Button variant="ghost" className="gap-2">
                                     <ScrollText className="h-4 w-4" />
                                     {t("menu")}
                                 </Button>
                             </Link>
-                            {!auth?.user && (
-                                <Link href="/track-order">
+                            {!user && (
+                                <Link to="/track-order">
                                     <Button variant="ghost" className="gap-2">
                                         <Search className="h-4 w-4" />
                                         {t("trackOrder")}
@@ -150,13 +157,24 @@ export default function Navigation({
                             <LanguageSwitcher />
 
                             {/* Notifications */}
-                            {auth?.user && <NotificationDropdown />}
+                            {user && (
+                                <PluginSlot
+                                    name="header.actions.notifications"
+                                    pluginId="push-notifications"
+                                />
+                            )}
 
-                            {/* Cart */}
-                            <CartButton />
+                            {/* Cart - Hidden on mobile viewports (< md) because MobileBottomNav provides bottom cart access */}
+                            <div className="hidden md:flex items-center">
+                                <PluginSlot
+                                    name="header.actions.cart"
+                                    pluginId="cart-engine"
+                                    fallback={<CartButton />}
+                                />
+                            </div>
 
                             {/* User Menu */}
-                            <UserMenu user={auth?.user} />
+                            <UserMenu user={user} />
 
                             {/* Mobile Menu Toggle */}
                             <MobileMenu
@@ -167,12 +185,16 @@ export default function Navigation({
                         </div>
                     </div>
 
-                    {/* Mobile Search Bar */}
-                    {searchOpen && (
+                    {/* Mobile Search Bar - Auto-expands on /menu, toggled on other pages */}
+                    {(searchOpen || isMenuPage) && (
                         <div className="lg:hidden pb-4 animate-in slide-in-from-top-2 relative">
                             <SearchBar
-                                autoFocus
-                                onClose={() => setSearchOpen(false)}
+                                autoFocus={searchOpen && !isMenuPage}
+                                onClose={() => {
+                                    if (!isMenuPage) {
+                                        setSearchOpen(false);
+                                    }
+                                }}
                             />
                         </div>
                     )}
@@ -180,7 +202,7 @@ export default function Navigation({
             </header>
 
             {/* Mobile Bottom Navigation */}
-            <MobileBottomNav user={auth?.user} cartItemsCount={cartItemsCount} />
+            <MobileBottomNav user={user} cartItemsCount={activeCartCount} />
         </>
     );
 }

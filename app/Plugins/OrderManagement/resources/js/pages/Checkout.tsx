@@ -7,15 +7,15 @@ import axios from "axios";
 import ReactPixel from "react-facebook-pixel";
 
 // Checkout Components
-import EmptyCart from "@/themes/default/components/checkout/EmptyCart";
-import OrderTypeSelection from "@/themes/default/components/checkout/OrderTypeSelection";
-import BranchSelection from "@/themes/default/components/checkout/BranchSelection";
-import GuestInformationForm from "@/themes/default/components/checkout/GuestInformationForm";
-import DeliveryAddressSection from "@/themes/default/components/checkout/DeliveryAddressSection";
-import PaymentMethodSelection from "@/themes/default/components/checkout/PaymentMethodSelection";
-import OrderNotesSection from "@/themes/default/components/checkout/OrderNotesSection";
-import CouponCodeSection from "@/themes/default/components/checkout/CouponCodeSection";
-import OrderSummary from "@/themes/default/components/checkout/OrderSummary";
+import EmptyCart from "@/themes/default/plugins/cart-engine/components/EmptyCart";
+import OrderTypeSelection from "@/themes/default/plugins/order-management/components/OrderTypeSelection";
+import BranchSelection from "@/themes/default/plugins/locations-delivery/components/BranchSelection";
+import GuestInformationForm from "@/themes/default/plugins/guest-checkout/components/GuestInformationForm";
+import DeliveryAddressSection from "@/themes/default/plugins/locations-delivery/components/DeliveryAddressSection";
+import PaymentMethodSelection from "@/themes/default/plugins/order-management/components/PaymentMethodSelection";
+import OrderNotesSection from "@/themes/default/plugins/order-management/components/OrderNotesSection";
+import CouponCodeSection from "@/themes/default/plugins/order-management/components/CouponCodeSection";
+import OrderSummary from "@/themes/default/plugins/order-management/components/OrderSummary";
 
 interface CheckoutPageProps extends PageProps {
     cart: Cart;

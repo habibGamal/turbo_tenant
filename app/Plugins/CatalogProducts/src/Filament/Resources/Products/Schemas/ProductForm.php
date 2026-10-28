@@ -45,7 +45,7 @@ final class ProductForm
                             ->label('الصورة')
                             ->image()
                             ->imageEditor()
-                            ->directory('products')
+                            ->optimizeForWeb('products')
                             ->columnSpanFull(),
                     ])
                     ->columns(2)
@@ -68,12 +68,12 @@ final class ProductForm
                         TextInput::make('base_price')
                             ->label('السعر الأساسي')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix('EGP')
                             ->maxValue(99999.99),
                         TextInput::make('price_after_discount')
                             ->label('السعر بعد الخصم')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix('EGP')
                             ->maxValue(99999.99),
                     ])
                     ->columns(2)

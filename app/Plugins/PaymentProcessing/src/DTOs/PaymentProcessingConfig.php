@@ -7,7 +7,7 @@ namespace App\Plugins\PaymentProcessing\src\DTOs;
 final readonly class PaymentProcessingConfig
 {
     /**
-     * @param array<int> $paymobIntegrationIds
+     * @param  array<int>  $paymobIntegrationIds
      */
     public function __construct(
         public string $activeGateway = 'paymob',
@@ -16,6 +16,7 @@ final readonly class PaymentProcessingConfig
         public string $paymobPublicKey = '',
         public array $paymobIntegrationIds = [],
         public string $paymobHmacSecret = '',
+        public string $paymobCurrency = 'EGP',
         public string $kashierMerchantId = '',
         public string $kashierApiKey = '',
         public string $kashierSecretKey = '',

@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, router } from "@inertiajs/react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Home, ScrollText, ShoppingCart, Search, User } from "lucide-react";
@@ -13,19 +13,12 @@ interface MobileBottomNavProps {
 export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavProps) {
     const { t } = useTranslation();
 
-    const handleAutoLogin = () => {
-        router.post("/login", {
-            email: "admin@example.com",
-            password: "password",
-        });
-    };
-
     return (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 safe-bottom">
             <div
                 className={`grid gap-1 p-2 ${!user ? "grid-cols-5" : "grid-cols-4"}`}
             >
-                <Link href="/">
+                <Link to="/">
                     <Button
                         variant="ghost"
                         className="flex-col h-auto py-2 w-full gap-1"
@@ -34,7 +27,7 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
                         <span className="text-xs">{t("home")}</span>
                     </Button>
                 </Link>
-                <Link href="/menu">
+                <Link to="/menu">
                     <Button
                         variant="ghost"
                         className="flex-col h-auto py-2 w-full gap-1"
@@ -43,7 +36,7 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
                         <span className="text-xs">{t("menu")}</span>
                     </Button>
                 </Link>
-                <Link href="/cart">
+                <Link to="/cart">
                     <Button
                         variant="ghost"
                         className="flex-col h-auto py-2 w-full gap-1 relative"
@@ -58,7 +51,7 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
                     </Button>
                 </Link>
                 {!user && (
-                    <Link href="/track-order">
+                    <Link to="/track-order">
                         <Button
                             variant="ghost"
                             className="flex-col h-auto py-2 w-full gap-1"
@@ -69,7 +62,7 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
                     </Link>
                 )}
                 {user ? (
-                    <Link href="/profile">
+                    <Link to="/profile">
                         <Button
                             variant="ghost"
                             className="flex-col h-auto py-2 w-full gap-1"
@@ -79,14 +72,15 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
                         </Button>
                     </Link>
                 ) : (
-                    <Button
-                        variant="ghost"
-                        className="flex-col h-auto py-2 w-full gap-1"
-                        onClick={handleAutoLogin}
-                    >
-                        <User className="h-5 w-5" />
-                        <span className="text-xs">{t("login")}</span>
-                    </Button>
+                    <Link to="/login">
+                        <Button
+                            variant="ghost"
+                            className="flex-col h-auto py-2 w-full gap-1"
+                        >
+                            <User className="h-5 w-5" />
+                            <span className="text-xs">{t("login")}</span>
+                        </Button>
+                    </Link>
                 )}
             </div>
         </nav>

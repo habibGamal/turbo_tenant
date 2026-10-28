@@ -8,7 +8,7 @@ use App\Enums\SettingKey;
 use App\Plugins\StoreSettings\src\Models\Setting;
 use Illuminate\Support\Collection;
 
-class SettingService
+final class SettingService
 {
     public function get(SettingKey|string $key, mixed $default = null): mixed
     {

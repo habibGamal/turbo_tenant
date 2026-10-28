@@ -43,10 +43,18 @@ final class CartEngineServiceProvider extends ServiceProvider
         $this->app->bind(CartServiceInterface::class, CartService::class);
         $this->app->singleton(CartService::class);
 
+        // 3. Register Bootstrap Contributor
+        $this->app->singleton(src\Bootstrap\CartEngineBootstrapContributor::class);
+        $this->app->tag([src\Bootstrap\CartEngineBootstrapContributor::class], 'tenant.bootstrap.contributors');
     }
 
     public function boot(): void
     {
+        \Illuminate\Support\Facades\Event::listen(
+            \Illuminate\Auth\Events\Login::class,
+            \App\Plugins\CartEngine\src\Listeners\SyncGuestCartOnLogin::class
+        );
+
         if (file_exists(__DIR__.'/routes/tenant.php')) {
             $this->loadRoutesFrom(__DIR__.'/routes/tenant.php');
         }

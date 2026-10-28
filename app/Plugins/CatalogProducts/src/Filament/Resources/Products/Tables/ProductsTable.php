@@ -43,11 +43,11 @@ final class ProductsTable
                     ->sortable(),
                 TextColumn::make('base_price')
                     ->label('السعر الأساسي')
-                    ->money('USD')
+                    ->money('EGP')
                     ->sortable(),
                 TextColumn::make('price_after_discount')
                     ->label('السعر بعد الخصم')
-                    ->money('USD')
+                    ->money('EGP')
                     ->sortable(),
                 IconColumn::make('sell_by_weight')
                     ->label('بيع بالوزن')

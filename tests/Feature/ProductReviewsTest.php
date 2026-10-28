@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Models\User;
 use App\Plugins\CatalogProducts\src\Models\Category;
 use App\Plugins\CatalogProducts\src\Models\Product;
-use App\Plugins\ProductReviews\src\Models\Review as LegacyReview;
-use App\Models\User;
 use App\Plugins\ProductReviews\src\Filament\Resources\ReviewResource;
 use App\Plugins\ProductReviews\src\Models\Review;
+use App\Plugins\ProductReviews\src\Models\Review as LegacyReview;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -53,13 +53,13 @@ it('creates a guest review with guest name and email', function () {
         ->and($review->is_published)->toBeTrue();
 });
 
-it('resolves legacy model and controller aliases', function () {
+it('resolves model and api controller', function () {
     expect(class_exists(LegacyReview::class))->toBeTrue();
 
     $legacyInstance = new LegacyReview();
     expect($legacyInstance)->toBeInstanceOf(Review::class);
 
-    expect(class_exists(\App\Http\Controllers\ReviewController::class))->toBeTrue();
+    expect(class_exists(App\Plugins\ProductReviews\src\Http\Controllers\Api\ProductReviewsApiController::class))->toBeTrue();
 });
 
 it('resolves dynamic reviews relationship on product model', function () {

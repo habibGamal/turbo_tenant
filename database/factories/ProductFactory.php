@@ -6,7 +6,6 @@ namespace Database\Factories;
 
 use App\Plugins\CatalogProducts\src\Models\Category;
 use App\Plugins\CatalogProducts\src\Models\ExtraOption;
-use App\Plugins\CatalogProducts\src\Models\WeightOption;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -33,9 +32,10 @@ final class ProductFactory extends Factory
             'price_after_discount' => fake()->boolean(30) ? $basePrice * 0.9 : null,
             'extra_option_id' => fake()->boolean(50) ? ExtraOption::factory() : null,
             'category_id' => Category::factory(),
-            'is_active' => fake()->boolean(90),
-            'sell_by_weight' => fake()->boolean(20),
-            'weight_options_id' => fake()->boolean(20) ? WeightOption::factory() : null,
+            'is_active' => true,
+            'sell_by_weight' => false,
+            'weight_options_id' => null,
+            'extra_option_id' => null,
         ];
     }
 }

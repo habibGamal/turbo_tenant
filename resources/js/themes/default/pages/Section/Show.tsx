@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Head, Link, usePage, WhenVisible } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import { Product } from '@/types';
-import ProductCard from '@/themes/default/components/ProductCard';
+import ProductCard from '@/themes/default/plugins/catalog-products/components/ProductCard';
 import { addToCart } from '@/utils/cartUtils';
+import { ProductCardSkeleton } from '@/components/ui/page-skeletons';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -121,13 +122,17 @@ export default function Show({ section, products: initialProducts }: Props) {
                             preserveUrl: true,
                         }}
                         fallback={
-                            <div className="py-8 text-center text-muted-foreground">
-                                {t('Loading more products...')}
+                            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                                {[...Array(4)].map((_, i) => (
+                                    <ProductCardSkeleton key={i} />
+                                ))}
                             </div>
                         }
                     >
-                        <div className="py-8 text-center text-muted-foreground">
-                            {t('Loading more products...')}
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                            {[...Array(4)].map((_, i) => (
+                                <ProductCardSkeleton key={i} />
+                            ))}
                         </div>
                     </WhenVisible>
                 )}

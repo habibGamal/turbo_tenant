@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { router, InfiniteScroll } from "@inertiajs/react";
 import MainLayout from '@/themes/default/layouts/MainLayout';
-import ProductCard from "@/themes/default/components/ProductCard";
+import ProductCard from "@/themes/default/plugins/catalog-products/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";

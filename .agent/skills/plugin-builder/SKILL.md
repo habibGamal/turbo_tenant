@@ -22,12 +22,13 @@ A plugin is an atomic slice of functionality that can span up to **6 architectur
 | **3. Database Tables** | Migrations inside `database/migrations/tenant/`, executed strictly in tenant DB context. |
 | **4. Storage Data** | Isolated directory in `storage/tenant{id}/plugins/{plugin-id}/`. |
 | **5. Filament Panels** | Plugin class implementing `Filament\Contracts\Plugin` in `src/Filament/`. |
-| **6. Frontend (React)** | Slot injection via `<PluginSlot />` or dedicated Inertia page components. |
+| **6. Frontend (React)** | Headless TanStack Query hooks (`api/`) & default fallback component (`components/`) in `resources/js/plugins/{plugin-slug}/`, registered to `<PluginSlot />` with optional theme overrides in `resources/js/themes/{theme}/plugins/{plugin-slug}/`. Zero Inertia coupling. |
 
 ---
 
-## 2. Standard Plugin Directory Structure
+## 2. Standard Plugin Architecture (Backend + Frontend)
 
+### Backend: `app/Plugins/{StudlyName}/`
 ```
 app/Plugins/{StudlyName}/
 ├── plugin.json                                # Required: Manifest & dependencies
@@ -36,6 +37,8 @@ app/Plugins/{StudlyName}/
 ├── database/
 │   └── migrations/
 │       └── tenant/                           # Optional: Tenant-isolated migrations
+├── routes/
+│   └── tenant.php                            # Scoped REST API routes (/api/...)
 ├── src/
 │   ├── DTOs/
 │   │   └── {StudlyName}Config.php           # Required: Typed Config DTO (Pattern 1)
@@ -43,13 +46,31 @@ app/Plugins/{StudlyName}/
 │   ├── Models/                               # Eloquent models
 │   ├── Listeners/                            # Event listeners
 │   ├── Http/
-│   │   └── Controllers/                      # Custom web/api/webhook controllers
+│   │   └── Controllers/
+│   │       └── Api/                          # REST API controllers returning JsonResponse
 │   └── Filament/
 │       ├── {StudlyName}FilamentPlugin.php   # Implements Filament\Contracts\Plugin
 │       ├── Resources/                        # Filament Resources
 │       └── Pages/                            # Filament Settings / Custom Pages
-└── resources/
-    └── js/                                   # React components and slot widgets
+```
+
+### Frontend Domain Module: `resources/js/plugins/{plugin-slug}/`
+```
+resources/js/plugins/{plugin-slug}/
+├── api/                                      # Headless TanStack Query hooks & API client calls
+│   └── use{Feature}.ts
+├── components/                               # Neutral default fallback components
+│   └── Default{Component}.tsx
+├── types/                                    # TypeScript interfaces for entities & API responses
+│   └── index.ts
+└── index.ts                                  # Registers default fallback into <PluginSlot /> via registerPluginDefault()
+```
+
+### Optional Theme Override: `resources/js/themes/{theme}/plugins/{plugin-slug}/`
+```
+resources/js/themes/{theme}/plugins/{plugin-slug}/
+├── Themed{Component}.tsx                     # Theme's custom presentation (Embla, Grid, Luxury styling)
+└── index.ts                                  # Calls registerThemeOverride('{theme}', '{slot}', ThemedComponent)
 ```
 
 ---
@@ -332,6 +353,8 @@ When asked to create or extract a new plugin:
 
 ## 6. Strict Rules & Anti-Patterns
 
+- ❌ **NEVER return `Inertia::render()` from plugin controllers.** Storefront plugin interactions must be exposed via clean, typed REST APIs (`src/Http/Controllers/Api/`) returning `JsonResponse`.
+- ❌ **NEVER hardcode theme-specific CSS or markup inside plugin default components.** Default components in `resources/js/plugins/{slug}/components/` are neutral fallbacks. Themes own presentation via `resources/js/themes/{theme}/plugins/{slug}/`.
 - ❌ **NEVER register pipeline pipes in `ServiceProvider::boot()`.** Pipeline pipes must be registered strictly in `*Plugin::bootForTenant()` to prevent leaking across tenants and ensure that pipes only execute when the tenant has the plugin active.
 - ❌ **NEVER inject `SettingService` directly into domain services.** All domain logic must depend solely on its local `{StudlyName}Config` DTO (Pattern 1).
 - ❌ **NEVER modify Core Kernel files** when creating a plugin. Core files must remain agnostic.

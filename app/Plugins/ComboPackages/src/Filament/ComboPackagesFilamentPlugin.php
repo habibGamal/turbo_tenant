@@ -11,7 +11,7 @@ final class ComboPackagesFilamentPlugin implements Plugin
 {
     public static function make(): static
     {
-        return app(static::class);
+        return app(self::class);
     }
 
     public function getId(): string
@@ -23,7 +23,7 @@ final class ComboPackagesFilamentPlugin implements Plugin
     {
         $panel
             ->resources([
-                \App\Plugins\ComboPackages\src\Filament\Resources\Packages\PackageResource::class,
+                Resources\Packages\PackageResource::class,
             ])
             ->pages([
                 // Register Filament Pages here

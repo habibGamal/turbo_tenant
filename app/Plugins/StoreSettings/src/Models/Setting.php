@@ -7,7 +7,7 @@ namespace App\Plugins\StoreSettings\src\Models;
 use App\Enums\SettingKey;
 use Illuminate\Database\Eloquent\Model;
 
-class Setting extends Model
+final class Setting extends Model
 {
     protected $fillable = [
         'key',

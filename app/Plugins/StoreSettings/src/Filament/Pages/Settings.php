@@ -26,6 +26,8 @@ use Filament\Support\Icons\Heroicon;
  */
 final class Settings extends Page
 {
+    use \App\Core\Plugins\Concerns\BelongsToPlugin;
+
     /**
      * @var array<string, mixed> | null
      */
@@ -77,8 +79,7 @@ final class Settings extends Page
                                 ->maxLength(255),
                             FileUpload::make(SettingKey::SITE_LOGO->value)
                                 ->label(SettingKey::SITE_LOGO->label())
-                                ->image()
-                                ->directory('site-images'),
+                                ->optimizeForWeb('site-images'),
                             TextInput::make(SettingKey::SITE_DESCRIPTION->value)
                                 ->label(SettingKey::SITE_DESCRIPTION->label())
                                 ->maxLength(500),
@@ -96,15 +97,14 @@ final class Settings extends Page
                             FileUpload::make(SettingKey::SITE_FAVICON->value)
                                 ->label(SettingKey::SITE_FAVICON->label())
                                 ->image()
-                                ->directory('site-images'),
+                                ->directory('images/site-images'),
                             FileUpload::make(SettingKey::IMAGE_PLACEHOLDER->value)
                                 ->label(SettingKey::IMAGE_PLACEHOLDER->label())
-                                ->image()
-                                ->directory('site-images'),
+                                ->optimizeForWeb('site-images'),
                             FileUpload::make(SettingKey::SVG_LOGO->value)
                                 ->label(SettingKey::SVG_LOGO->label())
                                 ->image()
-                                ->directory('site-images'),
+                                ->directory('images/site-images'),
                             TextInput::make(SettingKey::FACEBOOK_APP_ID->value)
                                 ->label(SettingKey::FACEBOOK_APP_ID->label())
                                 ->maxLength(255),
