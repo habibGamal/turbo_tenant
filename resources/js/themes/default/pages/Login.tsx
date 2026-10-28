@@ -30,8 +30,7 @@ function getSafeRedirect(redirectParam: string | null): string {
 }
 
 export default function Login({ canResetPassword = true, status: initialStatus }: LoginProps) {
-    const { t, i18n } = useTranslation();
-    const isRTL = i18n.language === "ar";
+    const { t } = useTranslation();
     const [showPassword, setShowPassword] = useState(false);
 
     const [email, setEmail] = useState("");
@@ -89,25 +88,22 @@ export default function Login({ canResetPassword = true, status: initialStatus }
     return (
         <MainLayout>
             <Head title={t("login")} />
-            <div
-                className="flex items-center justify-center bg-background px-4 py-12"
-                dir={isRTL ? "rtl" : "ltr"}
-            >
+            <div className="flex items-center justify-center bg-background px-4 py-12">
                 <div className="w-full max-w-md">
                     {/* Logo/Brand */}
                     <div className="text-center mb-8">
                         <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-lg">
-                            <LogIn className="w-8 h-8 text-white" />
+                            <LogIn className="w-8 h-8 text-primary-foreground" />
                         </div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                        <h1 className="text-3xl font-bold text-foreground">
                             {t("welcomeBack")}
                         </h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-2">
+                        <p className="text-muted-foreground mt-2">
                             {t("loginToYourAccount")}
                         </p>
                     </div>
 
-                    <Card className="shadow-xl border-0 dark:bg-gray-800">
+                    <Card className="shadow-xl border-border bg-card">
                         <CardHeader className="space-y-1">
                             <CardTitle className="text-2xl font-bold text-center">
                                 {t("signIn")}
@@ -120,8 +116,8 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                         <form onSubmit={submit}>
                             <CardContent className="space-y-4">
                                 {status && (
-                                    <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                                        <p className="text-sm text-green-800 dark:text-green-200 text-center">
+                                    <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                                        <p className="text-sm text-emerald-800 dark:text-emerald-200 text-center">
                                             {status}
                                         </p>
                                     </div>
@@ -133,11 +129,7 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                                         {t("email")}
                                     </Label>
                                     <div className="relative">
-                                        <Mail
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
-                                                isRTL ? "right-3" : "left-3"
-                                            }`}
-                                        />
+                                        <Mail className="absolute top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground start-3" />
                                         <Input
                                             id="email"
                                             type="email"
@@ -146,12 +138,12 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                                             autoComplete="username"
                                             autoFocus
                                             onChange={(e) => setEmail(e.target.value)}
-                                            className={`${isRTL ? "pr-10" : "pl-10"}`}
+                                            className="ps-10"
                                             placeholder={t("emailPlaceholder")}
                                         />
                                     </div>
                                     {errors.email && (
-                                        <p className="text-sm text-red-600 dark:text-red-400">
+                                        <p className="text-sm text-destructive">
                                             {errors.email}
                                         </p>
                                     )}
@@ -163,11 +155,7 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                                         {t("password")}
                                     </Label>
                                     <div className="relative">
-                                        <Lock
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
-                                                isRTL ? "right-3" : "left-3"
-                                            }`}
-                                        />
+                                        <Lock className="absolute top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground start-3" />
                                         <Input
                                             id="password"
                                             type={showPassword ? "text" : "password"}
@@ -175,15 +163,13 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                                             value={password}
                                             autoComplete="current-password"
                                             onChange={(e) => setPassword(e.target.value)}
-                                            className={`${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                                            className="ps-10 pe-10"
                                             placeholder={t("passwordPlaceholder")}
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className={`absolute top-1/2 -translate-y-1/2 ${
-                                                isRTL ? "left-3" : "right-3"
-                                            } text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors`}
+                                            className="absolute top-1/2 -translate-y-1/2 end-3 text-muted-foreground hover:text-foreground transition-colors"
                                         >
                                             {showPassword ? (
                                                 <EyeOff className="w-5 h-5" />
@@ -193,7 +179,7 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                                         </button>
                                     </div>
                                     {errors.password && (
-                                        <p className="text-sm text-red-600 dark:text-red-400">
+                                        <p className="text-sm text-destructive">
                                             {errors.password}
                                         </p>
                                     )}
@@ -201,15 +187,15 @@ export default function Login({ canResetPassword = true, status: initialStatus }
 
                                 {/* Remember Me & Forgot Password */}
                                 <div className="flex items-center justify-between">
-                                    <label className="flex items-center space-x-2 rtl:space-x-reverse cursor-pointer">
+                                    <label className="flex items-center gap-2 cursor-pointer">
                                         <input
                                             type="checkbox"
                                             name="remember"
                                             checked={remember}
                                             onChange={(e) => setRemember(e.target.checked)}
-                                            className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary dark:focus:ring-primary dark:bg-gray-700 dark:border-gray-600"
+                                            className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-primary"
                                         />
-                                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                                        <span className="text-sm text-muted-foreground">
                                             {t("rememberMe")}
                                         </span>
                                     </label>
@@ -233,7 +219,7 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                                 >
                                     {processing ? (
                                         <span className="flex items-center gap-2">
-                                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            <span className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
                                             {t("signingIn")}
                                         </span>
                                     ) : (
@@ -243,10 +229,10 @@ export default function Login({ canResetPassword = true, status: initialStatus }
 
                                 <div className="relative">
                                     <div className="absolute inset-0 flex items-center">
-                                        <span className="w-full border-t border-gray-300 dark:border-gray-600" />
+                                        <span className="w-full border-t border-border" />
                                     </div>
                                     <div className="relative flex justify-center text-xs uppercase">
-                                        <span className="bg-white dark:bg-gray-800 px-2 text-gray-500 dark:text-gray-400">
+                                        <span className="bg-card px-2 text-muted-foreground">
                                             {t("orContinueWith")}
                                         </span>
                                     </div>
@@ -259,10 +245,10 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        className="w-full py-6 border-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
+                                        className="w-full py-6 border-2 hover:bg-muted transition-all duration-200"
                                     >
                                         <svg
-                                            className="w-5 h-5 ltr:mr-2 rtl:ml-2"
+                                            className="w-5 h-5 me-2"
                                             viewBox="0 0 24 24"
                                         >
                                             <path
@@ -286,7 +272,7 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                                     </Button>
                                 </a>
 
-                                <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+                                <div className="text-center text-sm text-muted-foreground">
                                     {t("dontHaveAccount")}{" "}
                                     <Link
                                         to={`/register${

@@ -9,6 +9,7 @@ import { PluginSlot } from "@/core/slots/PluginSlot";
 import ReactPixel from "react-facebook-pixel";
 import { CheckoutSkeleton } from "@/components/ui/page-skeletons";
 import { useCheckoutData, usePlaceOrder } from "@/plugins/order-management";
+import { useCurrency } from "@/lib/money";
 
 // Checkout Components (Colocated within respective theme plugin directories)
 import EmptyCart from "@/themes/default/plugins/cart-engine/components/EmptyCart";
@@ -39,6 +40,7 @@ export default function Checkout({
     is_guest: initialIsGuest,
 }: CheckoutPageProps) {
     const { t } = useTranslation();
+    const currency = useCurrency();
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -338,7 +340,7 @@ export default function Checkout({
                     })) || [],
                     content_type: "product",
                     value: totalAmount,
-                    currency: "EGP",
+                    currency,
                     num_items: cart?.items?.length || 0,
                 });
 

@@ -9,8 +9,12 @@ import { Product } from '@/types';
 interface Category {
     id: number;
     name: string;
+    name_ar?: string;
+    nameAr?: string;
     slug: string;
     description?: string;
+    description_ar?: string;
+    descriptionAr?: string;
     image?: string;
 }
 
@@ -35,8 +39,8 @@ export default function HomePage({
     // Transform categories
     const transformedCategories = categories.map(cat => ({
         ...cat,
-        nameAr: cat.name, // TODO: Add actual Arabic translations
-        descriptionAr: cat.description,
+        nameAr: cat.name_ar || cat.nameAr || cat.name,
+        descriptionAr: cat.description_ar || cat.descriptionAr || cat.description,
     }));
 
     return (

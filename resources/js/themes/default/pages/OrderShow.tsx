@@ -30,6 +30,7 @@ import { useTranslation } from "react-i18next";
 import { Order, PageProps } from "@/types";
 import { getPaymentMethodLabel } from "@/lib/payment";
 import { useOrderDetails } from "@/plugins/order-management";
+import { useFormatMoney } from "@/lib/money";
 import {
     OrderStatusBadge,
     OrderTimeline,
@@ -45,6 +46,7 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === "ar";
     const BackArrowIcon = isRTL ? ArrowRight : ArrowLeft;
+    const formatMoney = useFormatMoney();
 
     const resolvedId = orderId || initialOrder?.id || (typeof window !== 'undefined' ? window.location.pathname.split('/').filter(Boolean).pop() : undefined);
     const { data: fetchedOrder, isLoading, error } = useOrderDetails(resolvedId, {
@@ -85,11 +87,6 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
 
     const getText = (text: string, textAr?: string) => {
         return i18n.language === 'ar' && textAr ? textAr : text;
-    };
-
-    const formatCurrency = (amount: number | undefined) => {
-        const safeAmount = amount ?? 0;
-        return `${safeAmount.toFixed(2)} ${t("currency")}`;
     };
 
     const formatDate = (dateString: string) => {
@@ -177,7 +174,7 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                                         <span> {item.weight_option_value.value}
                                                         </span>
                                                         <span>
-                                                            × {formatCurrency(item.unit_price)}
+                                                            × {formatMoney(item.unit_price)}
                                                         </span>
                                                     </div>
                                                 )}
@@ -189,21 +186,21 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                                                 <span>
                                                                     {getText(extra.extra_name, extra.extra_name_ar)}
                                                                     {extra.quantity > 1 && (
-                                                                        <span className="ltr:ml-1 rtl:mr-1">
+                                                                        <span className="ms-1">
                                                                             × {extra.quantity}
                                                                         </span>
                                                                     )}
                                                                 </span>
-                                                                <span className="ltr:ml-auto rtl:mr-auto">
-                                                                    {formatCurrency(extra.extra_price * extra.quantity)}
+                                                                <span className="ms-auto">
+                                                                    {formatMoney(extra.extra_price * extra.quantity)}
                                                                 </span>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="font-bold ltr:ml-4 rtl:mr-4">
-                                                {formatCurrency(item.total)}
+                                            <div className="font-bold ms-4">
+                                                {formatMoney(item.total)}
                                             </div>
                                         </div>
                                     </div>
@@ -242,7 +239,7 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                         {t("subtotal")}
                                     </span>
                                     <span className="font-medium">
-                                        {formatCurrency(order.sub_total)}
+                                        {formatMoney(order.sub_total)}
                                     </span>
                                 </div>
                                 {order.discount > 0 && (
@@ -250,9 +247,9 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                         <span className="text-muted-foreground">
                                             {t("discount")}
                                         </span>
-                                        <span className="font-medium text-green-600 dark:text-green-400">
+                                        <span className="font-medium text-emerald-600 dark:text-emerald-400">
                                             -
-                                            {formatCurrency(order.discount)}
+                                            {formatMoney(order.discount)}
                                         </span>
                                     </div>
                                 )}
@@ -261,7 +258,7 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                         {t("tax")}
                                     </span>
                                     <span className="font-medium">
-                                        {formatCurrency(order.tax)}
+                                        {formatMoney(order.tax)}
                                     </span>
                                 </div>
                                 {order.service > 0 && (
@@ -270,7 +267,7 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                             {t("codFees")}
                                         </span>
                                         <span className="font-medium">
-                                            {formatCurrency(order.service)}
+                                            {formatMoney(order.service)}
                                         </span>
                                     </div>
                                 )}
@@ -280,7 +277,7 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                     </span>
                                     <span className="font-medium">
                                         {order.delivery_fee > 0
-                                            ? formatCurrency(
+                                            ? formatMoney(
                                                 order.delivery_fee
                                             )
                                             : t("free")}
@@ -292,7 +289,7 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                         {t("total")}
                                     </span>
                                     <span className="font-bold text-2xl text-primary" data-testid="order-total-display">
-                                        {formatCurrency(order.total)}
+                                        {formatMoney(order.total)}
                                     </span>
                                 </div>
                             </CardContent>

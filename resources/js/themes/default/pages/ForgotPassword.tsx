@@ -22,8 +22,7 @@ interface ForgotPasswordProps {
 }
 
 export default function ForgotPassword({ status: initialStatus }: ForgotPasswordProps) {
-    const { t, i18n } = useTranslation();
-    const isRTL = i18n.language === "ar";
+    const { t } = useTranslation();
 
     const [email, setEmail] = useState("");
     const [status, setStatus] = useState(initialStatus || "");
@@ -59,25 +58,22 @@ export default function ForgotPassword({ status: initialStatus }: ForgotPassword
     return (
         <MainLayout>
             <Head title={t("forgotPassword")} />
-            <div
-                className="flex items-center justify-center bg-background px-4 py-12"
-                dir={isRTL ? "rtl" : "ltr"}
-            >
+            <div className="flex items-center justify-center bg-background px-4 py-12">
                 <div className="w-full max-w-md">
                     {/* Logo/Brand */}
                     <div className="text-center mb-8">
                         <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-lg">
-                            <KeyRound className="w-8 h-8 text-white" />
+                            <KeyRound className="w-8 h-8 text-primary-foreground" />
                         </div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                        <h1 className="text-3xl font-bold text-foreground">
                             {t("forgotPassword")}
                         </h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-2 max-w-sm mx-auto">
+                        <p className="text-muted-foreground mt-2 max-w-sm mx-auto">
                             {t("forgotPasswordDescription")}
                         </p>
                     </div>
 
-                    <Card className="shadow-xl border-0 dark:bg-gray-800">
+                    <Card className="shadow-xl border-border bg-card">
                         <CardHeader className="space-y-1">
                             <CardTitle className="text-2xl font-bold text-center">
                                 {t("resetPassword")}
@@ -90,9 +86,9 @@ export default function ForgotPassword({ status: initialStatus }: ForgotPassword
                         <form onSubmit={submit}>
                             <CardContent className="space-y-4">
                                 {status && (
-                                    <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-start gap-3">
-                                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
-                                        <p className="text-sm text-green-800 dark:text-green-200">
+                                    <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg flex items-start gap-3">
+                                        <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                                        <p className="text-sm text-emerald-800 dark:text-emerald-200">
                                             {status}
                                         </p>
                                     </div>
@@ -104,11 +100,7 @@ export default function ForgotPassword({ status: initialStatus }: ForgotPassword
                                         {t("email")}
                                     </Label>
                                     <div className="relative">
-                                        <Mail
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
-                                                isRTL ? "right-3" : "left-3"
-                                            }`}
-                                        />
+                                        <Mail className="absolute top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground start-3" />
                                         <Input
                                             id="email"
                                             type="email"
@@ -117,20 +109,20 @@ export default function ForgotPassword({ status: initialStatus }: ForgotPassword
                                             autoComplete="username"
                                             autoFocus
                                             onChange={(e) => setEmail(e.target.value)}
-                                            className={`${isRTL ? "pr-10" : "pl-10"}`}
+                                            className="ps-10"
                                             placeholder={t("emailPlaceholder")}
                                         />
                                     </div>
                                     {errors.email && (
-                                        <p className="text-sm text-red-600 dark:text-red-400">
+                                        <p className="text-sm text-destructive">
                                             {errors.email}
                                         </p>
                                     )}
                                 </div>
 
                                 {/* Info Box */}
-                                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                                <div className="p-4 bg-muted border border-border rounded-lg">
+                                    <p className="text-sm text-muted-foreground">
                                         {t("passwordResetLinkInfo")}
                                     </p>
                                 </div>
@@ -144,7 +136,7 @@ export default function ForgotPassword({ status: initialStatus }: ForgotPassword
                                 >
                                     {processing ? (
                                         <span className="flex items-center gap-2">
-                                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            <span className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
                                             {t("sendingLink")}
                                         </span>
                                     ) : (
@@ -155,19 +147,10 @@ export default function ForgotPassword({ status: initialStatus }: ForgotPassword
                                 <div className="text-center">
                                     <Link
                                         to="/login"
-                                        className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors inline-flex items-center gap-2"
+                                        className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-2"
                                     >
-                                        {isRTL ? (
-                                            <>
-                                                <span>{t("backToLogin")}</span>
-                                                <ArrowLeft className="w-4 h-4 rotate-180" />
-                                            </>
-                                        ) : (
-                                            <>
-                                                <ArrowLeft className="w-4 h-4" />
-                                                <span>{t("backToLogin")}</span>
-                                            </>
-                                        )}
+                                        <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
+                                        <span>{t("backToLogin")}</span>
                                     </Link>
                                 </div>
                             </CardFooter>

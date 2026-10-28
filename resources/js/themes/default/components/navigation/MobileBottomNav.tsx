@@ -33,7 +33,7 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
     return (
         <nav
             aria-label={t("bottomNavigation", "Mobile Navigation")}
-            className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 safe-bottom"
+            className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 safe-bottom"
         >
             <div
                 className={`grid gap-1 p-2 ${!user ? "grid-cols-5" : "grid-cols-4"}`}
@@ -64,7 +64,7 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
                     <div className="relative flex items-center justify-center">
                         <ShoppingCart className="h-5 w-5" />
                         {cartItemsCount > 0 && (
-                            <Badge className="absolute -top-1.5 -right-3 h-4 min-w-4 px-1 flex items-center justify-center p-0 text-[10px]">
+                            <Badge className="absolute -top-1.5 -end-3 h-4 min-w-4 px-1 flex items-center justify-center p-0 text-[10px]">
                                 {cartItemsCount > 9 ? "9+" : cartItemsCount}
                             </Badge>
                         )}

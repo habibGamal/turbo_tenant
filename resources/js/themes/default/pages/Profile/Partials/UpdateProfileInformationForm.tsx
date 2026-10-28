@@ -91,7 +91,7 @@ export default function UpdateProfileInformationForm({
                         autoComplete="name"
                     />
                     {errors.name && (
-                        <p className="text-sm text-red-600 mt-2">{errors.name}</p>
+                        <p className="text-sm text-destructive mt-2">{errors.name}</p>
                     )}
                 </div>
 
@@ -107,7 +107,7 @@ export default function UpdateProfileInformationForm({
                         autoComplete="username"
                     />
                     {errors.email && (
-                        <p className="text-sm text-red-600 mt-2">{errors.email}</p>
+                        <p className="text-sm text-destructive mt-2">{errors.email}</p>
                     )}
                 </div>
 
@@ -122,25 +122,25 @@ export default function UpdateProfileInformationForm({
                         autoComplete="tel"
                     />
                     {errors.phone && (
-                        <p className="text-sm text-red-600 mt-2">{errors.phone}</p>
+                        <p className="text-sm text-destructive mt-2">{errors.phone}</p>
                     )}
                 </div>
 
                 {mustVerifyEmail && (user as any)?.email_verified_at === null && (
                     <div>
-                        <p className="text-sm mt-2 text-gray-800 dark:text-gray-200">
+                        <p className="text-sm mt-2 text-foreground">
                             {t("emailUnverified")}{" "}
                             <button
                                 type="button"
                                 onClick={sendVerification}
-                                className="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
+                                className="underline text-sm text-muted-foreground hover:text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                             >
                                 {t("clickToResendVerification")}
                             </button>
                         </p>
 
                         {verificationStatus === "verification-link-sent" && (
-                            <div className="mt-2 font-medium text-sm text-green-600 dark:text-green-400">
+                            <div className="mt-2 font-medium text-sm text-emerald-600 dark:text-emerald-400">
                                 {t("verificationLinkSent")}
                             </div>
                         )}
@@ -157,7 +157,7 @@ export default function UpdateProfileInformationForm({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-sm text-muted-foreground">
                             {t("saved")}
                         </p>
                     </Transition>

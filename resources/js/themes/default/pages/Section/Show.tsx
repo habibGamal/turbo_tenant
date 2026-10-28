@@ -3,7 +3,10 @@ import { Head, Link, usePage, WhenVisible } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import { Product } from '@/types';
 import ProductCard from '@/themes/default/plugins/catalog-products/components/ProductCard';
-import { addToCart } from '@/utils/cartUtils';
+import ProductOptionsModal from '@/themes/default/plugins/catalog-products/components/ProductOptionsModal';
+import { useAddToCart } from '@/plugins/cart-engine/api';
+import { apiClient } from '@/core/api/client';
+import { toast } from 'sonner';
 import { ProductCardSkeleton } from '@/components/ui/page-skeletons';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -28,7 +31,9 @@ export default function Show({ section, products: initialProducts }: Props) {
     const { t, i18n } = useTranslation();
     const [products, setProducts] = useState<Product[]>(initialProducts.data);
     const [nextPageUrl, setNextPageUrl] = useState<string | null>(initialProducts.next_page_url);
-    const [addingToCart, setAddingToCart] = useState<{ [key: number]: boolean }>({});
+    const [modalProduct, setModalProduct] = useState<any | null>(null);
+    const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
+    const { mutate: addToCart, isPending } = useAddToCart();
 
     React.useEffect(() => {
         if (initialProducts.data.length > 0) {
@@ -57,21 +62,39 @@ export default function Show({ section, products: initialProducts }: Props) {
         e.preventDefault();
         e.stopPropagation();
 
-        setAddingToCart(prev => ({ ...prev, [productId]: true }));
+        const product = products.find(p => p.id === productId);
+        if (!product) return;
 
-        await addToCart(
-            {
-                product_id: productId,
-                variant_id: null,
-                quantity: '1',
-                extras: [],
-            },
-            {
-                onFinally: () => {
-                    setAddingToCart(prev => ({ ...prev, [productId]: false }));
-                },
-            }
+        const hasOptions = (product as any).has_options !== false && Boolean(
+            (product as any).has_options ||
+            (product as any).has_variants ||
+            (product as any).has_extras ||
+            product.sell_by_weight ||
+            (product.variants && product.variants.length > 0) ||
+            (product as any).extra_option_id ||
+            (product as any).extra_option ||
+            (product as any).extraOption
         );
+
+        if (!hasOptions) {
+            addToCart(
+                { product_id: product.id, quantity: '1' },
+                {
+                    onError: () => {
+                        toast.error(t('failedToAddToCart', 'Failed to add to cart'));
+                    },
+                }
+            );
+        } else {
+            try {
+                const response = await apiClient.get<any>(`/api/catalog-products/${product.id}`);
+                const full = response.data.product || response.data.data;
+                setModalProduct(full);
+                setIsOptionsModalOpen(true);
+            } catch (error) {
+                console.error('Failed to load product details', error);
+            }
+        }
     };
 
     return (
@@ -81,8 +104,8 @@ export default function Show({ section, products: initialProducts }: Props) {
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-8">
                     <Link href={route('menu')}>
-                        <Button variant="ghost" className="gap-2 pl-0 hover:pl-2 transition-all">
-                            <ArrowLeft className="h-4 w-4" />
+                        <Button variant="ghost" className="gap-2 ps-0 hover:ps-2 transition-all">
+                            <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
                             {t('Back to Menu')}
                         </Button>
                     </Link>
@@ -105,7 +128,6 @@ export default function Show({ section, products: initialProducts }: Props) {
                             key={product.id}
                             product={product}
                             onAddToCart={handleAddToCart}
-                            addingToCart={addingToCart[product.id]}
                             showFavorite={true}
                         />
                     ))}
@@ -135,6 +157,17 @@ export default function Show({ section, products: initialProducts }: Props) {
                             ))}
                         </div>
                     </WhenVisible>
+                )}
+
+                {modalProduct && (
+                    <ProductOptionsModal
+                        product={modalProduct}
+                        isOpen={isOptionsModalOpen}
+                        onClose={() => {
+                            setIsOptionsModalOpen(false);
+                            setModalProduct(null);
+                        }}
+                    />
                 )}
             </div>
         </>

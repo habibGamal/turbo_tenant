@@ -81,7 +81,7 @@ export function MobileMenu({
                                 <Link
                                     key={category.id}
                                     to={`/menu?category=${encodeURIComponent(category.name)}`}
-                                    className="ltr:pl-4 rtl:pr-4 text-sm hover:text-primary transition-colors"
+                                    className="ps-4 text-sm hover:text-primary transition-colors"
                                 >
                                     {getText(category.name, category.name_ar)}
                                 </Link>

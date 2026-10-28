@@ -156,7 +156,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium">{t("yourAddresses")}</h3>
                 <Button onClick={openCreateModal} size="sm">
-                    <Plus className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                    <Plus className="h-4 w-4 me-2" />
                     {t("addNewAddress")}
                 </Button>
             </div>
@@ -173,7 +173,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                             className="border rounded-lg p-4 relative hover:border-primary transition-colors"
                         >
                             {address.is_default && (
-                                <span className="absolute top-2 ltr:right-2 rtl:left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+                                <span className="absolute top-2 end-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
                                     {t("default")}
                                 </span>
                             )}
@@ -275,7 +275,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                                     </SelectContent>
                                 </Select>
                                 {errors.area_id && (
-                                    <p className="text-sm text-red-600">{errors.area_id}</p>
+                                    <p className="text-sm text-destructive">{errors.area_id}</p>
                                 )}
                             </div>
                         </div>
@@ -290,7 +290,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                                 required
                             />
                             {errors.street && (
-                                <p className="text-sm text-red-600">{errors.street}</p>
+                                <p className="text-sm text-destructive">{errors.street}</p>
                             )}
                         </div>
 
@@ -304,12 +304,12 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                                 required
                             />
                             {errors.building && (
-                                <p className="text-sm text-red-600">{errors.building}</p>
+                                <p className="text-sm text-destructive">{errors.building}</p>
                             )}
                         </div>
 
                         <div className="space-y-2">
-                            <Label dir="rtl">{t("phoneNumber")}</Label>
+                            <Label>{t("phoneNumber")}</Label>
                             <PhoneInput
                                 value={formData.phone_number}
                                 onChange={(value) =>
@@ -321,7 +321,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                                 dir="ltr"
                             />
                             {errors.phone_number && (
-                                <p dir={i18n.dir()} className="text-sm text-red-600">
+                                <p className="text-sm text-destructive">
                                     {errors.phone_number}
                                 </p>
                             )}
@@ -338,7 +338,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                                     required
                                 />
                                 {errors.floor && (
-                                    <p className="text-sm text-red-600">{errors.floor}</p>
+                                    <p className="text-sm text-destructive">{errors.floor}</p>
                                 )}
                             </div>
                             <div className="space-y-2">
@@ -354,7 +354,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                                     required
                                 />
                                 {errors.apartment && (
-                                    <p className="text-sm text-red-600">
+                                    <p className="text-sm text-destructive">
                                         {errors.apartment}
                                     </p>
                                 )}
@@ -382,7 +382,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                                         is_default: e.target.checked,
                                     }))
                                 }
-                                className="rounded border-gray-300 text-primary focus:ring-primary"
+                                className="rounded border-input bg-background text-primary focus:ring-primary"
                             />
                             <Label htmlFor="is_default">{t("setAsDefaultAddress")}</Label>
                         </div>

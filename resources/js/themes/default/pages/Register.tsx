@@ -25,8 +25,7 @@ function getSafeRedirect(redirectParam: string | null): string {
 }
 
 export default function Register() {
-    const { t, i18n } = useTranslation();
-    const isRTL = i18n.language === "ar";
+    const { t } = useTranslation();
     const [showPassword, setShowPassword] = useState(false);
     const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
@@ -84,25 +83,22 @@ export default function Register() {
     return (
         <MainLayout>
             <Head title={t("register")} />
-            <div
-                className="flex items-center justify-center bg-background px-4 py-12"
-                dir={isRTL ? "rtl" : "ltr"}
-            >
+            <div className="flex items-center justify-center bg-background px-4 py-12">
                 <div className="w-full max-w-md">
                     {/* Logo/Brand */}
                     <div className="text-center mb-8">
                         <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-lg">
-                            <UserPlus className="w-8 h-8 text-white" />
+                            <UserPlus className="w-8 h-8 text-primary-foreground" />
                         </div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                        <h1 className="text-3xl font-bold text-foreground">
                             {t("createAccount")}
                         </h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-2">
+                        <p className="text-muted-foreground mt-2">
                             {t("joinUsToday")}
                         </p>
                     </div>
 
-                    <Card className="shadow-xl border-0 dark:bg-gray-800">
+                    <Card className="shadow-xl border-border bg-card">
                         <CardHeader className="space-y-1">
                             <CardTitle className="text-2xl font-bold text-center">
                                 {t("signUp")}
@@ -120,11 +116,7 @@ export default function Register() {
                                         {t("name")}
                                     </Label>
                                     <div className="relative">
-                                        <User
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
-                                                isRTL ? "right-3" : "left-3"
-                                            }`}
-                                        />
+                                        <User className="absolute top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground start-3" />
                                         <Input
                                             id="name"
                                             type="text"
@@ -133,12 +125,12 @@ export default function Register() {
                                             autoComplete="name"
                                             autoFocus
                                             onChange={(e) => setName(e.target.value)}
-                                            className={`${isRTL ? "pr-10" : "pl-10"}`}
+                                            className="ps-10"
                                             placeholder={t("namePlaceholder")}
                                         />
                                     </div>
                                     {errors.name && (
-                                        <p className="text-sm text-red-600 dark:text-red-400">
+                                        <p className="text-sm text-destructive">
                                             {errors.name}
                                         </p>
                                     )}
@@ -150,11 +142,7 @@ export default function Register() {
                                         {t("email")}
                                     </Label>
                                     <div className="relative">
-                                        <Mail
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
-                                                isRTL ? "right-3" : "left-3"
-                                            }`}
-                                        />
+                                        <Mail className="absolute top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground start-3" />
                                         <Input
                                             id="email"
                                             type="email"
@@ -162,12 +150,12 @@ export default function Register() {
                                             value={email}
                                             autoComplete="username"
                                             onChange={(e) => setEmail(e.target.value)}
-                                            className={`${isRTL ? "pr-10" : "pl-10"}`}
+                                            className="ps-10"
                                             placeholder={t("emailPlaceholder")}
                                         />
                                     </div>
                                     {errors.email && (
-                                        <p className="text-sm text-red-600 dark:text-red-400">
+                                        <p className="text-sm text-destructive">
                                             {errors.email}
                                         </p>
                                     )}
@@ -179,11 +167,7 @@ export default function Register() {
                                         {t("password")}
                                     </Label>
                                     <div className="relative">
-                                        <Lock
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
-                                                isRTL ? "right-3" : "left-3"
-                                            }`}
-                                        />
+                                        <Lock className="absolute top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground start-3" />
                                         <Input
                                             id="password"
                                             type={showPassword ? "text" : "password"}
@@ -191,15 +175,13 @@ export default function Register() {
                                             value={password}
                                             autoComplete="new-password"
                                             onChange={(e) => setPassword(e.target.value)}
-                                            className={`${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                                            className="ps-10 pe-10"
                                             placeholder={t("passwordPlaceholder")}
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className={`absolute top-1/2 -translate-y-1/2 ${
-                                                isRTL ? "left-3" : "right-3"
-                                            } text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors`}
+                                            className="absolute top-1/2 -translate-y-1/2 end-3 text-muted-foreground hover:text-foreground transition-colors"
                                         >
                                             {showPassword ? (
                                                 <EyeOff className="w-5 h-5" />
@@ -209,7 +191,7 @@ export default function Register() {
                                         </button>
                                     </div>
                                     {errors.password && (
-                                        <p className="text-sm text-red-600 dark:text-red-400">
+                                        <p className="text-sm text-destructive">
                                             {errors.password}
                                         </p>
                                     )}
@@ -224,11 +206,7 @@ export default function Register() {
                                         {t("confirmPassword")}
                                     </Label>
                                     <div className="relative">
-                                        <Lock
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
-                                                isRTL ? "right-3" : "left-3"
-                                            }`}
-                                        />
+                                        <Lock className="absolute top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground start-3" />
                                         <Input
                                             id="password_confirmation"
                                             type={
@@ -242,7 +220,7 @@ export default function Register() {
                                             onChange={(e) =>
                                                 setPasswordConfirmation(e.target.value)
                                             }
-                                            className={`${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                                            className="ps-10 pe-10"
                                             placeholder={t("confirmPasswordPlaceholder")}
                                         />
                                         <button
@@ -252,9 +230,7 @@ export default function Register() {
                                                     !showPasswordConfirmation
                                                 )
                                             }
-                                            className={`absolute top-1/2 -translate-y-1/2 ${
-                                                isRTL ? "left-3" : "right-3"
-                                            } text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors`}
+                                            className="absolute top-1/2 -translate-y-1/2 end-3 text-muted-foreground hover:text-foreground transition-colors"
                                         >
                                             {showPasswordConfirmation ? (
                                                 <EyeOff className="w-5 h-5" />
@@ -264,7 +240,7 @@ export default function Register() {
                                         </button>
                                     </div>
                                     {errors.password_confirmation && (
-                                        <p className="text-sm text-red-600 dark:text-red-400">
+                                        <p className="text-sm text-destructive">
                                             {errors.password_confirmation}
                                         </p>
                                     )}
@@ -279,7 +255,7 @@ export default function Register() {
                                 >
                                     {processing ? (
                                         <span className="flex items-center gap-2">
-                                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            <span className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
                                             {t("creatingAccount")}
                                         </span>
                                     ) : (
@@ -289,10 +265,10 @@ export default function Register() {
 
                                 <div className="relative">
                                     <div className="absolute inset-0 flex items-center">
-                                        <span className="w-full border-t border-gray-300 dark:border-gray-600" />
+                                        <span className="w-full border-t border-border" />
                                     </div>
                                     <div className="relative flex justify-center text-xs uppercase">
-                                        <span className="bg-white dark:bg-gray-800 px-2 text-gray-500 dark:text-gray-400">
+                                        <span className="bg-card px-2 text-muted-foreground">
                                             {t("orContinueWith")}
                                         </span>
                                     </div>
@@ -305,10 +281,10 @@ export default function Register() {
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        className="w-full py-6 border-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
+                                        className="w-full py-6 border-2 hover:bg-muted transition-all duration-200"
                                     >
                                         <svg
-                                            className="w-5 h-5 ltr:mr-2 rtl:ml-2"
+                                            className="w-5 h-5 me-2"
                                             viewBox="0 0 24 24"
                                         >
                                             <path
@@ -332,7 +308,7 @@ export default function Register() {
                                     </Button>
                                 </a>
 
-                                <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+                                <div className="text-center text-sm text-muted-foreground">
                                     {t("alreadyHaveAccount")}{" "}
                                     <Link
                                         to={`/login${

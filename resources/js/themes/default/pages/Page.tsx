@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head } from '@inertiajs/react';
+import { Head } from '@/components/Head';
 
 interface PageProps {
     page: {
@@ -26,8 +26,8 @@ export default function Page({ page }: PageProps) {
             <div className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-background border-b">
                 {/* Decorative Elements */}
                 <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]" />
-                <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+                <div className="absolute top-0 end-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute bottom-0 start-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
                 <div className="container relative mx-auto px-4 py-16 md:py-24">
                     <div className="max-w-4xl mx-auto text-center">
@@ -58,7 +58,7 @@ export default function Page({ page }: PageProps) {
                                     prose-ul:my-6 prose-ul:space-y-2
                                     prose-ol:my-6 prose-ol:space-y-2
                                     prose-li:text-base prose-li:leading-relaxed
-                                    prose-blockquote:border-l-4 prose-blockquote:border-primary/30 prose-blockquote:pl-6 prose-blockquote:italic prose-blockquote:text-muted-foreground
+                                    prose-blockquote:border-s-4 prose-blockquote:border-primary/30 prose-blockquote:ps-6 prose-blockquote:italic prose-blockquote:text-muted-foreground
                                     prose-code:text-sm prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
                                     prose-pre:bg-muted prose-pre:border prose-pre:border-border
                                     prose-img:rounded-lg prose-img:shadow-md

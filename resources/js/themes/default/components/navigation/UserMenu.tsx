@@ -84,19 +84,19 @@ export function UserMenu({ user }: UserMenuProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                     <Link to="/profile" className="cursor-pointer">
-                        <User className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                        <User className="me-2 h-4 w-4" />
                         {t("profile")}
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                     <Link to="/favorites" data-testid="favorites-trigger" className="cursor-pointer">
-                        <Heart className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                        <Heart className="me-2 h-4 w-4" />
                         {t("myFavorites")}
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                     <Link to="/orders" data-testid="orders-history-trigger" className="cursor-pointer">
-                        <Package className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                        <Package className="me-2 h-4 w-4" />
                         {t("myOrders")}
                     </Link>
                 </DropdownMenuItem>
@@ -105,7 +105,7 @@ export function UserMenu({ user }: UserMenuProps) {
                     onClick={handleLogout}
                     className="w-full cursor-pointer text-destructive focus:text-destructive"
                 >
-                    <LogOut className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                    <LogOut className="me-2 h-4 w-4" />
                     {t("logout")}
                 </DropdownMenuItem>
             </DropdownMenuContent>

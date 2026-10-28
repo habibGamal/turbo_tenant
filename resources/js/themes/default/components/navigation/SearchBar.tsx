@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Search, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useFormatMoney } from "@/lib/money";
 
 interface SearchBarProps {
     className?: string;
@@ -16,6 +17,7 @@ interface SearchBarProps {
 
 export function SearchBar({ className, autoFocus, onClose }: SearchBarProps) {
     const { t, i18n } = useTranslation();
+    const formatMoney = useFormatMoney();
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
@@ -35,10 +37,6 @@ export function SearchBar({ className, autoFocus, onClose }: SearchBarProps) {
 
     const getText = (text: string, textAr?: string) => {
         return i18n.language === "ar" && textAr ? textAr : text;
-    };
-
-    const formatPrice = (price: number) => {
-        return `${Number(price).toFixed(2)} ${t("currency", "EGP")}`;
     };
 
     const handleSearch = (e: React.FormEvent) => {
@@ -111,12 +109,12 @@ export function SearchBar({ className, autoFocus, onClose }: SearchBarProps) {
     return (
         <div className={className}>
             <form onSubmit={handleSearch} className="relative w-full">
-                <Search className="absolute ltr:left-3 rtl:right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors pointer-events-none" />
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors pointer-events-none" />
                 <Input
                     data-testid="search-input"
                     type="search"
                     placeholder={placeholderText}
-                    className="ltr:pl-9 ltr:pr-9 rtl:pr-9 rtl:pl-9 w-full transition-all focus-visible:ring-primary/20"
+                    className="ps-9 pe-9 w-full transition-all focus-visible:ring-primary/20"
                     value={searchQuery}
                     onChange={handleSearchChange}
                     onFocus={() =>
@@ -132,14 +130,14 @@ export function SearchBar({ className, autoFocus, onClose }: SearchBarProps) {
                         type="button"
                         onClick={handleClear}
                         aria-label={t("clearAll", "Clear")}
-                        className="absolute ltr:right-3 rtl:left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
                     >
                         <X className="h-4 w-4" />
                     </button>
                 )}
             </form>
             {showSuggestions && suggestions.length > 0 && (
-                <Card data-testid="search-suggestions-container" className="absolute top-full left-0 right-0 mt-2 z-50 shadow-lg animate-in fade-in zoom-in-95 duration-200">
+                <Card data-testid="search-suggestions-container" className="absolute top-full inset-x-0 mt-2 z-50 shadow-lg animate-in fade-in zoom-in-95 duration-200">
                     {suggestions.map((product) => (
                         <CardContent
                             key={product.id}
@@ -156,7 +154,7 @@ export function SearchBar({ className, autoFocus, onClose }: SearchBarProps) {
                                     </p>
                                     <div className="flex items-center gap-2">
                                         <p className="text-xs text-muted-foreground">
-                                            {formatPrice(
+                                            {formatMoney(
                                                 getEffectivePrice(product),
                                             )}
                                         </p>

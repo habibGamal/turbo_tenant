@@ -14,10 +14,6 @@ import { Toaster } from "@/components/ui/sonner";
 // Initialize decoupled frontend plugins and slot registry
 initializePlugins();
 
-// Set initial document direction to RTL for Arabic
-document.documentElement.dir = "rtl";
-document.documentElement.lang = "ar";
-
 // Mount pure React SPA Shell
 const appElement = document.getElementById("app");
 if (appElement) {

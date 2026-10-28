@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ReactPixel from 'react-facebook-pixel';
-import { Head, Link, usePage } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
+import { Head } from "@/components/Head";
 import MainLayout from '@/themes/default/layouts/MainLayout';
 import { PluginSlot } from "@/core/slots/PluginSlot";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import ProductInfo from "@/themes/default/plugins/catalog-products/components/Pr
 import ProductOptions from "@/themes/default/plugins/catalog-products/components/ProductOptions";
 import ProductCard from "@/themes/default/plugins/catalog-products/components/ProductCard";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useCurrency, useFormatMoney } from "@/lib/money";
 
 interface RelatedProduct {
     id: number;
@@ -51,6 +53,8 @@ export default function ProductShow({
     promotionalProducts,
 }: ProductShowProps) {
     const { t, i18n } = useTranslation();
+    const currency = useCurrency();
+    const formatMoney = useFormatMoney();
     const isRTL = i18n.language === "ar";
     const isProductActive = product.is_active ?? true;
     const { settings } = usePage<PageProps>().props;
@@ -89,9 +93,9 @@ export default function ProductShow({
             contents: [{ id: product.id, quantity: 1 }],
             content_type: "product",
             value: product.price_after_discount || product.base_price || product.price,
-            currency: "EGP",
+            currency,
         });
-    }, [selectedVariant, product]);
+    }, [selectedVariant, product, currency]);
 
     console.log("Product Data:", product);
     const categoryName = getText(product.category!.name,product.category!.name_ar);
@@ -174,7 +178,7 @@ export default function ProductShow({
                                                 content_type: "product",
                                                 contents: [{ id: contentId, quantity: quantity }],
                                                 value: price,
-                                                currency: "EGP",
+                                                currency,
                                             });
                                         });
                                     }}
@@ -200,7 +204,6 @@ export default function ProductShow({
                     <Tabs
                         defaultValue="reviews"
                         className="mb-16"
-                        dir={isRTL ? "rtl" : "ltr"}
                     >
                         <TabsList className="grid w-full max-w-md grid-cols-2">
                             <TabsTrigger value="reviews">
@@ -243,8 +246,7 @@ export default function ProductShow({
                                                 {t("basePrice")}
                                             </span>
                                             <span className="text-muted-foreground">
-                                                {(product.base_price || 0).toFixed(2)}{" "}
-                                                {t("currency")}
+                                                {formatMoney(product.base_price || 0)}
                                             </span>
                                         </div>
                                         {product.sell_by_weight && (

@@ -83,7 +83,7 @@ export default function UpdatePasswordForm({
                         autoComplete="current-password"
                     />
                     {errors.current_password && (
-                        <p className="text-sm text-red-600 mt-2">
+                        <p className="text-sm text-destructive mt-2">
                             {errors.current_password}
                         </p>
                     )}
@@ -101,7 +101,7 @@ export default function UpdatePasswordForm({
                         autoComplete="new-password"
                     />
                     {errors.password && (
-                        <p className="text-sm text-red-600 mt-2">{errors.password}</p>
+                        <p className="text-sm text-destructive mt-2">{errors.password}</p>
                     )}
                 </div>
 
@@ -118,7 +118,7 @@ export default function UpdatePasswordForm({
                         autoComplete="new-password"
                     />
                     {errors.password_confirmation && (
-                        <p className="text-sm text-red-600 mt-2">
+                        <p className="text-sm text-destructive mt-2">
                             {errors.password_confirmation}
                         </p>
                     )}
@@ -134,7 +134,7 @@ export default function UpdatePasswordForm({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-sm text-muted-foreground">
                             {t("saved")}
                         </p>
                     </Transition>

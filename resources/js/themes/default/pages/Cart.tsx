@@ -1,5 +1,5 @@
 import React from "react";
-import { Head } from "@inertiajs/react";
+import { Head } from "@/components/Head";
 import MainLayout from "@/themes/default/layouts/MainLayout";
 import { useTranslation } from "react-i18next";
 import { PluginSlot } from "@/core/slots/PluginSlot";

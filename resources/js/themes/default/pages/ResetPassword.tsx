@@ -26,8 +26,7 @@ export default function ResetPassword({
     token: propToken,
     email: propEmail,
 }: ResetPasswordProps) {
-    const { t, i18n } = useTranslation();
-    const isRTL = i18n.language === "ar";
+    const { t } = useTranslation();
     const [showPassword, setShowPassword] = useState(false);
     const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
@@ -84,25 +83,22 @@ export default function ResetPassword({
     return (
         <MainLayout>
             <Head title={t("resetPassword")} />
-            <div
-                className="flex items-center justify-center bg-background px-4 py-12"
-                dir={isRTL ? "rtl" : "ltr"}
-            >
+            <div className="flex items-center justify-center bg-background px-4 py-12">
                 <div className="w-full max-w-md">
                     {/* Logo/Brand */}
                     <div className="text-center mb-8">
                         <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-lg">
-                            <ShieldCheck className="w-8 h-8 text-white" />
+                            <ShieldCheck className="w-8 h-8 text-primary-foreground" />
                         </div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                        <h1 className="text-3xl font-bold text-foreground">
                             {t("resetPassword")}
                         </h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-2">
+                        <p className="text-muted-foreground mt-2">
                             {t("enterNewPassword")}
                         </p>
                     </div>
 
-                    <Card className="shadow-xl border-0 dark:bg-gray-800">
+                    <Card className="shadow-xl border-border bg-card">
                         <CardHeader className="space-y-1">
                             <CardTitle className="text-2xl font-bold text-center">
                                 {t("createNewPassword")}
@@ -120,11 +116,7 @@ export default function ResetPassword({
                                         {t("email")}
                                     </Label>
                                     <div className="relative">
-                                        <Mail
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
-                                                isRTL ? "right-3" : "left-3"
-                                            }`}
-                                        />
+                                        <Mail className="absolute top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground start-3" />
                                         <Input
                                             id="email"
                                             type="email"
@@ -132,12 +124,12 @@ export default function ResetPassword({
                                             value={email}
                                             autoComplete="username"
                                             onChange={(e) => setEmail(e.target.value)}
-                                            className={`${isRTL ? "pr-10" : "pl-10"} bg-gray-50 dark:bg-gray-900`}
+                                            className="ps-10 bg-muted"
                                             readOnly={Boolean(propEmail || searchParams.get("email"))}
                                         />
                                     </div>
                                     {errors.email && (
-                                        <p className="text-sm text-red-600 dark:text-red-400">
+                                        <p className="text-sm text-destructive">
                                             {errors.email}
                                         </p>
                                     )}
@@ -149,11 +141,7 @@ export default function ResetPassword({
                                         {t("newPassword")}
                                     </Label>
                                     <div className="relative">
-                                        <Lock
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
-                                                isRTL ? "right-3" : "left-3"
-                                            }`}
-                                        />
+                                        <Lock className="absolute top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground start-3" />
                                         <Input
                                             id="password"
                                             type={showPassword ? "text" : "password"}
@@ -162,15 +150,13 @@ export default function ResetPassword({
                                             autoComplete="new-password"
                                             autoFocus
                                             onChange={(e) => setPassword(e.target.value)}
-                                            className={`${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                                            className="ps-10 pe-10"
                                             placeholder={t("passwordPlaceholder")}
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className={`absolute top-1/2 -translate-y-1/2 ${
-                                                isRTL ? "left-3" : "right-3"
-                                            } text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors`}
+                                            className="absolute top-1/2 -translate-y-1/2 end-3 text-muted-foreground hover:text-foreground transition-colors"
                                         >
                                             {showPassword ? (
                                                 <EyeOff className="w-5 h-5" />
@@ -180,7 +166,7 @@ export default function ResetPassword({
                                         </button>
                                     </div>
                                     {errors.password && (
-                                        <p className="text-sm text-red-600 dark:text-red-400">
+                                        <p className="text-sm text-destructive">
                                             {errors.password}
                                         </p>
                                     )}
@@ -195,11 +181,7 @@ export default function ResetPassword({
                                         {t("confirmPassword")}
                                     </Label>
                                     <div className="relative">
-                                        <Lock
-                                            className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 ${
-                                                isRTL ? "right-3" : "left-3"
-                                            }`}
-                                        />
+                                        <Lock className="absolute top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground start-3" />
                                         <Input
                                             id="password_confirmation"
                                             type={
@@ -213,7 +195,7 @@ export default function ResetPassword({
                                             onChange={(e) =>
                                                 setPasswordConfirmation(e.target.value)
                                             }
-                                            className={`${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                                            className="ps-10 pe-10"
                                             placeholder={t("confirmPasswordPlaceholder")}
                                         />
                                         <button
@@ -223,9 +205,7 @@ export default function ResetPassword({
                                                     !showPasswordConfirmation
                                                 )
                                             }
-                                            className={`absolute top-1/2 -translate-y-1/2 ${
-                                                isRTL ? "left-3" : "right-3"
-                                            } text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors`}
+                                            className="absolute top-1/2 -translate-y-1/2 end-3 text-muted-foreground hover:text-foreground transition-colors"
                                         >
                                             {showPasswordConfirmation ? (
                                                 <EyeOff className="w-5 h-5" />
@@ -235,18 +215,18 @@ export default function ResetPassword({
                                         </button>
                                     </div>
                                     {errors.password_confirmation && (
-                                        <p className="text-sm text-red-600 dark:text-red-400">
+                                        <p className="text-sm text-destructive">
                                             {errors.password_confirmation}
                                         </p>
                                     )}
                                 </div>
 
                                 {/* Password Strength Info */}
-                                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                                    <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">
+                                <div className="p-4 bg-muted border border-border rounded-lg">
+                                    <p className="text-sm text-foreground font-medium mb-2">
                                         {t("passwordStrengthTitle")}
                                     </p>
-                                    <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-disc ltr:list-inside rtl:pr-4">
+                                    <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside ps-2">
                                         <li>{t("passwordStrength1")}</li>
                                         <li>{t("passwordStrength2")}</li>
                                         <li>{t("passwordStrength3")}</li>
@@ -262,7 +242,7 @@ export default function ResetPassword({
                                 >
                                     {processing ? (
                                         <span className="flex items-center gap-2">
-                                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            <span className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
                                             {t("resettingPassword")}
                                         </span>
                                     ) : (
@@ -270,7 +250,7 @@ export default function ResetPassword({
                                     )}
                                 </Button>
 
-                                <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+                                <div className="text-center text-sm text-muted-foreground">
                                     {t("rememberPassword")}{" "}
                                     <Link
                                         to="/login"

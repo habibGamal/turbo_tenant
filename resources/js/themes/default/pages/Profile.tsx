@@ -41,7 +41,6 @@ export default function Profile({ mustVerifyEmail = false, status }: ProfileProp
                 <h1 className="text-3xl font-bold mb-8">{t("profile")}</h1>
 
                 <Tabs
-                    dir={i18n.dir()}
                     defaultValue="profile"
                     className="w-full"
                     onValueChange={setActiveTab}
