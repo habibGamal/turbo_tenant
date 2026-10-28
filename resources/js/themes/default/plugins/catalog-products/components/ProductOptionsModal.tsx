@@ -8,6 +8,7 @@ import ProductInfo from './ProductInfo';
 import { ImageWithFallback } from '@/components/ui/image';
 import { useTranslation } from 'react-i18next';
 import { getEffectivePrice } from '@/lib/pricing';
+import { useFormatMoney, useCurrency } from '@/lib/money';
 
 interface ProductOptionsModalProps {
     product: Product;
@@ -21,6 +22,8 @@ export default function ProductOptionsModal({
     onClose,
 }: ProductOptionsModalProps) {
     const { t, i18n } = useTranslation();
+    const formatMoney = useFormatMoney();
+    const currency = useCurrency();
     const {
         quantity,
         setQuantity,
@@ -57,7 +60,7 @@ export default function ProductOptionsModal({
                 content_type: "product",
                 contents: [{ id: contentId, quantity: quantity }],
                 value: price,
-                currency: "EGP",
+                currency,
             });
             onClose();
         });
@@ -97,7 +100,7 @@ export default function ProductOptionsModal({
                             </p>
                         </div>
                         <div className="text-2xl font-bold text-primary">
-                            {calculateTotalPrice().toFixed(2)} {t('currency')}
+                            {formatMoney(calculateTotalPrice())}
                         </div>
                         <ProductOptions
                             product={product}

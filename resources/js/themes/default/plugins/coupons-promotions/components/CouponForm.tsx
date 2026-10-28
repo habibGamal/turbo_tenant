@@ -114,7 +114,7 @@ export default function CouponForm({
                         <p data-testid="coupon-error-message" className="text-sm text-destructive">{couponError}</p>
                     )}
                     {couponSuccess && (
-                        <p data-testid="coupon-discount-value" className="text-sm text-green-600">{couponSuccess}</p>
+                        <p data-testid="coupon-discount-value" className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">{couponSuccess}</p>
                     )}
                 </div>
             </CardContent>

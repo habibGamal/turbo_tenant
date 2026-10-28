@@ -1,12 +1,27 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { addToCart } from "@/utils/cartUtils";
 import ProductCard from "./ProductCard";
 import { Button } from "@/components/ui/button";
 import { Star, TrendingUp, Flame } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { useAddToCart } from "@/plugins/cart-engine/api";
 
 import { Product } from "@/types";
+
+function pushUnavailableToEnd(products: Product[]): Product[] {
+    const available: Product[] = [];
+    const unavailable: Product[] = [];
+    for (const product of products) {
+        const isAvail = (product.is_active ?? true) && (product as any).is_available !== false;
+        if (isAvail) {
+            available.push(product);
+        } else {
+            unavailable.push(product);
+        }
+    }
+    return [...available, ...unavailable];
+}
 
 export interface ProductSection {
     id: string;
@@ -24,29 +39,31 @@ export interface ProductsSectionProps {
 
 export default function ProductsSection({ sections }: ProductsSectionProps) {
     const { t, i18n } = useTranslation();
+    const { mutate: addToCartMutation } = useAddToCart();
     const [addingToCart, setAddingToCart] = useState<{
         [key: number]: boolean;
     }>({});
 
-    const handleAddToCart = async (e: React.MouseEvent, productId: number) => {
+    const handleAddToCart = (e: React.MouseEvent, productId: number) => {
         e.preventDefault();
         e.stopPropagation();
 
         setAddingToCart((prev) => ({ ...prev, [productId]: true }));
 
-        await addToCart(
+        addToCartMutation(
             {
                 product_id: productId,
-                variant_id: null,
                 quantity: "1",
-                extras: [],
             },
             {
-                onFinally: () => {
+                onSettled: () => {
                     setAddingToCart((prev) => ({
                         ...prev,
                         [productId]: false,
                     }));
+                },
+                onError: () => {
+                    toast.error(t("failedToAddToCart", "Failed to add to cart"));
                 },
             },
         );
@@ -94,7 +111,7 @@ export default function ProductsSection({ sections }: ProductsSectionProps) {
                                     </h2>
                                 </div>
                                 {section.subtitle && (
-                                    <p className="text-lg text-muted-foreground ltr:md:ml-12 rtl:md:mr-12">
+                                    <p className="text-lg text-muted-foreground md:ms-12">
                                         {i18n.language === "ar" &&
                                         section.subtitleAr
                                             ? section.subtitleAr
@@ -111,7 +128,7 @@ export default function ProductsSection({ sections }: ProductsSectionProps) {
 
                         {/* Products Grid */}
                         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {section.products.map((product) => (
+                            {pushUnavailableToEnd(section.products).map((product) => (
                                 <ProductCard
                                     key={product.id}
                                     product={product}

@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Product } from "@/types";
 import { Spinner } from "@/components/ui/spinner";
 import { getEffectivePrice } from "@/lib/pricing";
+import { useFormatMoney } from "@/lib/money";
 
 interface ProductOptionsProps {
     product: Product;
@@ -52,6 +53,7 @@ export default function ProductOptions({
     totalPrice,
 }: ProductOptionsProps) {
     const { t, i18n } = useTranslation();
+    const formatMoney = useFormatMoney();
 
     const isMissingRequired = missingRequiredSelections;
     const isCanAddToCart = canAddToCart;
@@ -88,14 +90,10 @@ export default function ProductOptions({
     };
 
     const runningTotal = calculateRunningTotal();
-    const formattedRunningTotal = Number.isInteger(runningTotal)
-        ? runningTotal.toString()
-        : runningTotal.toFixed(2);
 
     const getText = (text: string, textAr?: string) => {
         return i18n.language === 'ar' && textAr ? textAr : text;
     };
-    console.log("ProductOptions render", product.extraOption)
     return (
         <div className="space-y-6">
             {/* Variants Selection */}
@@ -129,9 +127,9 @@ export default function ProductOptions({
                                                 {getText(variant.name, variant.name_ar)}
                                             </div>
                                             <div className="text-sm text-muted-foreground">
-                                                +{((variant.price !== null && variant.price !== undefined && variant.price > 0)
+                                                +{formatMoney((variant.price !== null && variant.price !== undefined && variant.price > 0)
                                                     ? variant.price
-                                                    : defaultProductPrice).toFixed(2)} {t("currency")}
+                                                    : defaultProductPrice)}
                                             </div>
                                         </div>
                                     </div>
@@ -204,9 +202,9 @@ export default function ProductOptions({
                                                     {getText(item.name, item.name_ar)}
                                                 </div>
                                                 <div className="text-sm text-muted-foreground">
-                                                    +{item.price.toFixed(2)} {t("currency")}
+                                                    +{formatMoney(item.price)}
                                                     {item.allow_quantity && isSelected && (
-                                                        <span className="ltr:ml-2 rtl:mr-2 font-semibold text-primary">
+                                                        <span className="ms-2 font-semibold text-primary">
                                                             × {qty}
                                                         </span>
                                                     )}
@@ -347,7 +345,7 @@ export default function ProductOptions({
                                 <Spinner />
                             </>
                         ) : (
-                            `${t("addToCart")} · ${formattedRunningTotal} ${t("currency")}`
+                            `${t("addToCart")} · ${formatMoney(runningTotal)}`
                         )}
                     </Button>
 
@@ -355,12 +353,18 @@ export default function ProductOptions({
                     <Button
                         size="lg"
                         variant="outline"
+                        aria-label={
+                            isFavorite
+                                ? t("removeFromFavorites", "Remove from favorites")
+                                : t("addToFavorites", "Add to favorites")
+                        }
+                        aria-pressed={isFavorite}
                         className="h-12 w-12 rounded-xl border-2 shrink-0"
                         onClick={handleToggleFavorite}
                     >
                         <Heart
                             className={`h-6 w-6 transition-colors ${isFavorite
-                                ? "fill-red-500 text-red-500"
+                                ? "fill-destructive text-destructive"
                                 : "text-muted-foreground"
                                 }`}
                         />

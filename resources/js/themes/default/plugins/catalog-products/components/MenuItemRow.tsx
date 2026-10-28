@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { ProductSummary } from '@/plugins/catalog-products';
 import { useAddToCart } from '@/plugins/cart-engine/api';
 import { hasActiveDiscount, getEffectivePrice, getDiscountPercent } from '@/lib/pricing';
+import { useFormatMoney } from '@/lib/money';
 import { cn } from '@/lib/utils';
 
 export function hasProductOptions(product: ProductSummary | any): boolean {
@@ -54,9 +55,11 @@ export default function MenuItemRow({
     const effectivePrice = getEffectivePrice(product);
     const discountPercent = getDiscountPercent(product);
 
+    const formatMoney = useFormatMoney();
+
     const formatCurrency = (val: number) => {
         if (formatPrice) return formatPrice(val);
-        return `${Number(val || 0).toFixed(2)} ${t('currency', 'EGP')}`;
+        return formatMoney(val);
     };
 
     const handleRowClick = () => {
@@ -170,7 +173,7 @@ export default function MenuItemRow({
                     data-testid={`menu-item-add-${product.id}`}
                     disabled={!isProductActive || isPending}
                     onClick={handlePlusClick}
-                    className="absolute bottom-1.5 ltr:right-1.5 rtl:left-1.5 h-7 w-7 sm:h-8 sm:w-8 rounded-full shadow-md bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-transform active:scale-90 z-10"
+                    className="absolute bottom-1.5 end-1.5 h-7 w-7 sm:h-8 sm:w-8 rounded-full shadow-md bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-transform active:scale-90 z-10"
                 >
                     {isPending ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />

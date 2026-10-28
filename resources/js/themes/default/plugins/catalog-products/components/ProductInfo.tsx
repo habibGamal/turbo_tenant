@@ -7,6 +7,7 @@ import { Product } from "@/types";
 import { ImageWithFallback } from "@/components/ui/image";
 import { useTenant } from "@/core/context/TenantContext";
 import { hasActiveDiscount, getEffectivePrice } from "@/lib/pricing";
+import { useFormatMoney } from "@/lib/money";
 
 interface ProductInfoProps {
     product: Product;
@@ -16,6 +17,7 @@ interface ProductInfoProps {
 export default function ProductInfo({ product, totalPrice }: ProductInfoProps) {
     const { t, i18n } = useTranslation();
     const { settings = {} } = useTenant();
+    const formatMoney = useFormatMoney();
 
     const getText = (text: string, textAr?: string) => {
         return i18n.language === 'ar' && textAr ? textAr : text;
@@ -47,8 +49,8 @@ export default function ProductInfo({ product, totalPrice }: ProductInfoProps) {
                         <Star
                             key={i}
                             className={`h-5 w-5 ${i < Math.floor(product.rating || 0)
-                                ? "fill-yellow-400 text-yellow-400"
-                                : "text-gray-300"
+                                ? "fill-amber-400 text-amber-400"
+                                : "text-muted-foreground/30"
                                 }`}
                         />
                     ))}
@@ -65,19 +67,17 @@ export default function ProductInfo({ product, totalPrice }: ProductInfoProps) {
             <div className="flex items-center gap-4">
                 <div>
                     <div data-testid="product-total-price" className="text-4xl font-bold text-primary">
-                        {totalPrice.toFixed(2)}{" "}
-                        {t("currency")}
+                        {formatMoney(totalPrice)}
                     </div>
                     {product.sell_by_weight && (
                         <div className="text-sm text-muted-foreground mt-1">
-                            {getEffectivePrice(product).toFixed(2)} {t("currency")} {t("perKg")}
+                            {formatMoney(getEffectivePrice(product))} {t("perKg")}
                         </div>
                     )}
                 </div>
                 {hasDiscount && (
-                    <div className="text-2xl text-muted-foreground line-through decoration-red-500/50">
-                        {basePrice.toFixed(2)}{" "}
-                        {t("currency")}
+                    <div className="text-2xl text-muted-foreground line-through decoration-destructive/50">
+                        {formatMoney(basePrice)}
                     </div>
                 )}
             </div>

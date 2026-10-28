@@ -6,9 +6,24 @@ import { Section, ProductSummary } from '@/plugins/catalog-products/types';
 import { Button } from '@/components/ui/button';
 import { Star, TrendingUp, Flame } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import ProductCard from './components/ProductCard';
 import { CatalogSectionsSkeleton } from '@/components/ui/page-skeletons';
-import { addToCart } from '@/utils/cartUtils';
+import { useAddToCart } from '@/plugins/cart-engine/api';
+
+function pushUnavailableToEnd(products: ProductSummary[]): ProductSummary[] {
+  const available: ProductSummary[] = [];
+  const unavailable: ProductSummary[] = [];
+  for (const product of products) {
+    const isAvail = (product.is_active ?? true) && (product as any).is_available !== false;
+    if (isAvail) {
+      available.push(product);
+    } else {
+      unavailable.push(product);
+    }
+  }
+  return [...available, ...unavailable];
+}
 
 export interface ThemedProductsSectionProps {
   sections?: Section[];
@@ -18,6 +33,7 @@ export default function ThemedProductsSection({ sections: propSections }: Themed
   const { t, i18n } = useTranslation();
   const { data, isLoading } = useCatalogSections();
   const { data: categoriesData } = useCatalogCategories();
+  const { mutate: addToCartMutation } = useAddToCart();
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [addingToCart, setAddingToCart] = useState<Record<number, boolean>>({});
 
@@ -33,22 +49,23 @@ export default function ThemedProductsSection({ sections: propSections }: Themed
         .filter((s) => s.products.length > 0)
     : sectionsToUse;
 
-  const handleAddToCart = async (e: React.MouseEvent, productId: number) => {
+  const handleAddToCart = (e: React.MouseEvent, productId: number) => {
     e.preventDefault();
     e.stopPropagation();
 
     setAddingToCart((prev) => ({ ...prev, [productId]: true }));
 
-    await addToCart(
+    addToCartMutation(
       {
         product_id: productId,
-        variant_id: null,
         quantity: '1',
-        extras: [],
       },
       {
-        onFinally: () => {
+        onSettled: () => {
           setAddingToCart((prev) => ({ ...prev, [productId]: false }));
+        },
+        onError: () => {
+          toast.error(t('failedToAddToCart', 'Failed to add to cart'));
         },
       }
     );
@@ -138,7 +155,7 @@ export default function ThemedProductsSection({ sections: propSections }: Themed
 
             {/* Products Grid */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {section.products.map((product: ProductSummary) => (
+              {pushUnavailableToEnd(section.products).map((product: ProductSummary) => (
                 <ProductCard
                   key={product.id}
                   product={product as any}

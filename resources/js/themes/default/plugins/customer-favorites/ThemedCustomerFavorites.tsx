@@ -17,6 +17,20 @@ export default function ThemedCustomerFavorites({
   const { t } = useTranslation();
   const { products, isLoading, totalCount } = useCustomerFavorites();
 
+  const sortedProducts = React.useMemo(() => {
+    const available: Product[] = [];
+    const unavailable: Product[] = [];
+    for (const p of products) {
+      const isAvail = (p.is_active ?? true) && (p as any).is_available !== false;
+      if (isAvail) {
+        available.push(p as unknown as Product);
+      } else {
+        unavailable.push(p as unknown as Product);
+      }
+    }
+    return [...available, ...unavailable];
+  }, [products]);
+
   if (isLoading) {
     return <FavoritesSkeleton />;
   }
@@ -34,12 +48,12 @@ export default function ThemedCustomerFavorites({
         </div>
       </div>
 
-      {products.length > 0 ? (
+      {sortedProducts.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.map((product) => (
+          {sortedProducts.map((product) => (
             <ProductCard
               key={product.id}
-              product={product as unknown as Product}
+              product={product}
               showFavorite={true}
             />
           ))}

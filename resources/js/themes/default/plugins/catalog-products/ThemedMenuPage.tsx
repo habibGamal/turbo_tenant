@@ -28,6 +28,7 @@ import {
     ProductSummary,
     Category,
 } from "@/plugins/catalog-products";
+import { useFormatMoney } from "@/lib/money";
 import { apiClient } from "@/core/api/client";
 import {
     Filter,
@@ -428,8 +429,10 @@ export default function ThemedMenuPage() {
         };
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+    const formatMoney = useFormatMoney();
+
     const formatPrice = (price: number) => {
-        return `${Number(price).toFixed(2)} ${t("currency", "EGP")}`;
+        return formatMoney(price);
     };
 
     const hasActiveFilters = Boolean(
@@ -454,11 +457,11 @@ export default function ThemedMenuPage() {
                         </span>
                     )}
                 </div>
-                <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+                <div className="space-y-1.5 max-h-60 overflow-y-auto pe-1">
                     {sortedCategories.length === 0 ? (
                         <div className="space-y-2 py-2">
                             {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="flex items-center space-x-3 rtl:space-x-reverse p-2">
+                                <div key={i} className="flex items-center gap-3 p-2">
                                     <Skeleton className="h-4 w-4 rounded" />
                                     <Skeleton className="h-4 w-28 rounded" />
                                 </div>
@@ -477,7 +480,7 @@ export default function ThemedMenuPage() {
                                     data-testid="menu-category-filter"
                                     data-category-name={category.name}
                                 >
-                                    <div className="flex items-center space-x-3 rtl:space-x-reverse pointer-events-none">
+                                    <div className="flex items-center gap-3 pointer-events-none">
                                         <Checkbox
                                             id={`${panelId}-cat-${category.id}`}
                                             checked={isChecked}
@@ -594,7 +597,7 @@ export default function ThemedMenuPage() {
                     className="hover:text-destructive hover:border-destructive/40"
                     data-testid={`${panelId}-reset-filters`}
                 >
-                    <RotateCcw className="h-4 w-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
+                    <RotateCcw className="h-4 w-4 me-1.5" />
                     {t("reset", "Reset")}
                 </Button>
             </div>
@@ -619,7 +622,7 @@ export default function ThemedMenuPage() {
                             <p className="text-muted-foreground mt-1 text-sm md:text-base">
                                 {t("browseOurDeliciousMenu", "Browse our delicious menu and freshly roasted coffee selections")}
                                 {totalProducts > 0 && (
-                                    <span className="font-semibold text-foreground ml-2 rtl:mr-2">
+                                    <span className="font-semibold text-foreground ms-2">
                                         ({totalProducts} {t("items", "items")})
                                     </span>
                                 )}
@@ -634,7 +637,7 @@ export default function ThemedMenuPage() {
                                         <SlidersHorizontal className="h-4 w-4 text-primary" />
                                         <span>{t("filters", "Filters")}</span>
                                         {hasActiveFilters && (
-                                            <span className="w-2 h-2 rounded-full bg-primary absolute -top-1 -right-1" />
+                                            <span className="w-2 h-2 rounded-full bg-primary absolute -top-1 -end-1" />
                                         )}
                                     </Button>
                                 </SheetTrigger>
@@ -659,7 +662,7 @@ export default function ThemedMenuPage() {
                 {/* Active Filter Chips */}
                 {hasActiveFilters && (
                     <div className="flex flex-wrap items-center gap-2 mb-6 p-3 bg-muted/40 rounded-xl border border-border/40" data-testid="active-filters-bar">
-                        <span className="text-xs font-medium text-muted-foreground mr-1 rtl:ml-1">
+                        <span className="text-xs font-medium text-muted-foreground me-1">
                             {t("activeFilters", "Active Filters:")}
                         </span>
 
@@ -692,7 +695,7 @@ export default function ThemedMenuPage() {
                         {(urlMinPrice || urlMaxPrice) && (
                             <Badge variant="secondary" className="gap-1.5 px-3 py-1 text-xs" data-testid="active-filter-price">
                                 <span>
-                                    {urlMinPrice || "0"} - {urlMaxPrice || "∞"} {t("currency", "EGP")}
+                                    {urlMinPrice ? formatMoney(urlMinPrice) : "0"} - {urlMaxPrice ? formatMoney(urlMaxPrice) : "∞"}
                                 </span>
                                 <X
                                     className="h-3 w-3 cursor-pointer hover:text-destructive"

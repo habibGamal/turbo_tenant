@@ -89,6 +89,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
                         <button
                             key={star}
                             type="button"
+                            aria-label={t("rateStars", { count: star, defaultValue: `Rate ${star} stars` })}
                             onClick={() => setRating(star)}
                             onMouseEnter={() => setHoverRating(star)}
                             onMouseLeave={() => setHoverRating(0)}
@@ -97,8 +98,8 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
                             <Star
                                 className={`h-10 w-10 transition-all duration-200 ${
                                     star <= (hoverRating || rating)
-                                        ? "fill-yellow-400 text-yellow-400 drop-shadow-sm"
-                                        : "text-muted-foreground/30 hover:text-yellow-200"
+                                        ? "fill-amber-400 text-amber-400 drop-shadow-sm"
+                                        : "text-muted-foreground/30 hover:text-amber-200"
                                 }`}
                                 strokeWidth={1.5}
                             />

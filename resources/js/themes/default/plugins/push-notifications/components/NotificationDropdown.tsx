@@ -13,7 +13,7 @@ import { useNotifications } from "@/plugins/push-notifications/api/useNotificati
 import { useNotificationMutations } from "@/plugins/push-notifications/api/useNotificationMutations";
 
 export function NotificationDropdown() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { data, isLoading } = useNotifications();
     const { markAsRead, markAllAsRead, deleteNotification } = useNotificationMutations();
 
@@ -36,17 +36,18 @@ export function NotificationDropdown() {
     };
 
     return (
-        <DropdownMenu dir="rtl">
+        <DropdownMenu dir={i18n.dir()}>
             <DropdownMenuTrigger asChild>
                 <Button
                     data-testid="notifications-trigger"
                     variant="ghost"
                     size="icon"
+                    aria-label={t("notifications", "Notifications")}
                     className="relative"
                 >
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
-                        <Badge data-testid="notifications-badge-count" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                        <Badge data-testid="notifications-badge-count" className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
                             {unreadCount > 9 ? "9+" : unreadCount}
                         </Badge>
                     )}
@@ -64,12 +65,12 @@ export function NotificationDropdown() {
                             onClick={() => markAllAsRead.mutate()}
                             disabled={markAllAsRead.isPending}
                         >
-                            <Check className="h-3 w-3 ltr:mr-1 rtl:ml-1" />
+                            <Check className="h-3 w-3 me-1" />
                             {t("markAllRead", "Mark all as read")}
                         </Button>
                     )}
                 </div>
-                <ScrollArea className="max-h-[400px]" dir="rtl">
+                <ScrollArea className="max-h-[400px]" dir={i18n.dir()}>
                     {isLoading ? (
                         <div className="p-4 text-center text-sm text-muted-foreground">
                             {t("loading", "Loading...")}
@@ -121,13 +122,14 @@ export function NotificationDropdown() {
                                                         }
                                                         disabled={markAsRead.isPending}
                                                     >
-                                                        <Check className="h-3 w-3 ltr:mr-1 rtl:ml-1" />
+                                                        <Check className="h-3 w-3 me-1" />
                                                         {t("markRead", "Mark read")}
                                                     </Button>
                                                 )}
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
+                                                    aria-label={t("delete", "Delete")}
                                                     className="h-5 px-2 text-[10px] text-destructive"
                                                     onClick={() =>
                                                         deleteNotification.mutate(

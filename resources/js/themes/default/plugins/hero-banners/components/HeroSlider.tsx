@@ -119,13 +119,13 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
                                 {/* Decorative Background Elements - Only if no image */}
                                 {!slide.image && (
                                     <>
-                                        <div className="absolute top-0 ltr:left-0 rtl:right-0 w-72 h-72 bg-primary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-                                        <div className="absolute bottom-0 ltr:right-0 rtl:left-0 w-96 h-96 bg-secondary/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
+                                        <div className="absolute top-0 start-0 w-72 h-72 bg-primary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+                                        <div className="absolute bottom-0 end-0 w-96 h-96 bg-secondary/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
                                     </>
                                 )}
 
                                 {slide.cta_link && slide.cta_text && (
-                                    <div className="absolute bottom-12 ltr:left-8 rtl:right-8 z-10">
+                                    <div className="absolute bottom-12 start-8 z-10">
                                         <Link to={slide.cta_link}>
                                             <Button data-testid="hero-slide-cta" size="lg">
                                                 {getText(slide.cta_text, slide.cta_text_ar)}

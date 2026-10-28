@@ -83,7 +83,7 @@ export default function CategoriesSection({
 
                                         {/* Products Count Badge */}
                                         {category.productsCount !== undefined && (
-                                            <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-foreground text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                                            <div className="absolute top-2 end-2 bg-card/90 backdrop-blur-sm text-foreground text-xs font-bold px-2 py-1 rounded-full shadow-sm">
                                                 {category.productsCount}
                                             </div>
                                         )}

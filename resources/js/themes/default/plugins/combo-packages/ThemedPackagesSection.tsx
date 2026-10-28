@@ -7,6 +7,13 @@ export default function ThemedPackagesSection() {
     const { t } = useTranslation();
     const { data: packages, isLoading } = usePackages();
 
+    const sortedPackages = React.useMemo(() => {
+        if (!packages) return [];
+        const active = packages.filter((p) => p.is_active ?? true);
+        const inactive = packages.filter((p) => !(p.is_active ?? true));
+        return [...active, ...inactive];
+    }, [packages]);
+
     if (isLoading || !packages || packages.length === 0) {
         return null;
     }
@@ -26,7 +33,7 @@ export default function ThemedPackagesSection() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {packages.map((pkg) => (
+                    {sortedPackages.map((pkg) => (
                         <ThemedPackageCard key={pkg.id} packageItem={pkg} />
                     ))}
                 </div>

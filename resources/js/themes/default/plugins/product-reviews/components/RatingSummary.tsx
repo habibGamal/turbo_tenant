@@ -33,8 +33,8 @@ export default function RatingSummary({ reviews, averageRating }: RatingSummaryP
                             <Star
                                 key={i}
                                 className={`h-4 w-4 ${i < Math.round(averageRating)
-                                    ? "fill-yellow-400 text-yellow-400"
-                                    : "text-gray-300"
+                                    ? "fill-amber-400 text-amber-400"
+                                    : "text-muted-foreground/30"
                                     }`}
                             />
                         ))}
@@ -52,7 +52,7 @@ export default function RatingSummary({ reviews, averageRating }: RatingSummaryP
                                 <span className="w-3 font-medium">{star}</span>
                                 <Star className="h-4 w-4 text-muted-foreground" />
                                 <Progress value={percentage} className="h-2" />
-                                <span className="w-8 text-right text-muted-foreground">
+                                <span className="w-8 text-end text-muted-foreground">
                                     {count}
                                 </span>
                             </div>

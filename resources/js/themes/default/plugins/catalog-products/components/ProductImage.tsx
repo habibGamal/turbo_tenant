@@ -32,7 +32,7 @@ export default function ProductImage({ product }: ProductImageProps) {
 
                 {/* Discount Badge */}
                 {hasDiscount && (
-                    <Badge className="absolute z-10 top-4 ltr:left-4 rtl:right-4 text-lg px-4 py-2 shadow-lg animate-in fade-in zoom-in duration-300">
+                    <Badge className="absolute z-10 top-4 start-4 text-lg px-4 py-2 shadow-lg animate-in fade-in zoom-in duration-300">
                         {discountPercentage}% {t("off")}
                     </Badge>
                 )}
@@ -41,7 +41,8 @@ export default function ProductImage({ product }: ProductImageProps) {
                 <Button
                     size="icon"
                     variant="secondary"
-                    className="absolute top-4 ltr:right-4 rtl:left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-md"
+                    aria-label={t("share", "Share")}
+                    className="absolute top-4 end-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-md"
                     onClick={() => {
                         if (navigator.share) {
                             navigator.share({

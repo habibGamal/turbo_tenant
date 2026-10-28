@@ -2,7 +2,9 @@ import React from 'react';
 import ReactPixel from 'react-facebook-pixel';
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 import { useFavoritesStorage } from '@/plugins/customer-favorites';
+import { useCurrency } from '@/lib/money';
 
 export interface ThemedFavoriteButtonProps {
   productId: number;
@@ -19,6 +21,8 @@ export default function ThemedFavoriteButton({
   variant = 'secondary',
   size = 'icon',
 }: ThemedFavoriteButtonProps) {
+  const { t } = useTranslation();
+  const currency = useCurrency();
   const { isFavorite, toggleFavorite } = useFavoritesStorage();
   const active = isFavorite(productId);
 
@@ -35,7 +39,7 @@ export default function ThemedFavoriteButton({
           content_ids: [productId],
           contents: [{ id: productId, quantity: 1 }],
           value: productPrice || 0,
-          currency: 'EGP',
+          currency,
         });
       } catch {
         // Safe fail if Pixel is not initialized
@@ -48,10 +52,11 @@ export default function ThemedFavoriteButton({
       size={size}
       variant={variant}
       className={`transition-all backdrop-blur-sm shadow-sm ${
-        active ? 'text-red-500 hover:text-red-600' : 'text-muted-foreground hover:text-foreground'
+        active ? 'text-destructive hover:text-destructive/90' : 'text-muted-foreground hover:text-foreground'
       } ${className}`}
       onClick={handleClick}
-      aria-label={active ? 'Remove from favorites' : 'Add to favorites'}
+      aria-label={active ? t('removeFromFavorites', 'Remove from favorites') : t('addToFavorites', 'Add to favorites')}
+      aria-pressed={active}
     >
       <Heart className={`h-4 w-4 transition-transform ${active ? 'fill-current scale-110' : ''}`} />
     </Button>

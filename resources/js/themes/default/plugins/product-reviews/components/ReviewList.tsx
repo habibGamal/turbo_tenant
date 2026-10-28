@@ -45,8 +45,8 @@ export default function ReviewList({ reviews }: ReviewListProps) {
                                                     <Star
                                                         key={i}
                                                         className={`h-3.5 w-3.5 ${i < review.rating
-                                                            ? "fill-yellow-400 text-yellow-400"
-                                                            : "text-gray-300"
+                                                            ? "fill-amber-400 text-amber-400"
+                                                            : "text-muted-foreground/30"
                                                             }`}
                                                     />
                                                 )

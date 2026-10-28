@@ -19,6 +19,21 @@ import ProductPageSkeleton from "./components/ProductPageSkeleton";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCatalogProduct } from "@/plugins/catalog-products/api/useCatalogProduct";
 import { getEffectivePrice } from "@/lib/pricing";
+import { useFormatMoney, useCurrency } from "@/lib/money";
+
+function pushUnavailableToEnd(products: Product[]): Product[] {
+  const available: Product[] = [];
+  const unavailable: Product[] = [];
+  for (const product of products) {
+    const isAvail = (product.is_active ?? true) && (product as any).is_available !== false;
+    if (isAvail) {
+      available.push(product);
+    } else {
+      unavailable.push(product);
+    }
+  }
+  return [...available, ...unavailable];
+}
 
 export interface ThemedProductShowProps {
   productId?: string | number;
@@ -30,6 +45,8 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
 
   const { data: responseData, isLoading, isError } = useCatalogProduct(productId);
   const { t, i18n } = useTranslation();
+  const formatMoney = useFormatMoney();
+  const currency = useCurrency();
   const isRTL = i18n.language === "ar";
 
   const getText = (text: string, textAr?: string) => {
@@ -103,7 +120,7 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
         contents: [{ id: product.id, quantity: 1 }],
         content_type: "product",
         value: defaultProductPrice,
-        currency: "EGP",
+        currency,
       });
     } catch {
       // Safe fallback if Pixel not configured
@@ -215,7 +232,7 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
                           content_type: "product",
                           contents: [{ id: contentId, quantity }],
                           value: price,
-                          currency: "EGP",
+                          currency,
                         });
                       } catch {
                         // ignore pixel error
@@ -276,7 +293,7 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
                     <div className="flex justify-between py-2 border-b">
                       <span className="font-medium">{t("basePrice")}</span>
                       <span className="text-muted-foreground">
-                        {(product.base_price || 0).toFixed(2)} {t("currency")}
+                        {formatMoney(product.base_price || 0)}
                       </span>
                     </div>
                     {product.sell_by_weight && (
@@ -307,7 +324,7 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
                 </Link>
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {relatedProducts.map((relatedProduct) => (
+                {pushUnavailableToEnd(relatedProducts).map((relatedProduct) => (
                   <ProductCard key={relatedProduct.id} product={relatedProduct} />
                 ))}
               </div>
@@ -324,7 +341,7 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
                 </Link>
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {promotionalProducts.map((promoProduct) => (
+                {pushUnavailableToEnd(promotionalProducts).map((promoProduct) => (
                   <ProductCard key={promoProduct.id} product={promoProduct} />
                 ))}
               </div>
