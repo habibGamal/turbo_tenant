@@ -7,6 +7,7 @@ namespace App\Plugins\PaymentProcessing\src\Services;
 use App\Plugins\OrderManagement\src\Contracts\PaymentGatewayInterface;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\PaymentProcessing\src\DTOs\PaymentProcessingConfig;
+use App\Plugins\PaymentProcessing\src\Exceptions\PaymentGatewayNotConfiguredException;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -46,6 +47,14 @@ final class KashierService implements PaymentGatewayInterface
     public function getGatewayId(): string
     {
         return 'kashier';
+    }
+
+    /**
+     * Get the configured currency for this gateway.
+     */
+    public function getCurrency(): string
+    {
+        return $this->currency;
     }
 
     /**
@@ -124,24 +133,21 @@ final class KashierService implements PaymentGatewayInterface
      */
     public function validateHmac(array $data, string $receivedHmac): bool
     {
+        $this->ensureConfigured();
+
         return $this->validateWebhookPayload($data, $receivedHmac);
     }
 
     /**
      * Validate HMAC signature from callback redirect.
-     * For Kashier, callback validation relies on webhook verification.
      */
     public function validateCallbackHmac(array $data, string $receivedHmac): bool
     {
-        // For URL redirect parameters, rely on webhook for verification
-        if (isset($data['merchantOrderId']) || isset($data['orderReference'])) {
-            return true;
-        }
+        $this->ensureConfigured();
 
-        // For responses with signature
-        if (! isset($data['signature'])) {
-            Log::warning('No signature found in Kashier payment response');
+        $signature = $data['signature'] ?? $receivedHmac;
 
+        if (! is_string($signature) || $signature === '') {
             return false;
         }
 
@@ -156,7 +162,7 @@ final class KashierService implements PaymentGatewayInterface
         $queryString = mb_ltrim($queryString, '&');
         $expectedSignature = hash_hmac('sha256', $queryString, $this->apiKey);
 
-        return hash_equals($expectedSignature, $data['signature']);
+        return hash_equals($expectedSignature, $signature);
     }
 
     /**
@@ -171,9 +177,10 @@ final class KashierService implements PaymentGatewayInterface
             $merchantOrderId = $data['merchantOrderId'] ?? null;
             $status = $data['status'] ?? 'UNKNOWN';
             $amount = $data['amount'] ?? 0;
+            $currency = $data['currency'] ?? $this->currency;
 
             // Determine payment status
-            $paymentStatus = match (mb_strtoupper($status)) {
+            $paymentStatus = match (mb_strtoupper((string) $status)) {
                 'SUCCESS', 'CAPTURED' => 'completed',
                 'PENDING' => 'processing',
                 'REFUNDED' => 'refunded',
@@ -181,10 +188,11 @@ final class KashierService implements PaymentGatewayInterface
             };
 
             return [
-                'transaction_id' => $transactionId,
-                'merchant_order_id' => $merchantOrderId,
+                'transaction_id' => (string) $transactionId,
+                'merchant_order_id' => (string) $merchantOrderId,
                 'payment_status' => $paymentStatus,
-                'amount_cents' => (int) ($amount * 100),
+                'amount_cents' => (int) round(((float) $amount) * 100),
+                'currency' => (string) $currency,
                 'success' => $paymentStatus === 'completed',
                 'pending' => $paymentStatus === 'processing',
                 'payment_data' => json_encode($data),
@@ -192,7 +200,6 @@ final class KashierService implements PaymentGatewayInterface
         } catch (Exception $e) {
             Log::error('Error processing Kashier webhook', [
                 'error' => $e->getMessage(),
-                'webhook_data' => $webhookData,
             ]);
 
             throw $e;
@@ -248,7 +255,10 @@ final class KashierService implements PaymentGatewayInterface
                 ];
             }
 
-            Log::error('Kashier refund failed', $responseData);
+            Log::error('Kashier refund failed', [
+                'transaction_id' => $transactionId,
+                'status' => $response->status(),
+            ]);
 
             return [
                 'success' => false,
@@ -290,16 +300,28 @@ final class KashierService implements PaymentGatewayInterface
      */
     private function validateWebhookPayload(array $webhookData, string $kashierSignature): bool
     {
+        $this->ensureConfigured();
+
+        if ($kashierSignature === '') {
+            return false;
+        }
+
         try {
             $data = $webhookData['data'] ?? $webhookData;
 
             if (! isset($data['signatureKeys']) || ! is_array($data['signatureKeys'])) {
-                Log::warning('Kashier webhook missing signatureKeys');
-
                 return false;
             }
 
             $signatureKeys = $data['signatureKeys'];
+            $requiredKeys = ['merchantOrderId', 'amount', 'currency', 'status', 'transactionId'];
+
+            foreach ($requiredKeys as $requiredKey) {
+                if (! in_array($requiredKey, $signatureKeys, true) || ! isset($data[$requiredKey])) {
+                    return false;
+                }
+            }
+
             sort($signatureKeys);
 
             $signatureData = [];
@@ -312,19 +334,22 @@ final class KashierService implements PaymentGatewayInterface
             $queryString = http_build_query($signatureData, '', '&', PHP_QUERY_RFC3986);
             $expectedSignature = hash_hmac('sha256', $queryString, $this->apiKey, false);
 
-            Log::info('Kashier webhook signature validation', [
-                'query_string' => $queryString,
-                'expected_signature' => $expectedSignature,
-                'received_signature' => $kashierSignature,
-            ]);
-
             return hash_equals($expectedSignature, $kashierSignature);
+        } catch (PaymentGatewayNotConfiguredException $e) {
+            throw $e;
         } catch (Exception $e) {
             Log::error('Error validating Kashier webhook signature', [
-                'exception' => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             return false;
+        }
+    }
+
+    private function ensureConfigured(): void
+    {
+        if (mb_trim($this->apiKey) === '') {
+            throw new PaymentGatewayNotConfiguredException('Kashier API key is not configured.');
         }
     }
 

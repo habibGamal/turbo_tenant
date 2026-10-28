@@ -365,6 +365,8 @@
   "min": "Min",
   "noFavoritesYet": "No favorites yet",
   "paymentFailed": "Payment Failed",
+  "paymentPendingConfirmation": "Your payment is still being confirmed. We'll update your order shortly.",
+  "paymentPendingTitle": "Payment Confirmation in Progress",
   "paymentProcessing": "Payment Processing",
   "paymentSuccessful": "Payment Successful",
   "pleaseSelectArea": "Please select an area",

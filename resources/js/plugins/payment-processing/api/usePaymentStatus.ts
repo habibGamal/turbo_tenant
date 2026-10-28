@@ -1,8 +1,11 @@
+import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/core/api/client';
 import { OrderPaymentStatus } from '../types';
 
 export function usePaymentStatus(orderId?: string | number) {
+  const startTimeRef = React.useRef<number>(Date.now());
+
   return useQuery<OrderPaymentStatus>({
     queryKey: ['payment-status', orderId],
     queryFn: async () => {
@@ -13,11 +16,21 @@ export function usePaymentStatus(orderId?: string | number) {
       return data.data;
     },
     enabled: !!orderId,
-    staleTime: 1000 * 10,
+    staleTime: 1000 * 2,
     refetchInterval: (query) => {
-      // Poll every 3 seconds if not paid yet, up to 5 times
       const data = query.state.data;
-      return data?.is_paid ? false : 3000;
+      const isPaid = Boolean(data?.is_paid || data?.order?.payment_status === 'completed');
+      const isFailed = data?.order?.payment_status === 'failed';
+
+      if (isPaid || isFailed) {
+        return false;
+      }
+
+      if (Date.now() - startTimeRef.current >= 30000) {
+        return false;
+      }
+
+      return 3000;
     },
   });
 }

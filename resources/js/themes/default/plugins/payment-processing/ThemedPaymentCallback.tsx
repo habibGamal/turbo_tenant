@@ -1,27 +1,42 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import MainLayout from '@/themes/default/layouts/MainLayout';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, XCircle, Clock } from "lucide-react";
+import { CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { usePaymentStatus } from "@/plugins/payment-processing/api/usePaymentStatus";
 
 export default function ThemedPaymentCallback() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const statusParam = searchParams.get("status") || "unknown";
+  const statusParam = searchParams.get("status") || "pending";
   const messageParam = searchParams.get("message") || "";
   const { t } = useTranslation();
 
   const { data: statusData, isLoading } = usePaymentStatus(id);
+  const [isTimedOut, setIsTimedOut] = useState(false);
 
-  const isSuccess = statusParam === "success" || statusData?.is_paid;
-  const isProcessing = statusParam === "processing" || (isLoading && !statusData);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsTimedOut(true);
+    }, 30000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const isSuccess = statusParam === "success" || statusData?.is_paid || statusData?.order?.payment_status === "completed";
+  const isFailed = statusParam === "failed" || statusData?.order?.payment_status === "failed";
+  const isConfirming = !isSuccess && !isFailed && isTimedOut;
+  const isProcessing = !isSuccess && !isFailed && !isTimedOut;
+
   const displayMessage = messageParam
     ? decodeURIComponent(messageParam)
     : isSuccess
     ? t("paymentSuccessful", "Payment Successful")
+    : isConfirming
+    ? t("paymentPendingConfirmation", "Your payment is still being confirmed. We'll update your order shortly.")
+    : isProcessing
+    ? t("paymentProcessingMessage", "Verifying payment status, please wait...")
     : t("paymentFailed", "Payment Failed");
 
   const order = statusData?.order;
@@ -64,10 +79,42 @@ export default function ThemedPaymentCallback() {
                     </Link>
                   </div>
                 </>
+              ) : isConfirming ? (
+                <>
+                  <div className="w-24 h-24 rounded-full bg-amber-500/10 flex items-center justify-center">
+                    <AlertCircle className="w-12 h-12 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="space-y-2">
+                    <h1 className="text-3xl font-bold text-amber-600 dark:text-amber-400">
+                      {t("paymentPendingTitle", "Payment Confirmation in Progress")}
+                    </h1>
+                    <p className="text-muted-foreground text-lg">{displayMessage}</p>
+                  </div>
+                  {order && (
+                    <div className="bg-muted/50 p-4 rounded-lg">
+                      <div className="text-sm text-muted-foreground mb-1">
+                        {t("orderNumber", "Order Number")}
+                      </div>
+                      <div className="text-2xl font-bold">#{order.order_number}</div>
+                    </div>
+                  )}
+                  <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                    {id && (
+                      <Link to={`/orders/${id}`}>
+                        <Button size="lg">{t("viewOrder", "View Order")}</Button>
+                      </Link>
+                    )}
+                    <Link to="/">
+                      <Button variant="outline" size="lg">
+                        {t("backToHome", "Back to Home")}
+                      </Button>
+                    </Link>
+                  </div>
+                </>
               ) : isProcessing ? (
                 <>
                   <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Clock className="w-12 h-12 text-primary" />
+                    <Clock className="w-12 h-12 text-primary animate-pulse" />
                   </div>
                   <div className="space-y-2">
                     <h1 className="text-3xl font-bold text-primary">
