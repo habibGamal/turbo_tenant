@@ -521,4 +521,14 @@ describe('POST /api/web-orders/place-order request contract', function () {
         $body = Http::recorded()[0][0]->data();
         expect($body['order']['items'])->toBe([]);
     });
+
+    it('throws exception when order does not have a branch assigned (doc: Service Endpoints & Flow)', function () {
+        $order = Order::factory()->make([
+            'branch_id' => null,
+            'type' => OrderType::WEB_DELIVERY,
+        ]);
+
+        expect(fn () => $this->service->placeOrder($order))
+            ->toThrow(Exception::class, 'Order does not have a branch assigned');
+    });
 });

@@ -573,4 +573,104 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
 
         expect(count($mappingQueries))->toBe(1);
     });
+
+    it('prevents duplicate mapping entries even when some columns are NULL (doc: posRefObj mapping)', function () {
+        $product = Product::factory()->create();
+
+        ProductPosMapping::create([
+            'product_id' => $product->id,
+            'variant_id' => null,
+            'extra_option_item_id' => null,
+            'branch_id' => null,
+            'pos_item_id' => 'POS-1',
+        ]);
+
+        expect(function () use ($product) {
+            ProductPosMapping::create([
+                'product_id' => $product->id,
+                'variant_id' => null,
+                'extra_option_item_id' => null,
+                'branch_id' => null,
+                'pos_item_id' => 'POS-2',
+            ]);
+        })->toThrow(Illuminate\Database\QueryException::class);
+    });
+
+    it('uses snapshot extra_name and variant_name in item notes, falling back only when empty (doc: Request Payload Requirements order.items.*.notes)', function () {
+        Http::fake([
+            'https://pos.example.com/api/web-orders/place-order' => Http::response(['message' => 'تم إنشاء الطلب بنجاح'], 200),
+        ]);
+
+        $branch = Branch::factory()->create(['link' => 'https://pos.example.com']);
+        $user = User::factory()->create();
+        $product = Product::factory()->create();
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'name' => 'Live Variant Name',
+        ]);
+        $extraItem = ExtraOptionItem::factory()->create([
+            'name' => 'Live Extra Name',
+        ]);
+
+        ProductPosMapping::factory()->create([
+            'product_id' => $product->id,
+            'branch_id' => $branch->id,
+            'pos_item_id' => 'POS-BASE',
+        ]);
+
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+            'branch_id' => $branch->id,
+            'type' => OrderType::WEB_DELIVERY,
+            'shift_id' => 1,
+        ]);
+
+        // Item 1: with snapshot names
+        $item1 = OrderItem::factory()->create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'variant_id' => $variant->id,
+            'variant_name' => 'Snapshot Variant Name',
+            'quantity' => 1,
+            'notes' => null,
+        ]);
+
+        OrderItemExtra::factory()->create([
+            'order_item_id' => $item1->id,
+            'extra_option_item_id' => $extraItem->id,
+            'extra_name' => 'Snapshot Extra Name',
+            'quantity' => 1,
+        ]);
+
+        // Item 2: fallback when snapshot names are null/empty
+        $item2 = OrderItem::factory()->create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'variant_id' => $variant->id,
+            'variant_name' => null,
+            'quantity' => 1,
+            'notes' => null,
+        ]);
+
+        OrderItemExtra::factory()->create([
+            'order_item_id' => $item2->id,
+            'extra_option_item_id' => $extraItem->id,
+            'extra_name' => '',
+            'quantity' => 1,
+        ]);
+
+        $this->service->placeOrder($order);
+
+        $body = Http::recorded()[0][0]->data();
+        $items = $body['order']['items'];
+
+        expect($items[0]['notes'])->toBe('json::'.json_encode([
+            'اضافات' => 'Snapshot Extra Name (x1)',
+            'النوع' => 'Snapshot Variant Name',
+        ], JSON_UNESCAPED_UNICODE))
+            ->and($items[1]['notes'])->toBe('json::'.json_encode([
+                'اضافات' => 'Live Extra Name (x1)',
+                'النوع' => 'Live Variant Name',
+            ], JSON_UNESCAPED_UNICODE));
+    });
 });

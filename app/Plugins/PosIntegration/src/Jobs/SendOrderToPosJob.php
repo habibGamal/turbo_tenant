@@ -14,7 +14,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class SendOrderToPosJob implements ShouldQueue
+final class SendOrderToPosJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -49,7 +49,18 @@ class SendOrderToPosJob implements ShouldQueue
                 return;
             }
 
-            $orderPOSService->placeOrder($this->order);
+            $result = $orderPOSService->placeOrder($this->order);
+
+            // Doc Scenario B: the POS rejected unknown products, so no order exists there.
+            // Retrying cannot fix a missing product, so fail without rethrowing.
+            if ($result['success'] === false) {
+                $this->order->update([
+                    'pos_status' => OrderPosStatus::FAILED,
+                    'pos_failure_reason' => $result['message'],
+                ]);
+
+                return;
+            }
 
             $this->order->update([
                 'pos_status' => OrderPosStatus::SENT,
