@@ -48,6 +48,9 @@ Route::middleware([
 
         Route::prefix('auth')->group(function () {
             Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login'])->name('api.tenant.auth.login');
+            Route::post('/google/native', [App\Http\Controllers\Api\GoogleNativeAuthController::class, 'login'])
+                ->middleware('throttle:10,1')
+                ->name('api.tenant.auth.google.native');
             Route::post('/register', [App\Http\Controllers\Api\AuthController::class, 'register'])->name('api.tenant.auth.register');
             Route::post('/logout', [App\Http\Controllers\Api\AuthController::class, 'logout'])->name('api.tenant.auth.logout');
             Route::get('/user', [App\Http\Controllers\Api\AuthController::class, 'user'])->name('api.tenant.auth.user');

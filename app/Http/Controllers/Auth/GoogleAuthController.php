@@ -4,164 +4,131 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
-use App\Enums\SettingKey;
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Plugins\CartEngine\src\Services\CartService;
-use App\Plugins\StoreSettings\src\Services\SettingService;
+use App\Services\Auth\ExpoTokenRegistrarService;
+use App\Services\Auth\GoogleAccountService;
+use App\Services\Auth\GoogleIdTokenVerifierService;
+use App\Services\Auth\GoogleOAuthConfigService;
+use App\Support\Auth\GoogleIdentity;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Throwable;
 
 final class GoogleAuthController extends Controller
 {
-    public function __construct(private readonly SettingService $settingService) {}
+    public function __construct(
+        private readonly GoogleIdTokenVerifierService $tokenVerifier,
+        private readonly GoogleOAuthConfigService $googleOAuthConfig,
+        private readonly GoogleAccountService $accountService,
+        private readonly ExpoTokenRegistrarService $expoTokenRegistrar
+    ) {}
 
-    public function redirect(): RedirectResponse
+    public function redirect(Request $request): RedirectResponse
     {
-        $this->configureSocialite();
+        $this->googleOAuthConfig->apply();
 
-        if (request()->has('expo_token')) {
-            session(['expo_token' => request('expo_token')]);
+        if ($request->filled('expo_token')) {
+            session(['expo_token' => $request->input('expo_token')]);
+        }
+
+        if ($request->has('remember')) {
+            session(['remember' => $request->boolean('remember')]);
         }
 
         return Socialite::driver('google')->redirect();
     }
 
-    public function callback(CartService $cartService): RedirectResponse
+    public function callback(Request $request): RedirectResponse
     {
-        $this->configureSocialite();
+        $this->googleOAuthConfig->apply();
 
         try {
             $googleUser = Socialite::driver('google')->user();
 
-            $user = User::query()->where('email', $googleUser->getEmail())->first();
-
-            if ($user) {
-                // Update existing user with Google ID if not set
-                if (! $user->google_id) {
-                    $user->update([
-                        'google_id' => $googleUser->getId(),
-                        'avatar' => $googleUser->getAvatar(),
-                    ]);
-                }
-            } else {
-                // Create new user
-                $user = User::query()->create([
-                    'name' => $googleUser->getName(),
-                    'email' => $googleUser->getEmail(),
-                    'google_id' => $googleUser->getId(),
-                    'avatar' => $googleUser->getAvatar(),
-                    'password' => Hash::make(Str::random(24)), // Random password for OAuth users
-                    'email_verified_at' => now(),
-                ]);
+            $emailVerified = false;
+            if (is_object($googleUser) && property_exists($googleUser, 'user') && is_array($googleUser->user)) {
+                $claim = $googleUser->user['email_verified'] ?? null;
+                $emailVerified = ($claim === true || $claim === 'true');
             }
 
-            Auth::login($user, true);
+            $identity = new GoogleIdentity(
+                googleId: (string) $googleUser->getId(),
+                email: (string) $googleUser->getEmail(),
+                name: (string) $googleUser->getName(),
+                avatar: (string) $googleUser->getAvatar(),
+                emailVerified: $emailVerified,
+            );
 
-            // Sync guest cart to authenticated user
-            $cartService->syncGuestCartToUser($user);
-
-            if (session()->has('expo_token')) {
-                $token = session('expo_token');
-                $validator = \Illuminate\Support\Facades\Validator::make(['expo_token' => $token], [
-                    'expo_token' => \NotificationChannels\Expo\ExpoPushToken::rule(),
-                ]);
-
-                if ($validator->passes()) {
-                    $user->update(['expo_token' => $token]);
-                }
-                session()->forget('expo_token');
+            $result = $this->accountService->resolveUser($identity);
+            if ($result->isFailure()) {
+                return redirect()->route('login')->with('error', $result->errorMessage());
             }
+
+            $user = $result->user();
+            $remember = (bool) (session()->pull('remember') ?? $request->boolean('remember'));
+            Auth::login($user, $remember);
+            $request->session()->regenerate();
+
+            $expoToken = session()->pull('expo_token');
+            $this->expoTokenRegistrar->registerFor($user, is_string($expoToken) ? $expoToken : null);
 
             return redirect()->intended(route('home', absolute: false));
-        } catch (Throwable $e) {
+        } catch (Throwable) {
             return redirect()->route('login')->with('error', 'Unable to login with Google. Please try again.');
         }
     }
 
     /**
-     * Handle the callback from the native app with an ID token.
+     * Handle the callback from the native app with an Access Token (deprecated).
      */
-    /**
-     * Handle the callback from the native app with an Access Token.
-     */
-    public function handleNativeCallback(\Illuminate\Http\Request $request): RedirectResponse
+    public function handleNativeCallback(Request $request): RedirectResponse
     {
-        $accessToken = $request->input('access_token');
+        logger()->warning('Google native callback via GET access_token is deprecated and will be removed in a future release.');
 
+        $accessToken = $request->input('access_token');
         if (! $accessToken) {
             return redirect()->route('login')->with('error', 'No Access token provided.');
         }
 
         try {
-            // Configure Socialite before using it
-            $this->configureSocialite();
+            $this->googleOAuthConfig->apply();
 
-            // Verify the token and get user details from Google via Socialite
+            $tokenInfo = $this->tokenVerifier->verifyAccessToken((string) $accessToken);
+            if ($tokenInfo === null) {
+                return redirect()->route('login')->with('error', 'Unable to login with Google. Please try again.');
+            }
+
             /** @var \Laravel\Socialite\Two\User $googleUser */
-            $googleUser = Socialite::driver('google')->userFromToken($accessToken);
+            $googleUser = Socialite::driver('google')->userFromToken((string) $accessToken);
 
-            $email = $googleUser->getEmail();
-            $googleId = $googleUser->getId();
-            $name = $googleUser->getName();
-            $avatar = $googleUser->getAvatar();
+            $claim = $tokenInfo['email_verified'] ?? null;
+            $emailVerified = ($claim === true || $claim === 'true');
 
-            $user = User::query()->where('email', $email)->first();
+            $identity = new GoogleIdentity(
+                googleId: (string) $googleUser->getId(),
+                email: (string) $googleUser->getEmail(),
+                name: (string) $googleUser->getName(),
+                avatar: (string) $googleUser->getAvatar(),
+                emailVerified: $emailVerified,
+            );
 
-            if ($user) {
-                // Update existing user with Google ID if not set
-                if (! $user->google_id) {
-                    $user->update([
-                        'google_id' => $googleId,
-                        'avatar' => $avatar ?? $user->avatar,
-                    ]);
-                }
-            } else {
-                // Create new user
-                $user = User::query()->create([
-                    'name' => $name,
-                    'email' => $email,
-                    'google_id' => $googleId,
-                    'avatar' => $avatar,
-                    'password' => Hash::make(Str::random(24)),
-                    'email_verified_at' => now(),
-                ]);
+            $result = $this->accountService->resolveUser($identity);
+            if ($result->isFailure()) {
+                return redirect()->route('login')->with('error', $result->errorMessage());
             }
 
-            Auth::login($user, true);
+            $user = $result->user();
+            $remember = $request->boolean('remember');
+            Auth::login($user, $remember);
+            $request->session()->regenerate();
 
-            // Handle Expo Token if present
-            if ($request->has('expo_token')) {
-                $token = $request->input('expo_token');
-                $validator = \Illuminate\Support\Facades\Validator::make(['expo_token' => $token], [
-                    'expo_token' => \NotificationChannels\Expo\ExpoPushToken::rule(),
-                ]);
-
-                if ($validator->passes()) {
-                    $user->update(['expo_token' => $token]);
-                }
-            }
+            $this->expoTokenRegistrar->registerFor($user, $request->input('expo_token'));
 
             return redirect()->intended(route('home', absolute: false));
-
-        } catch (Throwable $e) {
+        } catch (Throwable) {
             return redirect()->route('login')->with('error', 'Unable to login with Google. Please try again.');
         }
-    }
-
-    /**
-     * Configure Socialite with tenant-specific Google OAuth credentials.
-     */
-    private function configureSocialite(): void
-    {
-        config([
-            'services.google.client_id' => $this->settingService->get(SettingKey::GOOGLE_CLIENT_ID),
-            'services.google.client_secret' => $this->settingService->get(SettingKey::GOOGLE_CLIENT_SECRET),
-            'services.google.redirect' => $this->settingService->get(SettingKey::GOOGLE_REDIRECT_URL),
-        ]);
     }
 }
