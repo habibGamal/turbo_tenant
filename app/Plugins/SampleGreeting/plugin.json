@@ -9,5 +9,9 @@
   "dependencies": [],
   "providers": [
     "App\\Plugins\\SampleGreeting\\SampleGreetingServiceProvider"
+  ],
+  "tenant_scoped": [
+    "App\\Plugins\\SampleGreeting\\src\\DTOs\\SampleGreetingConfig",
+    "sample-greeting.message"
   ]
 }

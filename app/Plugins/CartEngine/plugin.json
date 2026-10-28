@@ -12,5 +12,14 @@
   ],
   "providers": [
     "App\\Plugins\\CartEngine\\CartEngineServiceProvider"
+  ],
+  "listeners": {
+    "Illuminate\\Auth\\Events\\Login": [
+      "App\\Plugins\\CartEngine\\src\\Listeners\\SyncGuestCartOnLogin"
+    ]
+  },
+  "tenant_scoped": [
+    "App\\Plugins\\CartEngine\\src\\DTOs\\CartEngineConfig",
+    "App\\Plugins\\CartEngine\\src\\Services\\CartService"
   ]
 }

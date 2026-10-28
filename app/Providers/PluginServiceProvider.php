@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Core\Plugins\Listeners\ActivationGatedListener;
 use App\Core\Plugins\Services\PluginDependencyResolver;
 use App\Core\Plugins\Services\PluginLifecycleService;
 use App\Core\Plugins\Services\PluginManager;
 use App\Core\Plugins\Services\PluginManifestLoader;
 use App\Core\Plugins\Services\PluginRegistry;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 final class PluginServiceProvider extends ServiceProvider
@@ -56,6 +58,18 @@ final class PluginServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Register manifest-declared listeners once at boot
+        $registry = $this->app->make(PluginRegistry::class);
+        $pluginManager = $this->app->make(PluginManager::class);
+
+        foreach ($registry->all() as $manifest) {
+            foreach ($manifest->listeners as $eventClass => $listeners) {
+                foreach ((array) $listeners as $listenerSpec) {
+                    Event::listen($eventClass, new ActivationGatedListener($manifest->id, $listenerSpec, $pluginManager));
+                }
+            }
+        }
+
         if ($this->app->runningInConsole()) {
             $this->commands([
                 \App\Console\Commands\MakePluginCommand::class,

@@ -12,5 +12,8 @@
     "providers": [
         "App\\Plugins\\ComboPackages\\ComboPackagesServiceProvider"
     ],
-    "filament": "App\\Plugins\\ComboPackages\\src\\Filament\\ComboPackagesFilamentPlugin"
+    "filament": "App\\Plugins\\ComboPackages\\src\\Filament\\ComboPackagesFilamentPlugin",
+    "tenant_scoped": [
+        "App\\Plugins\\ComboPackages\\src\\DTOs\\ComboPackagesConfig"
+    ]
 }

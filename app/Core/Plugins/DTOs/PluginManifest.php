@@ -12,6 +12,8 @@ final readonly class PluginManifest
     /**
      * @param  array<string>  $dependencies
      * @param  array<string>  $providers
+     * @param  array<string, array<string>>  $listeners
+     * @param  array<string>  $tenantScoped
      */
     public function __construct(
         public string $id,
@@ -26,6 +28,8 @@ final readonly class PluginManifest
         public array $providers = [],
         public ?string $filamentPlugin = null,
         public ?string $tenantMigrationsPath = null,
+        public array $listeners = [],
+        public array $tenantScoped = [],
     ) {}
 
     /**
@@ -41,7 +45,7 @@ final readonly class PluginManifest
             throw new InvalidArgumentException("Plugin manifest in {$basePath} is missing required 'name'");
         }
 
-        $migrationsPath = $basePath . '/database/migrations/tenant';
+        $migrationsPath = $basePath.'/database/migrations/tenant';
         $hasMigrations = is_dir($migrationsPath);
 
         return new self(
@@ -57,6 +61,8 @@ final readonly class PluginManifest
             providers: (array) ($data['providers'] ?? []),
             filamentPlugin: isset($data['filament']) ? (string) $data['filament'] : null,
             tenantMigrationsPath: $hasMigrations ? $migrationsPath : null,
+            listeners: (array) ($data['listeners'] ?? []),
+            tenantScoped: (array) ($data['tenant_scoped'] ?? []),
         );
     }
 }

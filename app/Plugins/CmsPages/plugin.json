@@ -12,5 +12,8 @@
     "providers": [
         "App\\Plugins\\CmsPages\\CmsPagesServiceProvider"
     ],
-    "filament": "App\\Plugins\\CmsPages\\src\\Filament\\CmsPagesFilamentPlugin"
+    "filament": "App\\Plugins\\CmsPages\\src\\Filament\\CmsPagesFilamentPlugin",
+    "tenant_scoped": [
+        "App\\Plugins\\CmsPages\\src\\DTOs\\CmsPagesConfig"
+    ]
 }

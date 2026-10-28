@@ -28,13 +28,11 @@ final class PluginManager
     /**
      * Boot all active plugins for the given tenant in topological dependency order.
      */
-    public function bootTenant(Tenant $tenant, bool $force = false): void
+    public function bootTenant(Tenant $tenant): void
     {
         $tenantId = (string) $tenant->id;
 
-        if (! $force && isset($this->bootedTenantPlugins[$tenantId])) {
-            return;
-        }
+        $this->resetTenantScopedInstances();
 
         $activeRecords = TenantPlugin::query()
             ->where('tenant_id', $tenantId)
@@ -75,9 +73,32 @@ final class PluginManager
         $this->bootedTenantPlugins[$tenantId] = $booted;
     }
 
-    public function resetTenant(Tenant $tenant): void
+    /**
+     * Forget container singletons declared as tenant-scoped across all plugins.
+     */
+    public function resetTenantScopedInstances(): void
     {
-        unset($this->bootedTenantPlugins[(string) $tenant->id]);
+        foreach ($this->registry->all() as $manifest) {
+            foreach ($manifest->tenantScoped as $abstract) {
+                $this->app->forgetInstance($abstract);
+            }
+        }
+    }
+
+    public function resetTenant(?Tenant $tenant = null): void
+    {
+        $this->resetTenantScopedInstances();
+
+        if ($tenant !== null) {
+            unset($this->bootedTenantPlugins[(string) $tenant->id]);
+        } else {
+            $this->bootedTenantPlugins = [];
+        }
+    }
+
+    public function onTenancyEnded(): void
+    {
+        $this->resetTenant();
     }
 
     public function isPluginActive(string $pluginId, ?Tenant $tenant = null): bool
@@ -156,15 +177,26 @@ final class PluginManager
         return $filamentPlugins;
     }
 
-    private function resolvePluginInstance(PluginManifest $manifest): ?TenantPluginInterface
+    public function resolvePluginInstance(PluginManifest $manifest): ?TenantPluginInterface
     {
         $studlyName = str_replace('-', '', ucwords($manifest->id, '-'));
         $pluginClass = "App\\Plugins\\{$studlyName}\\{$studlyName}Plugin";
 
         if (class_exists($pluginClass) && is_subclass_of($pluginClass, TenantPluginInterface::class)) {
+            if ($this->app->bound($pluginClass) && $this->app->isShared($pluginClass)) {
+                return $this->app->make($pluginClass);
+            }
+
             return $this->app->make($pluginClass, ['manifest' => $manifest]);
         }
 
         return null;
+    }
+
+    public function resolvePluginInstanceById(string $pluginId): ?TenantPluginInterface
+    {
+        $manifest = $this->registry->get($pluginId);
+
+        return $manifest !== null ? $this->resolvePluginInstance($manifest) : null;
     }
 }

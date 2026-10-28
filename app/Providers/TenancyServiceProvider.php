@@ -28,6 +28,7 @@ final class TenancyServiceProvider extends ServiceProvider
                     Jobs\CreateDatabase::class,
                     Jobs\MigrateDatabase::class,
                     Jobs\SeedDatabase::class,
+                    \App\Core\Plugins\Jobs\ActivateCorePlugins::class,
 
                     // Your own jobs to prepare the tenant.
                     // Provision API keys, create S3 buckets, anything you want!
@@ -77,6 +78,7 @@ final class TenancyServiceProvider extends ServiceProvider
             Events\EndingTenancy::class => [],
             Events\TenancyEnded::class => [
                 Listeners\RevertToCentralContext::class,
+                \App\Core\Plugins\Listeners\ResetTenantPluginsListener::class,
             ],
 
             Events\BootstrappingTenancy::class => [],

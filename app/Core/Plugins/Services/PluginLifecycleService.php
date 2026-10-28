@@ -33,6 +33,15 @@ final class PluginLifecycleService
             throw new InvalidArgumentException("Plugin '{$pluginId}' is not registered");
         }
 
+        $existingRecord = TenantPlugin::query()
+            ->where('tenant_id', (string) $tenant->id)
+            ->where('plugin_id', $manifest->id)
+            ->first();
+
+        if ($existingRecord?->status === PluginStatus::ACTIVE) {
+            return;
+        }
+
         $activeIds = $this->pluginManager->getActivePluginIds($tenant);
 
         // 1. Check dependencies
@@ -60,6 +69,9 @@ final class PluginLifecycleService
         }
 
         // 4. Update tenant plugin state
+        $resolvedSettings = ! empty($settings) ? $settings : ($existingRecord?->settings ?? []);
+        $installedAt = $existingRecord?->installed_at ?? now();
+
         TenantPlugin::updateOrCreate(
             [
                 'tenant_id' => (string) $tenant->id,
@@ -67,15 +79,18 @@ final class PluginLifecycleService
             ],
             [
                 'status' => PluginStatus::ACTIVE,
-                'settings' => $settings,
+                'settings' => $resolvedSettings,
                 'activated_at' => now(),
-                'installed_at' => now(),
+                'installed_at' => $installedAt,
             ]
         );
 
         $this->pluginManager->resetTenant($tenant);
-    }
 
+        // 5. Call onActivate hook
+        $pluginInstance = $this->pluginManager->resolvePluginInstance($manifest);
+        $pluginInstance?->onActivate($tenant);
+    }
 
     /**
      * Deactivate a plugin for a specific tenant (preserves DB tables and files).
@@ -111,6 +126,11 @@ final class PluginLifecycleService
         }
 
         $this->pluginManager->resetTenant($tenant);
+
+        if ($targetManifest !== null) {
+            $pluginInstance = $this->pluginManager->resolvePluginInstance($targetManifest);
+            $pluginInstance?->onDeactivate($tenant);
+        }
     }
 
     /**
@@ -118,14 +138,24 @@ final class PluginLifecycleService
      */
     public function uninstall(Tenant $tenant, string $pluginId): void
     {
-        $this->deactivate($tenant, $pluginId);
+        $targetManifest = $this->registry->get($pluginId);
+        if ($targetManifest !== null && $targetManifest->isCore) {
+            throw new RuntimeException("Plugin '{$pluginId}' is a mandatory core plugin and cannot be deactivated or uninstalled.");
+        }
 
-        $manifest = $this->registry->get($pluginId);
+        if ($this->pluginManager->isPluginActive($pluginId, $tenant)) {
+            $this->deactivate($tenant, $pluginId);
+        }
 
-        if ($manifest?->tenantMigrationsPath !== null) {
-            $tenant->run(function () use ($manifest) {
-                Artisan::call('migrate:rollback', [
-                    '--path' => $manifest->tenantMigrationsPath,
+        if ($targetManifest !== null) {
+            $pluginInstance = $this->pluginManager->resolvePluginInstance($targetManifest);
+            $pluginInstance?->onUninstall($tenant);
+        }
+
+        if ($targetManifest?->tenantMigrationsPath !== null) {
+            $tenant->run(function () use ($targetManifest) {
+                Artisan::call('migrate:reset', [
+                    '--path' => $targetManifest->tenantMigrationsPath,
                     '--realpath' => true,
                     '--force' => true,
                 ]);
@@ -145,5 +175,4 @@ final class PluginLifecycleService
 
         $this->pluginManager->resetTenant($tenant);
     }
-
 }

@@ -11,5 +11,8 @@
     ],
     "providers": [
         "App\\Plugins\\CustomerFavorites\\CustomerFavoritesServiceProvider"
+    ],
+    "tenant_scoped": [
+        "App\\Plugins\\CustomerFavorites\\src\\DTOs\\CustomerFavoritesConfig"
     ]
 }
