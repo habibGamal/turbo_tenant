@@ -20,8 +20,10 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
+        // One tenant database file per test process, so parallel test runs don't wipe each other's tables.
         config([
             'tenancy.central_domains' => [],
+            'tenancy.database.prefix' => 'tenant_p'.getmypid().'_',
         ]);
 
         $this->ensureTenantExists();
@@ -74,6 +76,8 @@ abstract class TestCase extends BaseTestCase
             static::$testTenant = $tenant;
             DB::purge('tenant');
             static::$testTenant->database()->manager()->createDatabase(static::$testTenant);
+            $dbFile = database_path(static::$testTenant->database()->getName());
+            register_shutdown_function(static fn () => @unlink($dbFile));
             static::$testTenant->domains()->firstOrCreate(['domain' => 'localhost']);
             if ($appHost !== 'localhost') {
                 static::$testTenant->domains()->firstOrCreate(['domain' => $appHost]);
