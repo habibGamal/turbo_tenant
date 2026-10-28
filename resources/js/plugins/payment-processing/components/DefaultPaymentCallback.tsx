@@ -1,27 +1,64 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams, useParams, Link } from 'react-router-dom';
 import { usePaymentStatus } from '../api/usePaymentStatus';
 
 export default function DefaultPaymentCallback() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const statusParam = searchParams.get('status') || 'unknown';
+  const statusParam = searchParams.get('status') || 'pending';
   const messageParam = searchParams.get('message') || '';
 
   const { data, isLoading } = usePaymentStatus(id);
+  const [isTimedOut, setIsTimedOut] = useState(false);
 
-  const isSuccess = statusParam === 'success' || data?.is_paid;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsTimedOut(true);
+    }, 30000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const isSuccess = statusParam === 'success' || data?.is_paid || data?.order?.payment_status === 'completed';
+  const isFailed = statusParam === 'failed' || data?.order?.payment_status === 'failed';
+  const isConfirming = !isSuccess && !isFailed && isTimedOut;
+  const isProcessing = !isSuccess && !isFailed && !isTimedOut;
+
+  const title = isSuccess
+    ? 'Payment Successful'
+    : isConfirming
+    ? 'Payment Confirmation in Progress'
+    : isProcessing
+    ? 'Payment Processing...'
+    : 'Payment Failed';
+
+  const titleColor = isSuccess
+    ? 'text-green-600'
+    : isConfirming
+    ? 'text-amber-600 dark:text-amber-400'
+    : isProcessing
+    ? 'text-blue-600'
+    : 'text-red-600';
+
+  const description = messageParam
+    ? decodeURIComponent(messageParam)
+    : isSuccess
+    ? 'Thank you! Your payment has been received.'
+    : isConfirming
+    ? "Your payment is still being confirmed. We'll update your order shortly."
+    : isProcessing
+    ? 'We are verifying your payment status. Please wait...'
+    : 'Unable to complete your transaction.';
 
   return (
     <div className="p-8 max-w-lg mx-auto text-center border rounded-xl shadow-sm bg-card text-card-foreground">
-      <h2 className={`text-2xl font-bold mb-3 ${isSuccess ? 'text-green-600' : 'text-red-600'}`}>
-        {isSuccess ? 'Payment Successful' : 'Payment Failed'}
+      <h2 className={`text-2xl font-bold mb-3 ${titleColor}`}>
+        {title}
       </h2>
       <p className="text-muted-foreground mb-4">
-        {messageParam ? decodeURIComponent(messageParam) : (isSuccess ? 'Thank you! Your payment has been received.' : 'Unable to complete your transaction.')}
+        {description}
       </p>
 
-      {isLoading ? (
+      {isLoading || isProcessing ? (
         <p className="text-sm text-muted-foreground">Verifying order status...</p>
       ) : data?.order ? (
         <div className="bg-muted p-4 rounded-lg mb-6 text-sm">

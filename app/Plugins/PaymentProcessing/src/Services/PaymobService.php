@@ -7,6 +7,7 @@ namespace App\Plugins\PaymentProcessing\src\Services;
 use App\Plugins\OrderManagement\src\Contracts\PaymentGatewayInterface;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\PaymentProcessing\src\DTOs\PaymentProcessingConfig;
+use App\Plugins\PaymentProcessing\src\Exceptions\PaymentGatewayNotConfiguredException;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -45,12 +46,19 @@ final class PaymobService implements PaymentGatewayInterface
     }
 
     /**
+     * Get the configured currency for this gateway.
+     */
+    public function getCurrency(): string
+    {
+        return $this->currency;
+    }
+
+    /**
      * Create a payment intention for an order
      */
     public function createPaymentIntention(Order $order, array $billingData, string $redirectionUrl, string $notificationUrl): array
     {
         $merchantOrderId = $this->generateMerchantOrderId($order);
-        logger()->info('$this->integrationIds', ['integration_ids' => $this->integrationIds]);
         $payload = [
             'amount' => $this->convertToSmallestUnit($order->total),
             'currency' => $this->currency,
@@ -141,6 +149,12 @@ final class PaymobService implements PaymentGatewayInterface
      */
     public function validateHmac(array $data, string $receivedHmac): bool
     {
+        $this->ensureConfigured();
+
+        if ($receivedHmac === '') {
+            return false;
+        }
+
         $concatenatedString = $this->buildHmacStringForWebhook($data);
         $calculatedHmac = hash_hmac('sha512', $concatenatedString, $this->hmacSecret);
 
@@ -152,6 +166,12 @@ final class PaymobService implements PaymentGatewayInterface
      */
     public function validateCallbackHmac(array $data, string $receivedHmac): bool
     {
+        $this->ensureConfigured();
+
+        if ($receivedHmac === '') {
+            return false;
+        }
+
         $concatenatedString = $this->buildHmacStringForCallback($data);
         $calculatedHmac = hash_hmac('sha512', $concatenatedString, $this->hmacSecret);
 
@@ -174,16 +194,18 @@ final class PaymobService implements PaymentGatewayInterface
             $paymentMethod = $transaction['source_data']['type'] ?? 'unknown';
             $isRefunded = $transaction['is_refunded'] ?? false;
             $isVoided = $transaction['is_voided'] ?? false;
+            $currency = $transaction['currency'] ?? $this->currency;
 
             // Determine payment status
             $paymentStatus = $this->determinePaymentStatus($success, $pending, $isRefunded, $isVoided);
 
             return [
-                'transaction_id' => $transactionId,
-                'merchant_order_id' => $merchantOrderId,
+                'transaction_id' => (string) $transactionId,
+                'merchant_order_id' => (string) $merchantOrderId,
                 'payment_status' => $paymentStatus,
                 'payment_method' => $paymentMethod,
-                'amount_cents' => $amountCents,
+                'amount_cents' => (int) $amountCents,
+                'currency' => (string) $currency,
                 'success' => $success,
                 'pending' => $pending,
                 'payment_data' => json_encode($transaction),
@@ -191,7 +213,6 @@ final class PaymobService implements PaymentGatewayInterface
         } catch (Exception $e) {
             Log::error('Error processing Paymob webhook', [
                 'error' => $e->getMessage(),
-                'webhook_data' => $webhookData,
             ]);
 
             throw $e;
@@ -232,7 +253,6 @@ final class PaymobService implements PaymentGatewayInterface
             Log::error('Paymob refund failed', [
                 'transaction_id' => $transactionId,
                 'status' => $response->status(),
-                'response' => $response->json(),
             ]);
 
             return [
@@ -258,6 +278,13 @@ final class PaymobService implements PaymentGatewayInterface
     public function convertFromSmallestUnit(int $amountCents): float
     {
         return $amountCents / 100;
+    }
+
+    private function ensureConfigured(): void
+    {
+        if (mb_trim($this->hmacSecret) === '') {
+            throw new PaymentGatewayNotConfiguredException('Paymob HMAC secret is not configured.');
+        }
     }
 
     /**

@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Payment;
 
+use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
-use App\Plugins\OrderManagement\src\Contracts\PaymentGatewayInterface;
 use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\PaymentProcessing\src\Contracts\PaymentCallbackServiceInterface;
-use App\Plugins\PaymentProcessing\src\Services\PaymentCallbackService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Mockery;
 use Tests\TestCase;
 
 final class PaymentCallbackServiceTest extends TestCase
@@ -26,110 +24,85 @@ final class PaymentCallbackServiceTest extends TestCase
         $this->callbackService = app(PaymentCallbackServiceInterface::class);
     }
 
-    public function test_handles_kashier_success_callback(): void
+    public function test_maps_completed_order_to_success_without_modifying_database(): void
     {
-        $order = Order::factory()->create(['payment_status' => PaymentStatus::PENDING]);
+        $order = Order::factory()->create([
+            'payment_status' => PaymentStatus::COMPLETED,
+            'status' => OrderStatus::PENDING,
+        ]);
 
-        $callbackData = [
-            'paymentStatus' => 'SUCCESS',
-            'transactionId' => 'KASH-SUCCESS-1',
-            'amount' => 150,
-            'currency' => 'EGP',
-        ];
+        $status = $this->callbackService->handleCallback($order->id);
 
-        $result = $this->callbackService->handleCallback($order->id, $callbackData);
-
-        $this->assertTrue($result['success']);
-        $this->assertSame('Payment successful', $result['message']);
+        $this->assertSame('success', $status);
 
         $fresh = $order->fresh();
-        $this->assertSame('completed', $fresh->payment_status->value ?? $fresh->payment_status);
-        $this->assertSame('KASH-SUCCESS-1', $fresh->transaction_id);
-        $this->assertSame(OrderPosStatus::READY, $fresh->pos_status);
+        $this->assertSame(PaymentStatus::COMPLETED, $fresh->payment_status);
+        $this->assertSame(OrderStatus::PENDING, $fresh->status);
+        $this->assertSame(OrderPosStatus::NOT_READY, $fresh->pos_status);
     }
 
-    public function test_handles_kashier_failure_callback(): void
+    public function test_maps_failed_order_to_failed_without_modifying_database(): void
     {
-        $order = Order::factory()->create(['payment_status' => PaymentStatus::PENDING]);
+        $order = Order::factory()->create([
+            'payment_status' => PaymentStatus::FAILED,
+            'status' => OrderStatus::PENDING,
+        ]);
 
-        $callbackData = [
-            'paymentStatus' => 'FAILED',
-            'transactionId' => 'KASH-FAIL-1',
-        ];
+        $status = $this->callbackService->handleCallback($order->id);
 
-        $result = $this->callbackService->handleCallback($order->id, $callbackData);
-
-        $this->assertFalse($result['success']);
-        $this->assertSame('Payment failed', $result['error']);
+        $this->assertSame('failed', $status);
 
         $fresh = $order->fresh();
-        $this->assertSame('failed', $fresh->payment_status->value ?? $fresh->payment_status);
-        $this->assertSame('cancelled', $fresh->status->value ?? $fresh->status);
+        $this->assertSame(PaymentStatus::FAILED, $fresh->payment_status);
+        $this->assertSame(OrderStatus::PENDING, $fresh->status);
     }
 
-    public function test_handles_paymob_success_callback(): void
+    public function test_maps_pending_order_to_pending_without_modifying_database(): void
     {
-        $order = Order::factory()->create(['payment_status' => PaymentStatus::PENDING]);
+        $order = Order::factory()->create([
+            'payment_status' => PaymentStatus::PENDING,
+            'status' => OrderStatus::PENDING,
+        ]);
 
-        $callbackData = [
-            'success' => 'true',
-            'pending' => 'false',
-            'id' => 'PM-SUCCESS-1',
-            'amount_cents' => 20000,
-            'currency' => 'EGP',
-        ];
+        $status = $this->callbackService->handleCallback($order->id);
 
-        $result = $this->callbackService->handleCallback($order->id, $callbackData);
-
-        $this->assertTrue($result['success']);
-        $this->assertSame('Payment successful', $result['message']);
+        $this->assertSame('pending', $status);
 
         $fresh = $order->fresh();
-        $this->assertSame('completed', $fresh->payment_status->value ?? $fresh->payment_status);
-        $this->assertSame('PM-SUCCESS-1', $fresh->transaction_id);
-        $this->assertSame(OrderPosStatus::READY, $fresh->pos_status);
+        $this->assertSame(PaymentStatus::PENDING, $fresh->payment_status);
+        $this->assertSame(OrderStatus::PENDING, $fresh->status);
+        $this->assertSame(OrderPosStatus::NOT_READY, $fresh->pos_status);
     }
 
-    public function test_handles_paymob_pending_callback(): void
+    public function test_maps_processing_order_to_pending_without_modifying_database(): void
     {
-        $order = Order::factory()->create(['payment_status' => PaymentStatus::PENDING]);
+        $order = Order::factory()->create([
+            'payment_status' => PaymentStatus::PROCESSING,
+            'status' => OrderStatus::PENDING,
+        ]);
 
-        $callbackData = [
-            'success' => 'false',
-            'pending' => 'true',
-            'id' => 'PM-PENDING-1',
-            'amount_cents' => 20000,
-            'currency' => 'EGP',
-        ];
+        $status = $this->callbackService->handleCallback($order->id);
 
-        $result = $this->callbackService->handleCallback($order->id, $callbackData);
-
-        $this->assertTrue($result['success']);
-        $this->assertSame('Payment is being processed', $result['message']);
+        $this->assertSame('pending', $status);
 
         $fresh = $order->fresh();
-        $this->assertSame('processing', $fresh->payment_status->value ?? $fresh->payment_status);
+        $this->assertSame(PaymentStatus::PROCESSING, $fresh->payment_status);
+        $this->assertSame(OrderStatus::PENDING, $fresh->status);
     }
 
-    public function test_handles_invalid_signature_callback(): void
+    public function test_callback_never_cancels_order(): void
     {
-        $mockGateway = Mockery::mock(PaymentGatewayInterface::class);
-        $mockGateway->shouldReceive('validateCallbackHmac')->andReturn(false);
+        $order = Order::factory()->create([
+            'payment_status' => PaymentStatus::PENDING,
+            'status' => OrderStatus::PENDING,
+        ]);
 
-        $service = new PaymentCallbackService($mockGateway);
+        $status = $this->callbackService->handleCallback($order->id);
 
-        $order = Order::factory()->create(['payment_status' => PaymentStatus::PENDING]);
+        $this->assertSame('pending', $status);
 
-        $callbackData = [
-            'success' => 'true',
-            'pending' => 'false',
-            'id' => 'PM-SIG-FAIL',
-            'hmac' => 'invalid_hmac',
-        ];
-
-        $result = $service->handleCallback($order->id, $callbackData);
-
-        $this->assertFalse($result['success']);
-        $this->assertSame('Invalid payment signature', $result['error']);
+        $fresh = $order->fresh();
+        $this->assertSame(PaymentStatus::PENDING, $fresh->payment_status);
+        $this->assertSame(OrderStatus::PENDING, $fresh->status);
     }
 }

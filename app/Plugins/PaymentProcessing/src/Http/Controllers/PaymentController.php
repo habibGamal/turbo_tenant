@@ -6,7 +6,6 @@ namespace App\Plugins\PaymentProcessing\src\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Plugins\PaymentProcessing\src\Contracts\PaymentCallbackServiceInterface;
-use App\Plugins\PaymentProcessing\src\Services\KashierService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -14,7 +13,6 @@ use Illuminate\Support\Facades\Log;
 final class PaymentController extends Controller
 {
     public function __construct(
-        private readonly KashierService $kashierService,
         private readonly PaymentCallbackServiceInterface $paymentCallbackService
     ) {}
 
@@ -29,21 +27,16 @@ final class PaymentController extends Controller
         }
 
         try {
-            $callbackData = $request->all();
-            logger()->info('Payment callback data', ['data' => $callbackData]);
+            $status = $this->paymentCallbackService->handleCallback($orderId);
 
-            $result = $this->paymentCallbackService->handleCallback($orderId, $callbackData);
-            $status = ! empty($result['success']) ? 'success' : 'failed';
-            $message = urlencode($result['message'] ?? $result['error'] ?? 'Unknown status');
-
-            return redirect("/orders/{$orderId}/payment/callback?status={$status}&message={$message}");
+            return redirect("/orders/{$orderId}/payment/callback?status={$status}");
         } catch (Exception $e) {
             Log::error('Payment callback exception', [
-                'order_id' => $orderId,
-                'error' => $e->getMessage(),
+                'merchant_order_id' => (string) $orderId,
+                'result' => 'error',
             ]);
 
-            return redirect("/orders/{$orderId}/payment/callback?status=failed&message=".urlencode('Failed to process payment callback'));
+            return redirect("/orders/{$orderId}/payment/callback?status=failed");
         }
     }
 }

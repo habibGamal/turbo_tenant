@@ -6,6 +6,8 @@ namespace App\Plugins\PaymentProcessing\src\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Plugins\PaymentProcessing\src\Contracts\PaymentWebhookServiceInterface;
+use App\Plugins\PaymentProcessing\src\Exceptions\PaymentGatewayNotConfiguredException;
+use App\Plugins\PaymentProcessing\src\Services\PaymentGatewayFactory;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,7 +16,8 @@ use Illuminate\Support\Facades\Log;
 final class KashierWebhookController extends Controller
 {
     public function __construct(
-        private readonly PaymentWebhookServiceInterface $webhookService
+        private readonly PaymentWebhookServiceInterface $webhookService,
+        private readonly PaymentGatewayFactory $gatewayFactory
     ) {}
 
     /**
@@ -23,14 +26,12 @@ final class KashierWebhookController extends Controller
     public function handle(Request $request): JsonResponse
     {
         try {
-            $webhookData = $request->all();
-
-            // Get signature from header
             $signature = $request->header('X-Kashier-Signature');
 
             if (! $signature) {
                 Log::warning('Kashier webhook received without signature', [
-                    'data' => $webhookData,
+                    'gateway' => 'kashier',
+                    'result' => 'missing_signature',
                 ]);
 
                 return response()->json([
@@ -39,17 +40,15 @@ final class KashierWebhookController extends Controller
                 ], 400);
             }
 
-            Log::info('Kashier webhook received', [
-                'event' => $webhookData['event'] ?? 'unknown',
-                'transaction_id' => $webhookData['data']['transactionId'] ?? null,
-            ]);
-
-            $result = $this->webhookService->handleWebhook($webhookData, $signature);
+            // T1.4: Explicitly select kashier gateway
+            $gateway = $this->gatewayFactory->getGateway('kashier');
+            $result = $this->webhookService->handleWebhook($request->all(), (string) $signature, $gateway);
 
             if (! $result['success']) {
                 Log::error('Kashier webhook processing failed', [
+                    'gateway' => 'kashier',
                     'error' => $result['error'] ?? 'Unknown error',
-                    'data' => $webhookData,
+                    'result' => 'failed',
                 ]);
 
                 return response()->json([
@@ -58,19 +57,25 @@ final class KashierWebhookController extends Controller
                 ], 400);
             }
 
-            Log::info('Kashier webhook processed successfully', [
-                'order_id' => $result['order']->id ?? null,
-                'payment_status' => $result['payment_data']['payment_status'] ?? null,
-            ]);
-
             return response()->json([
                 'success' => true,
                 'message' => 'Webhook processed successfully',
             ]);
+        } catch (PaymentGatewayNotConfiguredException $e) {
+            // T1.3: Gateway not configured mapped to HTTP 503 with no state change
+            Log::warning('Kashier webhook gateway not configured', [
+                'gateway' => 'kashier',
+                'result' => 'not_configured',
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 503);
         } catch (Exception $e) {
             Log::error('Kashier webhook exception', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'gateway' => 'kashier',
+                'result' => 'exception',
             ]);
 
             return response()->json([

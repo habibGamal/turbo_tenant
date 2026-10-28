@@ -70,4 +70,9 @@ interface PaymentGatewayInterface
      * Convert from smallest currency unit to main unit.
      */
     public function convertFromSmallestUnit(int $amountCents): float;
+
+    /**
+     * Get the configured currency for this gateway.
+     */
+    public function getCurrency(): string;
 }

@@ -363,6 +363,8 @@
   "min": "الحد الأدنى",
   "noFavoritesYet": "لا توجد عناصر مفضلة حتى الآن",
   "paymentFailed": "فشلت عملية الدفع",
+  "paymentPendingConfirmation": "لا يزال الدفع قيد التأكيد. سنقوم بتحديث حالة طلبك قريبًا.",
+  "paymentPendingTitle": "تأكيد الدفع قيد المعالجة",
   "paymentProcessing": "جاري معالجة الدفع",
   "paymentSuccessful": "تم الدفع بنجاح",
   "pleaseSelectArea": "يرجى تحديد المنطقة",

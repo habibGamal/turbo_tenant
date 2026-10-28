@@ -7,10 +7,7 @@ namespace App\Plugins\PaymentProcessing\src\Contracts;
 interface PaymentCallbackServiceInterface
 {
     /**
-     * Handle payment redirect callback from gateway.
-     *
-     * @param  array<string, mixed>  $callbackData
-     * @return array<string, mixed>
+     * Handle payment redirect callback and return the SPA status ('success', 'failed', 'pending').
      */
-    public function handleCallback(int $orderId, array $callbackData): array;
+    public function handleCallback(int $orderId): string;
 }
