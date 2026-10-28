@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Plugins\LocationsDelivery\src\Filament\Resources\Governorates\Tables;
 
+use App\Plugins\LocationsDelivery\src\Filament\Resources\Governorates\GovernorateResource;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
@@ -17,6 +19,8 @@ final class GovernoratesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->defaultSort('sort_order', 'asc')
+            ->reorderable('sort_order')
             ->columns([
                 TextColumn::make('id')
                     ->label('ID')
@@ -41,23 +45,31 @@ final class GovernoratesTable
                     ->label('ترتيب العرض')
                     ->sortable(),
 
-                IconColumn::make('is_active')
+                ToggleColumn::make('is_active')
                     ->label('نشط')
-                    ->boolean()
                     ->sortable(),
 
                 TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(),
             ])
             ->filters([
                 TernaryFilter::make('is_active')
-                    ->label('نشط')
+                    ->label('الحالة')
                     ->placeholder('الكل')
                     ->trueLabel('نشط فقط')
                     ->falseLabel('غير نشط فقط'),
+            ])
+            ->emptyStateHeading('لا توجد محافظات')
+            ->emptyStateDescription('لم تضف أي محافظات توصيل بعد — أضف أول محافظة')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('أضف أول محافظة')
+                    ->url(fn (): string => GovernorateResource::getUrl('create'))
+                    ->icon('heroicon-m-plus')
+                    ->button(),
             ])
             ->actions([
                 EditAction::make(),
@@ -66,7 +78,6 @@ final class GovernoratesTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ])
-            ->defaultSort('sort_order', 'asc');
+            ]);
     }
 }

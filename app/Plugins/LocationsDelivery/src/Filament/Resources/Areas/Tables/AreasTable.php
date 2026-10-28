@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Plugins\LocationsDelivery\src\Filament\Resources\Areas\Tables;
 
+use App\Plugins\LocationsDelivery\src\Filament\Resources\Areas\AreaResource;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\TextInputColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -18,6 +22,8 @@ final class AreasTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->defaultSort('sort_order', 'asc')
+            ->reorderable('sort_order')
             ->columns([
                 TextColumn::make('id')
                     ->label('ID')
@@ -43,9 +49,9 @@ final class AreasTable
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('shipping_cost')
+                TextInputColumn::make('shipping_cost')
                     ->label('تكلفة الشحن')
-                    ->money('EGP')
+                    ->rules(['numeric', 'min:0'])
                     ->sortable(),
 
                 TextColumn::make('addresses_count')
@@ -57,18 +63,21 @@ final class AreasTable
                     ->label('ترتيب العرض')
                     ->sortable(),
 
-                IconColumn::make('is_active')
+                ToggleColumn::make('is_active')
                     ->label('نشط')
-                    ->boolean()
                     ->sortable(),
 
                 TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(),
             ])
             ->filters([
+                Filter::make('free_shipping')
+                    ->label('توصيل مجاني')
+                    ->query(fn ($query) => $query->where('shipping_cost', 0)),
+
                 SelectFilter::make('governorate_id')
                     ->label('المحافظة')
                     ->relationship('governorate', 'name')
@@ -82,10 +91,19 @@ final class AreasTable
                     ->preload(),
 
                 TernaryFilter::make('is_active')
-                    ->label('نشط')
+                    ->label('الحالة')
                     ->placeholder('الكل')
                     ->trueLabel('نشط فقط')
                     ->falseLabel('غير نشط فقط'),
+            ])
+            ->emptyStateHeading('لا توجد مناطق توصيل')
+            ->emptyStateDescription('لم تضف مناطق توصيل بعد — أضف أول منطقة')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('أضف أول منطقة')
+                    ->url(fn (): string => AreaResource::getUrl('create'))
+                    ->icon('heroicon-m-plus')
+                    ->button(),
             ])
             ->actions([
                 EditAction::make(),
@@ -94,7 +112,6 @@ final class AreasTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ])
-            ->defaultSort('sort_order', 'asc');
+            ]);
     }
 }

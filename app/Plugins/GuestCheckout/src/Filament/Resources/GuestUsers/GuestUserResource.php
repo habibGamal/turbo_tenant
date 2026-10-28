@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 final class GuestUserResource extends Resource
 {
@@ -23,13 +24,15 @@ final class GuestUserResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserCircle;
 
-    protected static ?string $navigationLabel = 'الزوار';
+    protected static string|UnitEnum|null $navigationGroup = 'العملاء والتقييمات';
+
+    protected static ?string $navigationLabel = 'زوار المتجر';
 
     protected static ?string $modelLabel = 'زائر';
 
-    protected static ?string $pluralModelLabel = 'الزوار';
+    protected static ?string $pluralModelLabel = 'زوار المتجر';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 2;
 
     public static function infolist(Schema $schema): Schema
     {

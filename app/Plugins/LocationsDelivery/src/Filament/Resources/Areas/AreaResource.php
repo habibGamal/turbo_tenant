@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 final class AreaResource extends Resource
 {
@@ -24,15 +25,15 @@ final class AreaResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMapPin;
 
+    protected static string|UnitEnum|null $navigationGroup = 'التوصيل والمناطق';
+
     protected static ?string $navigationLabel = 'المناطق';
 
     protected static ?string $modelLabel = 'منطقة';
 
     protected static ?string $pluralModelLabel = 'المناطق';
 
-    // protected static ?string $navigationGroup = 'Locations';
-
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
 
     public static function form(Schema $schema): Schema
     {

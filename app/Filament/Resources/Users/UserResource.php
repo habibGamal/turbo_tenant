@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 final class UserResource extends Resource
 {
@@ -22,20 +23,22 @@ final class UserResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
 
+    protected static string|UnitEnum|null $navigationGroup = 'العملاء والتقييمات';
+
     protected static ?string $navigationLabel = 'المستخدمين';
 
     protected static ?string $modelLabel = 'مستخدم';
 
     protected static ?string $pluralModelLabel = 'المستخدمين';
 
+    protected static ?int $navigationSort = 1;
+
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function getGloballySearchableAttributes(): array
     {
-        return [
-            'name',
-            'email',
-        ];
+        // Customers' phone numbers live on their delivery addresses.
+        return ['name', 'email', 'addresses.phone_number'];
     }
 
     public static function form(Schema $schema): Schema

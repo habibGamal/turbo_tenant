@@ -89,6 +89,8 @@ final class AddressesTable
                     ->trueLabel('افتراضي فقط')
                     ->falseLabel('غير افتراضي فقط'),
             ])
+            ->emptyStateHeading('لا توجد عناوين')
+            ->emptyStateDescription('لم يتم حفظ أي عناوين للعملاء حتى الآن')
             ->actions([
                 EditAction::make(),
             ])

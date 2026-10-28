@@ -18,4 +18,13 @@ final class EditUser extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (auth()->check() && auth()->id() === $this->record->id) {
+            $data['is_admin'] = true;
+        }
+
+        return $data;
+    }
 }

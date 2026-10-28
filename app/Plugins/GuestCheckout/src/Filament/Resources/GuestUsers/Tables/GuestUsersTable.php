@@ -6,6 +6,7 @@ namespace App\Plugins\GuestCheckout\src\Filament\Resources\GuestUsers\Tables;
 
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -48,6 +49,17 @@ final class GuestUsersTable
                     ->badge()
                     ->color('success')
                     ->sortable(),
+                TextColumn::make('orders_sum_total')
+                    ->sum('orders', 'total')
+                    ->label('إجمالي الإنفاق')
+                    ->money('EGP')
+                    ->sortable(),
+                TextColumn::make('orders_max_created_at')
+                    ->max('orders', 'created_at')
+                    ->label('آخر طلب')
+                    ->dateTime('d M Y - H:i')
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('created_at')
                     ->label('تاريخ التسجيل')
                     ->dateTime()
@@ -55,6 +67,21 @@ final class GuestUsersTable
                     ->toggleable(),
             ])
             ->filters([
+                SelectFilter::make('governorate')
+                    ->label('المحافظة')
+                    ->relationship('area.governorate', 'name')
+                    ->searchable()
+                    ->preload(),
+                Filter::make('created_at')
+                    ->form([
+                        DatePicker::make('created_from')->label('من تاريخ'),
+                        DatePicker::make('created_until')->label('إلى تاريخ'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['created_from'], fn ($q, $date) => $q->whereDate('created_at', '>=', $date))
+                            ->when($data['created_until'], fn ($q, $date) => $q->whereDate('created_at', '<=', $date));
+                    }),
                 Filter::make('has_email')
                     ->label('لديه بريد إلكتروني')
                     ->query(fn (Builder $query): Builder => $query->whereNotNull('email')),
@@ -67,6 +94,8 @@ final class GuestUsersTable
                     ->searchable()
                     ->preload(),
             ])
+            ->emptyStateHeading('لا يوجد زوار')
+            ->emptyStateDescription('لم يقم أي زائر بالطلب عبر المتجر حتى الآن')
             ->recordActions([
                 ViewAction::make(),
                 DeleteAction::make(),

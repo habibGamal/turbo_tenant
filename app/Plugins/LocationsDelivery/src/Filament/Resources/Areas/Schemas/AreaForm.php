@@ -33,7 +33,25 @@ final class AreaForm
                             ->relationship('governorate', 'name')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->createOptionForm([
+                                TextInput::make('name')
+                                    ->label('اسم المحافظة (إنجليزي)')
+                                    ->required()
+                                    ->maxLength(255),
+                                TextInput::make('name_ar')
+                                    ->label('اسم المحافظة (عربي)')
+                                    ->required()
+                                    ->maxLength(255),
+                                TextInput::make('sort_order')
+                                    ->label('ترتيب العرض')
+                                    ->numeric()
+                                    ->default(0),
+                                Toggle::make('is_active')
+                                    ->label('نشطة للتوصيل')
+                                    ->default(true),
+                            ])
+                            ->createOptionModalHeading('إضافة محافظة جديدة سريعة'),
 
                         Select::make('branch_id')
                             ->label('الفرع')

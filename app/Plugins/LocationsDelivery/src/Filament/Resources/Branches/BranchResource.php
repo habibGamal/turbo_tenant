@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 final class BranchResource extends Resource
 {
@@ -24,11 +25,15 @@ final class BranchResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingStorefront;
 
+    protected static string|UnitEnum|null $navigationGroup = 'التوصيل والمناطق';
+
     protected static ?string $navigationLabel = 'الفروع';
 
     protected static ?string $modelLabel = 'فرع';
 
     protected static ?string $pluralModelLabel = 'الفروع';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {

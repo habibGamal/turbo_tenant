@@ -22,6 +22,8 @@ final class AddressResource extends Resource
 
     protected static ?string $model = Address::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedHome;
 
     protected static ?string $navigationLabel = 'العناوين';
