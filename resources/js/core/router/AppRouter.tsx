@@ -2,29 +2,18 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { PluginSlot } from '@/core/slots/PluginSlot';
 import { RequirePlugin } from '@/core/router/RequirePlugin';
-import MainLayout from '@/themes/default/layouts/MainLayout';
-import { ThemedCmsPages } from '@/themes/default/plugins/cms-pages';
-import { ThemedCustomerFavorites } from '@/themes/default/plugins/customer-favorites';
-import { ThemedCart } from '@/themes/default/plugins/cart-engine';
-import { ThemedGuestOrderTracking } from '@/themes/default/plugins/guest-checkout';
-import { ThemedOrdersList } from '@/themes/default/plugins/order-management';
-import { ThemedPaymentCallback, ThemedKashierPayment } from '@/themes/default/plugins/payment-processing';
-import { ThemedProductShow, ThemedMenuPage } from '@/themes/default/plugins/catalog-products';
-import Checkout from '@/themes/default/pages/Checkout';
-import OrderShow from '@/themes/default/pages/OrderShow';
-import Login from '@/themes/default/pages/Login';
-import Register from '@/themes/default/pages/Register';
-import ForgotPassword from '@/themes/default/pages/ForgotPassword';
-import ResetPassword from '@/themes/default/pages/ResetPassword';
-import Profile from '@/themes/default/pages/Profile';
+import { CheckoutGuard } from '@/core/router/guards/CheckoutGuard';
+import { ThemedComponent } from '@/core/router/ThemedComponent';
+import { useActiveTheme } from '@/core/hooks/useActiveTheme';
 
 function CartRoute() {
+  const { layouts: { MainLayout } } = useActiveTheme();
   return (
     <MainLayout>
       <PluginSlot
         name="cart.page"
         pluginId="cart-engine"
-        fallback={<ThemedCart />}
+        fallback={<ThemedComponent name="ThemedCart" />}
       />
     </MainLayout>
   );
@@ -32,31 +21,34 @@ function CartRoute() {
 
 function CmsPageRoute() {
   const { slug } = useParams<{ slug: string }>();
+  const { layouts: { MainLayout } } = useActiveTheme();
   return (
     <MainLayout>
       <PluginSlot
         name="cms.page"
         pluginId="cms-pages"
         context={{ slug }}
-        fallback={<ThemedCmsPages slug={slug} />}
+        fallback={<ThemedComponent name="ThemedCmsPages" props={{ slug }} />}
       />
     </MainLayout>
   );
 }
 
 function FavoritesRoute() {
+  const { layouts: { MainLayout } } = useActiveTheme();
   return (
     <MainLayout>
       <PluginSlot
         name="favorites.page"
         pluginId="customer-favorites"
-        fallback={<ThemedCustomerFavorites />}
+        fallback={<ThemedComponent name="ThemedCustomerFavorites" />}
       />
     </MainLayout>
   );
 }
 
 function HomeRoute() {
+  const { layouts: { MainLayout } } = useActiveTheme();
   return (
     <MainLayout>
       <div className="min-h-screen">
@@ -73,7 +65,7 @@ function MenuRoute() {
     <PluginSlot
       name="menu.page"
       pluginId="catalog-products"
-      fallback={<ThemedMenuPage />}
+      fallback={<ThemedComponent name="ThemedMenuPage" />}
     />
   );
 }
@@ -85,33 +77,39 @@ function ProductDetailsRoute() {
       name="product.page"
       pluginId="catalog-products"
       context={{ productId: id }}
-      fallback={<ThemedProductShow productId={id} />}
+      fallback={<ThemedComponent name="ThemedProductShow" props={{ productId: id }} />}
     />
   );
 }
 
 function OrdersRoute() {
+  const { layouts: { MainLayout } } = useActiveTheme();
   return (
     <MainLayout>
-      <ThemedOrdersList />
+      <ThemedComponent name="ThemedOrdersList" />
     </MainLayout>
   );
 }
 
 function TrackOrderRoute() {
+  const { layouts: { MainLayout } } = useActiveTheme();
   return (
     <MainLayout>
-      <ThemedGuestOrderTracking />
+      <ThemedComponent name="ThemedGuestOrderTracking" />
     </MainLayout>
   );
 }
 
 function OrderDetailsRoute() {
   const { id } = useParams<{ id: string }>();
+  const { pages: { OrderShow } } = useActiveTheme();
   return <OrderShow orderId={id} />;
 }
 
 export function AppRouter() {
+  const { pages } = useActiveTheme();
+  const { Checkout, Login, Register, ForgotPassword, ResetPassword, Profile } = pages;
+
   return (
     <BrowserRouter>
       <Routes>
@@ -148,7 +146,14 @@ export function AppRouter() {
             </RequirePlugin>
           }
         />
-        <Route path="/checkout" element={<Checkout />} />
+        <Route
+          path="/checkout"
+          element={
+            <CheckoutGuard>
+              <Checkout />
+            </CheckoutGuard>
+          }
+        />
         <Route
           path="/orders"
           element={
@@ -161,7 +166,7 @@ export function AppRouter() {
           path="/orders/:id/payment/callback"
           element={
             <RequirePlugin id="payment-processing">
-              <ThemedPaymentCallback />
+              <ThemedComponent name="ThemedPaymentCallback" />
             </RequirePlugin>
           }
         />
@@ -169,7 +174,7 @@ export function AppRouter() {
           path="/payments/:id/kashier"
           element={
             <RequirePlugin id="payment-processing">
-              <ThemedKashierPayment />
+              <ThemedComponent name="ThemedKashierPayment" />
             </RequirePlugin>
           }
         />

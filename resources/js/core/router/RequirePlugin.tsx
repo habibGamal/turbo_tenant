@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTenant } from '@/core/context/TenantContext';
-import MainLayout from '@/themes/default/layouts/MainLayout';
+import { useActiveTheme } from '@/core/hooks/useActiveTheme';
 
 export interface RequirePluginProps {
   id: string;
@@ -9,6 +9,7 @@ export interface RequirePluginProps {
 }
 
 export function PageNotAvailable({ message = 'Page not available' }: { message?: string }) {
+  const { layouts: { MainLayout } } = useActiveTheme();
   return (
     <MainLayout>
       <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center">

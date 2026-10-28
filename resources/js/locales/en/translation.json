@@ -354,6 +354,7 @@
   "errorLoadingOrders": "Failed to load orders",
   "extras": "Extras",
   "failedToSubmitReview": "Failed to submit review",
+  "checkoutSignInRequired": "Please sign in or create an account to proceed",
   "guestCheckout": "Guest Checkout",
   "guestCheckoutNotice": "Complete your order without needing an account.",
   "inStock": "In Stock",
