@@ -26,63 +26,59 @@ final class POSErrorResponseHandler implements POSErrorResponseHandlerInterface
      */
     public function handle(array $responseData, int $statusCode, Branch $branch): array
     {
-        $notFoundProducts = $this->extractMissingProductReferences($responseData);
+        $error = $responseData['error'] ?? null;
 
-        if (! empty($notFoundProducts)) {
-            $productNames = $this->getProductNamesByReferences($notFoundProducts);
+        // 1. status 400 AND error is a string starting with "منتجات غير موجودة:" and containing a JSON array
+        if ($statusCode === 400 && is_string($error) && str_starts_with($error, 'منتجات غير موجودة:')) {
+            $refs = $this->extractMissingProductReferences($error);
 
-            return [
-                'success' => false,
-                'message' => 'المنتجات التالية غير موجودة بهذا الفرع: '.implode(', ', $productNames),
-                'notFoundProducts' => $notFoundProducts,
-            ];
+            if (! empty($refs)) {
+                $names = $this->getProductNamesByReferences($refs);
+
+                return [
+                    'success' => false,
+                    'message' => 'المنتجات التالية غير موجودة بهذا الفرع: '.implode(', ', $names),
+                    'notFoundProducts' => $refs,
+                ];
+            }
         }
 
+        // 2. status 400 AND error is any other non-empty string (Scenario A, e.g. "الوردية غير صحيحة")
+        if ($statusCode === 400 && is_string($error) && $error !== '') {
+            throw new Exception($error);
+        }
+
+        // 3. status 422 AND message is a non-empty string
+        $message = $responseData['message'] ?? null;
+        if ($statusCode === 422 && is_string($message) && $message !== '') {
+            throw new Exception($message);
+        }
+
+        // 4. anything else -> log a warning (keep the existing log call) and throw generic exception
         Log::warning('POS error received without recognized missing products', [
             'status' => $statusCode,
             'branch_id' => $branch->id,
             'response' => $responseData,
         ]);
 
-        if (! empty($responseData['error']) && is_string($responseData['error'])) {
-            throw new Exception($responseData['error']);
-        }
-
         throw new Exception('لا يمكن التواصل مع الفرع في الوقت الحالي');
     }
 
     /**
-     * Extract missing product references from various POS error response formats.
+     * Extract missing product references from error string.
      *
-     * @param  array<string, mixed>  $responseData
      * @return array<string>
      */
-    private function extractMissingProductReferences(array $responseData): array
+    private function extractMissingProductReferences(string $error): array
     {
-        // 1. Array formats: notFoundProducts, missing_products, not_found_products
-        if (! empty($responseData['notFoundProducts']) && is_array($responseData['notFoundProducts'])) {
-            return array_values($responseData['notFoundProducts']);
-        }
+        if (preg_match('/\[.*\]/s', $error, $matches)) {
+            $decoded = json_decode($matches[0], true);
+            if (! is_array($decoded)) {
+                $decoded = json_decode(stripslashes($matches[0]), true);
+            }
 
-        if (! empty($responseData['missing_products']) && is_array($responseData['missing_products'])) {
-            return array_values($responseData['missing_products']);
-        }
-
-        if (! empty($responseData['not_found_products']) && is_array($responseData['not_found_products'])) {
-            return array_values($responseData['not_found_products']);
-        }
-
-        // 2. CREATE_ORDER_API_DOC.md Scenario B: error: "منتجات غير موجودة: [\"INVALID-REF-101\"]"
-        $errorString = $responseData['error'] ?? $responseData['message'] ?? '';
-        if (is_string($errorString) && str_contains($errorString, 'منتجات غير موجودة:')) {
-            if (preg_match('/\[.*\]/s', $errorString, $matches)) {
-                $decoded = json_decode($matches[0], true);
-                if (! is_array($decoded)) {
-                    $decoded = json_decode(stripslashes($matches[0]), true);
-                }
-                if (is_array($decoded)) {
-                    return array_values($decoded);
-                }
+            if (is_array($decoded)) {
+                return array_values($decoded);
             }
         }
 
