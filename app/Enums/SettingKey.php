@@ -65,6 +65,9 @@ enum SettingKey: string
     // Feature Toggles
     case ONLINE_PAYMENTS_ENABLED = 'online_payments_enabled';
 
+    // Order operations
+    case ALLOW_MANUAL_ORDER_STATUS_UPDATE = 'allow_manual_order_status_update';
+
     public function label(): string
     {
         return match ($this) {
@@ -118,6 +121,7 @@ enum SettingKey: string
             self::KASHIER_CURRENCY => 'Kashier Currency',
             self::KASHIER_ALLOWED_METHODS => 'Kashier Allowed Methods',
             self::ONLINE_PAYMENTS_ENABLED => 'Enable Online Payments',
+            self::ALLOW_MANUAL_ORDER_STATUS_UPDATE => 'Allow Manual Order Status Update',
         };
     }
 
@@ -156,6 +160,7 @@ enum SettingKey: string
             self::KASHIER_CURRENCY => 'EGP',
             self::KASHIER_ALLOWED_METHODS => 'card',
             self::ONLINE_PAYMENTS_ENABLED => 'true',
+            self::ALLOW_MANUAL_ORDER_STATUS_UPDATE => 'false',
             default => null,
         };
     }
@@ -185,7 +190,7 @@ enum SettingKey: string
             self::ACTIVE_PAYMENT_GATEWAY, self::KASHIER_MERCHANT_ID, self::KASHIER_API_KEY,
             self::KASHIER_SECRET_KEY, self::KASHIER_MODE, self::KASHIER_CURRENCY,
             self::KASHIER_ALLOWED_METHODS => 'text',
-            self::ONLINE_PAYMENTS_ENABLED => 'boolean',
+            self::ONLINE_PAYMENTS_ENABLED, self::ALLOW_MANUAL_ORDER_STATUS_UPDATE => 'boolean',
         };
     }
 }

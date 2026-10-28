@@ -6,5 +6,6 @@ namespace App\Core\Plugins\Contracts;
 
 interface GuestCustomer
 {
-    public function getKey(): mixed;
+    /** @return mixed */
+    public function getKey();
 }
