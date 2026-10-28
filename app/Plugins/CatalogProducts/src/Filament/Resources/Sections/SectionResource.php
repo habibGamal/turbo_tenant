@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 final class SectionResource extends Resource
 {
@@ -24,7 +25,11 @@ final class SectionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSquares2x2;
 
-    protected static ?string $navigationLabel = 'الأقسام';
+    protected static string|UnitEnum|null $navigationGroup = 'الكتالوج والمنتجات';
+
+    protected static ?int $navigationSort = 5;
+
+    protected static ?string $navigationLabel = 'أقسام الواجهة';
 
     protected static ?string $modelLabel = 'قسم';
 

@@ -339,6 +339,43 @@ describe('Cart Option Validation - Extras', function () {
         $responseHigh->assertStatus(422)->assertJsonValidationErrors(['extras']);
     });
 
+    it('applies product-level selection rules over the extra option defaults', function () {
+        $user = User::factory()->create();
+        $extraOption = ExtraOption::factory()->create([
+            'allow_multiple' => false,
+            'min_selections' => 0,
+            'max_selections' => 1,
+        ]);
+        $items = ExtraOptionItem::factory()->count(3)->create(['extra_option_id' => $extraOption->id]);
+        $product = Product::factory()->create([
+            'base_price' => 25.00,
+            'is_active' => true,
+            'extra_option_id' => $extraOption->id,
+            'min_selections' => 2,
+            'max_selections' => 3,
+            'allow_multiple' => true,
+        ]);
+
+        // Product requires at least 2, even though the extra option allows 0
+        $this->actingAs($user)
+            ->postJson(route('api.cart.store'), [
+                'product_id' => $product->id,
+                'quantity' => '1',
+                'extras' => [$items[0]->id],
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['extras']);
+
+        // Product allows several, even though the extra option is single-choice
+        $this->actingAs($user)
+            ->postJson(route('api.cart.store'), [
+                'product_id' => $product->id,
+                'quantity' => '1',
+                'extras' => [$items[0]->id, $items[1]->id],
+            ])
+            ->assertSuccessful();
+    });
+
     it('rejects extra quantity > 1 when allow_quantity is false', function () {
         $user = User::factory()->create();
         $extraOption = ExtraOption::factory()->create(['allow_multiple' => true]);

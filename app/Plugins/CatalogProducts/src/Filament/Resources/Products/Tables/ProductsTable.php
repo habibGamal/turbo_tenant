@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Plugins\CatalogProducts\src\Filament\Resources\Products\Tables;
 
+use App\Plugins\CatalogProducts\src\Filament\Resources\Products\ProductResource;
+use App\Plugins\StoreSettings\src\Services\SettingService;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
@@ -15,6 +18,7 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -25,37 +29,59 @@ final class ProductsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 ImageColumn::make('image')
                     ->label('الصورة')
-                    ->square(),
+                    ->square()
+                    ->defaultImageUrl(url('/images/placeholder.png')),
+
                 TextColumn::make('name')
                     ->label('الاسم')
                     ->searchable()
                     ->sortable(),
+
                 TextColumn::make('name_ar')
                     ->label('الاسم بالعربية')
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->sortable()
+                    ->toggleable(),
+
                 TextColumn::make('category.name')
                     ->label('الفئة')
                     ->searchable()
                     ->sortable(),
+
                 TextColumn::make('base_price')
                     ->label('السعر الأساسي')
-                    ->money('EGP')
+                    ->money(fn () => class_exists(SettingService::class) ? app(SettingService::class)->get('currency', 'EGP') : 'EGP')
                     ->sortable(),
+
                 TextColumn::make('price_after_discount')
                     ->label('السعر بعد الخصم')
-                    ->money('EGP')
+                    ->money(fn () => class_exists(SettingService::class) ? app(SettingService::class)->get('currency', 'EGP') : 'EGP')
+                    ->sortable()
+                    ->description(fn ($record) => $record->price_after_discount && $record->base_price && $record->base_price > 0
+                        ? '-'.round((($record->base_price - $record->price_after_discount) / $record->base_price) * 100).'%'
+                        : null
+                    ),
+
+                TextColumn::make('variants_count')
+                    ->counts('variants')
+                    ->label('التنويعات')
+                    ->badge()
+                    ->color('info')
                     ->sortable(),
+
+                ToggleColumn::make('is_active')
+                    ->label('نشط')
+                    ->sortable(),
+
                 IconColumn::make('sell_by_weight')
                     ->label('بيع بالوزن')
-                    ->boolean(),
-                IconColumn::make('is_active')
-                    ->label('نشط')
                     ->boolean()
-                    ->sortable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
                     ->dateTime()
@@ -63,17 +89,27 @@ final class ProductsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Filter::make('is_active')
-                    ->label('نشط')
-                    ->toggle(),
-                Filter::make('sell_by_weight')
-                    ->label('بيع بالوزن')
-                    ->toggle(),
+                Filter::make('on_sale')
+                    ->label('منتجات عليها تخفيض')
+                    ->query(fn ($query) => $query->whereNotNull('price_after_discount')->whereColumn('price_after_discount', '<', 'base_price')),
+
+                Filter::make('has_variants')
+                    ->label('منتجات بتنويعات متعددة')
+                    ->query(fn ($query) => $query->has('variants')),
+
+                Filter::make('missing_image')
+                    ->label('منتجات بلا صورة')
+                    ->query(fn ($query) => $query->whereNull('image')->orWhere('image', '')),
+
                 SelectFilter::make('category')
                     ->label('الفئة')
                     ->relationship('category', 'name')
                     ->searchable()
                     ->preload(),
+
+                Filter::make('sell_by_weight')
+                    ->label('بيع بالوزن')
+                    ->toggle(),
             ])
             ->recordActions([
                 EditAction::make(),
@@ -202,6 +238,13 @@ final class ProductsTable
                         ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
+            ])
+            ->emptyStateHeading('لا توجد منتجات حتى الآن')
+            ->emptyStateDescription('ابدأ بإضافة أول منتج إلى متجرك لعرضه للعملاء.')
+            ->emptyStateIcon('heroicon-o-shopping-bag')
+            ->emptyStateActions([
+                CreateAction::make()
+                    ->url(fn (): string => ProductResource::getUrl('create')),
             ]);
     }
 }

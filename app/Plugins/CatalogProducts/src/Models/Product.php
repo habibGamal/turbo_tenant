@@ -22,6 +22,9 @@ final class Product extends Model
         'base_price',
         'price_after_discount',
         'extra_option_id',
+        'min_selections',
+        'max_selections',
+        'allow_multiple',
         'category_id',
         'is_active',
         'sell_by_weight',
@@ -99,6 +102,9 @@ final class Product extends Model
             'price_after_discount' => 'float',
             'is_active' => 'boolean',
             'sell_by_weight' => 'boolean',
+            'min_selections' => 'integer',
+            'max_selections' => 'integer',
+            'allow_multiple' => 'boolean',
         ];
     }
 }

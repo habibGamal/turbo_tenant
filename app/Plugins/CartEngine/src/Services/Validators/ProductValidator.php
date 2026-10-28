@@ -105,13 +105,14 @@ final class ProductValidator implements ProductValidatorInterface
                     $errors['extras'] = ['Duplicate extras are not allowed.'];
                 } else {
                     $count = count($extraIds);
+                    [$minSelections, $maxSelections, $allowMultiple] = $this->selectionRules($product);
 
-                    if (! $extraOption->allow_multiple && $count > 1) {
+                    if (! $allowMultiple && $count > 1) {
                         $errors['extras'] = ['Multiple extras are not allowed for this product.'];
-                    } elseif ($extraOption->min_selections !== null && $extraOption->min_selections > 0 && $count < $extraOption->min_selections) {
-                        $errors['extras'] = ["Minimum {$extraOption->min_selections} extra selection(s) required."];
-                    } elseif ($extraOption->max_selections !== null && $extraOption->max_selections > 0 && $count > $extraOption->max_selections) {
-                        $errors['extras'] = ["Maximum {$extraOption->max_selections} extra selection(s) allowed."];
+                    } elseif ($minSelections !== null && $minSelections > 0 && $count < $minSelections) {
+                        $errors['extras'] = ["Minimum {$minSelections} extra selection(s) required."];
+                    } elseif ($maxSelections !== null && $maxSelections > 0 && $count > $maxSelections) {
+                        $errors['extras'] = ["Maximum {$maxSelections} extra selection(s) allowed."];
                     } else {
                         foreach ($normalizedExtras as $item) {
                             $extraItem = $extraOption->items->firstWhere('id', $item['id']);
@@ -130,9 +131,9 @@ final class ProductValidator implements ProductValidatorInterface
         } else {
             // Check if product requires minimum extras selections
             if ($product->extra_option_id !== null && $product->extraOption) {
-                $extraOption = $product->extraOption;
-                if ($extraOption->min_selections !== null && $extraOption->min_selections > 0) {
-                    $errors['extras'] = ["Minimum {$extraOption->min_selections} extra selection(s) required."];
+                [$minSelections] = $this->selectionRules($product);
+                if ($minSelections !== null && $minSelections > 0) {
+                    $errors['extras'] = ["Minimum {$minSelections} extra selection(s) required."];
                 }
             }
         }
@@ -173,5 +174,21 @@ final class ProductValidator implements ProductValidatorInterface
                 ]);
             }
         }
+    }
+
+    /**
+     * Effective extra selection rules: product-level values override the extra option's defaults.
+     *
+     * @return array{0: ?int, 1: ?int, 2: bool}
+     */
+    private function selectionRules($product): array
+    {
+        $extraOption = $product->extraOption;
+
+        return [
+            $product->min_selections ?? $extraOption->min_selections,
+            $product->max_selections ?? $extraOption->max_selections,
+            (bool) ($product->allow_multiple ?? $extraOption->allow_multiple),
+        ];
     }
 }

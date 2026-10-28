@@ -5,13 +5,19 @@ declare(strict_types=1);
 namespace App\Plugins\CatalogProducts\src\Filament\Resources\Products\Schemas;
 
 use App\Filament\Forms\Components\PosItemSelect;
+use App\Plugins\CatalogProducts\src\Models\ExtraOption;
+use App\Plugins\StoreSettings\src\Services\SettingService;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 
 final class ProductForm
@@ -19,112 +25,151 @@ final class ProductForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
-            ->columns(3)
             ->components([
-                Section::make('معلومات أساسية')
-                    ->schema([
-                        TextInput::make('name')
-                            ->label('الاسم')
-                            ->required()
-                            ->maxLength(255),
-                        TextInput::make('name_ar')
-                            ->label('الاسم بالعربية')
-                            ->maxLength(255),
-                        Select::make('category_id')
-                            ->label('الفئة')
-                            ->relationship('category', 'name')
-                            ->required()
-                            ->searchable()
-                            ->preload(),
-                        Textarea::make('description')
-                            ->label('الوصف')
-                            ->rows(3)
-                            ->maxLength(65535)
-                            ->columnSpanFull(),
-                        FileUpload::make('image')
-                            ->label('الصورة')
-                            ->image()
-                            ->imageEditor()
-                            ->optimizeForWeb('products')
-                            ->columnSpanFull(),
-                    ])
-                    ->columns(2)
-                    ->columnSpan(2),
-
-                Section::make('الحالة')
-                    ->schema([
-                        Toggle::make('is_active')
-                            ->label('نشط')
-                            ->default(true),
-                        Toggle::make('sell_by_weight')
-                            ->label('بيع بالوزن')
-                            ->default(false)
-                            ->reactive(),
-                    ])
-                    ->columnSpan(1),
-
-                Section::make('التسعير')
-                    ->schema([
-                        TextInput::make('base_price')
-                            ->label('السعر الأساسي')
-                            ->numeric()
-                            ->prefix('EGP')
-                            ->maxValue(99999.99),
-                        TextInput::make('price_after_discount')
-                            ->label('السعر بعد الخصم')
-                            ->numeric()
-                            ->prefix('EGP')
-                            ->maxValue(99999.99),
-                    ])
-                    ->columns(2)
-                    ->columnSpan(2),
-
-                Section::make('خيارات إضافية')
-                    ->schema([
-                        Select::make('extra_option_id')
-                            ->label('الخيار الإضافي')
-                            ->relationship('extraOption', 'name')
-                            ->searchable()
-                            ->preload(),
-                        Select::make('weight_options_id')
-                            ->label('خيارات الوزن')
-                            ->relationship('weightOption', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->visible(fn ($get) => $get('sell_by_weight')),
-                    ])
-                    ->columns(2)
-                    ->columnSpan(2),
-
-                Section::make('ربط POS')
-                    ->schema([
-                        Repeater::make('posMappings')
-                            ->relationship()
+                Tabs::make('تفاصيل المنتج')
+                    ->tabs([
+                        // TAB 1: BASIC INFO & MEDIA
+                        Tab::make('البيانات الأساسية')
+                            ->icon('heroicon-o-information-circle')
                             ->schema([
-                                Select::make('branch_id')
-                                    ->label('الفرع')
-                                    ->relationship('branch', 'name')
-                                    ->searchable()
-                                    ->preload(),
-                                Select::make('variant_id')
-                                    ->relationship('variant', 'name')
-                                    ->searchable()
-                                    ->preload()
-                                    ->label('تنويع المنتج (اختياري)'),
-                                Select::make('extra_option_item_id')
-                                    ->relationship('extraOptionItem', 'name')
-                                    ->searchable()
-                                    ->preload()
-                                    ->label('خيار إضافي (اختياري)'),
-                                PosItemSelect::make('pos_item_id'),
-                            ])
-                            ->columns(4)
-                            ->defaultItems(0)
-                            ->collapsible()
-                            ->addActionLabel('إضافة ربط POS'),
+                                Grid::make(2)->schema([
+                                    TextInput::make('name')
+                                        ->label('الاسم (إنجليزي)')
+                                        ->required()
+                                        ->maxLength(255),
+                                    TextInput::make('name_ar')
+                                        ->label('الاسم بالعربية')
+                                        ->maxLength(255),
+                                    Select::make('category_id')
+                                        ->label('الفئة')
+                                        ->relationship('category', 'name')
+                                        ->searchable()
+                                        ->preload()
+                                        ->required(),
+                                    Toggle::make('is_active')
+                                        ->label('متاح للطلب (نشط)')
+                                        ->default(true),
+                                ]),
+                                Textarea::make('description')
+                                    ->label('الوصف')
+                                    ->rows(3)
+                                    ->maxLength(65535)
+                                    ->columnSpanFull(),
+                                FileUpload::make('image')
+                                    ->label('صورة المنتج')
+                                    ->image()
+                                    ->imageEditor()
+                                    ->optimizeForWeb('products')
+                                    ->helperText('يفضل استخدام صور مربعة بأبعاد لا تقل عن 800x800 بكسل')
+                                    ->columnSpanFull(),
+                            ]),
+
+                        // TAB 2: PRICING & VARIANTS
+                        Tab::make('التسعير والتنويعات')
+                            ->icon('heroicon-o-currency-dollar')
+                            ->schema([
+                                Grid::make(2)->schema([
+                                    TextInput::make('base_price')
+                                        ->label('السعر الأساسي')
+                                        ->numeric()
+                                        ->prefix(fn () => class_exists(SettingService::class) ? app(SettingService::class)->get('currency', 'EGP') : 'EGP')
+                                        ->maxValue(99999.99)
+                                        ->required(),
+                                    TextInput::make('price_after_discount')
+                                        ->label('السعر بعد الخصم')
+                                        ->numeric()
+                                        ->prefix(fn () => class_exists(SettingService::class) ? app(SettingService::class)->get('currency', 'EGP') : 'EGP')
+                                        ->maxValue(99999.99)
+                                        ->helperText('اتركه فارغاً إذا لم يكن هناك خصم نشط'),
+                                ]),
+                                Toggle::make('sell_by_weight')
+                                    ->label('بيع المنتج بالوزن')
+                                    ->default(false)
+                                    ->live(),
+                            ]),
+
+                        // TAB 3: EXTRAS & WEIGHTS (WITH PRODUCT-LEVEL SELECTION RULES)
+                        Tab::make('الخيارات الإضافية والأوزان')
+                            ->icon('heroicon-o-adjustments-horizontal')
+                            ->schema([
+                                Section::make('مجموعة الإضافات وقواعد الاختيار')
+                                    ->description('تحديد الإضافات المسموحة لهذا المنتج وقواعد اختيار العميل')
+                                    ->schema([
+                                        Select::make('extra_option_id')
+                                            ->label('مجموعة الإضافات')
+                                            ->relationship('extraOption', 'name')
+                                            ->searchable()
+                                            ->preload()
+                                            ->live(),
+                                        // Empty = inherit the extra option group's rule; a value overrides it for this product only.
+                                        Grid::make(3)
+                                            ->visible(fn (callable $get) => filled($get('extra_option_id')))
+                                            ->schema([
+                                                TextInput::make('min_selections')
+                                                    ->label('الحد الأدنى للاختيارات')
+                                                    ->numeric()
+                                                    ->minValue(0)
+                                                    ->placeholder(fn (callable $get) => (string) (ExtraOption::find($get('extra_option_id'))?->min_selections ?? 0))
+                                                    ->helperText('اتركه فارغاً لاستخدام قيمة مجموعة الإضافات (0 يعني اختياري)'),
+                                                TextInput::make('max_selections')
+                                                    ->label('الحد الأقصى للاختيارات')
+                                                    ->numeric()
+                                                    ->minValue(1)
+                                                    ->placeholder(fn (callable $get) => (string) (ExtraOption::find($get('extra_option_id'))?->max_selections ?? 'بلا حد'))
+                                                    ->helperText('اتركه فارغاً لاستخدام قيمة مجموعة الإضافات'),
+                                                ToggleButtons::make('allow_multiple')
+                                                    ->label('السماح باختيار أكثر من خيار')
+                                                    ->boolean('نعم', 'لا')
+                                                    ->grouped()
+                                                    ->helperText('بدون اختيار = حسب مجموعة الإضافات'),
+                                            ]),
+                                    ]),
+
+                                Section::make('خيارات الوزن')
+                                    ->visible(fn (callable $get) => (bool) $get('sell_by_weight'))
+                                    ->schema([
+                                        Select::make('weight_options_id')
+                                            ->label('قالب أوزان المنتج')
+                                            ->relationship('weightOption', 'name')
+                                            ->searchable()
+                                            ->preload()
+                                            ->required(fn (callable $get) => (bool) $get('sell_by_weight')),
+                                    ]),
+                            ]),
+
+                        // TAB 4: POS INTEGRATION MAPPINGS
+                        Tab::make('ربط نقطة البيع (POS)')
+                            ->icon('heroicon-o-computer-desktop')
+                            ->schema([
+                                Repeater::make('posMappings')
+                                    ->relationship()
+                                    ->schema([
+                                        Select::make('branch_id')
+                                            ->label('الفرع')
+                                            ->relationship('branch', 'name')
+                                            ->searchable()
+                                            ->preload()
+                                            ->required(),
+                                        Select::make('variant_id')
+                                            ->relationship('variant', 'name')
+                                            ->searchable()
+                                            ->preload()
+                                            ->label('التنويع (اختياري)'),
+                                        Select::make('extra_option_item_id')
+                                            ->relationship('extraOptionItem', 'name')
+                                            ->searchable()
+                                            ->preload()
+                                            ->label('عنصر الإضافة (اختياري)'),
+                                        PosItemSelect::make('pos_item_id')
+                                            ->required(),
+                                    ])
+                                    ->columns(4)
+                                    ->collapsible()
+                                    ->defaultItems(0)
+                                    ->addActionLabel('إضافة ربط جديد مع فرع POS'),
+                            ]),
                     ])
-                    ->columnSpanFull()
-                    ->description('ربط المنتجات مع عناصر نظام POS حسب الفرع والتنويع والخيارات الإضافية'),
+                    ->columnSpanFull(),
             ]);
     }
 }

@@ -207,9 +207,9 @@ final class CatalogProductsApiController extends Controller
                 'name' => $product->extraOption->name,
                 'name_ar' => $product->extraOption->name_ar,
                 'description' => $product->extraOption->description,
-                'min_selections' => $product->extraOption->min_selections,
-                'max_selections' => $product->extraOption->max_selections,
-                'allow_multiple' => (bool) $product->extraOption->allow_multiple,
+                'min_selections' => $product->min_selections ?? $product->extraOption->min_selections,
+                'max_selections' => $product->max_selections ?? $product->extraOption->max_selections,
+                'allow_multiple' => $product->allow_multiple !== null ? (bool) $product->allow_multiple : (bool) $product->extraOption->allow_multiple,
                 'items' => $product->extraOption->items->map(fn ($item) => [
                     'id' => $item->id,
                     'name' => $item->name,
@@ -220,6 +220,9 @@ final class CatalogProductsApiController extends Controller
                     'allow_quantity' => (bool) $item->allow_quantity,
                 ]),
             ] : null,
+            'min_selections' => $product->min_selections,
+            'max_selections' => $product->max_selections,
+            'allow_multiple' => $product->allow_multiple,
             'weight_option' => $product->weightOption ? [
                 'id' => $product->weightOption->id,
                 'name' => $product->weightOption->name,

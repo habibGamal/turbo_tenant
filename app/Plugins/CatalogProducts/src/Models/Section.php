@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Plugins\CatalogProducts\src\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class Section extends Model
+final class Section extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'title',
         'title_ar',
@@ -23,6 +26,11 @@ class Section extends Model
             ->withPivot('sort_order')
             ->withTimestamps()
             ->orderBy('sort_order');
+    }
+
+    protected static function newFactory(): \Database\Factories\SectionFactory
+    {
+        return \Database\Factories\SectionFactory::new();
     }
 
     protected function casts(): array

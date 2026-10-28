@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 final class WeightOptionResource extends Resource
 {
@@ -23,6 +24,10 @@ final class WeightOptionResource extends Resource
     protected static ?string $model = WeightOption::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedScale;
+
+    protected static string|UnitEnum|null $navigationGroup = 'الكتالوج والمنتجات';
+
+    protected static ?int $navigationSort = 4;
 
     protected static ?string $navigationLabel = 'خيارات الوزن';
 

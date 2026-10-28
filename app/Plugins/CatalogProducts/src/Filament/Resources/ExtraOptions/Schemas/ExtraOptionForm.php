@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Plugins\CatalogProducts\src\Filament\Resources\ExtraOptions\Schemas;
 
 use App\Filament\Forms\Components\PosItemSelect;
+use App\Plugins\StoreSettings\src\Services\SettingService;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -40,6 +42,28 @@ final class ExtraOptionForm
                     ])
                     ->columnSpanFull(),
 
+                Section::make('قواعد الاختيار الافتراضية')
+                    ->description('القواعد الافتراضية التي تنطبق على هذه المجموعة عند ربطها بالمنتجات')
+                    ->schema([
+                        Grid::make(3)->schema([
+                            TextInput::make('min_selections')
+                                ->label('الحد الأدنى للاختيارات الافتراضي')
+                                ->numeric()
+                                ->default(0)
+                                ->minValue(0)
+                                ->helperText('0 = اختياري بالكامل'),
+                            TextInput::make('max_selections')
+                                ->label('الحد الأقصى للاختيارات الافتراضي')
+                                ->numeric()
+                                ->minValue(1)
+                                ->helperText('اتركه فارغاً للاختيار غير المحدود'),
+                            Toggle::make('allow_multiple')
+                                ->label('السماح باختيار أكثر من خيار')
+                                ->default(true),
+                        ]),
+                    ])
+                    ->columnSpanFull(),
+
                 Section::make('عناصر الخيار')
                     ->schema([
                         Repeater::make('items')
@@ -58,7 +82,7 @@ final class ExtraOptionForm
                                     ->label('السعر')
                                     ->numeric()
                                     ->default(0)
-                                    ->prefix('EGP')
+                                    ->prefix(fn () => class_exists(SettingService::class) ? app(SettingService::class)->get('currency', 'EGP') : 'EGP')
                                     ->required(),
                                 Toggle::make('is_default')
                                     ->default(false)

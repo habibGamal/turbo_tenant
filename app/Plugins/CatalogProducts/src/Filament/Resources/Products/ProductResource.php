@@ -16,6 +16,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
+use UnitEnum;
 
 final class ProductResource extends Resource
 {
@@ -25,11 +27,31 @@ final class ProductResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingBag;
 
+    protected static string|UnitEnum|null $navigationGroup = 'الكتالوج والمنتجات';
+
+    protected static ?int $navigationSort = 1;
+
     protected static ?string $navigationLabel = 'المنتجات';
 
     protected static ?string $modelLabel = 'منتج';
 
     protected static ?string $pluralModelLabel = 'المنتجات';
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'name_ar'];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        /** @var Product $record */
+        return array_filter([
+            'الفئة' => $record->category?->name,
+            'السعر' => $record->price !== null ? (string) $record->price : null,
+        ]);
+    }
 
     public static function form(Schema $schema): Schema
     {

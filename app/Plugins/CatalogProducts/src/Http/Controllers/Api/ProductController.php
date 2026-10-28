@@ -9,7 +9,7 @@ use App\Plugins\CatalogProducts\src\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class ProductController extends Controller
+final class ProductController extends Controller
 {
     public function show(Product $product): JsonResponse
     {
@@ -65,11 +65,14 @@ class ProductController extends Controller
                 'name' => $product->extraOption->name,
                 'name_ar' => $product->extraOption->name_ar,
                 'description' => $product->extraOption->description,
-                'min_selections' => $product->extraOption->min_selections,
-                'max_selections' => $product->extraOption->max_selections,
-                'allow_multiple' => $product->extraOption->allow_multiple,
+                'min_selections' => $product->min_selections ?? $product->extraOption->min_selections,
+                'max_selections' => $product->max_selections ?? $product->extraOption->max_selections,
+                'allow_multiple' => $product->allow_multiple !== null ? (bool) $product->allow_multiple : (bool) $product->extraOption->allow_multiple,
                 'items' => $product->extraOption->items,
             ] : null,
+            'min_selections' => $product->min_selections,
+            'max_selections' => $product->max_selections,
+            'allow_multiple' => $product->allow_multiple,
             'weight_option' => $product->weightOption ? [
                 'id' => $product->weightOption->id,
                 'name' => $product->weightOption->name,

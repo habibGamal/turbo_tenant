@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 final class ExtraOptionResource extends Resource
 {
@@ -24,7 +25,11 @@ final class ExtraOptionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPlusCircle;
 
-    protected static ?string $navigationLabel = 'الخيارات الإضافية';
+    protected static string|UnitEnum|null $navigationGroup = 'الكتالوج والمنتجات';
+
+    protected static ?int $navigationSort = 3;
+
+    protected static ?string $navigationLabel = 'خيارات إضافية';
 
     protected static ?string $modelLabel = 'خيار إضافي';
 
