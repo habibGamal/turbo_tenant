@@ -26,6 +26,8 @@ final class POSApiClient implements POSApiClientInterface
         try {
             $response = Http::withOptions([
                 'verify' => false,
+            ])->withHeaders([
+                'Accept' => 'application/json',
             ])->timeout(self::TIMEOUT_SECONDS)->get($url);
 
             if (! $response->successful()) {
@@ -62,6 +64,8 @@ final class POSApiClient implements POSApiClientInterface
         try {
             $response = Http::withOptions([
                 'verify' => false,
+            ])->withHeaders([
+                'Accept' => 'application/json',
             ])->timeout(self::TIMEOUT_SECONDS)->get($url);
 
             if (! $response->successful()) {
