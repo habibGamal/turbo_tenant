@@ -36,7 +36,9 @@ final class SyncPOSPrices extends Page implements HasForms, HasTable
 
     protected string $view = 'pos-integration::filament.pages.sync-p-o-s-prices';
 
-    protected static string|UnitEnum|null $navigationGroup = 'المنتجات';
+    protected static string|UnitEnum|null $navigationGroup = 'الكتالوج والمنتجات';
+
+    protected static ?int $navigationSort = 7;
 
     public function table(Table $table): Table
     {

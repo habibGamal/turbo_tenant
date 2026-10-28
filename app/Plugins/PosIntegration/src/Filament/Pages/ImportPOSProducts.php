@@ -37,7 +37,9 @@ final class ImportPOSProducts extends Page implements HasForms, HasTable
 
     protected string $view = 'pos-integration::filament.pages.import-p-o-s-products';
 
-    protected static string|UnitEnum|null $navigationGroup = 'المنتجات';
+    protected static string|UnitEnum|null $navigationGroup = 'الكتالوج والمنتجات';
+
+    protected static ?int $navigationSort = 6;
 
     public function table(Table $table): Table
     {

@@ -35,15 +35,15 @@ final class ManifestSettings extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDevicePhoneMobile;
 
-    protected static ?string $navigationLabel = 'PWA Manifest';
+    protected static ?string $navigationLabel = 'تطبيق الويب (PWA)';
 
-    protected static ?string $title = 'PWA Manifest Settings';
+    protected static ?string $title = 'إعدادات تطبيق الويب (PWA Manifest)';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Settings';
+    protected static string|UnitEnum|null $navigationGroup = 'الإعدادات والنظام';
 
     protected string $view = 'filament.pages.settings';
 
-    protected static ?int $navigationSort = 101;
+    protected static ?int $navigationSort = 3;
 
     public function mount(): void
     {
@@ -56,106 +56,106 @@ final class ManifestSettings extends Page
         return $schema
             ->components([
                 Form::make([
-                    Section::make('App Identity')
+                    Section::make('هوية التطبيق')
                         ->schema([
                             TextInput::make('name')
-                                ->label('Full Name')
+                                ->label('الاسم الكامل')
                                 ->required()
                                 ->maxLength(255)
-                                ->helperText('The full name of your app as it appears on the home screen'),
+                                ->helperText('الاسم الكامل للتطبيق كما يظهر على الشاشة الرئيسية للمستخدم'),
                             TextInput::make('short_name')
-                                ->label('Short Name')
+                                ->label('الاسم المختصر')
                                 ->required()
                                 ->maxLength(12)
-                                ->helperText('Short name displayed under the icon (max 12 characters recommended)'),
+                                ->helperText('الاسم المختصر المعروض أسفل أيقونة التطبيق (يوصى بحد أقصى 12 حرفاً)'),
                             TextInput::make('id')
-                                ->label('App ID')
+                                ->label('معرف التطبيق')
                                 ->required()
                                 ->maxLength(255)
-                                ->helperText('Unique identifier for your app (e.g., com.example.app)')
+                                ->helperText('معرف فريد لتطبيقك (مثال: com.example.app)')
                                 ->placeholder('com.example.app'),
                         ])
                         ->columns(2),
 
-                    Section::make('Appearance')
+                    Section::make('المظهر والألوان')
                         ->schema([
                             ColorPicker::make('theme_color')
-                                ->label('Theme Color')
+                                ->label('لون السمة (Theme Color)')
                                 ->required()
-                                ->helperText('Color of the browser UI and address bar'),
+                                ->helperText('لون شريط العنوان وواجهة المتصفح'),
                             ColorPicker::make('background_color')
-                                ->label('Background Color')
+                                ->label('لون الخلفية (Background Color)')
                                 ->required()
-                                ->helperText('Background color shown while the app loads'),
+                                ->helperText('لون الخلفية المعروض أثناء تحميل التطبيق'),
                         ])
                         ->columns(2),
 
-                    Section::make('Display Settings')
+                    Section::make('إعدادات العرض')
                         ->schema([
                             TextInput::make('start_url')
-                                ->label('Start URL')
+                                ->label('رابط البداية (Start URL)')
                                 ->required()
                                 ->maxLength(255)
                                 ->default('.')
-                                ->helperText('The URL that loads when the app launches'),
+                                ->helperText('الرابط الذي يفتح عند تشغيل التطبيق'),
                             Select::make('display')
-                                ->label('Display Mode')
+                                ->label('وضع العرض (Display Mode)')
                                 ->required()
                                 ->options([
-                                    'fullscreen' => 'Fullscreen',
-                                    'standalone' => 'Standalone',
-                                    'minimal-ui' => 'Minimal UI',
-                                    'browser' => 'Browser',
+                                    'fullscreen' => 'ملء الشاشة (Fullscreen)',
+                                    'standalone' => 'تطبيق مستقل (Standalone)',
+                                    'minimal-ui' => 'واجهة مصغرة (Minimal UI)',
+                                    'browser' => 'متصفح تقليدي (Browser)',
                                 ])
                                 ->default('standalone')
-                                ->helperText('How the app should be displayed'),
+                                ->helperText('طريقة عرض نافذة التطبيق'),
                             Select::make('orientation')
-                                ->label('Orientation')
+                                ->label('اتجاه الشاشة (Orientation)')
                                 ->required()
                                 ->options([
-                                    'any' => 'Any',
-                                    'natural' => 'Natural',
-                                    'landscape' => 'Landscape',
-                                    'portrait' => 'Portrait',
+                                    'any' => 'تلقائي / أي اتجاه (Any)',
+                                    'natural' => 'طبيعي للجهاز (Natural)',
+                                    'landscape' => 'أفقي (Landscape)',
+                                    'portrait' => 'عمودي (Portrait)',
                                 ])
                                 ->default('natural')
-                                ->helperText('Default orientation for the app'),
+                                ->helperText('الاتجاه الافتراضي لعرض شاشة التطبيق'),
                         ])
                         ->columns(3),
 
-                    Section::make('App Icons')
+                    Section::make('أيقونات التطبيق')
                         ->schema([
                             Repeater::make('icons')
                                 ->schema([
                                     FileUpload::make('src')
-                                        ->label('Icon Source')
+                                        ->label('مصدر الأيقونة')
                                         ->image()
                                         ->directory('images/pwa-icons')
                                         ->required(),
                                     TextInput::make('sizes')
-                                        ->label('Sizes')
+                                        ->label('الأبعاد (Sizes)')
                                         ->required()
                                         ->maxLength(50)
                                         ->placeholder('192x192')
-                                        ->helperText('Icon dimensions (e.g., 192x192)'),
+                                        ->helperText('أبعاد الأيقونة بالبكسل (مثال: 192x192)'),
                                     TextInput::make('type')
-                                        ->label('MIME Type')
+                                        ->label('نوع الملف (MIME Type)')
                                         ->required()
                                         ->maxLength(50)
                                         ->placeholder('image/png')
-                                        ->helperText('Image MIME type'),
+                                        ->helperText('نوع ملف الصورة (MIME Type)'),
                                 ])
                                 ->columns(3)
                                 ->defaultItems(3)
-                                ->addActionLabel('Add Icon')
-                                ->helperText('Define icons for different screen sizes and platforms'),
+                                ->addActionLabel('إضافة أيقونة جديدة')
+                                ->helperText('تحديد أيقونات التطبيق لمختلف أحجام الشاشات وأنظمة التشغيل'),
                         ]),
                 ])
                     ->livewireSubmitHandler('save')
                     ->footer([
                         Actions::make([
                             Action::make('save')
-                                ->label('Save Manifest')
+                                ->label('حفظ الإعدادات')
                                 ->submit('save')
                                 ->keyBindings(['mod+s']),
                         ]),
@@ -173,8 +173,8 @@ final class ManifestSettings extends Page
 
         Notification::make()
             ->success()
-            ->title('Manifest saved')
-            ->body('PWA manifest has been updated successfully.')
+            ->title('تم الحفظ بنجاح')
+            ->body('تم تحديث إعدادات تطبيق الويب (PWA) بنجاح.')
             ->send();
     }
 }

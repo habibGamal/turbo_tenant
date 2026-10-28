@@ -18,6 +18,7 @@ use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Collection;
 use Throwable;
+use UnitEnum;
 
 final class ManagePlugins extends Page
 {
@@ -59,13 +60,15 @@ final class ManagePlugins extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPuzzlePiece;
 
+    protected static string|UnitEnum|null $navigationGroup = 'الإعدادات والنظام';
+
     protected static ?string $navigationLabel = 'سوق الإضافات';
 
     protected static ?string $title = 'سوق الإضافات والخدمات';
 
     protected static ?string $slug = 'plugins';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 2;
 
     protected string $view = 'filament.pages.manage-plugins';
 

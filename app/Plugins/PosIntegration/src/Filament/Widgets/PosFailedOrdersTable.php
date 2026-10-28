@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Plugins\PosIntegration\src\Filament\Widgets;
 
+use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\OrderResource;
 use App\Plugins\OrderManagement\src\Models\Order;
-use App\Plugins\PosIntegration\src\Enums\OrderPosStatus;
 use App\Plugins\StoreSettings\src\Services\SettingService;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;

@@ -10,7 +10,7 @@ use App\Plugins\OrderManagement\src\Filament\Widgets\OrdersStatsOverview;
 use App\Plugins\OrderManagement\src\Filament\Widgets\TopProductsChart;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
-use App\Plugins\PosIntegration\src\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use App\Plugins\PosIntegration\src\Filament\Widgets\PosFailedOrdersTable;
 use App\Plugins\ProductReviews\src\Filament\Widgets\PendingReviewsStat;
 use App\Plugins\ProductReviews\src\Models\Review;
