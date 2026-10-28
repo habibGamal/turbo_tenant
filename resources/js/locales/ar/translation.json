@@ -353,6 +353,7 @@
   "errorLoadingOrders": "فشل تحميل الطلبات",
   "extras": "الإضافات",
   "failedToSubmitReview": "فشل في إرسال التقييم",
+  "checkoutSignInRequired": "يرجى تسجيل الدخول أو إنشاء حساب للمتابعة",
   "guestCheckout": "الشراء كضيف",
   "guestCheckoutNotice": "أكمل طلبك دون الحاجة إلى إنشاء حساب.",
   "inStock": "متوفر بالمخزون",

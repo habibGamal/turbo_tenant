@@ -67,7 +67,6 @@
         }
     </style>
     <!-- Scripts -->
-    @routes
     @viteReactRefresh
     @vite(['resources/js/app.tsx'])
     <link rel="stylesheet" href="/theme.css">

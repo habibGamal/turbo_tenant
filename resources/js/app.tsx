@@ -9,10 +9,17 @@ import { TenantProvider } from "@/core/context/TenantContext";
 import { AuthProvider } from "@/core/context/AuthContext";
 import { AppRouter } from "@/core/router/AppRouter";
 import { initializePlugins } from "@/plugins/registry";
+import { registerTheme, resolveTheme } from "@/themes/registry";
+import { defaultTheme } from "@/themes/default";
 import { Toaster } from "@/components/ui/sonner";
 
-// Initialize decoupled frontend plugins and slot registry
+// Initialize decoupled frontend plugins
 initializePlugins();
+
+// Register and activate default theme overrides at startup
+registerTheme(defaultTheme);
+const activeTheme = resolveTheme();
+activeTheme.registerOverrides();
 
 // Mount pure React SPA Shell
 const appElement = document.getElementById("app");
