@@ -8,6 +8,9 @@ use App\Enums\OrderStatus;
 use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\OrderResource;
 use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\OrderManagement\src\Services\IntegrationTokenService;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
 use Illuminate\Database\Eloquent\Builder;
@@ -62,6 +65,24 @@ final class ListOrders extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [];
+        return [
+            Action::make('integration_token')
+                ->label('رمز التكامل')
+                ->icon('heroicon-o-key')
+                ->requiresConfirmation()
+                ->modalHeading('رمز تكامل POS وتحديث حالات الطلبات')
+                ->modalDescription(fn (IntegrationTokenService $service): string => 'الرمز الحالي: '.($service->masked() ?? 'لم يتم إنشاء رمز تكامل بعد')."\nعند توليد رمز جديد، سيتم إبطال الرمز السابق فوراً.")
+                ->modalSubmitActionLabel('توليد رمز جديد')
+                ->action(function (IntegrationTokenService $service): void {
+                    $newToken = $service->generate();
+
+                    Notification::make()
+                        ->success()
+                        ->title('تم توليد رمز التكامل بنجاح')
+                        ->body("احفظ هذا الرمز في مكان آمن، فلن يتم عرضه مرة أخرى:\n{$newToken}")
+                        ->persistent()
+                        ->send();
+                }),
+        ];
     }
 }

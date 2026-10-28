@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\LocationsDelivery\src\Filament\Resources\Branches\Schemas;
 
+use App\Rules\PublicHttpUrl;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -27,7 +28,10 @@ final class BranchForm
                             ->required()
                             ->rows(3)
                             ->maxLength(65535)
-                            ->helperText('أدخل رابط الفرع أو عنوان URL'),
+                            ->helperText('أدخل رابط الفرع أو عنوان URL')
+                            ->rules([
+                                new PublicHttpUrl(),
+                            ]),
                         Toggle::make('is_active')
                             ->label('نشط')
                             ->default(true)
