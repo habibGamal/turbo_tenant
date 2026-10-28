@@ -112,7 +112,12 @@ export default function Footer({ sections, showNewsletter = true }: FooterProps)
                                 const Icon = PLATFORM_ICONS[social.platform] ?? Globe;
                                 return (
                                     <Button key={idx} variant="outline" size="icon" asChild>
-                                        <a href={social.url} target="_blank" rel="noopener noreferrer" aria-label={social.platform}>
+                                        <a
+                                            href={social.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            aria-label={t(`socialPlatform.${social.platform}`, social.platform)}
+                                        >
                                             <Icon className="h-4 w-4" />
                                         </a>
                                     </Button>

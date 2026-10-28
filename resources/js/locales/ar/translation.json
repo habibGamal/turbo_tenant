@@ -402,6 +402,7 @@
   "priceAsc": "السعر: من الأقل للأعلى",
   "priceDesc": "السعر: من الأعلى للأقل",
   "selectAddressToSeeFee": "اختر العنوان لمعرفة رسوم التوصيل",
+  "selectAddress": "اختر العنوان",
   "addedToCart": "تمت إضافة {{name}} إلى السلة",
   "viewCart": "عرض السلة",
   "failedToAddToCart": "فشل في إضافة المنتج إلى السلة",
@@ -409,5 +410,20 @@
   "confirmClearCartTitle": "مسح السلة",
   "confirmClearCartDescription": "هل أنت متأكد من رغبتك في مسح السلة؟ سيتم حذف جميع المنتجات.",
   "confirmDeleteAddressTitle": "حذف العنوان",
-  "itemRemovedFromCart": "تم حذف {{name}} من السلة"
+  "itemRemovedFromCart": "تم حذف {{name}} من السلة",
+  "callBranch": "اتصل بالفرع",
+  "userMenu": "قائمة المستخدم",
+  "openMenu": "فتح القائمة",
+  "addToFavorites": "إضافة إلى المفضلة",
+  "removeFromFavorites": "إزالة من المفضلة",
+  "bottomNavigation": "التنقل السفلي",
+  "socialPlatform": {
+    "facebook": "فيسبوك",
+    "twitter": "تويتر",
+    "instagram": "إنستغرام",
+    "whatsapp": "واتساب",
+    "tiktok": "تيك توك",
+    "youtube": "يوتيوب",
+    "linkedin": "لينكد إن"
+  }
 }

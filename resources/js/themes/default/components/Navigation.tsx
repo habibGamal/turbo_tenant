@@ -149,6 +149,7 @@ export default function Navigation({
                                 size="icon"
                                 className="lg:hidden"
                                 onClick={() => setSearchOpen(!searchOpen)}
+                                aria-label={t("search", "Search")}
                             >
                                 <Search className="h-5 w-5" />
                             </Button>

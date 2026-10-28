@@ -118,6 +118,7 @@ export default function ProductOptionsModal({
                             canAddToCart={canAddToCart}
                             missingRequiredSelections={missingRequiredSelections}
                             limitReachedFor={limitReachedFor}
+                            totalPrice={calculateTotalPrice()}
                         />
                     </div>
                 </div>

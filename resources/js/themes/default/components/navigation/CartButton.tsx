@@ -22,11 +22,15 @@ export function CartButton() {
     }, [cartCount]);
 
     return (
-        <Link to="/cart" data-testid="cart-trigger">
-            <Button
-                variant="ghost"
-                size="icon"
-                className={`relative transition-transform duration-300 ${isBumped ? "scale-125" : "scale-100"}`}
+        <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className={`relative transition-transform duration-300 ${isBumped ? "scale-125" : "scale-100"}`}
+        >
+            <Link
+                to="/cart"
+                data-testid="cart-trigger"
                 aria-label={t("shoppingCart", "Shopping Cart")}
             >
                 <ShoppingCart className="h-5 w-5" />
@@ -35,7 +39,7 @@ export function CartButton() {
                         {cartCount > 9 ? "9+" : cartCount}
                     </Badge>
                 )}
-            </Button>
-        </Link>
+            </Link>
+        </Button>
     );
 }

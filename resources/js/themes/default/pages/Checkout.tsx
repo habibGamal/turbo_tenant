@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { Head } from "@/components/Head";
 import MainLayout from '@/themes/default/layouts/MainLayout';
 import { useTranslation } from "react-i18next";
@@ -185,30 +186,133 @@ export default function Checkout({
         setData("coupon_id", null);
     };
 
-    const handlePlaceOrder = async () => {
-        if (!data.branch_id) {
-            alert(t("pleaseSelectBranch"));
+    const scrollToFirstError = (fieldErrors: Record<string, string>) => {
+        const fieldPriority = [
+            "branch_id",
+            "guest_data.name",
+            "guest_data.phone",
+            "guest_data.email",
+            "guest_data.area_id",
+            "guest_data.street",
+            "guest_data.building",
+            "guest_data.floor",
+            "guest_data.apartment",
+            "address_id",
+        ];
+
+        const fieldIdMap: Record<string, string> = {
+            branch_id: "checkout-branch-section",
+            address_id: "checkout-address-section",
+            "guest_data.name": "guest_name",
+            "guest_data.phone": "guest_phone",
+            "guest_data.email": "guest_email",
+            "guest_data.area_id": "guest_area",
+            "guest_data.street": "guest_street",
+            "guest_data.building": "guest_building",
+            "guest_data.floor": "guest_floor",
+            "guest_data.apartment": "guest_apartment",
+            "guest_data.city": "guest_city",
+        };
+
+        const targetField = fieldPriority.find((k) => fieldErrors[k]) || Object.keys(fieldErrors)[0];
+        if (!targetField) return;
+
+        const targetId = fieldIdMap[targetField] || targetField.replace(/\./g, "_");
+
+        setTimeout(() => {
+            const el =
+                document.getElementById(targetId) ||
+                document.querySelector(`[data-testid="${targetId}"]`) ||
+                document.querySelector(`[name="${targetField}"]`) ||
+                document.querySelector(`[data-testid="branch-select-trigger"]`) ||
+                document.querySelector(`[data-testid="address-error"]`);
+            if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                if ("focus" in el && typeof (el as HTMLElement).focus === "function") {
+                    (el as HTMLElement).focus();
+                }
+            }
+        }, 50);
+    };
+
+    const handleServerErrors = (serverErrors?: Record<string, any>, fallbackMessage?: string) => {
+        if (!serverErrors || Object.keys(serverErrors).length === 0) {
+            toast.error(fallbackMessage || t("failedToPlaceOrder"));
             return;
+        }
+
+        const knownFields = new Set([
+            "branch_id",
+            "address_id",
+            "payment_method",
+            "type",
+            "note",
+            "guest_data.name",
+            "guest_data.phone",
+            "guest_data.email",
+            "guest_data.area_id",
+            "guest_data.street",
+            "guest_data.building",
+            "guest_data.floor",
+            "guest_data.apartment",
+            "guest_data.city",
+        ]);
+
+        const fieldErrors: Record<string, string> = {};
+        const unmappedErrors: string[] = [];
+
+        Object.entries(serverErrors).forEach(([key, val]) => {
+            const message = Array.isArray(val) ? val.join(", ") : String(val);
+            if (knownFields.has(key)) {
+                fieldErrors[key] = message;
+            } else {
+                unmappedErrors.push(message);
+            }
+        });
+
+        if (Object.keys(fieldErrors).length > 0) {
+            setErrors(fieldErrors);
+            scrollToFirstError(fieldErrors);
+        }
+
+        if (unmappedErrors.length > 0) {
+            toast.error(unmappedErrors.join(", "));
+        } else if (Object.keys(fieldErrors).length === 0) {
+            toast.error(fallbackMessage || t("failedToPlaceOrder"));
+        }
+    };
+
+    const handlePlaceOrder = async () => {
+        const validationErrors: Record<string, string> = {};
+
+        if (!data.branch_id) {
+            validationErrors.branch_id = t("pleaseSelectBranch");
         }
 
         if (data.type === "web_delivery" && !is_guest && !data.address_id) {
-            alert(t("pleaseSelectAddress"));
-            return;
+            validationErrors.address_id = t("pleaseSelectAddress");
         }
 
         if (data.type === "web_delivery" && is_guest) {
-            if (!data.guest_data?.name || !data.guest_data?.phone) {
-                alert(t("pleaseProvideGuestInfo"));
-                return;
+            if (!data.guest_data?.name) {
+                validationErrors["guest_data.name"] = t("pleaseProvideGuestInfo");
+            }
+            if (!data.guest_data?.phone) {
+                validationErrors["guest_data.phone"] = t("pleaseProvideGuestInfo");
             }
             if (!data.guest_data?.area_id) {
-                alert(t("pleaseSelectArea"));
-                return;
+                validationErrors["guest_data.area_id"] = t("pleaseSelectArea");
             }
         }
 
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            scrollToFirstError(validationErrors);
+            return;
+        }
+
         if (!cart || cart.items.length === 0) {
-            alert(t("cartIsEmpty"));
+            toast.error(t("cartIsEmpty"));
             return;
         }
 
@@ -247,25 +351,17 @@ export default function Checkout({
                     navigate(redirect_url);
                 }
             } else {
-                // Handle errors from response
-                const errorMessages = responseData.errors
-                    ? Object.values(responseData.errors).flat().join(", ")
-                    : t("failedToPlaceOrder");
-                alert(errorMessages);
+                handleServerErrors(responseData.errors, t("failedToPlaceOrder"));
             }
         } catch (error: any) {
             console.error("Order placement error:", error);
 
             if (error.response?.data?.errors) {
-                // Laravel validation errors
-                const errorMessages = Object.values(error.response.data.errors)
-                    .flat()
-                    .join(", ");
-                alert(errorMessages);
+                handleServerErrors(error.response.data.errors, error.response.data.message);
             } else if (error.response?.data?.message) {
-                alert(error.response.data.message);
+                toast.error(error.response.data.message);
             } else {
-                alert(t("failedToPlaceOrder"));
+                toast.error(t("failedToPlaceOrder"));
             }
         } finally {
             setIsSubmitting(false);
@@ -296,7 +392,7 @@ export default function Checkout({
         <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5 dark:from-background dark:via-background dark:to-primary/10">
             <Head title={t("checkout")} />
 
-            <main className="container mx-auto px-4 py-8 md:py-12" data-testid="checkout-form">
+            <main className="container mx-auto px-4 py-8 md:py-12 pb-28 lg:pb-12" data-testid="checkout-form">
                 <div className="mb-8">
                     <h1 className="text-3xl md:text-4xl font-bold mb-2">
                         {t("checkout")}
@@ -314,11 +410,21 @@ export default function Checkout({
                             onChange={(value) => setData("type", value)}
                         />
 
-                        <BranchSelection
-                            branches={branches}
-                            value={data.branch_id}
-                            onChange={(value) => setData("branch_id", value)}
-                        />
+                        <div id="checkout-branch-section">
+                            <BranchSelection
+                                branches={branches}
+                                value={data.branch_id}
+                                onChange={(value) => {
+                                    setData("branch_id", value);
+                                    setErrors((prev) => {
+                                        const next = { ...prev };
+                                        delete next.branch_id;
+                                        return next;
+                                    });
+                                }}
+                                error={errors.branch_id}
+                            />
+                        </div>
 
                         {is_guest && (
                             <PluginSlot
@@ -326,11 +432,19 @@ export default function Checkout({
                                 pluginId="guest-checkout"
                                 context={{
                                     guestData: data.guest_data!,
-                                    onChange: (updates: any) =>
+                                    onChange: (updates: any) => {
                                         setData("guest_data", {
                                             ...data.guest_data!,
                                             ...updates,
-                                        }),
+                                        });
+                                        setErrors((prev) => {
+                                            const next = { ...prev };
+                                            Object.keys(updates).forEach((k) => {
+                                                delete next[`guest_data.${k}`];
+                                            });
+                                            return next;
+                                        });
+                                    },
                                     governorates,
                                     orderType: data.type,
                                     errors,
@@ -338,12 +452,19 @@ export default function Checkout({
                                 fallback={
                                     <GuestInformationForm
                                         guestData={data.guest_data!}
-                                        onChange={(updates) =>
+                                        onChange={(updates) => {
                                             setData("guest_data", {
                                                 ...data.guest_data!,
                                                 ...updates,
-                                            })
-                                        }
+                                            });
+                                            setErrors((prev) => {
+                                                const next = { ...prev };
+                                                Object.keys(updates).forEach((k) => {
+                                                    delete next[`guest_data.${k}`];
+                                                });
+                                                return next;
+                                            });
+                                        }}
                                         governorates={governorates}
                                         orderType={data.type}
                                         errors={errors as Record<string, string>}
@@ -353,20 +474,29 @@ export default function Checkout({
                         )}
 
                         {data.type === "web_delivery" && !is_guest && (
-                            <DeliveryAddressSection
-                                addresses={addresses}
-                                governorates={governorates}
-                                selectedAddressId={data.address_id}
-                                onAddressChange={(addressId) =>
-                                    setData("address_id", addressId)
-                                }
-                            />
+                            <div id="checkout-address-section">
+                                <DeliveryAddressSection
+                                    addresses={addresses}
+                                    governorates={governorates}
+                                    selectedAddressId={data.address_id}
+                                    onAddressChange={(addressId) => {
+                                        setData("address_id", addressId);
+                                        setErrors((prev) => {
+                                            const next = { ...prev };
+                                            delete next.address_id;
+                                            return next;
+                                        });
+                                    }}
+                                    error={errors.address_id}
+                                />
+                            </div>
                         )}
 
                         <PaymentMethodSelection
                             value={data.payment_method}
                             onChange={(value) => setData("payment_method", value)}
                             onlinePaymentsEnabled={Boolean(settings?.online_payments_enabled)}
+                            codFee={settings?.cod_fee}
                         />
 
                         <OrderNotesSection
@@ -396,6 +526,8 @@ export default function Checkout({
                             appliedCoupon={appliedCoupon}
                             isSubmitting={isSubmitting}
                             onPlaceOrder={handlePlaceOrder}
+                            orderType={data.type}
+                            hasAddressSelected={is_guest ? Boolean(data.guest_data?.area_id) : Boolean(data.address_id)}
                         />
                     </div>
                 </div>

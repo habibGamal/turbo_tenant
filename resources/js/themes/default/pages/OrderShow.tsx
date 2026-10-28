@@ -23,12 +23,18 @@ import {
     FileText,
     ArrowLeft,
     ArrowRight,
+    Phone,
 } from "lucide-react";
 import { OrderShowSkeleton } from "@/components/ui/page-skeletons";
 import { useTranslation } from "react-i18next";
 import { Order, PageProps } from "@/types";
 import { getPaymentMethodLabel } from "@/lib/payment";
 import { useOrderDetails } from "@/plugins/order-management";
+import {
+    OrderStatusBadge,
+    OrderTimeline,
+    getPaymentStatusColor,
+} from "@/themes/default/plugins/order-management/components/status";
 
 interface OrderShowPageProps extends Partial<PageProps> {
     order?: Order;
@@ -41,7 +47,15 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
     const BackArrowIcon = isRTL ? ArrowRight : ArrowLeft;
 
     const resolvedId = orderId || initialOrder?.id || (typeof window !== 'undefined' ? window.location.pathname.split('/').filter(Boolean).pop() : undefined);
-    const { data: fetchedOrder, isLoading, error } = useOrderDetails(resolvedId);
+    const { data: fetchedOrder, isLoading, error } = useOrderDetails(resolvedId, {
+        refetchInterval: (query) => {
+            const current = query.state.data;
+            if (!current || ["completed", "delivered", "cancelled"].includes(current.status)) {
+                return false;
+            }
+            return 20000;
+        },
+    });
 
     const order = fetchedOrder || initialOrder;
 
@@ -89,78 +103,6 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
         }).format(date);
     };
 
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case "pending":
-                return <Clock className="w-5 h-5" />;
-            case "processing":
-                return <Package className="w-5 h-5" />;
-            case "out_for_delivery":
-                return <Truck className="w-5 h-5" />;
-            case "delivered":
-            case "completed":
-                return <CheckCircle className="w-5 h-5" />;
-            case "cancelled":
-                return <XCircle className="w-5 h-5" />;
-            default:
-                return <Clock className="w-5 h-5" />;
-        }
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "pending":
-                return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-            case "processing":
-                return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
-            case "out_for_delivery":
-                return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400";
-            case "delivered":
-            case "completed":
-                return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-            case "cancelled":
-                return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-            default:
-                return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
-        }
-    };
-
-    const getPaymentStatusColor = (status: string) => {
-        switch (status) {
-            case "pending":
-                return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-            case "processing":
-                return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
-            case "completed":
-                return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-            case "failed":
-                return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-            default:
-                return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
-        }
-    };
-
-    const orderTimeline = [
-        { status: "pending", label: t("orderPlaced") },
-        { status: "processing", label: t("preparing") },
-        {
-            status: "out_for_delivery",
-            label:
-                order.type === "web_delivery"
-                    ? t("outForDelivery")
-                    : t("readyForPickup"),
-        },
-        {
-            status: "completed",
-            label:
-                order.type === "web_delivery" ? t("delivered") : t("completed"),
-        },
-    ];
-
-    const currentStatusIndex = orderTimeline.findIndex(
-        (item) => item.status === order.status
-    );
-
     return (
         <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5 dark:from-background dark:via-background dark:to-primary/10">
             <Head title={`${t("order")} #${order.order_number}`} />
@@ -190,90 +132,14 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                             <CardHeader>
                                 <CardTitle className="flex items-center justify-between">
                                     <span>{t("orderStatus")}</span>
-                                    <Badge
-                                        data-testid="order-status-badge"
-                                        className={`flex items-center gap-1 ${getStatusColor(
-                                            order.status
-                                        )}`}
-                                    >
-                                        {getStatusIcon(order.status)}
-                                        {t(order.status)}
-                                    </Badge>
+                                    <OrderStatusBadge status={order.status} />
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                {order.status !== "cancelled" && (
-                                    <div className="relative" data-testid="order-status-timeline">
-                                        <div className="flex justify-between mb-4">
-                                            {orderTimeline.map(
-                                                (item, index) => {
-                                                    const isCompleted =
-                                                        index <=
-                                                        currentStatusIndex;
-                                                    const isCurrent =
-                                                        index ===
-                                                        currentStatusIndex;
-
-                                                    return (
-                                                        <div
-                                                            key={
-                                                                item.status
-                                                            }
-                                                            className="flex flex-col items-center flex-1"
-                                                        >
-                                                            <div
-                                                                className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-colors ${isCompleted
-                                                                    ? "bg-primary text-primary-foreground"
-                                                                    : "bg-muted text-muted-foreground"
-                                                                    } ${isCurrent
-                                                                        ? "ring-4 ring-primary/20"
-                                                                        : ""
-                                                                    }`}
-                                                            >
-                                                                {isCompleted ? (
-                                                                    <CheckCircle className="w-5 h-5" />
-                                                                ) : (
-                                                                    <Clock className="w-5 h-5" />
-                                                                )}
-                                                            </div>
-                                                            <div className="text-xs text-center font-medium">
-                                                                {item.label}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                }
-                                            )}
-                                        </div>
-                                        <div className="absolute top-5 left-0 right-0 h-0.5 bg-muted -z-10">
-                                            <div
-                                                className="h-full bg-primary transition-all"
-                                                style={{
-                                                    width: `${(currentStatusIndex /
-                                                        (orderTimeline.length -
-                                                            1)) *
-                                                        100
-                                                        }%`,
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {order.status === "cancelled" && (
-                                    <div className="flex items-center justify-center py-8 text-destructive">
-                                        <XCircle className="w-12 h-12 ltr:mr-4 rtl:ml-4" />
-                                        <div>
-                                            <div className="text-lg font-semibold">
-                                                {t("orderCancelled")}
-                                            </div>
-                                            <div className="text-sm text-muted-foreground">
-                                                {t(
-                                                    "orderWasCancelledMessage"
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
+                                <OrderTimeline
+                                    status={order.status}
+                                    orderType={order.type}
+                                />
                             </CardContent>
                         </Card>
 
@@ -493,8 +359,16 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                     <div className="text-sm text-muted-foreground">
                                         {t("branch")}
                                     </div>
-                                    <div className="font-medium">
-                                        {order.branch?.name || t("unknown")}
+                                    <div className="font-medium flex items-center justify-between gap-2 mt-1">
+                                        <span>{order.branch?.name || t("unknown")}</span>
+                                        {((order.branch as any)?.phone || (order.branch as any)?.phone_number || (order.branch as any)?.contact_phone) && (
+                                            <Button variant="outline" size="sm" asChild className="gap-2 shrink-0">
+                                                <a href={`tel:${(order.branch as any)?.phone || (order.branch as any)?.phone_number || (order.branch as any)?.contact_phone}`}>
+                                                    <Phone className="w-4 h-4" />
+                                                    {t("callBranch", "اتصل بالفرع")}
+                                                </a>
+                                            </Button>
+                                        )}
                                     </div>
                                 </div>
                                 {order.type === "web_delivery" &&

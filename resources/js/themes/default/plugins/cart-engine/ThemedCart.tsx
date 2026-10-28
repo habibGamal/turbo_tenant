@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -7,6 +8,16 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
     ArrowRight,
     ArrowLeft,
@@ -18,6 +29,7 @@ import {
     useUpdateCartItem,
     useRemoveCartItem,
     useClearCart,
+    useAddToCart,
 } from "@/plugins/cart-engine/api";
 import CartItem from "./components/CartItem";
 import CartSummary from "./components/CartSummary";
@@ -33,8 +45,10 @@ export default function ThemedCart() {
     const updateItemMutation = useUpdateCartItem();
     const removeItemMutation = useRemoveCartItem();
     const clearCartMutation = useClearCart();
+    const addToCartMutation = useAddToCart({ suppressToast: true });
 
     const [updatingItems, setUpdatingItems] = useState<Set<number | string>>(new Set());
+    const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
 
     const formatCurrency = (amount: number | undefined) => {
         const safeAmount = amount ?? 0;
@@ -124,8 +138,38 @@ export default function ThemedCart() {
     };
 
     const handleRemoveItem = (itemId: number | string) => {
+        const itemToRemove = cart?.items.find((item) => item.id === itemId);
+        if (!itemToRemove) return;
+
+        const restorePayload = {
+            product_id: itemToRemove.product_id,
+            variant_id: itemToRemove.variant_id ?? itemToRemove.variant?.id ?? null,
+            weight_option_value_id: itemToRemove.weight_option_value_id ?? itemToRemove.weight_option_value?.id ?? null,
+            quantity: itemToRemove.quantity,
+            weight_multiplier: itemToRemove.weight_multiplier ?? 1,
+            extras: itemToRemove.extras?.map((e) => ({ id: e.id, quantity: e.quantity || 1 })),
+        };
+
+        const itemName = isRTL && itemToRemove.product?.name_ar
+            ? itemToRemove.product.name_ar
+            : itemToRemove.product?.name || "";
+
         setUpdatingItems((prev) => new Set(prev).add(itemId));
         removeItemMutation.mutate(itemId, {
+            onSuccess: () => {
+                const message = itemName
+                    ? t("itemRemovedFromCart", { name: itemName, defaultValue: `Removed ${itemName} from cart` })
+                    : t("itemRemovedFromCart", { defaultValue: "Item removed from cart" });
+
+                toast(message, {
+                    action: {
+                        label: t("undo", "تراجع"),
+                        onClick: () => {
+                            addToCartMutation.mutate(restorePayload);
+                        },
+                    },
+                });
+            },
             onSettled: () => {
                 setUpdatingItems((prev) => {
                     const next = new Set(prev);
@@ -137,7 +181,7 @@ export default function ThemedCart() {
     };
 
     const handleClearCart = () => {
-        clearCartMutation.mutate();
+        setIsClearDialogOpen(true);
     };
 
     if (isLoading) {
@@ -239,6 +283,38 @@ export default function ThemedCart() {
                     </div>
                 </div>
             )}
+
+            {/* Clear Cart Confirmation Dialog */}
+            <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            {t("confirmClearCartTitle", "مسح السلة")}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {t(
+                                "confirmClearCartDescription",
+                                "هل أنت متأكد من رغبتك في مسح السلة؟ سيتم حذف جميع المنتجات."
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>
+                            {t("cancel", "إلغاء")}
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            data-testid="confirm-clear-cart-action"
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => {
+                                clearCartMutation.mutate();
+                                setIsClearDialogOpen(false);
+                            }}
+                        >
+                            {t("clearCart", "مسح السلة")}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

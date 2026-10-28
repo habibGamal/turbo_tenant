@@ -27,6 +27,7 @@ interface ProductOptionsProps {
     canAddToCart: boolean;
     missingRequiredSelections: boolean;
     limitReachedFor?: number | boolean | null;
+    totalPrice?: number;
 }
 
 export default function ProductOptions({
@@ -48,6 +49,7 @@ export default function ProductOptions({
     canAddToCart,
     missingRequiredSelections,
     limitReachedFor,
+    totalPrice,
 }: ProductOptionsProps) {
     const { t, i18n } = useTranslation();
 
@@ -56,6 +58,39 @@ export default function ProductOptions({
     const isLimitReached = (limitReachedFor === product.extraOption?.id || limitReachedFor === true) && Boolean(product.extraOption?.max_selections);
 
     const defaultProductPrice = getEffectivePrice(product);
+
+    const calculateRunningTotal = () => {
+        if (totalPrice !== undefined) return totalPrice;
+
+        let basePrice = getEffectivePrice(product);
+        if (selectedVariant && product.variants) {
+            const variant = product.variants.find((v) => v.id === selectedVariant);
+            if (variant && variant.price !== null && variant.price !== undefined) {
+                basePrice = variant.price;
+            }
+        }
+
+        let extrasTotal = 0;
+        if (product.extraOption?.items) {
+            selectedExtras.forEach((qty, extraId) => {
+                const extra = product.extraOption!.items.find((item) => item.id === extraId);
+                if (extra) {
+                    extrasTotal += extra.price * qty;
+                }
+            });
+        }
+
+        if (product.sell_by_weight) {
+            return (basePrice * quantity) + extrasTotal;
+        } else {
+            return (basePrice + extrasTotal) * quantity;
+        }
+    };
+
+    const runningTotal = calculateRunningTotal();
+    const formattedRunningTotal = Number.isInteger(runningTotal)
+        ? runningTotal.toString()
+        : runningTotal.toFixed(2);
 
     const getText = (text: string, textAr?: string) => {
         return i18n.language === 'ar' && textAr ? textAr : text;
@@ -306,10 +341,14 @@ export default function ProductOptions({
 
                     >
                         <ShoppingCart className="h-5 w-5" />
-                        {isAddingToCart ? t("adding") : t("addToCart")}
-                        {
-                            isAddingToCart && <Spinner />
-                        }
+                        {isAddingToCart ? (
+                            <>
+                                {t("adding")}
+                                <Spinner />
+                            </>
+                        ) : (
+                            `${t("addToCart")} · ${formattedRunningTotal} ${t("currency")}`
+                        )}
                     </Button>
 
                     {/* Favorite Button */}

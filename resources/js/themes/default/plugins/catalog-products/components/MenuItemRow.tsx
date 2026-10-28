@@ -73,17 +73,10 @@ export default function MenuItemRow({
         if (hasOptions) {
             onOpenOptions(product);
         } else {
+            // Success toast comes from useAddToCart itself
             addToCart(
                 { product_id: product.id, quantity: '1' },
                 {
-                    onSuccess: () => {
-                        toast.success(
-                            t('addedToCart', {
-                                name: productName,
-                                defaultValue: `${productName} added to cart`,
-                            })
-                        );
-                    },
                     onError: () => {
                         toast.error(t('failedToAddToCart', 'Failed to add to cart'));
                     },

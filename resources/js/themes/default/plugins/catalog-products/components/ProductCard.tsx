@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import ReactPixel from 'react-facebook-pixel';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,15 +34,15 @@ export default function ProductCard({
     const { isFavorite, toggleFavorite } = useFavoritesStorage();
     const isProductActive = product.is_active ?? true;
 
-    const handleCardClick = () => {
+    const handleLinkClick = (e: React.MouseEvent) => {
         if (!isProductActive) {
+            e.preventDefault();
             return;
         }
 
         if (onClick) {
+            e.preventDefault();
             onClick();
-        } else {
-            navigate(`/products/${product.id}`);
         }
     };
 
@@ -121,20 +121,37 @@ export default function ProductCard({
         <>
             <Card
                 data-testid="product-card"
-                className={`group transition-all duration-300 ${isProductActive ? 'hover:shadow-lg hover:-translate-y-1 cursor-pointer' : 'opacity-70 grayscale cursor-not-allowed'}`}
-                onClick={handleCardClick}
+                className={`group transition-all duration-300 ${isProductActive ? 'hover:shadow-lg hover:-translate-y-1' : 'opacity-70 grayscale cursor-not-allowed'}`}
                 aria-disabled={!isProductActive}
             >
-                {/* Product Image */}
+                {/* Product Image wrapped in Link */}
                 <div className="relative aspect-square overflow-hidden rounded-t-lg">
-                    <ImageWithFallback
-                        src={product.image}
-                        alt={getText(product.name, product.name_ar)}
-                        className={`w-full h-full object-cover transition-transform duration-300 ${isProductActive ? 'group-hover:scale-105' : ''}`}
-                    />
+                    {isProductActive ? (
+                        <Link
+                            to={`/products/${product.id}`}
+                            onClick={handleLinkClick}
+                            className="block w-full h-full rounded-t-lg"
+                            tabIndex={-1}
+                            aria-hidden="true"
+                        >
+                            <ImageWithFallback
+                                src={product.image}
+                                alt={getText(product.name, product.name_ar)}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                        </Link>
+                    ) : (
+                        <div className="w-full h-full">
+                            <ImageWithFallback
+                                src={product.image}
+                                alt={getText(product.name, product.name_ar)}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                    )}
 
                     {/* Badges */}
-                    <div className="absolute z-10 top-2 ltr:left-2 rtl:right-2 flex flex-col gap-2">
+                    <div className="absolute z-10 top-2 ltr:left-2 rtl:right-2 flex flex-col gap-2 pointer-events-none">
                         {!isProductActive && (
                             <Badge variant="secondary" className="bg-muted text-muted-foreground shadow-lg">
                                 {t('unavailable')}
@@ -153,7 +170,7 @@ export default function ProductCard({
                         )}
                     </div>
 
-                    {/* Favorite Button */}
+                    {/* Favorite Button - NOT nested inside the link */}
                     {showFavorite && (
                         <Button
                             data-testid="product-favorite-toggle"
@@ -161,9 +178,16 @@ export default function ProductCard({
                             size="icon"
                             className="absolute top-2 ltr:right-2 rtl:left-2 h-9 w-9 rounded-full bg-white/90 dark:bg-card/90 backdrop-blur-sm hover:bg-white dark:hover:bg-card shadow-md transition-transform active:scale-95 z-20"
                             onClick={(e) => {
+                                e.preventDefault();
                                 e.stopPropagation();
                                 toggleFavorite(product.id);
                             }}
+                            aria-label={
+                                isFavorite(product.id)
+                                    ? t("removeFromFavorites", "Remove from favorites")
+                                    : t("addToFavorites", "Add to favorites")
+                            }
+                            aria-pressed={isFavorite(product.id)}
                         >
                             <Heart
                                 className={`h-5 w-5 transition-colors ${
@@ -184,9 +208,21 @@ export default function ProductCard({
                         </p>
                     )}
 
-                    {/* Product Name */}
-                    <h3 data-testid="product-card-title" className="font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors">
-                        {getText(product.name, product.name_ar)}
+                    {/* Product Name wrapped in Link */}
+                    <h3 data-testid="product-card-title" className="font-semibold text-lg line-clamp-1">
+                        {isProductActive ? (
+                            <Link
+                                to={`/products/${product.id}`}
+                                onClick={handleLinkClick}
+                                className="group-hover:text-primary transition-colors focus-visible:outline-none focus-visible:underline"
+                            >
+                                {getText(product.name, product.name_ar)}
+                            </Link>
+                        ) : (
+                            <span className="text-muted-foreground">
+                                {getText(product.name, product.name_ar)}
+                            </span>
+                        )}
                     </h3>
 
                     {/* Rating */}

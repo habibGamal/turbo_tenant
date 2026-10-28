@@ -11,11 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-    Clock,
-    CheckCircle,
     XCircle,
-    Package,
-    Truck,
     ShoppingBag,
     ArrowRight,
     ArrowLeft,
@@ -24,6 +20,10 @@ import { OrdersListSkeleton } from "@/components/ui/page-skeletons";
 import { useTranslation } from "react-i18next";
 import { useOrders } from "@/plugins/order-management";
 import { getPaymentMethodLabel } from "@/lib/payment";
+import {
+    OrderStatusBadge,
+    getPaymentStatusColor,
+} from "./components/status";
 
 export interface ThemedOrdersListProps {
     initialPage?: number;
@@ -51,57 +51,6 @@ export default function ThemedOrdersList({ initialPage = 1 }: ThemedOrdersListPr
             hour: "2-digit",
             minute: "2-digit",
         }).format(date);
-    };
-
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case "pending":
-                return <Clock className="w-5 h-5" />;
-            case "processing":
-                return <Package className="w-5 h-5" />;
-            case "out_for_delivery":
-                return <Truck className="w-5 h-5" />;
-            case "delivered":
-            case "completed":
-                return <CheckCircle className="w-5 h-5" />;
-            case "cancelled":
-                return <XCircle className="w-5 h-5" />;
-            default:
-                return <Clock className="w-5 h-5" />;
-        }
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "pending":
-                return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-            case "processing":
-                return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
-            case "out_for_delivery":
-                return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400";
-            case "delivered":
-            case "completed":
-                return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-            case "cancelled":
-                return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-            default:
-                return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
-        }
-    };
-
-    const getPaymentStatusColor = (status: string) => {
-        switch (status) {
-            case "pending":
-                return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-            case "processing":
-                return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
-            case "completed":
-                return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-            case "failed":
-                return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-            default:
-                return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
-        }
     };
 
     if (isLoading && !paginatedOrders) {
@@ -170,15 +119,7 @@ export default function ThemedOrdersList({ initialPage = 1 }: ThemedOrdersListPr
                                 </CardDescription>
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                <Badge
-                                    data-testid="order-status-badge"
-                                    className={`flex items-center gap-1 ${getStatusColor(
-                                        order.status
-                                    )}`}
-                                >
-                                    {getStatusIcon(order.status)}
-                                    {t(order.status)}
-                                </Badge>
+                                <OrderStatusBadge status={order.status} />
                                 <Badge
                                     variant="outline"
                                     data-testid="order-payment-status-badge"

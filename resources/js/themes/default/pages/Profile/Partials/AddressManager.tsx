@@ -13,6 +13,16 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -33,6 +43,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
     const { t, i18n } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+    const [addressToDelete, setAddressToDelete] = useState<number | null>(null);
     const [selectedGovernorateId, setSelectedGovernorateId] = useState<string>("");
     const [processing, setProcessing] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -112,13 +123,17 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (confirm(t("confirmDeleteAddress", "Are you sure you want to delete this address?"))) {
-            try {
-                await deleteMutation.mutateAsync(id);
-            } catch (err) {
-                console.error("Failed to delete address:", err);
-            }
+    const handleDelete = (id: number) => {
+        setAddressToDelete(id);
+    };
+
+    const confirmDelete = async () => {
+        if (!addressToDelete) return;
+        try {
+            await deleteMutation.mutateAsync(addressToDelete);
+            setAddressToDelete(null);
+        } catch (err) {
+            console.error("Failed to delete address:", err);
         }
     };
 
@@ -184,6 +199,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                                 <Button
                                     variant="outline"
                                     size="icon"
+                                    aria-label={t("editAddress", "تعديل العنوان")}
                                     onClick={() => openEditModal(address)}
                                 >
                                     <Pencil className="h-4 w-4" />
@@ -191,6 +207,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                                 <Button
                                     variant="destructive"
                                     size="icon"
+                                    aria-label={t("confirmDeleteAddressTitle", t("delete", "حذف العنوان"))}
                                     onClick={() => handleDelete(address.id)}
                                 >
                                     <Trash2 className="h-4 w-4" />
@@ -385,6 +402,38 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                     </form>
                 </DialogContent>
             </Dialog>
+
+            {/* Delete Address Confirmation Dialog */}
+            <AlertDialog
+                open={addressToDelete !== null}
+                onOpenChange={(open) => !open && setAddressToDelete(null)}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            {t("confirmDeleteAddressTitle", "حذف العنوان")}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {t(
+                                "confirmDeleteAddress",
+                                "هل أنت متأكد أنك تريد حذف هذا العنوان؟"
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setAddressToDelete(null)}>
+                            {t("cancel", "إلغاء")}
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            data-testid="confirm-delete-address-action"
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={confirmDelete}
+                        >
+                            {t("delete", "حذف")}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

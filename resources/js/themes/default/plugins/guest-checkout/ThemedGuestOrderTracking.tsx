@@ -26,11 +26,18 @@ import {
     Search,
     Copy,
     Check,
+    Phone,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Order } from "@/types";
 import { getPaymentMethodLabel } from "@/lib/payment";
-import { useTrackGuestOrder } from "@/plugins/guest-checkout/api/useGuestOrderTracking";
+import { useGuestOrderDetails } from "@/plugins/guest-checkout/api/useGuestOrderTracking";
+import type { TrackOrderPayload } from "@/plugins/guest-checkout/types";
+import {
+    OrderStatusBadge,
+    OrderTimeline,
+    getPaymentStatusColor,
+} from "@/themes/default/plugins/order-management/components/status";
 
 export interface ThemedGuestOrderTrackingProps {
     initialOrderNumber?: string;
@@ -53,10 +60,49 @@ export default function ThemedGuestOrderTracking({
     const [orderNumber, setOrderNumber] = useState(defaultOrderNumber);
     const [phone, setPhone] = useState(defaultPhone);
     const [error, setError] = useState<string | null>(null);
-    const [order, setOrder] = useState<Order | null>(null);
     const [isCopied, setIsCopied] = useState(false);
 
-    const trackMutation = useTrackGuestOrder();
+    const [searchPayload, setSearchPayload] = useState<TrackOrderPayload | null>(() => {
+        if (defaultOrderNumber && defaultPhone) {
+            return {
+                order_number: defaultOrderNumber.trim(),
+                phone: defaultPhone.trim(),
+            };
+        }
+        return null;
+    });
+
+    const {
+        data: queryData,
+        isLoading: isQueryLoading,
+        error: queryError,
+        refetch,
+    } = useGuestOrderDetails(searchPayload, {
+        refetchInterval: (query) => {
+            const currentOrder = query.state.data?.order;
+            if (
+                !currentOrder ||
+                ["completed", "delivered", "cancelled"].includes(
+                    currentOrder.status
+                )
+            ) {
+                return false;
+            }
+            return 20000;
+        },
+    });
+
+    const isSearching = isQueryLoading && !queryData;
+    const order = queryData?.success ? queryData.order : null;
+
+    const displayError =
+        error ||
+        (queryData && !queryData.success
+            ? queryData.error || t("orderNotFound")
+            : null) ||
+        (queryError
+            ? (queryError as any)?.response?.data?.error || t("failedToTrackOrder")
+            : null);
 
     const formatCurrency = (amount: number | undefined) => {
         const safeAmount = amount ?? 0;
@@ -86,104 +132,28 @@ export default function ThemedGuestOrderTracking({
         }
     };
 
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case "pending":
-                return <Clock className="w-5 h-5" />;
-            case "processing":
-                return <Package className="w-5 h-5" />;
-            case "out_for_delivery":
-                return <Truck className="w-5 h-5" />;
-            case "delivered":
-            case "completed":
-                return <CheckCircle className="w-5 h-5" />;
-            case "cancelled":
-                return <XCircle className="w-5 h-5" />;
-            default:
-                return <Clock className="w-5 h-5" />;
-        }
-    };
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        const trimmedOrder = orderNumber.trim();
+        const trimmedPhone = phone.trim();
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "pending":
-                return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-            case "processing":
-                return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
-            case "out_for_delivery":
-                return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400";
-            case "delivered":
-            case "completed":
-                return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-            case "cancelled":
-                return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-            default:
-                return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
-        }
-    };
-
-    const getPaymentStatusColor = (status: string) => {
-        switch (status) {
-            case "pending":
-                return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-            case "processing":
-                return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
-            case "completed":
-                return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-            case "failed":
-                return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-            default:
-                return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
-        }
-    };
-
-    const executeSearch = (orderNum: string, phoneNum: string) => {
-        if (!orderNum.trim() || !phoneNum.trim()) {
+        if (!trimmedOrder || !trimmedPhone) {
             setError(t("pleaseProvideOrderNumberAndPhone"));
             return;
         }
 
         setError(null);
-        setOrder(null);
-
-        trackMutation.mutate(
-            {
-                order_number: orderNum.trim(),
-                phone: phoneNum.trim(),
-            },
-            {
-                onSuccess: (data) => {
-                    if (data.success && data.order) {
-                        setOrder(data.order);
-                    } else {
-                        setError(data.error || t("orderNotFound"));
-                    }
-                },
-                onError: (err: any) => {
-                    if (err.response?.data?.error) {
-                        setError(err.response.data.error);
-                    } else if (err.response?.data?.errors) {
-                        const errorMessages = Object.values(err.response.data.errors)
-                            .flat()
-                            .join(", ");
-                        setError(errorMessages);
-                    } else {
-                        setError(t("failedToTrackOrder"));
-                    }
-                },
-            }
-        );
-    };
-
-    useEffect(() => {
-        if (defaultOrderNumber && defaultPhone) {
-            executeSearch(defaultOrderNumber, defaultPhone);
+        if (
+            searchPayload?.order_number === trimmedOrder &&
+            searchPayload?.phone === trimmedPhone
+        ) {
+            refetch();
+        } else {
+            setSearchPayload({
+                order_number: trimmedOrder,
+                phone: trimmedPhone,
+            });
         }
-    }, []);
-
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        executeSearch(orderNumber, phone);
     };
 
     return (
@@ -213,7 +183,7 @@ export default function ThemedGuestOrderTracking({
                                 value={orderNumber}
                                 onChange={(e) => setOrderNumber(e.target.value)}
                                 placeholder={t("orderNumberPlaceholder")}
-                                disabled={trackMutation.isPending}
+                                disabled={isSearching}
                             />
                         </div>
 
@@ -230,13 +200,13 @@ export default function ThemedGuestOrderTracking({
                                 defaultCountry="EG"
                                 countries={['EG', 'SA', 'AE']}
                                 placeholder={t("phoneNumberPlaceholder")}
-                                disabled={trackMutation.isPending}
+                                disabled={isSearching}
                             />
                         </div>
 
-                        {error && (
+                        {displayError && (
                             <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-                                <p className="text-sm text-destructive">{error}</p>
+                                <p className="text-sm text-destructive">{displayError}</p>
                             </div>
                         )}
 
@@ -245,9 +215,9 @@ export default function ThemedGuestOrderTracking({
                             type="submit"
                             className="w-full"
                             size="lg"
-                            disabled={trackMutation.isPending}
+                            disabled={isSearching}
                         >
-                            {trackMutation.isPending ? (
+                            {isSearching ? (
                                 <>
                                     <Loader2 className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
                                     {t("searching")}
@@ -298,14 +268,10 @@ export default function ThemedGuestOrderTracking({
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <Badge
-                                        className={`${getStatusColor(
-                                            order.status
-                                        )} flex items-center gap-2 justify-center px-3 py-1`}
-                                    >
-                                        {getStatusIcon(order.status)}
-                                        {t(order.status)}
-                                    </Badge>
+                                    <OrderStatusBadge
+                                        status={order.status}
+                                        className="justify-center px-3 py-1"
+                                    />
                                     <Badge
                                         className={`${getPaymentStatusColor(
                                             order.payment_status
@@ -351,18 +317,28 @@ export default function ThemedGuestOrderTracking({
 
                                 {/* Branch */}
                                 {order.branch && (
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                                            <Store className="w-5 h-5 text-primary" />
-                                        </div>
-                                        <div>
-                                            <div className="text-sm text-muted-foreground">
-                                                {t("branch")}
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                                <Store className="w-5 h-5 text-primary" />
                                             </div>
-                                            <div className="font-medium">
-                                                {order.branch.name}
+                                            <div>
+                                                <div className="text-sm text-muted-foreground">
+                                                    {t("branch")}
+                                                </div>
+                                                <div className="font-medium">
+                                                    {order.branch.name}
+                                                </div>
                                             </div>
                                         </div>
+                                        {((order.branch as any)?.phone || (order.branch as any)?.phone_number || (order.branch as any)?.contact_phone) && (
+                                            <Button variant="outline" size="sm" asChild className="gap-2 shrink-0">
+                                                <a href={`tel:${(order.branch as any)?.phone || (order.branch as any)?.phone_number || (order.branch as any)?.contact_phone}`}>
+                                                    <Phone className="w-4 h-4" />
+                                                    {t("callBranch", "اتصل بالفرع")}
+                                                </a>
+                                            </Button>
+                                        )}
                                     </div>
                                 )}
 
@@ -432,6 +408,22 @@ export default function ThemedGuestOrderTracking({
                                     </div>
                                 </>
                             )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Order Status & Timeline */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center justify-between">
+                                <span>{t("orderStatus")}</span>
+                                <OrderStatusBadge status={order.status} />
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <OrderTimeline
+                                status={order.status}
+                                orderType={order.type}
+                            />
                         </CardContent>
                     </Card>
 

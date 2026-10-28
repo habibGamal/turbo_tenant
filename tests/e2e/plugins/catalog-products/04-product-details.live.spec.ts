@@ -15,7 +15,8 @@ test.describe('CatalogProducts Suite 04: Product Detail Page & Meta Information'
     // Click card to navigate
     await Promise.all([
       page.waitForResponse((r) => r.url().includes('/api/catalog-products/') && r.status() === 200),
-      firstCard.click(),
+      // The card itself isn't clickable any more; the title is a real link
+      firstCard.locator('[data-testid="product-card-title"] a').click(),
     ]);
 
     await expect(page).toHaveURL(/\/products\/\d+/);

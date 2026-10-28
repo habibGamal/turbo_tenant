@@ -1,9 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/core/api/client';
 import { Order, OrderDetailResponse } from '../types';
 
-export function useOrderDetails(orderId: number | string | undefined | null) {
-    return useQuery<Order>({
+export function useOrderDetails(
+    orderId: number | string | undefined | null,
+    options?: Omit<UseQueryOptions<Order, Error, Order>, 'queryKey' | 'queryFn'>
+) {
+    return useQuery<Order, Error>({
         queryKey: ['orders', orderId],
         queryFn: async () => {
             if (!orderId) {
@@ -14,5 +17,6 @@ export function useOrderDetails(orderId: number | string | undefined | null) {
         },
         enabled: Boolean(orderId),
         staleTime: 1000 * 60 * 5, // 5 minutes
+        ...options,
     });
 }

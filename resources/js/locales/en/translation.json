@@ -402,6 +402,7 @@
   "priceAsc": "Price: Low to High",
   "priceDesc": "Price: High to Low",
   "selectAddressToSeeFee": "Select address to see fee",
+  "selectAddress": "Select address",
   "addedToCart": "{{name}} added to cart",
   "viewCart": "View Cart",
   "failedToAddToCart": "Failed to add to cart",
@@ -409,5 +410,20 @@
   "confirmClearCartTitle": "Clear Cart",
   "confirmClearCartDescription": "Are you sure you want to clear the cart? All items will be removed.",
   "confirmDeleteAddressTitle": "Delete Address",
-  "itemRemovedFromCart": "{{name}} removed from cart"
+  "itemRemovedFromCart": "{{name}} removed from cart",
+  "callBranch": "Call Branch",
+  "userMenu": "User Menu",
+  "openMenu": "Open Menu",
+  "addToFavorites": "Add to favorites",
+  "removeFromFavorites": "Remove from favorites",
+  "bottomNavigation": "Bottom Navigation",
+  "socialPlatform": {
+    "facebook": "Facebook",
+    "twitter": "Twitter",
+    "instagram": "Instagram",
+    "whatsapp": "WhatsApp",
+    "tiktok": "TikTok",
+    "youtube": "YouTube",
+    "linkedin": "LinkedIn"
+  }
 }

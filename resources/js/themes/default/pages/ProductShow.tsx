@@ -183,6 +183,7 @@ export default function ProductShow({
                                     handleToggleFavorite={handleToggleFavorite}
                                     canAddToCart={canAddToCart}
                                     missingRequiredSelections={missingRequiredSelections}
+                                    totalPrice={calculateTotalPrice()}
                                 />
                             </div>
                         </div>

@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/core/api/client';
 import type { TrackOrderPayload, TrackOrderResponse, GuestCheckoutConfigResponse } from '../types';
 
@@ -11,6 +11,28 @@ export function useTrackGuestOrder() {
       const { data } = await apiClient.post<TrackOrderResponse>('/api/guest-checkout/track', payload);
       return data;
     },
+  });
+}
+
+/**
+ * Headless TanStack Query Hook to fetch and poll guest order details.
+ */
+export function useGuestOrderDetails(
+  payload?: TrackOrderPayload | null,
+  options?: Omit<UseQueryOptions<TrackOrderResponse, Error, TrackOrderResponse>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery<TrackOrderResponse, Error>({
+    queryKey: ['guest-checkout', 'track', payload?.order_number, payload?.phone],
+    queryFn: async () => {
+      if (!payload?.order_number || !payload?.phone) {
+        throw new Error('Order number and phone are required');
+      }
+      const { data } = await apiClient.post<TrackOrderResponse>('/api/guest-checkout/track', payload);
+      return data;
+    },
+    enabled: Boolean(payload?.order_number && payload?.phone),
+    staleTime: 1000 * 60 * 5,
+    ...options,
   });
 }
 

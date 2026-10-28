@@ -25,6 +25,8 @@ interface OrderSummaryProps {
     appliedCoupon: AppliedCoupon | null;
     isSubmitting: boolean;
     onPlaceOrder: () => void;
+    orderType?: string;
+    hasAddressSelected?: boolean;
 }
 
 export default function OrderSummary({
@@ -37,6 +39,8 @@ export default function OrderSummary({
     appliedCoupon,
     isSubmitting,
     onPlaceOrder,
+    orderType,
+    hasAddressSelected = true,
 }: OrderSummaryProps) {
     const { t, i18n } = useTranslation();
 
@@ -137,10 +141,12 @@ export default function OrderSummary({
                         </div>
                     )}
 
-                    <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">{t("tax")}</span>
-                        <span className="font-medium">{formatCurrency(tax)}</span>
-                    </div>
+                    {tax > 0 && (
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">{t("tax")}</span>
+                            <span className="font-medium">{formatCurrency(tax)}</span>
+                        </div>
+                    )}
 
                     {service > 0 && (
                         <div className="flex items-center justify-between text-sm">
@@ -153,16 +159,20 @@ export default function OrderSummary({
                         </div>
                     )}
 
-                    <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
-                            {t("deliveryFee")}
-                        </span>
-                        <span className="font-medium">
-                            {deliveryFee > 0
-                                ? formatCurrency(deliveryFee)
-                                : t("free")}
-                        </span>
-                    </div>
+                    {orderType !== "web_takeaway" && (
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">
+                                {t("deliveryFee")}
+                            </span>
+                            <span className={hasAddressSelected ? "font-medium" : "text-xs text-muted-foreground italic"}>
+                                {!hasAddressSelected
+                                    ? t("selectAddress", t("selectAddressToSeeFee", "اختر العنوان"))
+                                    : deliveryFee > 0
+                                        ? formatCurrency(deliveryFee)
+                                        : t("free")}
+                            </span>
+                        </div>
+                    )}
 
                     <Separator />
 
@@ -191,6 +201,35 @@ export default function OrderSummary({
                     )}
                 </Button>
             </CardContent>
+
+            {/* Mobile Sticky Bottom Bar: below md it sits above MobileBottomNav (4.5rem), the spacer keeps the page end visible */}
+            <div className="lg:hidden h-24" aria-hidden="true" />
+            <div className="lg:hidden fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-t border-border p-4 shadow-lg md:pb-[calc(1rem+env(safe-area-inset-bottom))]">
+                <div className="flex items-center justify-between gap-4 container mx-auto">
+                    <div className="flex flex-col">
+                        <span className="text-xs text-muted-foreground">{t("total")}</span>
+                        <span className="text-lg font-bold text-primary">
+                            {formatCurrency(totalAmount)}
+                        </span>
+                    </div>
+                    <Button
+                        data-testid="mobile-place-order-button"
+                        size="lg"
+                        className="flex-1 max-w-[200px]"
+                        onClick={onPlaceOrder}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
+                                {t("placingOrder")}
+                            </>
+                        ) : (
+                            t("placeOrder")
+                        )}
+                    </Button>
+                </div>
+            </div>
         </Card>
     );
 }

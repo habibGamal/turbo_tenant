@@ -228,6 +228,7 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
                   canAddToCart={canAddToCart}
                   missingRequiredSelections={missingRequiredSelections}
                   limitReachedFor={limitReachedFor}
+                  totalPrice={calculateTotalPrice()}
                 />
               </div>
             </div>

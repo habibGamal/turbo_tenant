@@ -23,9 +23,14 @@ test.describe('CartEngine Suite 07: Clear Cart', () => {
     const clearBtn = theme.cart.getClearCartButton();
     await expect(clearBtn).toBeVisible();
 
+    // Clearing asks for confirmation first
+    await clearBtn.click();
+    const confirmBtn = theme.cart.getClearCartConfirmButton();
+    await expect(confirmBtn).toBeVisible();
+
     await Promise.all([
       page.waitForResponse(r => r.url().includes('/api/cart') && r.request().method() === 'DELETE' && r.status() === 200),
-      clearBtn.click(),
+      confirmBtn.click(),
     ]);
 
     // 4. Verify Empty Cart message is displayed

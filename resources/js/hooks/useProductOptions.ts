@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
+import i18n from '@/i18n';
 import { Product } from '@/types';
-import { addToCart, ExtraWithQuantity } from '@/utils/cartUtils';
+import { useAddToCart } from '@/plugins/cart-engine/api';
 import { getEffectivePrice } from '@/lib/pricing';
 
 interface UseProductOptionsProps {
@@ -8,6 +10,8 @@ interface UseProductOptionsProps {
 }
 
 export function useProductOptions({ product }: UseProductOptionsProps) {
+    const addToCartMutation = useAddToCart();
+
     // For weight-based products, use first weight option value or default, otherwise use 1
     const defaultQuantity = product.sell_by_weight && product.weight_option?.values?.[0]
         ? parseFloat(product.weight_option.values[0].value)
@@ -147,41 +151,40 @@ export function useProductOptions({ product }: UseProductOptionsProps) {
 
         setIsAddingToCart(true);
 
-        const extrasArray: ExtraWithQuantity[] = Array.from(selectedExtras.entries()).map(
+        const extrasArray = Array.from(selectedExtras.entries()).map(
             ([id, quantity]) => ({ id, quantity })
         );
 
-        await addToCart(
-            {
+        try {
+            await addToCartMutation.mutateAsync({
                 product_id: product.id,
                 variant_id: selectedVariant,
                 weight_option_value_id: selectedWeightValue,
                 quantity: quantity.toString(),
                 extras: extrasArray,
-            },
-            {
-                onSuccess: () => {
-                    // Reset form to default state
-                    const defaultQty = product.sell_by_weight && product.weight_option?.values?.[0]
-                        ? parseFloat(product.weight_option.values[0].value)
-                        : 1;
-                    setQuantity(defaultQty);
-                    setSelectedWeightValue(product.weight_option?.values?.[0]?.id || null);
-                    setSelectedExtras(
-                        new Map(
-                            product.extraOption?.items
-                                .filter((item) => item.is_default)
-                                .map((item) => [item.id, 1]) || []
-                        )
-                    );
-                    setLimitReachedFor(null);
-                    if (onSuccess) onSuccess();
-                },
-                onFinally: () => {
-                    setIsAddingToCart(false);
-                },
-            }
-        );
+            });
+
+            // Reset form to default state
+            const defaultQty = product.sell_by_weight && product.weight_option?.values?.[0]
+                ? parseFloat(product.weight_option.values[0].value)
+                : 1;
+            setQuantity(defaultQty);
+            setSelectedWeightValue(product.weight_option?.values?.[0]?.id || null);
+            setSelectedExtras(
+                new Map(
+                    product.extraOption?.items
+                        .filter((item) => item.is_default)
+                        .map((item) => [item.id, 1]) || []
+                )
+            );
+            setLimitReachedFor(null);
+            if (onSuccess) onSuccess();
+        } catch (error: any) {
+            console.error("Failed to add to cart:", error);
+            toast.error(error?.response?.data?.message || i18n.t('failedToAddToCart', 'Failed to add to cart'));
+        } finally {
+            setIsAddingToCart(false);
+        }
     };
 
     return {

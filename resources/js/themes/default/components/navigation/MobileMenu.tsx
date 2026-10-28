@@ -46,7 +46,11 @@ export function MobileMenu({
     return (
         <Sheet>
             <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="icon">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t("openMenu", "Open menu")}
+                >
                     <Menu className="h-5 w-5" />
                 </Button>
             </SheetTrigger>
@@ -163,7 +167,7 @@ export function MobileMenu({
                                         href={social.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        aria-label={social.platform}
+                                        aria-label={t(`socialPlatform.${social.platform}`, social.platform)}
                                     >
                                         <Icon className="h-4 w-4" />
                                     </a>

@@ -206,6 +206,10 @@ export class BaseCartTheme implements ICartTheme {
     return this.page.locator('[data-testid="clear-cart-button"]');
   }
 
+  getClearCartConfirmButton(): Locator {
+    return this.page.locator('[data-testid="confirm-clear-cart-action"]');
+  }
+
   getSubtotal(): Locator {
     return this.page.locator('[data-testid="cart-subtotal"]');
   }

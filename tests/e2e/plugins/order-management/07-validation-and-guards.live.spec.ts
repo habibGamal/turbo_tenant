@@ -7,6 +7,7 @@ test.describe('OrderManagement Suite 07: Validation Safeguards & Boundary Condit
     const clearBtn = theme.cart.getClearCartButton();
     if (await clearBtn.isVisible()) {
       await clearBtn.click();
+      await theme.cart.getClearCartConfirmButton().click();
     }
 
     // 2. Direct visit to /checkout with 0 items
@@ -36,25 +37,26 @@ test.describe('OrderManagement Suite 07: Validation Safeguards & Boundary Condit
       page.goto('/checkout', { waitUntil: 'domcontentloaded' }),
     ]);
 
-    // 3. Listen for validation dialogs
-    const dialogMessages: string[] = [];
+    // 3. Validation errors render inline (no browser alert dialogs)
+    let dialogCount = 0;
     page.on('dialog', async (dialog) => {
-      dialogMessages.push(dialog.message());
+      dialogCount++;
       await dialog.dismiss();
     });
+    const inlineErrors = page.locator('p.text-destructive');
 
     const placeOrderBtn = theme.orders.getPlaceOrderButton();
 
-    // 4. Click place order with empty name/phone -> triggers validation
+    // 4. Click place order with empty name/phone -> inline errors appear
     await placeOrderBtn.click();
-    expect(dialogMessages.length).toBeGreaterThan(0);
+    await expect(inlineErrors.first()).toBeVisible({ timeout: 5000 });
 
-    // 5. Fill name and phone, but do NOT select area
+    // 5. Fill name and phone, but do NOT select area -> an error is still shown
     await page.locator('[data-testid="guest-name-input"], input#guest_name').first().fill('Habib Validation Test');
     await page.locator('[data-testid="guest-phone-input"], input#guest_phone').first().fill('01011223344');
 
-    const previousCount = dialogMessages.length;
     await placeOrderBtn.click();
-    expect(dialogMessages.length).toBeGreaterThan(previousCount);
+    await expect(inlineErrors.first()).toBeVisible({ timeout: 5000 });
+    expect(dialogCount).toBe(0);
   });
 });

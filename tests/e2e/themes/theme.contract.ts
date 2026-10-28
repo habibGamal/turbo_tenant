@@ -54,6 +54,7 @@ export interface ICartTheme {
   getQuantityDecrementButton(item: Locator): Locator;
   getItemRemoveButton(item: Locator): Locator;
   getClearCartButton(): Locator;
+  getClearCartConfirmButton(): Locator;
   getSubtotal(): Locator;
   getCheckoutButton(): Locator;
   getEmptyCartMessage(): Locator;
