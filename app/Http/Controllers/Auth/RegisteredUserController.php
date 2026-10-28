@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Plugins\CartEngine\src\Services\CartService;
+use App\Services\Auth\ExpoTokenRegistrarService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -17,6 +17,10 @@ use Illuminate\Validation\Rules;
 
 final class RegisteredUserController extends Controller
 {
+    public function __construct(
+        private readonly ExpoTokenRegistrarService $expoTokenRegistrar
+    ) {}
+
     /**
      * Display the registration view.
      */
@@ -30,7 +34,7 @@ final class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request, CartService $cartService): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -48,18 +52,7 @@ final class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        // Sync guest cart to newly registered user
-        $cartService->syncGuestCartToUser($user);
-
-        if ($request->filled('expo_token')) {
-            $validator = \Illuminate\Support\Facades\Validator::make($request->only('expo_token'), [
-                'expo_token' => \NotificationChannels\Expo\ExpoPushToken::rule(),
-            ]);
-
-            if ($validator->passes()) {
-                $user->update(['expo_token' => $request->expo_token]);
-            }
-        }
+        $this->expoTokenRegistrar->registerFor($user, $request->input('expo_token'));
 
         return redirect(route('home', absolute: false));
     }

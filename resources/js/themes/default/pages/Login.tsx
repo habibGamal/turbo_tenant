@@ -16,17 +16,11 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { LogIn, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { getSafeRedirect } from "@/lib/safeRedirect";
 
 interface LoginProps {
     canResetPassword?: boolean;
     status?: string;
-}
-
-function getSafeRedirect(redirectParam: string | null): string {
-    if (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")) {
-        return redirectParam;
-    }
-    return "/";
 }
 
 export default function Login({ canResetPassword = true, status: initialStatus }: LoginProps) {

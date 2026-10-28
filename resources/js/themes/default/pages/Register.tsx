@@ -16,13 +16,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { UserPlus, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
-
-function getSafeRedirect(redirectParam: string | null): string {
-    if (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")) {
-        return redirectParam;
-    }
-    return "/";
-}
+import { getSafeRedirect } from "@/lib/safeRedirect";
 
 export default function Register() {
     const { t } = useTranslation();

@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Facades\Auth;
+
+beforeEach(function () {
+    Auth::logout();
+});
+
 test('registration screen can be rendered', function () {
     $response = $this->get('/register');
 
@@ -17,5 +23,5 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('home', absolute: false));
 });

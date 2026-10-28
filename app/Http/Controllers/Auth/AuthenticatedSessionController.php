@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Plugins\CartEngine\src\Services\CartService;
+use App\Services\Auth\ExpoTokenRegistrarService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\Auth;
 
 final class AuthenticatedSessionController extends Controller
 {
+    public function __construct(
+        private readonly ExpoTokenRegistrarService $expoTokenRegistrar
+    ) {}
+
     /**
      * Display the login view.
      */
@@ -25,23 +29,15 @@ final class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request, CartService $cartService): RedirectResponse
+    public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
 
         $request->session()->regenerate();
-        logger()->info('LoginRequest', $request->all());
-        // Sync guest cart to authenticated user
-        $cartService->syncGuestCartToUser($request->user());
 
-        if ($request->filled('expo_token')) {
-            // $validator = \Illuminate\Support\Facades\Validator::make($request->only('expo_token'), [
-            //     'expo_token' => \NotificationChannels\Expo\ExpoPushToken::rule(),
-            // ]);
-            logger()->info($request->expo_token);
-            // if ($validator->passes()) {
-            $request->user()->update(['expo_token' => $request->expo_token]);
-            // }
+        $user = $request->user();
+        if ($user !== null) {
+            $this->expoTokenRegistrar->registerFor($user, $request->input('expo_token'));
         }
 
         return redirect()->intended(route('home', absolute: false));

@@ -48,9 +48,10 @@ Add to your `.env` file:
 GOOGLE_CLIENT_ID=your-client-id
 GOOGLE_CLIENT_SECRET=your-client-secret
 GOOGLE_REDIRECT_URL=http://localhost:8000/auth/google/callback
+GOOGLE_ALLOWED_CLIENT_IDS=your-client-id,your-android-client-id,your-ios-client-id
 ```
 
-**Note:** Database settings take precedence over environment variables.
+**Note:** Database settings take precedence over environment variables for web OAuth. `GOOGLE_ALLOWED_CLIENT_IDS` configures comma-separated allowed audiences (`aud`/`azp`) for native and mobile ID token verification. If unset, it falls back to `GOOGLE_CLIENT_ID`.
 
 ### 3. Database Migration
 The migration has already been run to add OAuth fields to the users table:
@@ -88,8 +89,10 @@ The migration has already been run to add OAuth fields to the users table:
 ## Routes
 
 ```php
-GET  /auth/google           - Redirect to Google OAuth
-GET  /auth/google/callback  - Handle Google OAuth callback
+GET  /auth/google                   - Redirect to Google OAuth
+GET  /auth/google/callback          - Handle Google OAuth callback
+POST /api/tenant/auth/google/native - Authenticate with Google ID token (native/mobile)
+GET  /auth/google/native-callback   - Deprecated legacy mobile access token callback
 ```
 
 ## Files Modified/Created
