@@ -25,9 +25,4 @@ export function ThemedComponent<K extends ThemedPluginKey>({
   return <Component {...(props as any)} />;
 }
 
-export function useThemedComponent<K extends ThemedPluginKey>(name: K) {
-  const { plugins } = useActiveTheme();
-  return plugins?.[name];
-}
-
 export default ThemedComponent;
