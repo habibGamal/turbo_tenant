@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\CatalogProducts\src\Models\ExtraOptionItem;
+use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\CatalogProducts\src\Models\ProductVariant;
+use App\Plugins\CatalogProducts\src\Models\WeightOptionValue;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
 use App\Plugins\OrderManagement\src\Models\OrderItemExtra;
-use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Plugins\PosIntegration\src\Models\ProductPosMapping;
-use App\Plugins\CatalogProducts\src\Models\ProductVariant;
-use App\Plugins\CatalogProducts\src\Models\WeightOptionValue;
 use App\Plugins\PosIntegration\src\Services\POS\POSProductResolver;
 
 beforeEach(function () {
@@ -125,8 +125,7 @@ describe('POSProductResolver', function () {
         $result = $this->resolver->resolveOrderItem($item, $branch->id);
 
         expect($result['posRefObj'][0]['productRef'])->toBe('BASE-PRODUCT')
-            ->and($result['notes'])->toContain('json::')
-            ->and($result['notes'])->toContain('Large Size');
+            ->and($result['notes'])->toBe('json::'.json_encode(['النوع' => 'Large Size'], JSON_UNESCAPED_UNICODE));
     });
 
     it('includes mapped extras inside posRefObj with accurate multiplier quantities', function () {
@@ -205,13 +204,14 @@ describe('POSProductResolver', function () {
         OrderItemExtra::factory()->create([
             'order_item_id' => $item->id,
             'extra_option_item_id' => $extraItem->id,
+            'extra_name' => 'Sauce',
             'quantity' => 2,
         ]);
 
         $result = $this->resolver->resolveOrderItem($item, $branch->id);
 
         expect($result['posRefObj'][1]['quantity'])->toBe(4.0) // 2 * 2 multiplier
-            ->and($result['notes'])->toContain('500g');
+            ->and($result['notes'])->toBe('json::'.json_encode(['الوزن' => '(2 x) 500g', 'اضافات' => 'Sauce (x2)'], JSON_UNESCAPED_UNICODE));
     });
 
     it('resolves variant mapping even when base product has no mapping', function () {
@@ -303,6 +303,6 @@ describe('POSProductResolver', function () {
 
         expect($result['posRefObj'])->toHaveCount(1)
             ->and($result['posRefObj'][0]['productRef'])->toBe('MAIN-BURGER')
-            ->and($result['notes'])->toContain('Custom Spice');
+            ->and($result['notes'])->toBe('json::'.json_encode(['اضافات' => 'Custom Spice (x1)'], JSON_UNESCAPED_UNICODE));
     });
 });

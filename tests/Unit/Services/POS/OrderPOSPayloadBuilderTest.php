@@ -2,16 +2,17 @@
 
 declare(strict_types=1);
 
+use App\Enums\OrderType;
 use App\Enums\PaymentMethod;
+use App\Models\User;
+use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\GuestCheckout\src\Models\GuestUser;
 use App\Plugins\LocationsDelivery\src\Models\Address;
 use App\Plugins\LocationsDelivery\src\Models\Area;
 use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\LocationsDelivery\src\Models\Governorate;
-use App\Plugins\GuestCheckout\src\Models\GuestUser;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
-use App\Plugins\CatalogProducts\src\Models\Product;
-use App\Models\User;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\POSProductResolverInterface;
 use App\Plugins\PosIntegration\src\Services\POS\OrderPOSPayloadBuilder;
 use App\Plugins\PosIntegration\src\Services\POS\POSCustomerDataFormatter;
@@ -40,6 +41,7 @@ describe('OrderPOSPayloadBuilder', function () {
             'phone_number' => '01012345678',
             'street' => 'Street 9',
             'building' => '15',
+            'floor' => null,
             'apartment' => '7',
             'full_address' => null,
         ]);
@@ -52,7 +54,7 @@ describe('OrderPOSPayloadBuilder', function () {
             'address_id' => $address->id,
             'order_number' => 'WEB-10542',
             'shift_id' => 42,
-            'type' => 'web_delivery',
+            'type' => OrderType::WEB_DELIVERY,
             'sub_total' => 320.00,
             'tax' => 44.80,
             'service' => 5.00,
@@ -91,7 +93,7 @@ describe('OrderPOSPayloadBuilder', function () {
             ->and($payload['user']['name'])->toBe('Ahmed Mostafa')
             ->and($payload['user']['phone'])->toBe('01012345678')
             ->and($payload['user']['area'])->toBe('Maadi')
-            ->and($payload['user']['address'])->toContain('Street 9')
+            ->and($payload['user']['address'])->toBe('Street 9, Building 15, Apartment 7, Maadi, Cairo')
             ->and($payload['order']['type'])->toBe('web_delivery')
             ->and($payload['order']['shiftId'])->toBe(42)
             ->and($payload['order']['orderNumber'])->toBe('WEB-10542')
@@ -135,7 +137,7 @@ describe('OrderPOSPayloadBuilder', function () {
             'branch_id' => $branch->id,
             'order_number' => 'WEB-GUEST-1',
             'shift_id' => 10,
-            'type' => 'delivery',
+            'type' => OrderType::WEB_DELIVERY,
         ]);
 
         $this->productResolver->shouldReceive('resolveOrderItem')->andReturn(null);
@@ -145,9 +147,7 @@ describe('OrderPOSPayloadBuilder', function () {
         expect($payload['user']['name'])->toBe('Sara Guest')
             ->and($payload['user']['phone'])->toBe('+201122334455')
             ->and($payload['user']['area'])->toBe('Dokki')
-            ->and($payload['user']['address'])->toContain('Building 12')
-            ->and($payload['user']['address'])->toContain('Floor 4')
-            ->and($payload['user']['address'])->toContain('Apartment 402')
+            ->and($payload['user']['address'])->toBe('Tahrir St, Building 12, Floor 4, Apartment 402, Giza, Dokki, Giza')
             ->and($payload['order']['type'])->toBe('web_delivery');
     });
 
@@ -158,7 +158,7 @@ describe('OrderPOSPayloadBuilder', function () {
         $order = Order::factory()->create([
             'user_id' => $user->id,
             'branch_id' => $branch->id,
-            'type' => 'takeaway',
+            'type' => OrderType::WEB_TAKEAWAY,
             'shift_id' => 5,
         ]);
 
@@ -176,6 +176,7 @@ describe('OrderPOSPayloadBuilder', function () {
         $order = Order::factory()->create([
             'user_id' => $user->id,
             'branch_id' => $branch->id,
+            'type' => OrderType::WEB_DELIVERY,
             'shift_id' => 5,
             'payment_method' => PaymentMethod::CARD,
             'transaction_id' => 'TXN-998877',
@@ -191,29 +192,34 @@ describe('OrderPOSPayloadBuilder', function () {
         ]);
     });
 
-    it('handles raw string payment_method gracefully', function () {
+    it('maps payment method to cash or card across all enum cases', function (PaymentMethod $paymentMethod, string $expectedPosMethod) {
         $branch = Branch::factory()->create();
         $user = User::factory()->create();
 
         $order = Order::factory()->create([
             'user_id' => $user->id,
             'branch_id' => $branch->id,
+            'type' => OrderType::WEB_DELIVERY,
             'shift_id' => 5,
-            'transaction_id' => 'TXN-RAW-1',
+            'payment_method' => $paymentMethod,
+            'transaction_id' => 'TXN-DATASET-1',
         ]);
-
-        // Force string payment_method on model attribute
-        $order->setAttribute('payment_method', 'card');
 
         $this->productResolver->shouldReceive('resolveOrderItem')->andReturn(null);
 
         $payload = $this->builder->build($order);
 
         expect($payload['order']['webPreferences'])->toBe([
-            'payment_method' => 'card',
-            'transaction_id' => 'TXN-RAW-1',
+            'payment_method' => $expectedPosMethod,
+            'transaction_id' => 'TXN-DATASET-1',
         ]);
-    });
+    })->with([
+        [PaymentMethod::COD, 'cash'],
+        [PaymentMethod::CARD, 'card'],
+        [PaymentMethod::WALLET, 'card'],
+        [PaymentMethod::KIOSK, 'card'],
+        [PaymentMethod::BANK_TRANSFER, 'card'],
+    ]);
 
     it('formats registered user address with full_address without leading dash', function () {
         $branch = Branch::factory()->create();
@@ -228,6 +234,7 @@ describe('OrderPOSPayloadBuilder', function () {
             'user_id' => $user->id,
             'address_id' => $address->id,
             'branch_id' => $branch->id,
+            'type' => OrderType::WEB_DELIVERY,
             'shift_id' => 1,
         ]);
 

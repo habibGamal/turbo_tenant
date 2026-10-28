@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Plugins\PosIntegration\src\Services\POS;
 
+use App\Enums\OrderType;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\PosIntegration\src\Models\ProductPosMapping;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\OrderPOSPayloadBuilderInterface;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\POSProductResolverInterface;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 
 final class OrderPOSPayloadBuilder implements OrderPOSPayloadBuilderInterface
 {
@@ -125,11 +127,12 @@ final class OrderPOSPayloadBuilder implements OrderPOSPayloadBuilderInterface
     /**
      * Map order type to POS expected type enum ('web_delivery' or 'web_takeaway').
      */
-    private function mapOrderType(?string $type): string
+    private function mapOrderType(OrderType $type): string
     {
         return match ($type) {
-            'takeaway', 'web_takeaway' => 'web_takeaway',
-            default => 'web_delivery',
+            OrderType::WEB_DELIVERY => 'web_delivery',
+            OrderType::WEB_TAKEAWAY => 'web_takeaway',
+            OrderType::POS => throw new InvalidArgumentException('نوع الطلب غير مدعوم في نقطة البيع: pos'),
         };
     }
 
@@ -144,17 +147,8 @@ final class OrderPOSPayloadBuilder implements OrderPOSPayloadBuilderInterface
             return null;
         }
 
-        $paymentMethod = $order->payment_method;
-        if (is_string($paymentMethod)) {
-            $paymentMethod = \App\Enums\PaymentMethod::tryFrom($paymentMethod);
-        }
-
-        $mappedMethod = $paymentMethod instanceof \App\Enums\PaymentMethod
-            ? $paymentMethod->posMapping()
-            : (string) $order->payment_method;
-
         $preferences = [
-            'payment_method' => $mappedMethod,
+            'payment_method' => $order->payment_method->posMapping(),
         ];
 
         if (! empty($order->transaction_id)) {
