@@ -12,5 +12,11 @@
   ],
   "providers": [
     "App\\Plugins\\PaymentProcessing\\PaymentProcessingServiceProvider"
+  ],
+  "tenant_scoped": [
+    "App\\Plugins\\PaymentProcessing\\src\\DTOs\\PaymentProcessingConfig",
+    "App\\Plugins\\PaymentProcessing\\src\\Services\\PaymobService",
+    "App\\Plugins\\PaymentProcessing\\src\\Services\\KashierService",
+    "App\\Plugins\\PaymentProcessing\\src\\Services\\PaymentGatewayFactory"
   ]
 }

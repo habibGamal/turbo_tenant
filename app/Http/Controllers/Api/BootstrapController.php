@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Core\Plugins\Contracts\BootstrapContributor;
-use App\Core\Plugins\Enums\PluginStatus;
 use App\Core\Plugins\Services\PluginManager;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\CustomerResource;
-use App\Models\TenantPlugin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -25,15 +23,7 @@ final class BootstrapController extends Controller
         $user = $request->user();
 
         // 1. Resolve Active Plugins for this Tenant
-        $activePlugins = [];
-        if ($tenant) {
-            $activePlugins = TenantPlugin::query()
-                ->where('tenant_id', (string) $tenant->id)
-                ->where('status', PluginStatus::ACTIVE)
-                ->pluck('plugin_id')
-                ->values()
-                ->all();
-        }
+        $activePlugins = $tenant ? $this->pluginManager->getActivePluginIds($tenant) : [];
 
         // 2. Resolve Dynamic Bootstrap Contributors
         $contributions = [
@@ -55,10 +45,16 @@ final class BootstrapController extends Controller
             $themeName = $tenant->theme ?? 'default';
         }
 
+        $tenantName = null;
+        if ($tenant) {
+            $nameAttr = $tenant->name ?? ($tenant->data['name'] ?? null);
+            $tenantName = (is_string($nameAttr) && mb_trim($nameAttr) !== '') ? $nameAttr : (string) $tenant->id;
+        }
+
         return response()->json([
             'tenant' => $tenant ? [
                 'id' => (string) $tenant->id,
-                'name' => (string) ($tenant->id),
+                'name' => $tenantName,
                 'theme' => $themeName,
             ] : null,
             'user' => $user ? CustomerResource::make($user)->resolve() : null,

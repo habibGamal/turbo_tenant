@@ -15,5 +15,20 @@
     "providers": [
         "App\\Plugins\\PosIntegration\\PosIntegrationServiceProvider"
     ],
-    "filament": "App\\Plugins\\PosIntegration\\src\\Filament\\PosIntegrationFilamentPlugin"
+    "filament": "App\\Plugins\\PosIntegration\\src\\Filament\\PosIntegrationFilamentPlugin",
+    "listeners": {
+        "App\\Plugins\\OrderManagement\\src\\Events\\OrderCreated": [
+            "App\\Plugins\\PosIntegration\\src\\Listeners\\SendOrderToPosListener@handleOrderCreated"
+        ],
+        "App\\Plugins\\OrderManagement\\src\\Events\\OrderStatusUpdated": [
+            "App\\Plugins\\PosIntegration\\src\\Listeners\\SendOrderToPosListener@handleStatusUpdated"
+        ]
+    },
+    "tenant_scoped": [
+        "App\\Plugins\\PosIntegration\\src\\DTOs\\PosIntegrationConfig",
+        "App\\Plugins\\PosIntegration\\src\\Services\\POS\\Contracts\\POSApiClientInterface",
+        "App\\Plugins\\PosIntegration\\src\\Services\\POS\\Contracts\\POSProductResolverInterface",
+        "App\\Plugins\\PosIntegration\\src\\Services\\POS\\POSCustomerDataFormatter",
+        "App\\Plugins\\PosIntegration\\src\\Services\\POS\\Contracts\\OrderPOSPayloadBuilderInterface"
+    ]
 }

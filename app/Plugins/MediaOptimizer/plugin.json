@@ -9,5 +9,9 @@
   "dependencies": [],
   "providers": [
     "App\\Plugins\\MediaOptimizer\\MediaOptimizerServiceProvider"
+  ],
+  "tenant_scoped": [
+    "App\\Plugins\\MediaOptimizer\\src\\DTOs\\MediaOptimizerConfig",
+    "App\\Plugins\\MediaOptimizer\\src\\Services\\ImageOptimizerService"
   ]
 }

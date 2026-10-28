@@ -44,4 +44,17 @@ final class BootstrapTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('cart_count', 0);
     }
+
+    public function test_tenant_bootstrap_returns_tenant_name_when_set(): void
+    {
+        $tenant = tenant();
+        $tenant->name = 'Pizza Palace';
+        $tenant->save();
+
+        $response = $this->getJson('/api/tenant/bootstrap');
+
+        $response->assertOk()
+            ->assertJsonPath('tenant.name', 'Pizza Palace')
+            ->assertJsonPath('tenant.id', (string) $tenant->id);
+    }
 }

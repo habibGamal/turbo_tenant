@@ -13,5 +13,9 @@
   "providers": [
     "App\\Plugins\\GuestCheckout\\GuestCheckoutServiceProvider"
   ],
-  "filament": "App\\Plugins\\GuestCheckout\\src\\Filament\\GuestCheckoutFilamentPlugin"
+  "filament": "App\\Plugins\\GuestCheckout\\src\\Filament\\GuestCheckoutFilamentPlugin",
+  "tenant_scoped": [
+    "App\\Plugins\\GuestCheckout\\src\\Services\\GuestUserService",
+    "guest.user.service"
+  ]
 }

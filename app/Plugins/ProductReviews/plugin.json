@@ -12,5 +12,8 @@
     "providers": [
         "App\\Plugins\\ProductReviews\\ProductReviewsServiceProvider"
     ],
-    "filament": "App\\Plugins\\ProductReviews\\src\\Filament\\ProductReviewsFilamentPlugin"
+    "filament": "App\\Plugins\\ProductReviews\\src\\Filament\\ProductReviewsFilamentPlugin",
+    "tenant_scoped": [
+        "App\\Plugins\\ProductReviews\\src\\DTOs\\ProductReviewsConfig"
+    ]
 }

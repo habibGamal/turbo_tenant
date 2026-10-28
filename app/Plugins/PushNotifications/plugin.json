@@ -12,5 +12,16 @@
     "providers": [
         "App\\Plugins\\PushNotifications\\PushNotificationsServiceProvider"
     ],
-    "filament": "App\\Plugins\\PushNotifications\\src\\Filament\\PushNotificationsFilamentPlugin"
+    "filament": "App\\Plugins\\PushNotifications\\src\\Filament\\PushNotificationsFilamentPlugin",
+    "listeners": {
+        "App\\Plugins\\OrderManagement\\src\\Events\\OrderCreated": [
+            "App\\Plugins\\PushNotifications\\src\\Listeners\\SendOrderStatusNotificationListener"
+        ],
+        "App\\Plugins\\OrderManagement\\src\\Events\\OrderStatusUpdated": [
+            "App\\Plugins\\PushNotifications\\src\\Listeners\\SendOrderStatusNotificationListener"
+        ]
+    },
+    "tenant_scoped": [
+        "App\\Plugins\\PushNotifications\\src\\DTOs\\PushNotificationsConfig"
+    ]
 }

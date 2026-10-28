@@ -10,5 +10,11 @@
   "providers": [
     "App\\Plugins\\StoreSettings\\StoreSettingsServiceProvider"
   ],
-  "filament": "App\\Plugins\\StoreSettings\\src\\Filament\\StoreSettingsFilamentPlugin"
-}
+  "filament": "App\\Plugins\\StoreSettings\\src\\Filament\\StoreSettingsFilamentPlugin",
+  "tenant_scoped": [
+    "App\\Plugins\\StoreSettings\\src\\Services\\SettingService",
+    "setting.service",
+    "App\\Plugins\\StoreSettings\\src\\DTOs\\StoreConfig",
+    "App\\Plugins\\StoreSettings\\src\\Bootstrap\\StoreSettingsBootstrapContributor"
+  ]
+}

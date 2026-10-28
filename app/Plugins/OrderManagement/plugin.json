@@ -15,5 +15,16 @@
   "providers": [
     "App\\Plugins\\OrderManagement\\OrderManagementServiceProvider"
   ],
-  "filament": "App\\Plugins\\OrderManagement\\src\\Filament\\OrderManagementFilamentPlugin"
+  "filament": "App\\Plugins\\OrderManagement\\src\\Filament\\OrderManagementFilamentPlugin",
+  "listeners": {
+    "App\\Plugins\\OrderManagement\\src\\Events\\OrderCreated": [
+      "App\\Plugins\\OrderManagement\\src\\Listeners\\NotifyAdminsOfNewOrder"
+    ]
+  },
+  "tenant_scoped": [
+    "App\\Plugins\\OrderManagement\\src\\Pipelines\\OrderPipelineRegistry",
+    "App\\Plugins\\OrderManagement\\src\\Pipelines\\OrderValidationPipeline",
+    "App\\Plugins\\OrderManagement\\src\\Pipelines\\PricingCalculationPipeline",
+    "App\\Plugins\\OrderManagement\\src\\DTOs\\OrderManagementConfig"
+  ]
 }
