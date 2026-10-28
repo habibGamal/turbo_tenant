@@ -7,11 +7,16 @@ namespace App\Plugins\ProductReviews\src\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Plugins\ProductReviews\src\Models\Review;
+use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class ProductReviewsApiController extends Controller
 {
+    public function __construct(
+        private readonly SettingService $settingService
+    ) {}
+
     /**
      * Display a paginated listing of approved reviews for a product.
      */
@@ -19,6 +24,7 @@ final class ProductReviewsApiController extends Controller
     {
         $reviews = Review::query()
             ->where('product_id', $product->id)
+            ->where('is_approved', true)
             ->where('is_published', true)
             ->with('user:id,name')
             ->latest()
@@ -56,6 +62,9 @@ final class ProductReviewsApiController extends Controller
             }
         }
 
+        $autoApproveSetting = $this->settingService->get(Review::SETTING_AUTO_APPROVE, false);
+        $autoApprove = filter_var($autoApproveSetting, FILTER_VALIDATE_BOOLEAN);
+
         $review = Review::query()->create([
             'product_id' => $product->id,
             'user_id' => $isAuthenticated ? auth()->id() : null,
@@ -64,13 +73,17 @@ final class ProductReviewsApiController extends Controller
             'rating' => (int) $validated['rating'],
             'comment' => $validated['comment'],
             'images' => $images,
-            'is_published' => true,
-            'is_approved' => true,
+            'is_published' => $autoApprove,
+            'is_approved' => $autoApprove,
         ]);
+
+        $message = $autoApprove
+            ? 'Review submitted successfully!'
+            : 'Review submitted successfully and is awaiting approval.';
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Review submitted successfully!',
+            'message' => $message,
             'review' => $review->load('user:id,name'),
         ], 201);
     }

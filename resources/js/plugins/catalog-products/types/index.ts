@@ -123,14 +123,6 @@ export interface CatalogProductsResponse {
 export interface ProductDetailResponse {
   status: string;
   data: ProductDetail;
-  reviews?: Array<{
-    id: number;
-    user_name: string;
-    rating: number;
-    comment?: string;
-    images?: string[];
-    created_at?: string;
-  }>;
   related_products?: ProductSummary[];
   promotional_products?: ProductSummary[];
 }

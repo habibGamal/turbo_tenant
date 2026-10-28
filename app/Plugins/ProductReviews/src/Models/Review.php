@@ -12,9 +12,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Review extends Model
+final class Review extends Model
 {
     use HasFactory;
+
+    public const string SETTING_AUTO_APPROVE = 'product-reviews.auto_approve';
 
     protected $table = 'reviews';
 
@@ -47,15 +49,15 @@ class Review extends Model
         return $this->belongsTo(Product::class);
     }
 
+    protected static function newFactory(): ReviewFactory
+    {
+        return ReviewFactory::new();
+    }
+
     protected function authorName(): Attribute
     {
         return Attribute::make(
             get: fn () => $this->user?->name ?? $this->guest_name ?? 'Guest'
         );
-    }
-
-    protected static function newFactory(): ReviewFactory
-    {
-        return ReviewFactory::new();
     }
 }

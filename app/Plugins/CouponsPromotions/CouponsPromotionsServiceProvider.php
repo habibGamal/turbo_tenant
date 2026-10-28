@@ -28,14 +28,19 @@ final class CouponsPromotionsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // 1. Dynamic relationship on Order model
-        Order::resolveRelationUsing('coupon', function (Order $order) {
-            return $order->belongsTo(Coupon::class, 'coupon_id');
-        });
+        $this->registerRelations();
 
         // 3. Load routes
         if (file_exists(__DIR__.'/routes/tenant.php')) {
             $this->loadRoutesFrom(__DIR__.'/routes/tenant.php');
         }
+    }
+
+    private function registerRelations(): void
+    {
+        // 1. Dynamic relationship on Order model
+        Order::resolveRelationUsing('coupon', function (Order $order) {
+            return $order->belongsTo(Coupon::class, 'coupon_id');
+        });
     }
 }

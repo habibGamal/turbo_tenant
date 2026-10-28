@@ -26,36 +26,36 @@ final class PosIntegrationServiceProvider extends ServiceProvider
 
         // Plugin domain bindings
         $this->app->singleton(
-            \App\Plugins\PosIntegration\src\Services\POS\Contracts\POSApiClientInterface::class,
-            \App\Plugins\PosIntegration\src\Services\POS\POSApiClient::class
+            src\Services\POS\Contracts\POSApiClientInterface::class,
+            src\Services\POS\POSApiClient::class
         );
         $this->app->singleton(
-            \App\Plugins\PosIntegration\src\Services\POS\Contracts\POSProductResolverInterface::class,
-            \App\Plugins\PosIntegration\src\Services\POS\POSProductResolver::class
+            src\Services\POS\Contracts\POSProductResolverInterface::class,
+            src\Services\POS\POSProductResolver::class
         );
         $this->app->singleton(
-            \App\Plugins\PosIntegration\src\Services\POS\POSCustomerDataFormatter::class,
-            \App\Plugins\PosIntegration\src\Services\POS\POSCustomerDataFormatter::class
+            src\Services\POS\POSCustomerDataFormatter::class,
+            src\Services\POS\POSCustomerDataFormatter::class
         );
         $this->app->singleton(
-            \App\Plugins\PosIntegration\src\Services\POS\Contracts\OrderPOSPayloadBuilderInterface::class,
-            \App\Plugins\PosIntegration\src\Services\POS\OrderPOSPayloadBuilder::class
+            src\Services\POS\Contracts\OrderPOSPayloadBuilderInterface::class,
+            src\Services\POS\OrderPOSPayloadBuilder::class
         );
         $this->app->bind(
-            \App\Plugins\PosIntegration\src\Services\POS\Contracts\POSErrorResponseHandlerInterface::class,
+            src\Services\POS\Contracts\POSErrorResponseHandlerInterface::class,
             function ($app) {
-                return new \App\Plugins\PosIntegration\src\Services\POS\POSErrorResponseHandler(
-                    $app->make(\App\Plugins\PosIntegration\src\Services\ProductPOSImporterService::class)
+                return new src\Services\POS\POSErrorResponseHandler(
+                    $app->make(src\Services\ProductPOSImporterService::class)
                 );
             }
         );
         $this->app->bind(
-            \App\Plugins\PosIntegration\src\Services\OrderPOSService::class,
-            \App\Plugins\PosIntegration\src\Services\OrderPOSService::class
+            src\Services\OrderPOSService::class,
+            src\Services\OrderPOSService::class
         );
         $this->app->bind(
-            \App\Plugins\PosIntegration\src\Services\ProductPOSImporterService::class,
-            \App\Plugins\PosIntegration\src\Services\ProductPOSImporterService::class
+            src\Services\ProductPOSImporterService::class,
+            src\Services\ProductPOSImporterService::class
         );
     }
 
@@ -63,14 +63,25 @@ final class PosIntegrationServiceProvider extends ServiceProvider
     {
         $this->loadViewsFrom(__DIR__.'/resources/views', 'pos-integration');
 
-        // Dynamic relationship on Product
+        $this->registerRelations();
+    }
+
+    private function registerRelations(): void
+    {
         \App\Plugins\CatalogProducts\src\Models\Product::resolveRelationUsing('posMappings', function ($product) {
-            return $product->hasMany(\App\Plugins\PosIntegration\src\Models\ProductPosMapping::class);
+            return $product->hasMany(src\Models\ProductPosMapping::class);
         });
 
-        // Dynamic relationship on Branch
+        \App\Plugins\CatalogProducts\src\Models\ProductVariant::resolveRelationUsing('posMappings', function ($variant) {
+            return $variant->hasMany(src\Models\ProductPosMapping::class, 'variant_id');
+        });
+
+        \App\Plugins\CatalogProducts\src\Models\ExtraOptionItem::resolveRelationUsing('posMappings', function ($extraOptionItem) {
+            return $extraOptionItem->hasMany(src\Models\ProductPosMapping::class, 'extra_option_item_id');
+        });
+
         \App\Plugins\LocationsDelivery\src\Models\Branch::resolveRelationUsing('posMappings', function ($branch) {
-            return $branch->hasMany(\App\Plugins\PosIntegration\src\Models\ProductPosMapping::class);
+            return $branch->hasMany(src\Models\ProductPosMapping::class);
         });
     }
 }

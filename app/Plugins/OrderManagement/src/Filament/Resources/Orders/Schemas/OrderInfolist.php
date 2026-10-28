@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Filament\Resources\Orders\Schemas;
 
+use App\Core\Plugins\Services\PluginManager;
 use App\Plugins\StoreSettings\src\Services\SettingService;
 use BackedEnum;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -83,7 +84,7 @@ final class OrderInfolist
                         TextEntry::make('guest_user_id')
                             ->label('معرف الزائر')
                             ->copyable()
-                            ->visible(fn ($record) => filled($record->guest_user_id)),
+                            ->visible(fn ($record) => app(PluginManager::class)->isPluginActive('guest-checkout') && filled($record->guest_user_id)),
                         TextEntry::make('address.full_address')
                             ->label('العنوان')
                             ->visible(fn ($record) => filled($record->address_id))
@@ -93,17 +94,27 @@ final class OrderInfolist
                             ->visible(fn ($record) => filled($record->address_id)),
                         TextEntry::make('guest_address')
                             ->label('عنوان الزائر')
-                            ->state(fn ($record) => $record->guestUser ?
-                                collect([
+                            ->state(function ($record) {
+                                $isGuestActive = app(PluginManager::class)->isPluginActive('guest-checkout');
+
+                                if (! $isGuestActive || ! $record->guestUser) {
+                                    return null;
+                                }
+
+                                return collect([
                                     $record->guestUser->street,
                                     $record->guestUser->building,
                                     "الدور: {$record->guestUser->floor}",
                                     "شقة: {$record->guestUser->apartment}",
                                     $record->guestUser->city,
                                     $record->guestUser->area?->name,
-                                ])->filter()->join('، ') : null
-                            )
-                            ->visible(fn ($record) => $record->isGuestOrder() && $record->guestUser)
+                                ])->filter()->join('، ');
+                            })
+                            ->visible(function ($record) {
+                                $isGuestActive = app(PluginManager::class)->isPluginActive('guest-checkout');
+
+                                return $isGuestActive && $record->isGuestOrder() && $record->guestUser;
+                            })
                             ->columnSpanFull(),
                     ])
                     ->columnSpan(1),

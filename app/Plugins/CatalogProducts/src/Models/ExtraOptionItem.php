@@ -7,7 +7,6 @@ namespace App\Plugins\CatalogProducts\src\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class ExtraOptionItem extends Model
 {
@@ -27,11 +26,6 @@ final class ExtraOptionItem extends Model
     public function extraOption(): BelongsTo
     {
         return $this->belongsTo(ExtraOption::class);
-    }
-
-    public function posMappings(): HasMany
-    {
-        return $this->hasMany(\App\Plugins\PosIntegration\src\Models\ProductPosMapping::class, 'extra_option_item_id');
     }
 
     protected function casts(): array

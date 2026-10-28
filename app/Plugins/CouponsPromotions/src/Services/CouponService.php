@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\CouponsPromotions\src\Services;
 
+use App\Core\Plugins\Services\PluginManager;
 use App\Models\User;
 use App\Plugins\CouponsPromotions\src\Models\Coupon;
 use App\Plugins\OrderManagement\src\Models\Order;
@@ -11,6 +12,14 @@ use Carbon\Carbon;
 
 final class CouponService
 {
+    private readonly PluginManager $pluginManager;
+
+    public function __construct(
+        ?PluginManager $pluginManager = null
+    ) {
+        $this->pluginManager = $pluginManager ?? app(PluginManager::class);
+    }
+
     /**
      * Validate if a coupon can be applied to an order
      */
@@ -186,6 +195,11 @@ final class CouponService
             ->first();
     }
 
+    private function isGuestCheckoutActive(): bool
+    {
+        return $this->pluginManager->isPluginActive('guest-checkout');
+    }
+
     /**
      * Validate if coupon applies to items in cart
      */
@@ -320,13 +334,19 @@ final class CouponService
                     return false;
                 }
             } elseif ($phone) {
-                $guestOrderCount = Order::whereHas('guestUser', function ($query) use ($phone) {
-                    $query->where('phone', $phone);
-                })
-                ->whereIn('status', ['processing', 'completed', 'out_for_delivery'])
-                ->count();
+                $guestOrderQuery = Order::query()
+                    ->whereIn('status', ['processing', 'completed', 'out_for_delivery']);
 
-                if ($guestOrderCount > 0) {
+                if ($this->isGuestCheckoutActive()) {
+                    $guestOrderQuery->where(function ($query) use ($phone) {
+                        $query->where('customer_phone', $phone)
+                            ->orWhereHas('guestUser', fn ($q) => $q->where('phone', $phone));
+                    });
+                } else {
+                    $guestOrderQuery->where('customer_phone', $phone);
+                }
+
+                if ($guestOrderQuery->count() > 0) {
                     return false;
                 }
             }
@@ -346,14 +366,19 @@ final class CouponService
                     return false;
                 }
             } elseif ($phone) {
-                $guestOrderCount = Order::where('coupon_id', $coupon->id)
-                    ->whereHas('guestUser', function ($query) use ($phone) {
-                        $query->where('phone', $phone);
-                    })
-                    ->whereIn('status', ['processing', 'completed', 'out_for_delivery'])
-                    ->count();
+                $guestOrderQuery = Order::where('coupon_id', $coupon->id)
+                    ->whereIn('status', ['processing', 'completed', 'out_for_delivery']);
 
-                if ($guestOrderCount >= $limit) {
+                if ($this->isGuestCheckoutActive()) {
+                    $guestOrderQuery->where(function ($query) use ($phone) {
+                        $query->where('customer_phone', $phone)
+                            ->orWhereHas('guestUser', fn ($q) => $q->where('phone', $phone));
+                    });
+                } else {
+                    $guestOrderQuery->where('customer_phone', $phone);
+                }
+
+                if ($guestOrderQuery->count() >= $limit) {
                     return false;
                 }
             }

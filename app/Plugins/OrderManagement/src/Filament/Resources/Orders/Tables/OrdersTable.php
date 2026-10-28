@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Filament\Resources\Orders\Tables;
 
+use App\Core\Plugins\Services\PluginManager;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -40,12 +41,17 @@ final class OrdersTable
                     ->description(fn ($record) => $record->getCustomerPhone() ?? '—')
                     ->searchable(query: function ($query, $search) {
                         return $query->where(function ($q) use ($search) {
-                            $q->whereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%"))
-                                ->orWhereHas('guestUser', fn ($g) => $g->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%"));
+                            $q->whereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%"));
+
+                            if (app(PluginManager::class)->isPluginActive('guest-checkout')) {
+                                $q->orWhereHas('guestUser', fn ($g) => $g->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%"));
+                            }
                         });
                     })
                     ->sortable(query: function ($query, $direction) {
-                        if (class_exists(\App\Plugins\GuestCheckout\src\Models\GuestUser::class)) {
+                        $isGuestActive = app(PluginManager::class)->isPluginActive('guest-checkout');
+
+                        if ($isGuestActive) {
                             return $query->orderBy(
                                 \App\Models\User::select('name')
                                     ->whereColumn('users.id', 'orders.user_id')
