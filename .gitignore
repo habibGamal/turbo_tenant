@@ -25,3 +25,5 @@ Homestead.yaml
 Thumbs.db
 tests/Browser/Screenshots
 /storage/tenant*
+database/testing/
+database/tenanttest_*

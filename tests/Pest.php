@@ -22,6 +22,8 @@ pest()->extend(Tests\CentralTestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Feature/Central');
 
+pest()->group('security')->in('Feature/Security');
+
 /*
 |--------------------------------------------------------------------------
 | Expectations

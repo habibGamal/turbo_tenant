@@ -9,9 +9,12 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 abstract class TestCase extends BaseTestCase
 {
+    protected array $connectionsToTransact = ['sqlite'];
+
     protected static ?Tenant $testTenant = null;
 
     protected static bool $tenantMigrated = false;
@@ -20,10 +23,22 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
+        if (! $this->shouldInitializeTenancy()) {
+            $this->useCentralConnection();
+
+            return;
+        }
+
+        $testingDir = database_path('testing');
+        if (! is_dir($testingDir)) {
+            mkdir($testingDir, 0777, true);
+        }
+
         // One tenant database file per test process, so parallel test runs don't wipe each other's tables.
         config([
             'tenancy.central_domains' => [],
-            'tenancy.database.prefix' => 'tenant_p'.getmypid().'_',
+            'tenancy.database.prefix' => 'testing/tenant_p'.getmypid().'_',
+            'tenancy.database.suffix' => '.sqlite',
         ]);
 
         $this->ensureTenantExists();
@@ -44,14 +59,31 @@ abstract class TestCase extends BaseTestCase
 
     protected function tearDown(): void
     {
-        if (tenancy()->initialized) {
-            tenancy()->end();
-        }
+        $this->useCentralConnection();
 
         DB::disconnect('tenant');
         DB::purge('tenant');
 
         parent::tearDown();
+    }
+
+    /**
+     * Reset default database connection and end any active tenancy context.
+     */
+    protected function useCentralConnection(): void
+    {
+        if (tenancy()->initialized) {
+            tenancy()->end();
+        }
+
+        $central = config('tenancy.database.central_connection', 'sqlite');
+        config(['database.default' => $central]);
+        DB::setDefaultConnection($central);
+    }
+
+    protected function shouldInitializeTenancy(): bool
+    {
+        return ! $this instanceof CentralTestCase;
     }
 
     /**
@@ -66,18 +98,30 @@ abstract class TestCase extends BaseTestCase
             ]);
         }
 
-        $tenant = Tenant::withoutEvents(fn (): Tenant => Tenant::firstOrCreate([
-            'id' => 'test_suite_tenant',
-        ]));
+        $tenantDbName = 'testing/tenant_'.getmypid().'.sqlite';
+        $dbFile = database_path($tenantDbName);
+
+        $tenant = Tenant::withoutEvents(function () use ($tenantDbName): Tenant {
+            $t = Tenant::firstOrCreate(['id' => 'test_suite_tenant']);
+            $t->setInternal('db_name', $tenantDbName);
+
+            return $t;
+        });
 
         $appHost = parse_url(config('app.url', 'http://localhost'), PHP_URL_HOST) ?: 'localhost';
 
         if (static::$testTenant === null) {
+            if (file_exists($dbFile)) {
+                @unlink($dbFile);
+            }
             static::$testTenant = $tenant;
             DB::purge('tenant');
             static::$testTenant->database()->manager()->createDatabase(static::$testTenant);
-            $dbFile = database_path(static::$testTenant->database()->getName());
-            register_shutdown_function(static fn () => @unlink($dbFile));
+            register_shutdown_function(static function () use ($dbFile): void {
+                if (file_exists($dbFile)) {
+                    @unlink($dbFile);
+                }
+            });
             static::$testTenant->domains()->firstOrCreate(['domain' => 'localhost']);
             if ($appHost !== 'localhost') {
                 static::$testTenant->domains()->firstOrCreate(['domain' => $appHost]);
@@ -125,7 +169,7 @@ abstract class TestCase extends BaseTestCase
             try {
                 DB::connection('tenant')->statement('PRAGMA journal_mode = MEMORY;');
                 DB::connection('tenant')->statement('PRAGMA synchronous = OFF;');
-            } catch (\Throwable) {
+            } catch (Throwable) {
             }
         } else {
             $tables = DB::connection('tenant')->select("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != 'migrations'");
@@ -134,12 +178,12 @@ abstract class TestCase extends BaseTestCase
             foreach ($tables as $table) {
                 try {
                     DB::connection('tenant')->statement("DELETE FROM \"{$table->name}\";");
-                } catch (\Throwable) {
+                } catch (Throwable) {
                 }
             }
             try {
                 DB::connection('tenant')->statement('DELETE FROM sqlite_sequence;');
-            } catch (\Throwable) {
+            } catch (Throwable) {
             }
             DB::connection('tenant')->commit();
             DB::connection('tenant')->statement('PRAGMA foreign_keys = ON;');

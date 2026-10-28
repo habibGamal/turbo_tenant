@@ -5,18 +5,14 @@ declare(strict_types=1);
 namespace Tests;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
-abstract class CentralTestCase extends BaseTestCase
+abstract class CentralTestCase extends TestCase
 {
     protected function setUp(): void
     {
         parent::setUp();
 
-        // End any existing tenancy context
-        if (tenancy()->initialized) {
-            tenancy()->end();
-        }
+        $this->useCentralConnection();
 
         // Create central admin user
         $this->actingAs(User::factory()->create([
@@ -31,11 +27,13 @@ abstract class CentralTestCase extends BaseTestCase
 
     protected function tearDown(): void
     {
-        // Ensure tenancy is ended
-        if (tenancy()->initialized) {
-            tenancy()->end();
-        }
+        $this->useCentralConnection();
 
         parent::tearDown();
+    }
+
+    protected function shouldInitializeTenancy(): bool
+    {
+        return false;
     }
 }
