@@ -31,6 +31,7 @@ import {
     useClearCart,
     useAddToCart,
 } from "@/plugins/cart-engine/api";
+import { useFormatMoney } from "@/lib/money";
 import CartItem from "./components/CartItem";
 import CartSummary from "./components/CartSummary";
 import EmptyCart from "./components/EmptyCart";
@@ -49,11 +50,7 @@ export default function ThemedCart() {
 
     const [updatingItems, setUpdatingItems] = useState<Set<number | string>>(new Set());
     const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
-
-    const formatCurrency = (amount: number | undefined) => {
-        const safeAmount = amount ?? 0;
-        return `${safeAmount.toFixed(2)} ${t("currency")}`;
-    };
+    const formatMoney = useFormatMoney();
 
     const handleUpdateQuantity = (itemId: number | string, newQuantity: string) => {
         if (parseFloat(newQuantity) < 0.001) return;
@@ -237,7 +234,7 @@ export default function ThemedCart() {
                                     disabled={clearCartMutation.isPending}
                                     className="text-destructive hover:text-destructive"
                                 >
-                                    <Trash2 className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                                    <Trash2 className="h-4 w-4 me-2" />
                                     {t("clearCart")}
                                 </Button>
                             </CardHeader>
@@ -267,7 +264,7 @@ export default function ThemedCart() {
                                         onWeightChange={(value) =>
                                             handleWeightChange(item.id, value)
                                         }
-                                        formatCurrency={formatCurrency}
+                                        formatCurrency={formatMoney}
                                     />
                                 ))}
                             </CardContent>
@@ -278,7 +275,7 @@ export default function ThemedCart() {
                     <div className="lg:col-span-1">
                         <CartSummary
                             cart={cart as any}
-                            formatCurrency={formatCurrency}
+                            formatCurrency={formatMoney}
                         />
                     </div>
                 </div>

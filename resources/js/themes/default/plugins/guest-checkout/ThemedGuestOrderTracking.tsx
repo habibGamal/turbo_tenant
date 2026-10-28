@@ -31,6 +31,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Order } from "@/types";
 import { getPaymentMethodLabel } from "@/lib/payment";
+import { useFormatMoney } from "@/lib/money";
 import { useGuestOrderDetails } from "@/plugins/guest-checkout/api/useGuestOrderTracking";
 import type { TrackOrderPayload } from "@/plugins/guest-checkout/types";
 import {
@@ -104,10 +105,7 @@ export default function ThemedGuestOrderTracking({
             ? (queryError as any)?.response?.data?.error || t("failedToTrackOrder")
             : null);
 
-    const formatCurrency = (amount: number | undefined) => {
-        const safeAmount = amount ?? 0;
-        return `${safeAmount.toFixed(2)} ${t("currency")}`;
-    };
+    const formatMoney = useFormatMoney();
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -219,12 +217,12 @@ export default function ThemedGuestOrderTracking({
                         >
                             {isSearching ? (
                                 <>
-                                    <Loader2 className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
+                                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
                                     {t("searching")}
                                 </>
                             ) : (
                                 <>
-                                    <Search className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                                    <Search className="me-2 h-4 w-4" />
                                     {t("trackOrder")}
                                 </>
                             )}
@@ -260,7 +258,7 @@ export default function ThemedGuestOrderTracking({
                                             className="shrink-0"
                                         >
                                             {isCopied ? (
-                                                <Check className="h-4 w-4 text-green-600" />
+                                                <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                                             ) : (
                                                 <Copy className="h-4 w-4" />
                                             )}
@@ -472,7 +470,7 @@ export default function ThemedGuestOrderTracking({
                                                     )}
                                                 </div>
                                                 <div className="font-semibold text-primary shrink-0">
-                                                    {formatCurrency(item.total)}
+                                                    {formatMoney(item.total)}
                                                 </div>
                                             </div>
 
@@ -486,7 +484,7 @@ export default function ThemedGuestOrderTracking({
                                                             <span>+ {extra.extra_name}</span>
                                                             {extra.quantity > 1 && <span>× {extra.quantity}</span>}
                                                             <span className="text-xs">
-                                                                ({formatCurrency(extra.extra_price * extra.quantity)})
+                                                                ({formatMoney(extra.extra_price * extra.quantity)})
                                                             </span>
                                                         </div>
                                                     ))}
@@ -507,34 +505,34 @@ export default function ThemedGuestOrderTracking({
                         <CardContent className="space-y-3">
                             <div className="flex items-center justify-between text-sm">
                                 <span className="text-muted-foreground">{t("subtotal")}</span>
-                                <span className="font-medium">{formatCurrency(order.sub_total)}</span>
+                                <span className="font-medium">{formatMoney(order.sub_total)}</span>
                             </div>
 
                             {order.discount > 0 && (
-                                <div className="flex items-center justify-between text-sm text-green-600 dark:text-green-400">
+                                <div className="flex items-center justify-between text-sm text-emerald-600 dark:text-emerald-400">
                                     <span>{t("discount")}</span>
-                                    <span className="font-medium">- {formatCurrency(order.discount)}</span>
+                                    <span className="font-medium">- {formatMoney(order.discount)}</span>
                                 </div>
                             )}
 
                             {order.tax > 0 && (
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-muted-foreground">{t("tax")}</span>
-                                    <span className="font-medium">{formatCurrency(order.tax)}</span>
+                                    <span className="font-medium">{formatMoney(order.tax)}</span>
                                 </div>
                             )}
 
                             {order.service > 0 && (
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-muted-foreground">{t("serviceFee")}</span>
-                                    <span className="font-medium">{formatCurrency(order.service)}</span>
+                                    <span className="font-medium">{formatMoney(order.service)}</span>
                                 </div>
                             )}
 
                             <div className="flex items-center justify-between text-sm">
                                 <span className="text-muted-foreground">{t("deliveryFee")}</span>
                                 <span className="font-medium">
-                                    {order.delivery_fee > 0 ? formatCurrency(order.delivery_fee) : t("free")}
+                                    {order.delivery_fee > 0 ? formatMoney(order.delivery_fee) : t("free")}
                                 </span>
                             </div>
 
@@ -543,7 +541,7 @@ export default function ThemedGuestOrderTracking({
                             <div className="flex items-center justify-between">
                                 <span className="font-semibold text-lg">{t("total")}</span>
                                 <span className="font-bold text-2xl text-primary">
-                                    {formatCurrency(order.total)}
+                                    {formatMoney(order.total)}
                                 </span>
                             </div>
                         </CardContent>

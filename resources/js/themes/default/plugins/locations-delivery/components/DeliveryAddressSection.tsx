@@ -21,6 +21,7 @@ import { MapPin, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Address, Governorate } from "@/types";
 import DefaultLocationsDelivery from "@/plugins/locations-delivery/components/DefaultLocationsDelivery";
+import { useFormatMoney } from "@/lib/money";
 
 export interface DeliveryAddressSectionProps {
     addresses: Address[];
@@ -40,6 +41,7 @@ export default function DeliveryAddressSection({
     error,
 }: DeliveryAddressSectionProps) {
     const { t } = useTranslation();
+    const formatMoney = useFormatMoney();
     const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
 
     return (
@@ -59,7 +61,7 @@ export default function DeliveryAddressSection({
                         >
                             <DialogTrigger asChild>
                                 <Button variant="outline" size="sm">
-                                    <Plus className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                                    <Plus className="me-2 h-4 w-4" />
                                     {t("addNew")}
                                 </Button>
                             </DialogTrigger>
@@ -107,7 +109,7 @@ export default function DeliveryAddressSection({
                         {addresses.map((address) => (
                             <div
                                 key={address.id}
-                                className="flex items-start space-x-3 border rounded-lg p-3 hover:bg-accent/50 transition-colors"
+                                className="flex items-start gap-3 border border-border rounded-lg p-3 hover:bg-accent/50 transition-colors"
                             >
                                 <RadioGroupItem
                                     value={address.id.toString()}
@@ -141,7 +143,7 @@ export default function DeliveryAddressSection({
                                         <span className="text-xs font-medium text-primary">
                                             {t("deliveryFee")}:{" "}
                                             {address.area?.shipping_cost
-                                                ? `${address.area.shipping_cost.toFixed(2)} ${t("currency")}`
+                                                ? formatMoney(address.area.shipping_cost)
                                                 : t("free")}
                                         </span>
                                     </div>

@@ -14,8 +14,7 @@ export function OrderTimeline({
     orderType = "web_delivery",
     className,
 }: OrderTimelineProps) {
-    const { t, i18n } = useTranslation();
-    const isRTL = i18n.language === "ar";
+    const { t } = useTranslation();
 
     if (status === "cancelled") {
         return (
@@ -109,12 +108,9 @@ export function OrderTimeline({
             </div>
 
             {/* Connecting Progress Track */}
-            <div className="absolute top-7 left-0 right-0 h-0.5 bg-muted -z-10">
+            <div className="absolute top-7 inset-x-0 h-0.5 bg-muted -z-10">
                 <div
-                    className={cn(
-                        "h-full bg-primary transition-all",
-                        isRTL ? "mr-0 ml-auto" : "ml-0 mr-auto"
-                    )}
+                    className="h-full bg-primary transition-all ms-0 me-auto"
                     style={{ width: `${progressPercent}%` }}
                 />
             </div>

@@ -19,6 +19,7 @@ import {
 import { OrdersListSkeleton } from "@/components/ui/page-skeletons";
 import { useTranslation } from "react-i18next";
 import { useOrders } from "@/plugins/order-management";
+import { useFormatMoney } from "@/lib/money";
 import { getPaymentMethodLabel } from "@/lib/payment";
 import {
     OrderStatusBadge,
@@ -36,11 +37,7 @@ export default function ThemedOrdersList({ initialPage = 1 }: ThemedOrdersListPr
     const [page, setPage] = useState<number>(initialPage);
 
     const { data: paginatedOrders, isLoading, error } = useOrders({ page });
-
-    const formatCurrency = (amount: number | undefined) => {
-        const safeAmount = amount ?? 0;
-        return `${safeAmount.toFixed(2)} ${t("currency")}`;
-    };
+    const formatMoney = useFormatMoney();
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -198,7 +195,7 @@ export default function ThemedOrdersList({ initialPage = 1 }: ThemedOrdersListPr
                                                 )}
                                             </span>
                                             <span className="font-medium">
-                                                {formatCurrency(item.total)}
+                                                {formatMoney(item.total)}
                                             </span>
                                         </div>
                                     ))}
@@ -219,13 +216,13 @@ export default function ThemedOrdersList({ initialPage = 1 }: ThemedOrdersListPr
                                     {t("total")}
                                 </div>
                                 <div className="text-2xl font-bold text-primary" data-testid="order-total-display">
-                                    {formatCurrency(order.total)}
+                                    {formatMoney(order.total)}
                                 </div>
                             </div>
                             <Link to={`/orders/${order.id}`}>
                                 <Button variant="outline" data-testid="view-order-details-button">
                                     {t("viewDetails")}
-                                    <ArrowIcon className="ltr:ml-2 rtl:mr-2 h-4 w-4" />
+                                    <ArrowIcon className="ms-2 h-4 w-4" />
                                 </Button>
                             </Link>
                         </div>

@@ -30,32 +30,32 @@ export function getStatusIcon(status: string): React.ReactNode {
 export function getStatusColor(status: string): string {
     switch (status) {
         case "pending":
-            return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+            return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
         case "processing":
             return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
         case "out_for_delivery":
-            return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400";
+            return "bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400";
         case "delivered":
         case "completed":
-            return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+            return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400";
         case "cancelled":
-            return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+            return "bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive";
         default:
-            return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
+            return "bg-muted text-muted-foreground";
     }
 }
 
 export function getPaymentStatusColor(status: string): string {
     switch (status) {
         case "pending":
-            return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+            return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
         case "processing":
             return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
         case "completed":
-            return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+            return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400";
         case "failed":
-            return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+            return "bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive";
         default:
-            return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
+            return "bg-muted text-muted-foreground";
     }
 }

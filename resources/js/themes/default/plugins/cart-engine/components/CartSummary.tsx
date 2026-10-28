@@ -13,16 +13,20 @@ import { Separator } from "@/components/ui/separator";
 import { Package, ArrowRight, ArrowLeft } from "lucide-react";
 import { Cart as CartType } from "@/types";
 import { useTranslation } from "react-i18next";
+import { useCurrency, useFormatMoney } from "@/lib/money";
 
 interface CartSummaryProps {
     cart: CartType;
-    formatCurrency: (amount: number | undefined) => string;
+    formatCurrency?: (amount: number | string | null | undefined) => string;
 }
 
 export default function CartSummary({ cart, formatCurrency }: CartSummaryProps) {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === "ar";
     const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
+    const fallbackFormatMoney = useFormatMoney();
+    const format = formatCurrency ?? fallbackFormatMoney;
+    const currency = useCurrency();
 
     return (
         <Card className="sticky top-4">
@@ -36,7 +40,7 @@ export default function CartSummary({ cart, formatCurrency }: CartSummaryProps) 
                             {t("subtotal")}
                         </span>
                         <span data-testid="cart-subtotal" className="font-medium">
-                            {formatCurrency((cart as any).subtotal ?? cart.total)}
+                            {format((cart as any).subtotal ?? cart.total)}
                         </span>
                     </div>
 
@@ -51,7 +55,7 @@ export default function CartSummary({ cart, formatCurrency }: CartSummaryProps) 
                     <div className="flex items-center justify-between text-base font-semibold">
                         <span>{t("total")}</span>
                         <span className="text-xl font-bold text-primary">
-                            {formatCurrency(cart.total)}
+                            {format(cart.total)}
                         </span>
                     </div>
                 </div>
@@ -74,7 +78,7 @@ export default function CartSummary({ cart, formatCurrency }: CartSummaryProps) 
                                 })),
                                 content_type: "product",
                                 value: cart.total,
-                                currency: "EGP",
+                                currency,
                                 num_items: cart.items.length,
                             });
                         }}

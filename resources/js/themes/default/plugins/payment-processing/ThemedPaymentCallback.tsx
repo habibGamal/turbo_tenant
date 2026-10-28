@@ -34,11 +34,11 @@ export default function ThemedPaymentCallback() {
             <div className="flex flex-col items-center gap-6 text-center">
               {isSuccess ? (
                 <>
-                  <div className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                    <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
+                  <div className="w-24 h-24 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                    <CheckCircle className="w-12 h-12 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div className="space-y-2">
-                    <h1 className="text-3xl font-bold text-green-600 dark:text-green-400">
+                    <h1 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                       {t("paymentSuccessful", "Payment Successful")}
                     </h1>
                     <p className="text-muted-foreground text-lg">{displayMessage}</p>
@@ -66,11 +66,11 @@ export default function ThemedPaymentCallback() {
                 </>
               ) : isProcessing ? (
                 <>
-                  <div className="w-24 h-24 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                    <Clock className="w-12 h-12 text-blue-600 dark:text-blue-400" />
+                  <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Clock className="w-12 h-12 text-primary" />
                   </div>
                   <div className="space-y-2">
-                    <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                    <h1 className="text-3xl font-bold text-primary">
                       {t("paymentProcessing", "Payment Processing")}
                     </h1>
                     <p className="text-muted-foreground text-lg">{displayMessage}</p>
@@ -98,11 +98,11 @@ export default function ThemedPaymentCallback() {
                 </>
               ) : (
                 <>
-                  <div className="w-24 h-24 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                    <XCircle className="w-12 h-12 text-red-600 dark:text-red-400" />
+                  <div className="w-24 h-24 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <XCircle className="w-12 h-12 text-destructive" />
                   </div>
                   <div className="space-y-2">
-                    <h1 className="text-3xl font-bold text-red-600 dark:text-red-400">
+                    <h1 className="text-3xl font-bold text-destructive">
                       {t("paymentFailed", "Payment Failed")}
                     </h1>
                     <p className="text-muted-foreground text-lg">{displayMessage}</p>

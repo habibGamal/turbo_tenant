@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Minus, Plus, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CartItem as CartItemType } from "@/types";
+import { useFormatMoney } from "@/lib/money";
 
 interface CartItemProps {
     item: CartItemType;
@@ -23,7 +24,7 @@ interface CartItemProps {
     onIncrement: () => void;
     onDecrement: () => void;
     onWeightChange: (value: string) => void;
-    formatCurrency: (amount: number) => string;
+    formatCurrency?: (amount: number | string | null | undefined) => string;
 }
 
 export default function CartItem({
@@ -36,6 +37,8 @@ export default function CartItem({
     formatCurrency,
 }: CartItemProps) {
     const { t, i18n } = useTranslation();
+    const fallbackFormatMoney = useFormatMoney();
+    const format = formatCurrency ?? fallbackFormatMoney;
 
     const getText = (text: string, textAr?: string) => {
         return i18n.language === "ar" && textAr ? textAr : text;
@@ -73,7 +76,7 @@ export default function CartItem({
                                 {getText(item.product.name, item.product.name_ar)}
                             </Link>
                             <p data-testid="cart-item-price" className="text-sm font-medium text-primary">
-                                {formatCurrency(item.price)}
+                                {format(item.price)}
                             </p>
                         </div>
                         <Button
@@ -178,7 +181,7 @@ export default function CartItem({
 
                 {/* Quantity Controls and Total */}
                 <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center gap-1 border rounded-md p-1">
+                    <div className="flex items-center gap-1 border border-border rounded-md p-1">
                         <Button
                             data-testid="cart-qty-decrement"
                             variant="ghost"
@@ -210,9 +213,9 @@ export default function CartItem({
                             <Plus className="h-3 w-3" />
                         </Button>
                     </div>
-                    <div className="text-right">
+                    <div className="text-end">
                         <span className="text-sm font-semibold">
-                            {formatCurrency((item as any).total ?? item.subtotal)}
+                            {format((item as any).total ?? item.subtotal)}
                         </span>
                     </div>
                 </div>

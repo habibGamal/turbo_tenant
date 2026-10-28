@@ -5,6 +5,7 @@ import { ImageWithFallback } from "@/components/ui/image";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Cart } from "@/types";
+import { useFormatMoney } from "@/lib/money";
 
 interface AppliedCoupon {
     id: number;
@@ -44,13 +45,10 @@ export default function OrderSummary({
 }: OrderSummaryProps) {
     const { t, i18n } = useTranslation();
 
+    const formatMoney = useFormatMoney();
+
     const getText = (text: string, textAr?: string) => {
         return i18n.language === 'ar' && textAr ? textAr : text;
-    };
-
-    const formatCurrency = (amount: number | undefined) => {
-        const safeAmount = amount ?? 0;
-        return `${safeAmount.toFixed(2)} ${t("currency")}`;
     };
 
     return (
@@ -89,7 +87,7 @@ export default function OrderSummary({
                                         )}
                                     </div>
                                     <div className="text-xs font-semibold text-primary shrink-0">
-                                        {formatCurrency(item.price)}
+                                        {formatMoney(item.price)}
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 mt-0.5">
@@ -111,7 +109,7 @@ export default function OrderSummary({
                                     </div>
                                 )}
                                 <div className="text-sm font-semibold text-primary mt-1">
-                                    {formatCurrency(item.subtotal)}
+                                    {formatMoney(item.subtotal)}
                                 </div>
                             </div>
                         </div>
@@ -126,17 +124,17 @@ export default function OrderSummary({
                             {t("subtotal")}
                         </span>
                         <span className="font-medium">
-                            {formatCurrency(cart?.total)}
+                            {formatMoney(cart?.total)}
                         </span>
                     </div>
 
                     {appliedCoupon && (
-                        <div className="flex items-center justify-between text-sm text-green-600">
+                        <div className="flex items-center justify-between text-sm text-emerald-600 dark:text-emerald-400">
                             <span>
                                 {t("discount")} ({appliedCoupon.code})
                             </span>
                             <span className="font-medium">
-                                - {formatCurrency(appliedCoupon.discount)}
+                                - {formatMoney(appliedCoupon.discount)}
                             </span>
                         </div>
                     )}
@@ -144,7 +142,7 @@ export default function OrderSummary({
                     {tax > 0 && (
                         <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">{t("tax")}</span>
-                            <span className="font-medium">{formatCurrency(tax)}</span>
+                            <span className="font-medium">{formatMoney(tax)}</span>
                         </div>
                     )}
 
@@ -154,7 +152,7 @@ export default function OrderSummary({
                                 {t("codFees")}
                             </span>
                             <span className="font-medium">
-                                {formatCurrency(service)}
+                                {formatMoney(service)}
                             </span>
                         </div>
                     )}
@@ -168,7 +166,7 @@ export default function OrderSummary({
                                 {!hasAddressSelected
                                     ? t("selectAddress", t("selectAddressToSeeFee", "اختر العنوان"))
                                     : deliveryFee > 0
-                                        ? formatCurrency(deliveryFee)
+                                        ? formatMoney(deliveryFee)
                                         : t("free")}
                             </span>
                         </div>
@@ -179,7 +177,7 @@ export default function OrderSummary({
                     <div className="flex items-center justify-between">
                         <span className="font-semibold text-lg">{t("total")}</span>
                         <span className="font-bold text-2xl text-primary">
-                            {formatCurrency(totalAmount)}
+                            {formatMoney(totalAmount)}
                         </span>
                     </div>
                 </div>
@@ -193,7 +191,7 @@ export default function OrderSummary({
                 >
                     {isSubmitting ? (
                         <>
-                            <Loader2 className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="me-2 h-4 w-4 animate-spin" />
                             {t("placingOrder")}
                         </>
                     ) : (
@@ -204,12 +202,12 @@ export default function OrderSummary({
 
             {/* Mobile Sticky Bottom Bar: below md it sits above MobileBottomNav (4.5rem), the spacer keeps the page end visible */}
             <div className="lg:hidden h-24" aria-hidden="true" />
-            <div className="lg:hidden fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-t border-border p-4 shadow-lg md:pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            <div className="lg:hidden fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-t border-border p-4 shadow-lg md:pb-[calc(1rem+env(safe-area-inset-bottom))]">
                 <div className="flex items-center justify-between gap-4 container mx-auto">
                     <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">{t("total")}</span>
                         <span className="text-lg font-bold text-primary">
-                            {formatCurrency(totalAmount)}
+                            {formatMoney(totalAmount)}
                         </span>
                     </div>
                     <Button
@@ -221,7 +219,7 @@ export default function OrderSummary({
                     >
                         {isSubmitting ? (
                             <>
-                                <Loader2 className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
+                                <Loader2 className="me-2 h-4 w-4 animate-spin" />
                                 {t("placingOrder")}
                             </>
                         ) : (

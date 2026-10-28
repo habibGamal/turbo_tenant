@@ -3,6 +3,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CreditCard, DollarSign, LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useFormatMoney } from "@/lib/money";
 
 interface PaymentMethod {
     value: string;
@@ -25,6 +26,7 @@ export default function PaymentMethodSelection({
 }: PaymentMethodSelectionProps) {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === "ar";
+    const formatMoney = useFormatMoney();
 
     const paymentMethods: PaymentMethod[] = [
         { value: "cod", label: t("cashOnDelivery"), icon: DollarSign },
@@ -53,7 +55,7 @@ export default function PaymentMethodSelection({
                         return (
                             <div
                                 key={method.value}
-                                className="flex items-center space-x-3"
+                                className="flex items-center gap-3"
                             >
                                 <RadioGroupItem
                                     value={method.value}
@@ -69,7 +71,7 @@ export default function PaymentMethodSelection({
                                     </div>
                                     {method.value === "cod" && codFee !== undefined && codFee > 0 && (
                                         <span className="text-xs font-medium text-muted-foreground">
-                                            +{codFee.toFixed(2)} {t("currency")}
+                                            +{formatMoney(codFee)}
                                         </span>
                                     )}
                                 </Label>

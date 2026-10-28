@@ -24,7 +24,7 @@ export default function OrderTypeSelection({ value, onChange }: OrderTypeSelecti
                     className="space-y-3"
                     dir={isRTL ? "rtl" : "ltr"}
                 >
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-2">
                         <RadioGroupItem
                             value="web_delivery"
                             id="delivery"
@@ -37,7 +37,7 @@ export default function OrderTypeSelection({ value, onChange }: OrderTypeSelecti
                             {t("delivery")}
                         </Label>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-2">
                         <RadioGroupItem
                             value="web_takeaway"
                             id="takeaway"

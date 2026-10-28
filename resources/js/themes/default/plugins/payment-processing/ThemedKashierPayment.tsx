@@ -5,10 +5,12 @@ import { CreditCard, Shield, Info } from 'lucide-react';
 import { PageTransition } from '@/components/PageTransition';
 import { PaymentGatewaySkeleton } from '@/components/ui/page-skeletons';
 import { useKashierConfig } from '@/plugins/payment-processing/api/useKashierConfig';
+import { useFormatMoney } from '@/lib/money';
 
 export default function ThemedKashierPayment() {
   const { id } = useParams<{ id: string }>();
   const { data, isLoading, error } = useKashierConfig(id);
+  const formatMoney = useFormatMoney();
   const iframeLoaded = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -68,26 +70,26 @@ export default function ThemedKashierPayment() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-8 px-4">
+      <div className="min-h-screen bg-background py-8 px-4">
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="text-center space-y-2">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
               <CreditCard className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Complete Your Payment</h1>
-            <p className="text-gray-600 dark:text-gray-400">Order #{order.order_number}</p>
+            <h1 className="text-2xl font-bold text-foreground">Complete Your Payment</h1>
+            <p className="text-muted-foreground">Order #{order.order_number}</p>
           </div>
 
-          <Card className="p-6 shadow-lg border-0 bg-white dark:bg-gray-800">
+          <Card className="p-6 shadow-sm border border-border bg-card">
             <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Amount to Pay</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {kashierParams.amount} {kashierParams.currency}
+                  <p className="text-sm text-muted-foreground">Amount to Pay</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {formatMoney(kashierParams.amount)}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 text-green-600">
+                <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                   <Shield className="h-5 w-5" />
                   <span className="text-sm font-medium">Secure</span>
                 </div>
@@ -97,11 +99,11 @@ export default function ThemedKashierPayment() {
             </div>
           </Card>
 
-          <div className="flex gap-3 p-4 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-            <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+          <div className="flex gap-3 p-4 rounded-lg border border-border bg-muted/40">
+            <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-blue-800 dark:text-blue-300">Having trouble with payment?</p>
-              <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
+              <p className="font-medium text-foreground">Having trouble with payment?</p>
+              <p className="text-sm text-muted-foreground mt-1">
                 If the payment form does not appear, please try refreshing this page or contact support.
               </p>
             </div>

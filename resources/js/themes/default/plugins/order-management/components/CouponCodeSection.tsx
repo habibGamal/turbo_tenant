@@ -119,7 +119,7 @@ export default function CouponCodeSection({
                         <p className="text-sm text-destructive">{couponError}</p>
                     )}
                     {couponSuccess && (
-                        <p className="text-sm text-green-600">{couponSuccess}</p>
+                        <p className="text-sm text-emerald-600 dark:text-emerald-400">{couponSuccess}</p>
                     )}
                 </div>
             </CardContent>
