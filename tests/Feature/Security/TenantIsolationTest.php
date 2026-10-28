@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
+#[\PHPUnit\Framework\Attributes\Group('security')]
 final class TenantIsolationTest extends TestCase
 {
     private Tenant $tenantA;

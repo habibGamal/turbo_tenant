@@ -13,6 +13,7 @@ use App\Plugins\OrderManagement\src\Models\Order;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+#[\PHPUnit\Framework\Attributes\Group('security')]
 final class PaymentCallbackSecurityTest extends TestCase
 {
     use RefreshDatabase;

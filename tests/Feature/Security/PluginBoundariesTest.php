@@ -34,6 +34,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Livewire\Livewire;
 use Tests\TestCase;
 
+#[\PHPUnit\Framework\Attributes\Group('security')]
 final class PluginBoundariesTest extends TestCase
 {
     public function test_with_guest_checkout_inactive_order_update_mail_can_be_built_and_rendered(): void

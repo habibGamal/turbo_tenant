@@ -17,6 +17,7 @@ use App\Plugins\PaymentProcessing\src\Services\PaymobService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+#[\PHPUnit\Framework\Attributes\Group('security')]
 final class PaymentWebhookSecurityTest extends TestCase
 {
     use RefreshDatabase;

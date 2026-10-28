@@ -10,6 +10,7 @@ use App\Support\Network\PublicEndpointGuard;
 use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
+#[\PHPUnit\Framework\Attributes\Group('security')]
 final class PublicEndpointGuardTest extends TestCase
 {
     private PublicEndpointGuard $guard;

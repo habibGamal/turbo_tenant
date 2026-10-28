@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 use Tests\TestCase;
 
+#[\PHPUnit\Framework\Attributes\Group('security')]
 final class OrderStatusIntegrationSecurityTest extends TestCase
 {
     private SettingService $settingService;
