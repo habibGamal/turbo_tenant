@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Plugins\OrderManagement\src\Models;
 
 use App\Enums\OrderStatus;
+use App\Enums\OrderType;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\User;
@@ -127,6 +128,7 @@ final class Order extends Model
     {
         return [
             'status' => OrderStatus::class,
+            'type' => OrderType::class,
             'payment_status' => PaymentStatus::class,
             'payment_method' => PaymentMethod::class,
             'pos_status' => class_exists(OrderPosStatus::class) ? OrderPosStatus::class : 'string',

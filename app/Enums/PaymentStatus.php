@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum PaymentStatus: string
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasIcon;
+use Filament\Support\Contracts\HasLabel;
+
+enum PaymentStatus: string implements HasColor, HasIcon, HasLabel
 {
     case PENDING = 'pending';
     case PROCESSING = 'processing';
@@ -12,15 +16,42 @@ enum PaymentStatus: string
     case FAILED = 'failed';
     case REFUNDED = 'refunded';
 
-    public function label(): string
+    public function getLabel(): ?string
     {
         return match ($this) {
-            self::PENDING => 'Pending',
-            self::PROCESSING => 'Processing',
-            self::COMPLETED => 'Completed',
-            self::FAILED => 'Failed',
-            self::REFUNDED => 'Refunded',
+            self::PENDING => 'قيد الانتظار',
+            self::PROCESSING => 'قيد المعالجة',
+            self::COMPLETED => 'مكتمل (مدفوع)',
+            self::FAILED => 'فشل الدفع',
+            self::REFUNDED => 'مسترجع',
         };
+    }
+
+    public function getColor(): string|array|null
+    {
+        return match ($this) {
+            self::PENDING => 'gray',
+            self::PROCESSING => 'warning',
+            self::COMPLETED => 'success',
+            self::FAILED => 'danger',
+            self::REFUNDED => 'info',
+        };
+    }
+
+    public function getIcon(): ?string
+    {
+        return match ($this) {
+            self::PENDING => 'heroicon-o-clock',
+            self::PROCESSING => 'heroicon-o-arrow-path',
+            self::COMPLETED => 'heroicon-o-check-circle',
+            self::FAILED => 'heroicon-o-x-circle',
+            self::REFUNDED => 'heroicon-o-arrow-uturn-left',
+        };
+    }
+
+    public function label(): string
+    {
+        return $this->getLabel() ?? $this->value;
     }
 
     public function isSuccessful(): bool

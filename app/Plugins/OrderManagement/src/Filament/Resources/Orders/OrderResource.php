@@ -16,6 +16,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
+use UnitEnum;
 
 final class OrderResource extends Resource
 {
@@ -25,11 +27,34 @@ final class OrderResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingCart;
 
+    protected static UnitEnum|string|null $navigationGroup = 'إدارة المبيعات';
+
     protected static ?string $navigationLabel = 'الطلبات';
+
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $modelLabel = 'طلب';
 
     protected static ?string $pluralModelLabel = 'الطلبات';
+
+    protected static ?string $recordTitleAttribute = 'order_number';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return [
+            'order_number',
+            'customer_phone',
+        ];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        /** @var Order $record */
+        return array_filter([
+            'العميل' => $record->getCustomerName(),
+            'الهاتف' => $record->getCustomerPhone(),
+        ]);
+    }
 
     public static function form(Schema $schema): Schema
     {

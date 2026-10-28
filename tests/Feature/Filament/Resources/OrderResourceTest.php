@@ -144,8 +144,9 @@ it('can render the view page with all order details and translated resend to pos
         ->assertSee('MRC-1001')
         ->assertSee('TXN-2001')
         ->assertSee('PMB-3001')
-        ->assertSee('completed')
-        ->assertSee('card')
+        // Payment enums render their Arabic labels
+        ->assertSee('مكتمل (مدفوع)')
+        ->assertSee('بطاقة ائتمانية / بنكية')
         ->assertSee('{"gateway":"paymob","rrn":"123456"}')
         ->assertSee('Temporary POS timeout')
         ->assertSee('Signature Burger')
