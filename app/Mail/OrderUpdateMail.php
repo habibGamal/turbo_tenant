@@ -20,7 +20,12 @@ final class OrderUpdateMail extends Mailable
      */
     public function __construct(public Order $order)
     {
-        $this->order->load(['items.product', 'items.variant', 'address', 'user', 'guestUser']);
+        $relations = array_merge(
+            ['items.product', 'items.variant', 'address'],
+            Order::customerRelations()
+        );
+
+        $this->order->load($relations);
     }
 
     /**

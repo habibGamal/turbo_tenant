@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace App\Plugins\GuestCheckout;
 
 use App\Plugins\GuestCheckout\src\Models\GuestUser;
-use App\Plugins\GuestCheckout\src\Pipelines\Pipes\GuestCheckoutPermissionPipe;
 use App\Plugins\GuestCheckout\src\Services\GuestUserService;
 use App\Plugins\OrderManagement\src\Models\Order;
-use App\Plugins\OrderManagement\src\Pipelines\OrderPipelineRegistry;
 use Illuminate\Support\ServiceProvider;
 
 final class GuestCheckoutServiceProvider extends ServiceProvider
@@ -21,14 +19,18 @@ final class GuestCheckoutServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // 1. Dynamic relationship on Order model
-        Order::resolveRelationUsing('guestUser', function (Order $order) {
-            return $order->belongsTo(GuestUser::class, 'guest_user_id');
-        });
+        $this->registerRelations();
 
         // 2. Load plugin routes
         if (file_exists(__DIR__.'/routes/tenant.php')) {
             $this->loadRoutesFrom(__DIR__.'/routes/tenant.php');
         }
+    }
+
+    private function registerRelations(): void
+    {
+        Order::resolveRelationUsing('guestUser', function (Order $order) {
+            return $order->belongsTo(GuestUser::class, 'guest_user_id');
+        });
     }
 }

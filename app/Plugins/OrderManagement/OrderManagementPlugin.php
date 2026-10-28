@@ -20,10 +20,6 @@ final class OrderManagementPlugin extends AbstractTenantPlugin
 {
     public function bootForTenant(Tenant $tenant): void
     {
-        \App\Models\User::resolveRelationUsing('orders', function (\App\Models\User $user) {
-            return $user->hasMany(\App\Plugins\OrderManagement\src\Models\Order::class);
-        });
-
         $registry = app(OrderPipelineRegistry::class);
 
         // Register core validation pipes
@@ -39,15 +35,9 @@ final class OrderManagementPlugin extends AbstractTenantPlugin
         $registry->registerPricingPipe(CalculateDeliveryFeePipe::class, 500);
     }
 
-    public function onActivate(Tenant $tenant): void
-    {
-    }
+    public function onActivate(Tenant $tenant): void {}
 
-    public function onDeactivate(Tenant $tenant): void
-    {
-    }
+    public function onDeactivate(Tenant $tenant): void {}
 
-    public function onUninstall(Tenant $tenant): void
-    {
-    }
+    public function onUninstall(Tenant $tenant): void {}
 }

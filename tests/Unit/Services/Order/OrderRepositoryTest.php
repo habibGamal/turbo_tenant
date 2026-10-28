@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Order;
 
-use App\Plugins\OrderManagement\src\DTOs\OrderTotals;
-use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
-use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
+use App\Core\Plugins\Services\PluginManager;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
-use App\Plugins\LocationsDelivery\src\Models\Branch;
-use App\Plugins\OrderManagement\src\Models\Order;
-use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Models\User;
 use App\Plugins\CartEngine\src\Services\CartService;
+use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\OrderManagement\src\DTOs\OrderTotals;
+use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
+use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Services\Repositories\OrderRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -33,8 +34,11 @@ final class OrderRepositoryTest extends TestCase
     {
         parent::setUp();
 
-        $this->repository = app(OrderRepository::class);
         $this->cartService = app(CartService::class);
+        $this->repository = new OrderRepository(
+            $this->cartService,
+            app(PluginManager::class)
+        );
         $this->branch = Branch::factory()->create();
     }
 

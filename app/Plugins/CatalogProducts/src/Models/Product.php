@@ -55,34 +55,12 @@ final class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
-    public function posMappings(): HasMany
-    {
-        return $this->hasMany(\App\Plugins\PosIntegration\src\Models\ProductPosMapping::class);
-    }
-
     public function sections(): BelongsToMany
     {
         return $this->belongsToMany(Section::class, 'section_products')
             ->withPivot('sort_order')
             ->withTimestamps()
             ->orderBy('sort_order');
-    }
-
-    public function orderItems(): HasMany
-    {
-        return $this->hasMany(\App\Plugins\OrderManagement\src\Models\OrderItem::class);
-    }
-
-    public function packages(): BelongsToMany
-    {
-        return $this->belongsToMany(\App\Plugins\ComboPackages\src\Models\Package::class, 'package_product')
-            ->withPivot('quantity')
-            ->withTimestamps();
-    }
-
-    public function reviews(): HasMany
-    {
-        return $this->hasMany(\App\Plugins\ProductReviews\src\Models\Review::class);
     }
 
     public function getPriceAttribute()

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\CatalogProducts\src\Http\Controllers\Api;
 
+use App\Core\Plugins\Services\PluginManager;
 use App\Http\Controllers\Controller;
 use App\Plugins\CatalogProducts\src\Models\Product;
 use Illuminate\Http\JsonResponse;
@@ -11,6 +12,10 @@ use Illuminate\Http\Request;
 
 final class ProductController extends Controller
 {
+    public function __construct(
+        private readonly PluginManager $pluginManager
+    ) {}
+
     public function show(Product $product): JsonResponse
     {
         // Load product with all relationships
@@ -27,21 +32,17 @@ final class ProductController extends Controller
             },
         ]);
 
-        $reviews = $product->reviews()
-            ->with('user:id,name')
-            ->latest()
-            ->get()
-            ->map(function ($review) {
-                return [
-                    'id' => $review->id,
-                    'user_name' => $review->user->name,
-                    'rating' => $review->rating,
-                    'comment' => $review->comment,
-                    'images' => $review->images,
-                    'created_at' => $review->created_at->toISOString(),
-                ];
-            });
-
+        $reviewsCount = 0;
+        $rating = 0.0;
+        if ($this->pluginManager->isPluginActive('product-reviews')) {
+            $approvedReviews = $product->reviews()
+                ->where('is_approved', true)
+                ->where('is_published', true);
+            $reviewsCount = $approvedReviews->count();
+            if ($reviewsCount > 0) {
+                $rating = round((float) $approvedReviews->avg('rating'), 1);
+            }
+        }
         $productData = [
             'id' => $product->id,
             'name' => $product->name,
@@ -79,13 +80,12 @@ final class ProductController extends Controller
                 'unit' => $product->weightOption->unit,
                 'values' => $product->weightOption->values,
             ] : null,
-            'rating' => $reviews->avg('rating') ?? 0,
-            'reviewsCount' => $reviews->count(),
+            'rating' => $rating,
+            'reviewsCount' => $reviewsCount,
         ];
 
         return response()->json([
             'product' => $productData,
-            'reviews' => $reviews,
         ]);
     }
 

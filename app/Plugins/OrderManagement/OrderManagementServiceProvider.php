@@ -52,6 +52,17 @@ final class OrderManagementServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->registerRelations();
+
+        Event::listen(OrderCreated::class, NotifyAdminsOfNewOrder::class);
+
+        if (file_exists(__DIR__.'/routes/tenant.php')) {
+            $this->loadRoutesFrom(__DIR__.'/routes/tenant.php');
+        }
+    }
+
+    private function registerRelations(): void
+    {
         \App\Models\User::resolveRelationUsing('orders', function (\App\Models\User $user) {
             return $user->hasMany(src\Models\Order::class);
         });
@@ -64,10 +75,12 @@ final class OrderManagementServiceProvider extends ServiceProvider
             return $branch->hasMany(src\Models\Order::class);
         });
 
-        Event::listen(OrderCreated::class, NotifyAdminsOfNewOrder::class);
+        \App\Plugins\CatalogProducts\src\Models\Product::resolveRelationUsing('orderItems', function (\App\Plugins\CatalogProducts\src\Models\Product $product) {
+            return $product->hasMany(src\Models\OrderItem::class);
+        });
 
-        if (file_exists(__DIR__.'/routes/tenant.php')) {
-            $this->loadRoutesFrom(__DIR__.'/routes/tenant.php');
-        }
+        \App\Plugins\CatalogProducts\src\Models\ProductVariant::resolveRelationUsing('orderItems', function (\App\Plugins\CatalogProducts\src\Models\ProductVariant $variant) {
+            return $variant->hasMany(src\Models\OrderItem::class, 'variant_id');
+        });
     }
 }

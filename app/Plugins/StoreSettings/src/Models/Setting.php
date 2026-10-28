@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Plugins\StoreSettings\src\Models;
 
-use App\Enums\SettingKey;
 use Illuminate\Database\Eloquent\Model;
 
 final class Setting extends Model
@@ -17,7 +16,7 @@ final class Setting extends Model
     protected function casts(): array
     {
         return [
-            'key' => SettingKey::class,
+            'key' => 'string',
         ];
     }
 }

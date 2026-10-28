@@ -26,8 +26,19 @@ final class ComboPackagesServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->registerRelations();
+
         if (file_exists(__DIR__.'/routes/tenant.php')) {
             $this->loadRoutesFrom(__DIR__.'/routes/tenant.php');
         }
+    }
+
+    private function registerRelations(): void
+    {
+        \App\Plugins\CatalogProducts\src\Models\Product::resolveRelationUsing('packages', function (\App\Plugins\CatalogProducts\src\Models\Product $product) {
+            return $product->belongsToMany(src\Models\Package::class, 'package_product')
+                ->withPivot('quantity')
+                ->withTimestamps();
+        });
     }
 }

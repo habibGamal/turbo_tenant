@@ -96,14 +96,21 @@ it('loads product with extra options and items via REST API', function () {
     expect($response->json('data.extra_option.items'))->toHaveCount(2);
 });
 
-it('displays reviews for the product via REST API', function () {
+it('displays reviews count and rating for the product via REST API', function () {
     $category = Category::factory()->create();
     $product = Product::factory()->create(['category_id' => $category->id, 'is_active' => true]);
 
     $response = $this->getJson(route('api.catalog-products.show', $product->id));
 
     $response->assertSuccessful()
-        ->assertJsonStructure(['status', 'reviews']);
+        ->assertJsonStructure([
+            'status',
+            'data' => [
+                'rating',
+                'reviews_count',
+            ],
+        ])
+        ->assertJsonMissing(['reviews']);
 });
 
 it('loads related products from the same category via REST API', function () {

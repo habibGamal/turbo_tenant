@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Models;
 
+use App\Core\Plugins\Services\PluginManager;
 use App\Enums\OrderStatus;
 use App\Enums\OrderType;
 use App\Enums\PaymentMethod;
@@ -52,6 +53,16 @@ final class Order extends Model
         'pos_failure_reason',
     ];
 
+    /**
+     * @return array<int, string>
+     */
+    public static function customerRelations(): array
+    {
+        return self::guestCheckoutActive()
+            ? ['user', 'guestUser']
+            : ['user'];
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -85,7 +96,9 @@ final class Order extends Model
      */
     public function getCustomerName(): string
     {
-        return $this->customer_name ?? $this->user?->name ?? $this->guestUser?->name ?? 'Unknown';
+        $guestName = self::guestCheckoutActive() ? $this->guestUser?->name : null;
+
+        return $this->customer_name ?? $this->user?->name ?? $guestName ?? 'Unknown';
     }
 
     /**
@@ -93,7 +106,9 @@ final class Order extends Model
      */
     public function getCustomerPhone(): ?string
     {
-        return $this->customer_phone ?? $this->user?->phone ?? $this->guestUser?->phone;
+        $guestPhone = self::guestCheckoutActive() ? $this->guestUser?->phone : null;
+
+        return $this->customer_phone ?? $this->user?->phone ?? $guestPhone;
     }
 
     /**
@@ -101,7 +116,9 @@ final class Order extends Model
      */
     public function getCustomerEmail(): ?string
     {
-        return $this->user?->email ?? $this->guestUser?->email;
+        $guestEmail = self::guestCheckoutActive() ? $this->guestUser?->email : null;
+
+        return $this->user?->email ?? $guestEmail;
     }
 
     protected static function newFactory()
@@ -141,5 +158,10 @@ final class Order extends Model
             'discount' => 'float',
             'total' => 'float',
         ];
+    }
+
+    private static function guestCheckoutActive(): bool
+    {
+        return app(PluginManager::class)->isPluginActive('guest-checkout');
     }
 }

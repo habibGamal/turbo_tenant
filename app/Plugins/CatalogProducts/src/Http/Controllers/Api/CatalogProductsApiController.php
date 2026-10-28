@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\CatalogProducts\src\Http\Controllers\Api;
 
+use App\Core\Plugins\Services\PluginManager;
 use App\Http\Controllers\Controller;
 use App\Plugins\CatalogProducts\src\Models\Category;
 use App\Plugins\CatalogProducts\src\Models\Product;
@@ -13,6 +14,10 @@ use Illuminate\Http\Request;
 
 final class CatalogProductsApiController extends Controller
 {
+    public function __construct(
+        private readonly PluginManager $pluginManager
+    ) {}
+
     /**
      * Display a listing of products with filtering, search, and pagination.
      */
@@ -137,24 +142,17 @@ final class CatalogProductsApiController extends Controller
             ], 404);
         }
 
-        // Reviews calculation if model relationship exists
-        $reviews = collect();
-        if (method_exists($product, 'reviews')) {
-            $reviews = $product->reviews()
-                ->with('user:id,name')
-                ->latest()
-                ->limit(10)
-                ->get()
-                ->map(function ($review) {
-                    return [
-                        'id' => $review->id,
-                        'user_name' => $review->user?->name ?? 'Customer',
-                        'rating' => $review->rating,
-                        'comment' => $review->comment,
-                        'images' => $review->images,
-                        'created_at' => $review->created_at?->toISOString(),
-                    ];
-                });
+        // Reviews calculation if product-reviews plugin is active
+        $reviewsCount = 0;
+        $rating = 4.5;
+        if ($this->pluginManager->isPluginActive('product-reviews')) {
+            $approvedReviews = $product->reviews()
+                ->where('is_approved', true)
+                ->where('is_published', true);
+            $reviewsCount = $approvedReviews->count();
+            if ($reviewsCount > 0) {
+                $rating = round((float) $approvedReviews->avg('rating'), 1);
+            }
         }
 
         // Related products in same category
@@ -234,15 +232,14 @@ final class CatalogProductsApiController extends Controller
                     'sort_order' => $val->sort_order,
                 ]),
             ] : null,
-            'rating' => $reviews->isNotEmpty() ? round((float) $reviews->avg('rating'), 1) : 4.5,
-            'reviews_count' => $reviews->count(),
+            'rating' => $rating,
+            'reviews_count' => $reviewsCount,
         ];
 
         return response()->json([
             'status' => 'success',
             'data' => $productData,
             'product' => $productData,
-            'reviews' => $reviews,
             'related_products' => $relatedProducts,
             'promotional_products' => $promotionalProducts,
         ]);

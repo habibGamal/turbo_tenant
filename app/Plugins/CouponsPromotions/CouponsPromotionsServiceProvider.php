@@ -7,12 +7,9 @@ namespace App\Plugins\CouponsPromotions;
 use App\Plugins\CouponsPromotions\src\DTOs\CouponsPromotionsConfig;
 use App\Plugins\CouponsPromotions\src\Listeners\RecordCouponUsageListener;
 use App\Plugins\CouponsPromotions\src\Models\Coupon;
-use App\Plugins\CouponsPromotions\src\Pipelines\Pipes\ApplyCouponDiscountPipe;
-use App\Plugins\CouponsPromotions\src\Pipelines\Pipes\ValidateCouponPipe;
 use App\Plugins\CouponsPromotions\src\Services\CouponService;
 use App\Plugins\OrderManagement\src\Events\OrderCreated;
 use App\Plugins\OrderManagement\src\Models\Order;
-use App\Plugins\OrderManagement\src\Pipelines\OrderPipelineRegistry;
 use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -34,10 +31,7 @@ final class CouponsPromotionsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // 1. Dynamic relationship on Order model
-        Order::resolveRelationUsing('coupon', function (Order $order) {
-            return $order->belongsTo(Coupon::class, 'coupon_id');
-        });
+        $this->registerRelations();
 
         // 2. Listen to OrderCreated event
         Event::listen(OrderCreated::class, RecordCouponUsageListener::class);
@@ -46,5 +40,13 @@ final class CouponsPromotionsServiceProvider extends ServiceProvider
         if (file_exists(__DIR__.'/routes/tenant.php')) {
             $this->loadRoutesFrom(__DIR__.'/routes/tenant.php');
         }
+    }
+
+    private function registerRelations(): void
+    {
+        // 1. Dynamic relationship on Order model
+        Order::resolveRelationUsing('coupon', function (Order $order) {
+            return $order->belongsTo(Coupon::class, 'coupon_id');
+        });
     }
 }

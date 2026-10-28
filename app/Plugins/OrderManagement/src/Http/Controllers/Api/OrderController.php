@@ -24,6 +24,12 @@ use Illuminate\Validation\Rule;
 
 final class OrderController extends Controller
 {
+    public const int DEFAULT_PER_PAGE = 10;
+
+    public const int MIN_PER_PAGE = 1;
+
+    public const int MAX_PER_PAGE = 50;
+
     public function __construct(
         protected readonly PlaceOrderServiceInterface $placeOrderService,
         protected readonly CartService $cartService
@@ -43,7 +49,9 @@ final class OrderController extends Controller
             ], 401);
         }
 
-        $perPage = (int) $request->input('per_page', 10);
+        $rawPerPage = $request->input('per_page', self::DEFAULT_PER_PAGE);
+        $perPage = is_numeric($rawPerPage) ? (int) $rawPerPage : self::DEFAULT_PER_PAGE;
+        $perPage = max(self::MIN_PER_PAGE, min($perPage, self::MAX_PER_PAGE));
         $orders = Order::with(['items.product.weightOption', 'items.weightOptionValue', 'branch', 'address'])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')

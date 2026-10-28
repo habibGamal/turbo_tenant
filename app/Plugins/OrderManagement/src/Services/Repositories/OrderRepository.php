@@ -4,24 +4,26 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Services\Repositories;
 
+use App\Core\Plugins\Services\PluginManager;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Plugins\CartEngine\src\Services\CartService;
 use App\Plugins\OrderManagement\src\DTOs\OrderTotals;
 use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
+use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
 use App\Plugins\OrderManagement\src\Models\OrderItemExtra;
 use App\Plugins\OrderManagement\src\Pipelines\Context\OrderValidationContext;
 use App\Plugins\OrderManagement\src\Services\Contracts\OrderRepositoryInterface;
-use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 final class OrderRepository implements OrderRepositoryInterface
 {
     public function __construct(
-        private CartService $cartService
+        private readonly CartService $cartService,
+        private readonly PluginManager $pluginManager
     ) {}
 
     /**
@@ -35,11 +37,10 @@ final class OrderRepository implements OrderRepositoryInterface
     ): Order {
         return DB::transaction(function () use ($data, $cartItems, $totals, $validationContext): Order {
             $isGuest = $data->isGuest();
-            $couponId = $validationContext?->get('coupon_id') ?? $data->couponId;
 
             $deliveryAddress = null;
             $address = null;
-            if ($data->addressId && class_exists(\App\Plugins\LocationsDelivery\src\Models\Address::class)) {
+            if ($data->addressId && $this->pluginManager->isPluginActive('locations-delivery')) {
                 $address = \App\Plugins\LocationsDelivery\src\Models\Address::with(['area.governorate'])->find($data->addressId);
                 if ($address) {
                     $deliveryAddress = $address->toArray();
@@ -55,11 +56,16 @@ final class OrderRepository implements OrderRepositoryInterface
             $customerName = $data->user?->name ?? null;
             $customerPhone = $data->user?->phone ?? $address?->phone_number ?? null;
 
-            $appliedCoupon = $validationContext?->get('applied_coupon');
-            if (! $appliedCoupon && $couponId && class_exists(\App\Plugins\CouponsPromotions\src\Models\Coupon::class)) {
-                $appliedCoupon = \App\Plugins\CouponsPromotions\src\Models\Coupon::find($couponId);
+            $couponId = null;
+            $couponCode = null;
+            if ($this->pluginManager->isPluginActive('coupons-promotions')) {
+                $couponId = $validationContext?->get('coupon_id') ?? $data->couponId;
+                $appliedCoupon = $validationContext?->get('applied_coupon');
+                if (! $appliedCoupon && $couponId) {
+                    $appliedCoupon = \App\Plugins\CouponsPromotions\src\Models\Coupon::find($couponId);
+                }
+                $couponCode = $appliedCoupon?->code ?? null;
             }
-            $couponCode = $appliedCoupon?->code ?? null;
 
             $order = Order::create([
                 'order_number' => $this->generateOrderNumber(),

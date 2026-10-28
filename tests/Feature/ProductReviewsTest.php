@@ -82,14 +82,17 @@ it('allows authenticated users to submit reviews', function () {
     $response->assertStatus(201)
         ->assertJsonPath('review.rating', 5)
         ->assertJsonPath('review.user_id', $user->id)
-        ->assertJsonPath('review.is_published', true);
+        ->assertJsonPath('review.is_published', false)
+        ->assertJsonPath('review.is_approved', false)
+        ->assertJsonPath('message', 'Review submitted successfully and is awaiting approval.');
 
     $this->assertDatabaseHas('reviews', [
         'product_id' => $this->product->id,
         'user_id' => $user->id,
         'rating' => 5,
         'comment' => 'Outstanding taste and quick delivery!',
-        'is_published' => true,
+        'is_published' => false,
+        'is_approved' => false,
     ]);
 });
 
@@ -105,7 +108,9 @@ it('allows guests to submit reviews with name and optional email', function () {
         ->assertJsonPath('review.rating', 4)
         ->assertJsonPath('review.guest_name', 'Sara Guest')
         ->assertJsonPath('review.user_id', null)
-        ->assertJsonPath('review.is_published', true);
+        ->assertJsonPath('review.is_published', false)
+        ->assertJsonPath('review.is_approved', false)
+        ->assertJsonPath('message', 'Review submitted successfully and is awaiting approval.');
 
     $this->assertDatabaseHas('reviews', [
         'product_id' => $this->product->id,
@@ -113,7 +118,8 @@ it('allows guests to submit reviews with name and optional email', function () {
         'guest_email' => 'sara@example.com',
         'user_id' => null,
         'rating' => 4,
-        'is_published' => true,
+        'is_published' => false,
+        'is_approved' => false,
     ]);
 });
 

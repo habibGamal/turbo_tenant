@@ -28,15 +28,17 @@ final class ProductReviewsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Dynamic relationship on Product
-        if (class_exists(Product::class)) {
-            Product::resolveRelationUsing('reviews', function ($product) {
-                return $product->hasMany(Review::class);
-            });
-        }
+        $this->registerRelations();
 
         if (file_exists(__DIR__.'/routes/tenant.php')) {
             $this->loadRoutesFrom(__DIR__.'/routes/tenant.php');
         }
+    }
+
+    private function registerRelations(): void
+    {
+        Product::resolveRelationUsing('reviews', function (Product $product) {
+            return $product->hasMany(Review::class);
+        });
     }
 }
