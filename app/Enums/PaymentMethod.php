@@ -65,11 +65,8 @@ enum PaymentMethod: string implements HasColor, HasIcon, HasLabel
     public function posMapping(): string
     {
         return match ($this) {
-            self::CARD => 'card',
+            self::CARD, self::WALLET, self::KIOSK, self::BANK_TRANSFER => 'card',
             self::COD => 'cash',
-            self::WALLET => 'POS-WALLET',
-            self::KIOSK => 'POS-KIOSK',
-            self::BANK_TRANSFER => 'POS-BANK-TRANSFER',
         };
     }
 }
