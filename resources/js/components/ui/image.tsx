@@ -9,6 +9,8 @@ interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElemen
     className?: string;
     forceWidth?: 20 | 480 | 1920;
     mobileBreakpoint?: number;
+    showPlaceholder?: boolean;
+    priority?: boolean;
     w?: number;
     h?: number;
     fit?: 'contain' | 'max' | 'fill' | 'stretch' | 'crop';
@@ -16,7 +18,25 @@ interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElemen
 }
 
 export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFallbackProps>(
-    ({ src, alt, fallback, className, forceWidth, mobileBreakpoint = 480, w, h, fit, fm, sizes, ...props }, ref) => {
+    ({
+        src,
+        alt,
+        fallback,
+        className,
+        forceWidth,
+        mobileBreakpoint = 480,
+        showPlaceholder = false,
+        priority = false,
+        w,
+        h,
+        fit,
+        fm,
+        sizes,
+        loading: propLoading,
+        fetchPriority: propFetchPriority,
+        decoding = 'async',
+        ...props
+    }, ref) => {
 
         const tenant = useTenantSafe();
         if(tenant?.isDevMode){
@@ -48,37 +68,22 @@ export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFal
             setIsLoading(false);
         };
 
-        // Determine variant URLs if using Ahead-of-Time 1920w WebP structure
-        const isExternalOrStatic = !imgSrc || imgSrc.startsWith('http') || imgSrc.startsWith('data:') || imgSrc === finalFallback;
+        const isExternalOrStatic = !imgSrc || imgSrc.startsWith('data:') || imgSrc === finalFallback;
+        const isOptimizedVariant = !hasError && !isExternalOrStatic && /\.1920\.webp($|\?)/i.test(imgSrc);
 
-        let normalizedSrc = imgSrc;
-        if (!isExternalOrStatic) {
-            let path = imgSrc.startsWith('/') ? imgSrc.slice(1) : imgSrc;
-            // Strip leading "storage/" if present
-            if (path.startsWith('storage/')) {
-                path = path.slice('storage/'.length);
-            }
-            // Ensure path starts with images/
-            if (!path.startsWith('images/')) {
-                path = `images/${path}`;
-            }
-            normalizedSrc = `/${path}`;
-        }
-
-        const isOptimizedVariant = !isExternalOrStatic && /\.1920\.webp$/i.test(normalizedSrc);
-
-        let displaySrc = normalizedSrc;
+        let displaySrc = imgSrc;
         let placeholderUrl: string | null = null;
         let url480: string | undefined = undefined;
         let url1920: string | undefined = undefined;
 
         if (isOptimizedVariant) {
-            const basePath = normalizedSrc.replace(/\.1920\.webp$/i, '');
-            const url20 = `${basePath}.20.webp`;
-            url480 = `${basePath}.480.webp`;
-            url1920 = normalizedSrc;
+            const url20 = imgSrc.replace(/\.1920\.webp(\?.*)?$/i, '.20.webp$1');
+            url480 = imgSrc.replace(/\.1920\.webp(\?.*)?$/i, '.480.webp$1');
+            url1920 = imgSrc;
 
-            placeholderUrl = url20;
+            if (showPlaceholder) {
+                placeholderUrl = url20;
+            }
 
             if (forceWidth === 20) {
                 displaySrc = url20;
@@ -89,21 +94,23 @@ export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFal
             } else {
                 displaySrc = url1920;
             }
-        } else if (!isExternalOrStatic) {
-            // Legacy / unmigrated fallback
-            displaySrc = normalizedSrc;
         }
 
         const usePicture = isOptimizedVariant && !forceWidth && !!url480 && !hasError;
+        const effectiveLoading = propLoading || (priority ? 'eager' : 'lazy');
+        const effectiveFetchPriority = propFetchPriority || (priority ? 'high' : (effectiveLoading === 'eager' ? 'auto' : 'low'));
 
         const mainImage = (
             <img
                 ref={ref}
                 src={displaySrc}
                 alt={alt}
+                loading={effectiveLoading}
+                fetchPriority={effectiveFetchPriority}
+                decoding={decoding}
                 className={cn(
-                    'transition-opacity duration-500 relative z-10 w-full h-full object-cover',
-                    isLoading && placeholderUrl ? 'opacity-0' : 'opacity-100'
+                    'transition-opacity duration-300 relative z-10 w-full h-full object-cover',
+                    isLoading ? 'opacity-0' : 'opacity-100'
                 )}
                 onError={handleError}
                 onLoad={handleLoad}
@@ -112,19 +119,25 @@ export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFal
         );
 
         return (
-            <div className={cn("relative overflow-hidden", className)}>
-                {/* Step 1: 20w Blurred Placeholder (LQIP) */}
+            <div className={cn("relative overflow-hidden bg-muted/20", className)}>
+                {/* CSS skeleton background while loading to prevent CLS with zero network overhead */}
+                {isLoading && (
+                    <div className="absolute inset-0 bg-muted/40 animate-pulse pointer-events-none" aria-hidden="true" />
+                )}
+
+                {/* Optional 20w Blurred Placeholder (only if explicitly requested via showPlaceholder) */}
                 {isLoading && placeholderUrl && !hasError && (
                     <img
                         src={placeholderUrl}
-                        alt={alt}
-                        className="absolute inset-0 w-full h-full object-cover blur-lg scale-110 transition-opacity duration-500"
+                        alt=""
+                        loading={effectiveLoading}
+                        className="absolute inset-0 w-full h-full object-cover blur-lg scale-110 transition-opacity duration-500 pointer-events-none"
                         style={{ filter: 'blur(20px)' }}
                         aria-hidden="true"
                     />
                 )}
 
-                {/* Step 2 & 3: Main Responsive / Forced Width Image */}
+                {/* Main Responsive / Forced Width Image */}
                 {usePicture ? (
                     <picture className="relative z-10 block w-full h-full">
                         <source media={`(max-width: ${mobileBreakpoint}px)`} srcSet={url480} />

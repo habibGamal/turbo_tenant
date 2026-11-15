@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ScrollText } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { ImageWithFallback } from "@/components/ui/image";
 
 interface LogoProps {
     siteLogo?: string;
@@ -17,10 +18,12 @@ export function Logo({ siteLogo, siteName, siteNameAr }: LogoProps) {
     return (
         <Link to="/" className="flex items-center gap-2 shrink-0">
             {siteLogo ? (
-                <img
+                <ImageWithFallback
                     src={siteLogo}
                     alt={displayName || t("home")}
                     className="h-12 w-auto object-contain rounded"
+                    forceWidth={480}
+                    priority={true}
                 />
             ) : (
                 <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">

@@ -24,6 +24,7 @@ interface ProductCardProps {
     addingToCart?: boolean;
     showFavorite?: boolean;
     onClick?: () => void;
+    priority?: boolean;
 }
 
 export default function ProductCard({
@@ -32,6 +33,7 @@ export default function ProductCard({
     addingToCart = false,
     showFavorite = false,
     onClick,
+    priority = false,
 }: ProductCardProps) {
     const { t, i18n } = useTranslation();
     const navigate = useNavigate();
@@ -148,6 +150,7 @@ export default function ProductCard({
                                 src={product.image}
                                 alt={getText(product.name, product.name_ar)}
                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                priority={priority}
                             />
                         </Link>
                     ) : (
@@ -156,6 +159,7 @@ export default function ProductCard({
                                 src={product.image}
                                 alt={getText(product.name, product.name_ar)}
                                 className="w-full h-full object-cover"
+                                priority={priority}
                             />
                         </div>
                     )}

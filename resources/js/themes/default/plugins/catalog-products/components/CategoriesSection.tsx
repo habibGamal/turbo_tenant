@@ -67,7 +67,7 @@ export default function CategoriesSection({
 
                 {/* Categories Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                    {categoriesToUse.map((category) => (
+                    {categoriesToUse.map((category, idx) => (
                         <Link key={category.id} to={`/menu?category_ids[]=${category.id}`} className="group block h-full">
                             <Card data-testid="category-card" className="h-full overflow-hidden border-0 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-card">
                                 <CardContent className="p-0 h-full flex flex-col">
@@ -77,6 +77,8 @@ export default function CategoriesSection({
                                             src={category.image}
                                             alt={getText(category.name, category.name_ar)}
                                             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                            priority={idx === 0}
+                                            loading={idx < 2 ? "eager" : "lazy"}
                                         />
                                         {/* Overlay Gradient */}
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-300" />

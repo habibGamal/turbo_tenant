@@ -100,7 +100,7 @@ export default function ThemedProductsSection({ sections: propSections }: Themed
         <section className="py-8 bg-background border-b">
           <div className="container mx-auto px-4">
             <div className="flex items-start gap-4 sm:gap-6 overflow-x-auto pb-2 scrollbar-none" role="tablist">
-              {categories.map((cat) => {
+              {categories.map((cat, index) => {
                 const isSelected = selectedCategory === cat.id;
                 return (
                   <button
@@ -112,7 +112,13 @@ export default function ThemedProductsSection({ sections: propSections }: Themed
                     className={`group flex w-24 sm:w-32 shrink-0 flex-col items-center gap-2 rounded-xl border border-transparent p-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isSelected ? "border-primary" : ""}`}
                   >
                     <span className={`block w-full aspect-square overflow-hidden rounded-2xl border-2 transition-colors ${isSelected ? 'border-primary' : 'border-transparent group-hover:border-primary/50'}`}>
-                      <ImageWithFallback src={cat.image} alt="" className="h-full w-full object-cover" />
+                      <ImageWithFallback
+                        src={cat.image}
+                        alt={i18n.language === 'ar' && cat.name_ar ? cat.name_ar : cat.name}
+                        className="h-full w-full object-cover"
+                        priority={index === 0}
+                        loading={index < 2 ? "eager" : "lazy"}
+                      />
                     </span>
                     <span className={`text-sm font-semibold ${isSelected ? 'text-primary' : 'text-foreground'}`}>
                       {i18n.language === 'ar' && cat.name_ar ? cat.name_ar : cat.name}
@@ -157,13 +163,14 @@ export default function ThemedProductsSection({ sections: propSections }: Themed
 
             {/* Products Grid */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {pushUnavailableToEnd(section.products).map((product: ProductSummary) => (
+              {pushUnavailableToEnd(section.products).map((product: ProductSummary, productIndex: number) => (
                 <ProductCard
                   key={product.id}
                   product={product as any}
                   onAddToCart={handleAddToCart}
                   addingToCart={addingToCart[product.id]}
                   showFavorite={true}
+                  priority={sectionIndex === 0 && productIndex < 2}
                 />
               ))}
             </div>

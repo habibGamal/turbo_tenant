@@ -20,11 +20,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    @foreach(['latin', 'arabic'] as $fontSubset)
-        @foreach([400, 500, 700] as $fontWeight)
-            <link rel="preload" href="{{ Vite::asset('resources/fonts/tajawal/tajawal-'.$fontSubset.'-'.$fontWeight.'-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
-        @endforeach
-    @endforeach
+    @php
+        $isArabicLocale = str_starts_with(app()->getLocale(), 'ar');
+        $primarySubset = $isArabicLocale ? 'arabic' : 'latin';
+    @endphp
+    <link rel="preload" href="{{ Vite::asset('resources/fonts/tajawal/tajawal-'.$primarySubset.'-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ Vite::asset('resources/fonts/tajawal/tajawal-'.$primarySubset.'-700-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
 
     <title>{{ $siteName }}</title>
     @if($siteDescription)

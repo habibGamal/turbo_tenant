@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { ImageWithFallback } from '@/components/ui/image';
 import {
     ScrollText,
     Mail,
@@ -92,10 +93,12 @@ export default function Footer({ sections, showNewsletter = true }: FooterProps)
                     <div className="lg:col-span-4 space-y-4">
                         <Link to="/" className="flex items-center gap-2">
                             {settings?.site_logo ? (
-                                <img
+                                <ImageWithFallback
                                     src={settings.site_logo}
                                     alt={i18n.language === 'ar' && settings?.site_name_ar ? settings.site_name_ar : (settings?.site_name || t("home"))}
                                     className="h-10 w-auto object-contain"
+                                    forceWidth={480}
+                                    loading="lazy"
                                 />
                             ) : (
                                 <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
