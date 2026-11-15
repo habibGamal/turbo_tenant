@@ -20,6 +20,23 @@ final class LatestOrdersTable extends BaseWidget
 
     protected int|string|array $columnSpan = 'full';
 
+    public static function canView(): bool
+    {
+        if (! class_exists(Order::class)) {
+            return false;
+        }
+
+        if (function_exists('tenancy') && tenancy()->initialized && ! app(\App\Core\Plugins\Services\PluginManager::class)->isPluginActive('order-management')) {
+            return false;
+        }
+
+        if (! \Illuminate\Support\Facades\Schema::hasTable('orders')) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function table(Table $table): Table
     {
         $currency = $this->getCurrency();
