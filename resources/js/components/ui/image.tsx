@@ -8,6 +8,7 @@ interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElemen
     fallback?: string;
     className?: string;
     forceWidth?: 20 | 480 | 1920;
+    mobileBreakpoint?: number;
     w?: number;
     h?: number;
     fit?: 'contain' | 'max' | 'fill' | 'stretch' | 'crop';
@@ -15,7 +16,7 @@ interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElemen
 }
 
 export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFallbackProps>(
-    ({ src, alt, fallback, className, forceWidth, w, h, fit, fm, sizes, ...props }, ref) => {
+    ({ src, alt, fallback, className, forceWidth, mobileBreakpoint = 480, w, h, fit, fm, sizes, ...props }, ref) => {
 
         const tenant = useTenantSafe();
         if(tenant?.isDevMode){
@@ -68,14 +69,14 @@ export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFal
 
         let displaySrc = normalizedSrc;
         let placeholderUrl: string | null = null;
-        let srcSet: string | undefined = undefined;
-        let computedSizes = sizes || '(max-width: 768px) 480px, 1920px';
+        let url480: string | undefined = undefined;
+        let url1920: string | undefined = undefined;
 
         if (isOptimizedVariant) {
             const basePath = normalizedSrc.replace(/\.1920\.webp$/i, '');
             const url20 = `${basePath}.20.webp`;
-            const url480 = `${basePath}.480.webp`;
-            const url1920 = normalizedSrc;
+            url480 = `${basePath}.480.webp`;
+            url1920 = normalizedSrc;
 
             placeholderUrl = url20;
 
@@ -86,14 +87,29 @@ export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFal
             } else if (forceWidth === 1920) {
                 displaySrc = url1920;
             } else {
-                // Adaptive / Viewport-dependent
                 displaySrc = url1920;
-                srcSet = `${url480} 480w, ${url1920} 1920w`;
             }
         } else if (!isExternalOrStatic) {
             // Legacy / unmigrated fallback
             displaySrc = normalizedSrc;
         }
+
+        const usePicture = isOptimizedVariant && !forceWidth && !!url480 && !hasError;
+
+        const mainImage = (
+            <img
+                ref={ref}
+                src={displaySrc}
+                alt={alt}
+                className={cn(
+                    'transition-opacity duration-500 relative z-10 w-full h-full object-cover',
+                    isLoading && placeholderUrl ? 'opacity-0' : 'opacity-100'
+                )}
+                onError={handleError}
+                onLoad={handleLoad}
+                {...props}
+            />
+        );
 
         return (
             <div className={cn("relative overflow-hidden", className)}>
@@ -109,20 +125,14 @@ export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFal
                 )}
 
                 {/* Step 2 & 3: Main Responsive / Forced Width Image */}
-                <img
-                    ref={ref}
-                    src={displaySrc}
-                    srcSet={srcSet}
-                    sizes={srcSet ? computedSizes : undefined}
-                    alt={alt}
-                    className={cn(
-                        'transition-opacity duration-500 relative z-10 w-full h-full object-cover',
-                        isLoading && placeholderUrl ? 'opacity-0' : 'opacity-100'
-                    )}
-                    onError={handleError}
-                    onLoad={handleLoad}
-                    {...props}
-                />
+                {usePicture ? (
+                    <picture className="relative z-10 block w-full h-full">
+                        <source media={`(max-width: ${mobileBreakpoint}px)`} srcSet={url480} />
+                        {mainImage}
+                    </picture>
+                ) : (
+                    mainImage
+                )}
             </div>
         );
     }
