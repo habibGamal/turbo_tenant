@@ -138,6 +138,7 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
                                                     src={slide.image}
                                                     alt={slide.title}
                                                     className="w-full h-full object-cover"
+                                                    priority={index === 0}
                                                     loading={index === 0 ? "eager" : "lazy"}
                                                     fetchPriority={index === 0 ? "high" : "low"}
                                                 />

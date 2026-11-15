@@ -13,6 +13,7 @@ let currentConfig: MetaPixelConfig = {
 
 let currentUserId: number | null = null;
 let initializedPixelId: string | null = null;
+let isPixelInitialized = false;
 let hasSyncedConfig = false;
 const eventBuffer: CommerceEvent[] = [];
 const MAX_BUFFER = 50;
@@ -82,6 +83,7 @@ export function updateTrackerConfig(
   if (initializedPixelId !== pixelId || currentUserId !== newUserId) {
     initializedPixelId = pixelId;
     currentUserId = newUserId;
+    isPixelInitialized = false;
 
     const advancedMatching: Record<string, string> = {};
     if (user?.email) {
@@ -91,31 +93,44 @@ export function updateTrackerConfig(
       advancedMatching.external_id = `u:${user.id}`;
     }
 
-    try {
-      ReactPixel.init(pixelId, advancedMatching as any, {
-        autoConfig: true,
-        debug: false,
-      });
-
-      if (isDebugMode(currentConfig.debugMode)) {
-        console.info('[MetaPixel] Initialized Pixel:', {
-          pixelId,
-          advancedMatching,
+    const initPixel = () => {
+      try {
+        ReactPixel.init(pixelId, advancedMatching as any, {
+          autoConfig: true,
+          debug: false,
         });
-      }
-    } catch (err) {
-      if (isDebugMode(currentConfig.debugMode)) {
-        console.warn('[MetaPixel] Init error:', err);
-      }
-    }
-  }
 
-  // Flush buffered events through the normal path on first sync
-  if (isFirstSync && eventBuffer.length > 0) {
-    const eventsToFlush = [...eventBuffer];
-    eventBuffer.length = 0;
-    for (const bufferedEvent of eventsToFlush) {
-      handleCommerceEvent(bufferedEvent);
+        isPixelInitialized = true;
+
+        if (isDebugMode(currentConfig.debugMode)) {
+          console.info('[MetaPixel] Initialized Pixel (deferred):', {
+            pixelId,
+            advancedMatching,
+          });
+        }
+      } catch (err) {
+        if (isDebugMode(currentConfig.debugMode)) {
+          console.warn('[MetaPixel] Init error:', err);
+        }
+      }
+
+      // Flush buffered events once Pixel is ready
+      if (eventBuffer.length > 0) {
+        const eventsToFlush = [...eventBuffer];
+        eventBuffer.length = 0;
+        for (const bufferedEvent of eventsToFlush) {
+          handleCommerceEvent(bufferedEvent);
+        }
+      }
+    };
+
+    // Defer initialization to idle time so tracking does not block critical page render or TBT
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(initPixel, { timeout: 2500 });
+    } else if (typeof window !== 'undefined') {
+      setTimeout(initPixel, 1500);
+    } else {
+      initPixel();
     }
   }
 }
@@ -168,8 +183,8 @@ async function relayEvent(payload: MetaRelayPayload): Promise<void> {
  * Handle incoming commerce event from the core event bus.
  */
 export function handleCommerceEvent(event: CommerceEvent): void {
-  // Before the first settings sync, buffer events up to MAX_BUFFER
-  if (!hasSyncedConfig) {
+  // Before the first settings sync or before Pixel finishes idle init, buffer events up to MAX_BUFFER
+  if (!hasSyncedConfig || !isPixelInitialized) {
     if (eventBuffer.length < MAX_BUFFER) {
       eventBuffer.push(event);
     }
