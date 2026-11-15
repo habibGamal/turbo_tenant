@@ -13,15 +13,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('order_status_events', function (Blueprint $table): void {
-            $table->id();
-            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
-            $table->string('from_status');
-            $table->string('to_status');
-            $table->string('source');
-            $table->string('ip')->nullable();
-            $table->timestamp('created_at')->nullable();
-        });
+        if (! Schema::hasTable('order_status_events')) {
+            Schema::create('order_status_events', function (Blueprint $table): void {
+                $table->id();
+                $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
+                $table->string('from_status');
+                $table->string('to_status');
+                $table->string('source');
+                $table->string('ip')->nullable();
+                $table->timestamp('created_at')->nullable();
+            });
+        }
     }
 
     /**
