@@ -11,15 +11,27 @@ return new class() extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->string('customer_name')->nullable()->after('note');
-            $table->string('customer_phone')->nullable()->after('customer_name');
-            $table->json('delivery_address')->nullable()->after('customer_phone');
-            $table->string('coupon_code')->nullable()->after('delivery_address');
+            if (! Schema::hasColumn('orders', 'customer_name')) {
+                $table->string('customer_name')->nullable()->after('note');
+            }
+            if (! Schema::hasColumn('orders', 'customer_phone')) {
+                $table->string('customer_phone')->nullable()->after('customer_name');
+            }
+            if (! Schema::hasColumn('orders', 'delivery_address')) {
+                $table->json('delivery_address')->nullable()->after('customer_phone');
+            }
+            if (! Schema::hasColumn('orders', 'coupon_code')) {
+                $table->string('coupon_code')->nullable()->after('delivery_address');
+            }
         });
 
         Schema::table('order_items', function (Blueprint $table) {
-            $table->string('weight_label')->nullable()->after('notes');
-            $table->decimal('extras_unit_total', 10, 2)->nullable()->after('weight_label');
+            if (! Schema::hasColumn('order_items', 'weight_label')) {
+                $table->string('weight_label')->nullable()->after('notes');
+            }
+            if (! Schema::hasColumn('order_items', 'extras_unit_total')) {
+                $table->decimal('extras_unit_total', 10, 2)->nullable()->after('weight_label');
+            }
         });
     }
 

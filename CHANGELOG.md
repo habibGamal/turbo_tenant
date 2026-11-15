@@ -24,6 +24,11 @@ The project has no release tags; history is grouped by month from the git log on
 ### Changed
 - Coupons can target line types (e.g. packages).
 
+### Fixed
+- Prevent central database foreign key integrity violation (`1452`) on `tenant_plugins` during tenant creation by self-healing missing central catalog records in `PluginLifecycleService::activate`.
+- Prevent tenant dashboard 500 query exceptions (`42S02`) on new tenant accounts by gating `PendingReviewsStat` and `OrderManagement` widgets with tenant plugin activation and schema table existence checks.
+- Resolve cross-plugin circular dependency in `orders` tenant migration: decoupled `coupon_id` foreign key from `OrderManagement` and added idempotency guards (`Schema::hasTable`) to prevent `1824` / `1050` table creation crashes.
+
 ### Upgrade notes
 - Run `php artisan plugin:discover` and `php artisan tenants:plugin:migrate --force` so active plugins get their new tenant tables (notably POS delivery tracking and Meta tables).
 - Set `DB_QUEUE_CONNECTION` to the central connection; restart queue workers after deploying.

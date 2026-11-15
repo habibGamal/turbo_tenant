@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Core\Plugins\Services;
 
 use App\Core\Plugins\Enums\PluginStatus;
+use App\Models\Plugin;
 use App\Models\Tenant;
 use App\Models\TenantPlugin;
 use Illuminate\Support\Facades\Artisan;
@@ -74,6 +75,20 @@ final class PluginLifecycleService
         $installedAt = $existingRecord !== null ? $existingRecord->installed_at : now();
         $recordExisted = $existingRecord !== null;
         $previousStatus = $existingRecord !== null ? $existingRecord->status : null;
+
+        // Ensure plugin exists in central catalog before attaching to tenant
+        Plugin::firstOrCreate(
+            ['id' => $manifest->id],
+            [
+                'name' => $manifest->name,
+                'version' => $manifest->version,
+                'category' => $manifest->category,
+                'description' => $manifest->description,
+                'author' => $manifest->author,
+                'is_core' => $manifest->isCore,
+                'dependencies' => $manifest->dependencies,
+            ]
+        );
 
         TenantPlugin::updateOrCreate(
             [

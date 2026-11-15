@@ -18,7 +18,19 @@ final class TopProductsChart extends ChartWidget
 
     public static function canView(): bool
     {
-        return class_exists(OrderItem::class);
+        if (! class_exists(OrderItem::class)) {
+            return false;
+        }
+
+        if (function_exists('tenancy') && tenancy()->initialized && ! app(\App\Core\Plugins\Services\PluginManager::class)->isPluginActive('order-management')) {
+            return false;
+        }
+
+        if (! \Illuminate\Support\Facades\Schema::hasTable('order_items') || ! \Illuminate\Support\Facades\Schema::hasTable('orders')) {
+            return false;
+        }
+
+        return true;
     }
 
     protected function getData(): array

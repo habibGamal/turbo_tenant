@@ -8,6 +8,7 @@ use App\Plugins\ProductReviews\src\Filament\Resources\ReviewResource;
 use App\Plugins\ProductReviews\src\Models\Review;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Throwable;
 
 final class PendingReviewsStat extends BaseWidget
 {
@@ -19,7 +20,19 @@ final class PendingReviewsStat extends BaseWidget
             return false;
         }
 
-        return Review::query()->where('is_approved', false)->count() > 0;
+        if (function_exists('tenancy') && tenancy()->initialized && ! app(\App\Core\Plugins\Services\PluginManager::class)->isPluginActive('product-reviews')) {
+            return false;
+        }
+
+        if (! \Illuminate\Support\Facades\Schema::hasTable('reviews')) {
+            return false;
+        }
+
+        try {
+            return Review::query()->where('is_approved', false)->count() > 0;
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     protected function getStats(): array
