@@ -1,7 +1,7 @@
 @php
     use App\Plugins\StoreSettings\src\Services\SettingService;
     use App\Enums\SettingKey;
-    use Illuminate\Support\Facades\Storage;
+    use App\Plugins\StoreSettings\src\Theme\ThemeCssBuilder;
 
     $isTenant = tenant() !== null;
     $settingService = ($isTenant && app()->bound(SettingService::class)) ? app(SettingService::class) : null;
@@ -9,7 +9,10 @@
     $siteName = $settingService ? $settingService->get(SettingKey::SITE_NAME, config('app.name', 'Laravel')) : config('app.name', 'Laravel');
     $siteDescription = $settingService ? $settingService->get(SettingKey::SITE_DESCRIPTION) : null;
     $favicon = $settingService ? $settingService->get(SettingKey::SITE_FAVICON) : null;
-    $svgLogo = $settingService ? $settingService->get(SettingKey::SVG_LOGO) : null;
+    $bootstrap = $isTenant ? app(\App\Http\Controllers\Api\BootstrapController::class)(request())->getData(true) : null;
+    $themeCss = ($isTenant && $settingService && app()->bound(ThemeCssBuilder::class))
+        ? app(ThemeCssBuilder::class)->build($settingService->get(SettingKey::THEME, []))
+        : '';
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -17,6 +20,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    @foreach(['latin', 'arabic'] as $fontSubset)
+        @foreach([400, 500, 700] as $fontWeight)
+            <link rel="preload" href="{{ Vite::asset('resources/fonts/tajawal/tajawal-'.$fontSubset.'-'.$fontWeight.'-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+        @endforeach
+    @endforeach
 
     <title>{{ $siteName }}</title>
     @if($siteDescription)
@@ -26,58 +34,23 @@
         <link rel="icon" type="image/x-icon" href="{{ '/storage/'.$favicon }}">
     @endif
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-    <style>
-        .loading-container {
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-        }
-
-        .logo-svg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 100%;
-            background-color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-
-        .logo-svg img {
-            height: 100%;
-            display: block;
-            object-fit: contain;
-            max-width: 100%;
-        }
-
-        .loading-container.disabled {
-            height: inherit;
-            width: inherit;
-            overflow: inherit;
-        }
-
-        .loading-container.disabled .logo-svg {
-            display: none;
-        }
-    </style>
+    @if($bootstrap)
+        <script>window.__TENANT_BOOTSTRAP__ = {{ \Illuminate\Support\Js::from($bootstrap) }};</script>
+    @endif
     <!-- Scripts -->
+    @if(Vite::isRunningHot())
+        @vite('resources/css/app.css')
+    @else
+        <style id="storefront-styles">{!! str_ireplace('</style', '<\\/style', Vite::content('resources/css/app.css')) !!}</style>
+    @endif
     @viteReactRefresh
     @vite(['resources/js/app.tsx'])
-    <link rel="stylesheet" href="/theme.css">
+    @if($themeCss !== '')
+        <style id="tenant-theme">{!! str_ireplace('</style', '<\\/style', $themeCss) !!}</style>
+    @endif
 </head>
 
 <body class="font-sans antialiased">
-    <div class="loading-container" id="loading_container">
-        <div class="logo-svg">
-            <img id="section-logo-animation" src="{{ $svgLogo ? '/storage/' . $svgLogo : '' }}" alt="Logo" class="img-fade-in">
-        </div>
-    </div>
     <div id="app"></div>
 </body>
 

@@ -30,7 +30,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
-import { Plus, Pencil, Trash2, MapPin, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, MapPin, LoaderIcon } from "lucide-react";
 import {
     useAddresses,
     useGovernorates,
@@ -53,8 +53,8 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
     const saveMutation = useSaveAddress();
     const deleteMutation = useDeleteAddress();
 
-    const addresses: Address[] = addressesRes?.data ?? initialAddresses ?? [];
-    const governorates = governoratesRes?.data ?? [];
+    const addresses: Address[] = addressesRes ?? initialAddresses ?? [];
+    const governorates = governoratesRes ?? [];
 
     const [formData, setFormData] = useState<AddressPayload>({
         area_id: "",
@@ -163,17 +163,17 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
 
             {isLoadingAddresses && addresses.length === 0 ? (
                 <div className="flex justify-center p-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <LoaderIcon className="h-6 w-6 animate-spin text-primary" />
                 </div>
             ) : (
                 <div className="grid gap-4 md:grid-cols-2">
                     {addresses.map((address) => (
                         <div
                             key={address.id}
-                            className="border rounded-lg p-4 relative hover:border-primary transition-colors"
+                            className="border rounded-lg p-4 hover:border-primary transition-colors"
                         >
                             {address.is_default && (
-                                <span className="absolute top-2 end-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+                                <span className="mb-3 inline-flex w-fit bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
                                     {t("default")}
                                 </span>
                             )}
@@ -188,10 +188,10 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                                         {address.apartment}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                        {address.area?.name}, {address.area?.governorate?.name}
+                                        {i18n.dir() === "rtl" ? address.area?.name_ar || address.area?.name : address.area?.name}, {i18n.dir() === "rtl" ? address.area?.governorate?.name_ar || address.area?.governorate?.name : address.area?.governorate?.name}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                        {address.phone_number}
+                                        <bdi dir="ltr">{address.phone_number}</bdi>
                                     </p>
                                 </div>
                             </div>
@@ -219,8 +219,8 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
             )}
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogContent className="sm:max-w-[500px]">
-                    <DialogHeader>
+                <DialogContent dir={i18n.dir()} className="max-h-[90vh] overflow-y-auto text-start sm:max-w-[500px]">
+                    <DialogHeader className="text-start sm:text-start rtl:ps-6">
                         <DialogTitle>
                             {editingAddress ? t("editAddress") : t("addNewAddress")}
                         </DialogTitle>
@@ -233,6 +233,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                             <div className="space-y-2">
                                 <Label>{t("governorate")}</Label>
                                 <Select
+                                    dir={i18n.dir()}
                                     value={selectedGovernorateId}
                                     onValueChange={setSelectedGovernorateId}
                                 >
@@ -245,7 +246,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                                                 key={gov.id}
                                                 value={gov.id.toString()}
                                             >
-                                                {gov.name}
+                                                {i18n.dir() === "rtl" ? gov.name_ar || gov.name : gov.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -254,6 +255,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                             <div className="space-y-2">
                                 <Label>{t("area")}</Label>
                                 <Select
+                                    dir={i18n.dir()}
                                     value={formData.area_id ? formData.area_id.toString() : ""}
                                     onValueChange={(val) =>
                                         setFormData((prev) => ({ ...prev, area_id: val }))
@@ -269,7 +271,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                                                 key={area.id}
                                                 value={area.id.toString()}
                                             >
-                                                {area.name}
+                                                {i18n.dir() === "rtl" ? area.name_ar || area.name : area.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -387,7 +389,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                             <Label htmlFor="is_default">{t("setAsDefaultAddress")}</Label>
                         </div>
 
-                        <DialogFooter>
+                        <DialogFooter className="gap-2 sm:space-x-0">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -408,7 +410,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                 open={addressToDelete !== null}
                 onOpenChange={(open) => !open && setAddressToDelete(null)}
             >
-                <AlertDialogContent>
+                <AlertDialogContent dir={i18n.dir()} className="text-start">
                     <AlertDialogHeader>
                         <AlertDialogTitle>
                             {t("confirmDeleteAddressTitle", "حذف العنوان")}

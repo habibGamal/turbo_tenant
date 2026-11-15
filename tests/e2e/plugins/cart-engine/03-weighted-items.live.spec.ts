@@ -1,4 +1,5 @@
 import { test, expect } from '../../helpers/live-fixture';
+import { pricePattern } from '../../helpers/price';
 
 test.describe('CartEngine Suite 03: Weighted Items', () => {
   test('calculates weighted price, handles dynamic weight changes, and enforces multiplier boundaries', async ({ page, theme }) => {
@@ -32,7 +33,7 @@ test.describe('CartEngine Suite 03: Weighted Items', () => {
 
     // Verify initial subtotal for 250g (0.250 * 600 = 150.00 EGP)
     const subtotal = theme.cart.getSubtotal();
-    await expect(subtotal).toContainText('150.00');
+    await expect(subtotal).toContainText(pricePattern(150));
 
     // 2. Dynamic in-cart weight change: Switch from 250g to 500g (0.500 kg)
     await weightSelect.click();
@@ -45,7 +46,7 @@ test.describe('CartEngine Suite 03: Weighted Items', () => {
     ]);
 
     // Subtotal should now reflect 500g (0.500 * 600 = 300.00 EGP)
-    await expect(subtotal).toContainText('300.00', { timeout: 5000 });
+    await expect(subtotal).toContainText(pricePattern(300), { timeout: 5000 });
 
     // 3. Multiplier Stepper: Increment weight multiplier (1x -> 2x)
     const incBtn = theme.cart.getQuantityIncrementButton(firstItem);
@@ -55,7 +56,7 @@ test.describe('CartEngine Suite 03: Weighted Items', () => {
     ]);
 
     // Multiplier 2x of 500g = 1.0kg -> Subtotal should now reflect 600.00 EGP
-    await expect(subtotal).toContainText('600.00', { timeout: 5000 });
+    await expect(subtotal).toContainText(pricePattern(600), { timeout: 5000 });
 
     // 4. Boundary enforcement: Decrement back to 1x
     const decBtn = theme.cart.getQuantityDecrementButton(firstItem);
@@ -66,7 +67,7 @@ test.describe('CartEngine Suite 03: Weighted Items', () => {
       decBtn.click(),
     ]);
 
-    await expect(subtotal).toContainText('300.00', { timeout: 5000 });
+    await expect(subtotal).toContainText(pricePattern(300), { timeout: 5000 });
 
     // Decrement button should now be disabled (multiplier is 1)
     await expect(decBtn).toBeDisabled();

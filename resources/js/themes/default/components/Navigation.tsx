@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Search, Home, ScrollText, X } from "lucide-react";
@@ -13,6 +13,7 @@ import { MobileBottomNav } from "./navigation/MobileBottomNav";
 import { PluginSlot } from "@/core/slots/PluginSlot";
 import { useTenantSafe } from "@/core/context/TenantContext";
 import { useAuth } from "@/core/context/AuthContext";
+import { cn } from "@/lib/utils";
 
 interface NavigationProps {
     categories?: Array<{ id: number; name: string; name_ar?: string }>;
@@ -41,8 +42,37 @@ export default function Navigation({
     const activeCartCount = cartItemsCount || tenantContext?.cartCount || 0;
     const { t, i18n } = useTranslation();
     const location = useLocation();
-    const isMenuPage = location.pathname === "/menu";
+    const pathname = location.pathname;
+    const isMenuPage = pathname === "/menu";
     const [searchOpen, setSearchOpen] = useState(false);
+
+    const isHomeActive = pathname === "/";
+    const isMenuActive = pathname === "/menu" || pathname.startsWith("/menu/") || pathname.startsWith("/products/");
+    const isTrackActive = pathname === "/track-order" || pathname === "/orders/track";
+
+    const headerRef = useRef<HTMLElement>(null);
+
+    useEffect(() => {
+        const el = headerRef.current;
+        if (!el) return;
+
+        const updateHeight = () => {
+            const height = el.getBoundingClientRect().height;
+            document.documentElement.style.setProperty("--header-h", `${height}px`);
+        };
+
+        updateHeight();
+
+        if (typeof ResizeObserver !== "undefined") {
+            const observer = new ResizeObserver(() => {
+                updateHeight();
+            });
+            observer.observe(el);
+            return () => {
+                observer.disconnect();
+            };
+        }
+    }, []);
 
     const getText = (text: string, textAr?: string) => {
         return i18n.language === "ar" && textAr ? textAr : text;
@@ -81,7 +111,7 @@ export default function Navigation({
                 {
                     label: t("trackOrder"),
                     labelAr: t("trackOrder"),
-                    href: "/orders",
+                    href: user ? "/orders" : "/track-order",
                 },
                 {
                     label: t("returns"),
@@ -99,12 +129,12 @@ export default function Navigation({
                 href: `/pages/${page.slug}`,
             })),
         },
-    ];
+    ].filter((section) => section.links.length > 0);
 
     return (
         <>
             {/* Desktop & Tablet Header */}
-            <header data-testid="theme-header" className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <header ref={headerRef} data-testid="theme-header" className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="container mx-auto px-4">
                     <div className="flex h-16 items-center justify-between gap-4">
                         {/* Logo */}
@@ -116,25 +146,49 @@ export default function Navigation({
 
                         {/* Desktop Navigation Links - Hidden on Mobile */}
                         <nav className="hidden md:flex items-center gap-1">
-                            <Link to="/">
-                                <Button variant="ghost" className="gap-2">
+                            <Button
+                                asChild
+                                variant="ghost"
+                                className={cn(
+                                    "gap-2",
+                                    isHomeActive && "bg-accent text-accent-foreground font-semibold"
+                                )}
+                            >
+                                <Link to="/" aria-current={isHomeActive ? "page" : undefined}>
                                     <Home className="h-4 w-4" />
                                     {t("home")}
-                                </Button>
-                            </Link>
-                            <Link to="/menu">
-                                <Button variant="ghost" className="gap-2">
+                                </Link>
+                            </Button>
+                            <Button
+                                asChild
+                                variant="ghost"
+                                className={cn(
+                                    "gap-2",
+                                    isMenuActive && "bg-accent text-accent-foreground font-semibold"
+                                )}
+                            >
+                                <Link to="/menu" aria-current={isMenuActive ? "page" : undefined}>
                                     <ScrollText className="h-4 w-4" />
                                     {t("menu")}
-                                </Button>
-                            </Link>
+                                </Link>
+                            </Button>
                             {!user && (
-                                <Link to="/track-order">
-                                    <Button variant="ghost" className="gap-2">
+                                <Button
+                                    asChild
+                                    variant="ghost"
+                                    className={cn(
+                                        "gap-2",
+                                        isTrackActive && "bg-accent text-accent-foreground font-semibold"
+                                    )}
+                                >
+                                    <Link
+                                        to="/track-order"
+                                        aria-current={isTrackActive ? "page" : undefined}
+                                    >
                                         <Search className="h-4 w-4" />
                                         {t("trackOrder")}
-                                    </Button>
-                                </Link>
+                                    </Link>
+                                </Button>
                             )}
                         </nav>
 

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ImageWithFallback } from '@/components/ui/image';
-import { Plus, Loader2, Flame } from 'lucide-react';
+import { Plus, LoaderIcon, Flame } from 'lucide-react';
 import { toast } from 'sonner';
 import { ProductSummary } from '@/plugins/catalog-products';
 import { useAddToCart } from '@/plugins/cart-engine/api';
@@ -21,9 +21,7 @@ export function hasProductOptions(product: ProductSummary | any): boolean {
         (product.variants && product.variants.length > 0) ||
         product.extra_option_id ||
         product.extra_option ||
-        product.extraOption ||
-        product.weight_option ||
-        product.weightOption
+        product.weight_option
     );
 }
 
@@ -176,7 +174,7 @@ export default function MenuItemRow({
                     className="absolute bottom-1.5 end-1.5 h-7 w-7 sm:h-8 sm:w-8 rounded-full shadow-md bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-transform active:scale-90 z-10"
                 >
                     {isPending ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <LoaderIcon className="h-3.5 w-3.5 animate-spin" />
                     ) : (
                         <Plus className="h-4 w-4" />
                     )}

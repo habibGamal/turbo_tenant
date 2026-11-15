@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-use App\Enums\OrderStatus;
-use App\Enums\OrderType;
-use App\Enums\PaymentMethod;
-use App\Enums\PaymentStatus;
-use App\Enums\SettingKey;
 use App\Models\User;
 use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderType;
+use App\Plugins\OrderManagement\src\Enums\PaymentMethod;
+use App\Plugins\OrderManagement\src\Enums\PaymentStatus;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\OrderResource;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\Pages\ListOrders;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
 use App\Plugins\OrderManagement\src\Models\OrderItemExtra;
+use App\Plugins\OrderManagement\src\Settings\OrderSettingKey;
 use App\Plugins\StoreSettings\src\Services\SettingService;
 use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasIcon;
@@ -93,8 +93,24 @@ describe('Order Enums UX and Contracts', function () {
             ->and(PaymentMethod::BANK_TRANSFER->getLabel())->toBe('تحويل بنكي');
 
         expect(PaymentMethod::CARD->requiresOnlinePayment())->toBeTrue()
-            ->and(PaymentMethod::COD->requiresOnlinePayment())->toBeFalse()
-            ->and(PaymentMethod::COD->posMapping())->toBe('cash');
+            ->and(PaymentMethod::COD->requiresOnlinePayment())->toBeFalse();
+    });
+
+    it('maps payment method to cash or card in POS payload builder', function () {
+        $builder = app(App\Plugins\PosIntegration\src\Services\POS\Contracts\OrderPOSPayloadBuilderInterface::class);
+
+        // The POS only accepts web order types, so fix the type (the factory may pick 'pos').
+        $codOrder = Order::factory()->create([
+            'payment_method' => PaymentMethod::COD,
+            'type' => OrderType::WEB_TAKEAWAY,
+        ]);
+        $cardOrder = Order::factory()->create([
+            'payment_method' => PaymentMethod::CARD,
+            'type' => OrderType::WEB_TAKEAWAY,
+        ]);
+
+        expect($builder->build($codOrder)['order']['webPreferences']['payment_method'])->toBe('cash')
+            ->and($builder->build($cardOrder)['order']['webPreferences']['payment_method'])->toBe('card');
     });
 
     it('implements HasLabel, HasColor, and HasIcon on OrderPosStatus with Arabic labels', function () {
@@ -224,7 +240,7 @@ describe('Order Filament UX rendering', function () {
     });
 
     it('hides manual status update action when setting is false', function () {
-        app(SettingService::class)->set(SettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE, 'false');
+        app(SettingService::class)->set(OrderSettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE, 'false');
 
         $order = Order::factory()->create();
 
@@ -236,7 +252,7 @@ describe('Order Filament UX rendering', function () {
     });
 
     it('reveals manual status update action when setting is true and allows updating status', function () {
-        app(SettingService::class)->set(SettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE, 'true');
+        app(SettingService::class)->set(OrderSettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE, 'true');
 
         $order = Order::factory()->create([
             'status' => OrderStatus::PENDING,

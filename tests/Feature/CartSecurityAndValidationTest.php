@@ -426,4 +426,60 @@ describe('Cart Option Validation - Extras', function () {
 
         $response->assertCreated();
     });
+
+    it('accepts extras as a list of integers over HTTP', function () {
+        $user = User::factory()->create();
+        $extraOption = ExtraOption::factory()->create(['allow_multiple' => true]);
+        $item = ExtraOptionItem::factory()->create([
+            'extra_option_id' => $extraOption->id,
+            'allow_quantity' => true,
+        ]);
+        $product = Product::factory()->create([
+            'base_price' => 25.00,
+            'is_active' => true,
+            'extra_option_id' => $extraOption->id,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->postJson(route('api.cart.store'), [
+                'product_id' => $product->id,
+                'quantity' => '1',
+                'extras' => [$item->id],
+            ]);
+
+        $response->assertCreated();
+        $this->assertDatabaseHas('cart_item_extras', [
+            'extra_option_item_id' => $item->id,
+            'quantity' => 1,
+        ]);
+    });
+
+    it('accepts extras as a list of id and quantity objects over HTTP', function () {
+        $user = User::factory()->create();
+        $extraOption = ExtraOption::factory()->create(['allow_multiple' => true]);
+        $item = ExtraOptionItem::factory()->create([
+            'extra_option_id' => $extraOption->id,
+            'allow_quantity' => true,
+        ]);
+        $product = Product::factory()->create([
+            'base_price' => 25.00,
+            'is_active' => true,
+            'extra_option_id' => $extraOption->id,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->postJson(route('api.cart.store'), [
+                'product_id' => $product->id,
+                'quantity' => '1',
+                'extras' => [
+                    ['id' => $item->id, 'quantity' => 3],
+                ],
+            ]);
+
+        $response->assertCreated();
+        $this->assertDatabaseHas('cart_item_extras', [
+            'extra_option_item_id' => $item->id,
+            'quantity' => 3,
+        ]);
+    });
 });

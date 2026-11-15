@@ -22,10 +22,12 @@ final class PluginServiceProvider extends ServiceProvider
 
         $this->app->singleton(PluginRegistry::class, function ($app) {
             $pluginsPath = app_path('Plugins');
+            $cachePath = $app->bootstrapPath('cache/plugins.php');
 
             return new PluginRegistry(
                 $app->make(PluginManifestLoader::class),
-                $pluginsPath
+                $pluginsPath,
+                $cachePath
             );
         });
 
@@ -70,10 +72,17 @@ final class PluginServiceProvider extends ServiceProvider
             }
         }
 
+        $this->optimizes(
+            optimize: 'plugin:discover',
+            clear: 'plugin:clear',
+            key: 'plugins',
+        );
+
         if ($this->app->runningInConsole()) {
             $this->commands([
                 \App\Console\Commands\MakePluginCommand::class,
                 \App\Console\Commands\PluginDiscoverCommand::class,
+                \App\Console\Commands\PluginClearCommand::class,
                 \App\Console\Commands\TenantPluginActivateCommand::class,
                 \App\Console\Commands\TenantPluginDeactivateCommand::class,
                 \App\Console\Commands\TenantPluginListCommand::class,

@@ -37,24 +37,25 @@ export default function Profile({ mustVerifyEmail = false, status }: ProfileProp
         <MainLayout>
             <Head title={t("profile")} />
 
-            <div className="container mx-auto py-10 px-4 md:px-6">
+            <div dir={i18n.dir()} className="container mx-auto py-10 px-4 text-start md:px-6">
                 <h1 className="text-3xl font-bold mb-8">{t("profile")}</h1>
 
                 <Tabs
                     defaultValue="profile"
+                    dir={i18n.dir()}
                     className="w-full"
                     onValueChange={setActiveTab}
                 >
                     <TabsList className="grid w-full grid-cols-3 mb-8">
-                        <TabsTrigger value="profile" className="flex items-center gap-2">
+                        <TabsTrigger value="profile" aria-label={t("profileInformation")} className="flex items-center gap-2">
                             <User className="h-4 w-4" />
                             <span className="hidden sm:inline">{t("profileInformation")}</span>
                         </TabsTrigger>
-                        <TabsTrigger value="password" className="flex items-center gap-2">
+                        <TabsTrigger value="password" aria-label={t("updatePassword")} className="flex items-center gap-2">
                             <Lock className="h-4 w-4" />
                             <span className="hidden sm:inline">{t("updatePassword")}</span>
                         </TabsTrigger>
-                        <TabsTrigger value="addresses" className="flex items-center gap-2">
+                        <TabsTrigger value="addresses" aria-label={t("addresses")} className="flex items-center gap-2">
                             <MapPin className="h-4 w-4" />
                             <span className="hidden sm:inline">{t("addresses")}</span>
                         </TabsTrigger>

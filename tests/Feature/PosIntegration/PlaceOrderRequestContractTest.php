@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\OrderType;
-use App\Enums\PaymentMethod;
 use App\Models\User;
 use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Plugins\GuestCheckout\src\Models\GuestUser;
@@ -11,17 +9,19 @@ use App\Plugins\LocationsDelivery\src\Models\Address;
 use App\Plugins\LocationsDelivery\src\Models\Area;
 use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\LocationsDelivery\src\Models\Governorate;
+use App\Plugins\OrderManagement\src\Enums\OrderType;
+use App\Plugins\OrderManagement\src\Enums\PaymentMethod;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
 use App\Plugins\PosIntegration\src\Models\ProductPosMapping;
 use App\Plugins\PosIntegration\src\Services\OrderPOSService;
-use App\Plugins\PosIntegration\src\Services\ProductPOSImporterService;
+use App\Plugins\PosIntegration\src\Services\POS\Contracts\PosMasterClient;
 use Illuminate\Support\Facades\Http;
 use Tests\Feature\PosIntegration\Support\PosOrderFixture;
 
 beforeEach(function () {
-    $this->productImporter = mock(ProductPOSImporterService::class);
-    $this->app->instance(ProductPOSImporterService::class, $this->productImporter);
+    $this->posMasterClient = mock(PosMasterClient::class);
+    $this->app->instance(PosMasterClient::class, $this->posMasterClient);
     $this->service = app(OrderPOSService::class);
     Http::preventStrayRequests();
 });
@@ -318,6 +318,12 @@ describe('POST /api/web-orders/place-order request contract', function () {
         $order = Order::factory()->create([
             'user_id' => $user->id,
             'address_id' => $address->id,
+            'customer_name' => 'Sara',
+            'customer_phone' => '01012345678',
+            'delivery_address' => [
+                'full_address' => 'Sample Address',
+                'phone_number' => '01012345678',
+            ],
             'branch_id' => $branch->id,
             'type' => OrderType::WEB_DELIVERY,
             'shift_id' => 1,
@@ -345,6 +351,9 @@ describe('POST /api/web-orders/place-order request contract', function () {
         $order = Order::factory()->create([
             'user_id' => $user->id,
             'address_id' => $address->id,
+            'delivery_address' => [
+                'full_address' => 'شارع 9، عمارة 15، الدور 3، شقة 7',
+            ],
             'branch_id' => $branch->id,
             'type' => OrderType::WEB_DELIVERY,
             'shift_id' => 1,
@@ -377,6 +386,14 @@ describe('POST /api/web-orders/place-order request contract', function () {
         $order = Order::factory()->create([
             'user_id' => $user->id,
             'address_id' => $address->id,
+            'delivery_address' => [
+                'street' => 'Street 9',
+                'building' => '15',
+                'floor' => '3',
+                'apartment' => '7',
+                'area_name' => 'Maadi',
+                'governorate_name' => 'Cairo',
+            ],
             'branch_id' => $branch->id,
             'type' => OrderType::WEB_DELIVERY,
             'shift_id' => 1,
@@ -411,6 +428,17 @@ describe('POST /api/web-orders/place-order request contract', function () {
         $order = Order::factory()->create([
             'user_id' => null,
             'guest_user_id' => $guestUser->id,
+            'customer_name' => 'Guest Ahmed',
+            'customer_phone' => '+2001099887766',
+            'delivery_address' => [
+                'street' => 'Tahrir',
+                'building' => '1',
+                'floor' => '2',
+                'apartment' => '3',
+                'city' => 'Dokki City',
+                'area_name' => 'Dokki',
+                'governorate_name' => 'Giza',
+            ],
             'branch_id' => $branch->id,
             'type' => OrderType::WEB_DELIVERY,
             'shift_id' => 1,

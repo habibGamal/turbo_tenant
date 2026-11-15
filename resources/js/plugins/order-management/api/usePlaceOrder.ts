@@ -1,19 +1,34 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/core/api/client';
-import { PlaceOrderPayload, PlaceOrderResponse } from '../types';
+import { emitCommerceEvent } from '@/core/analytics';
+import { PlaceOrderPayload, PlaceOrderResponse, PlaceOrderSuccessData } from '../types';
 
 export function usePlaceOrder() {
     const queryClient = useQueryClient();
 
-    return useMutation<PlaceOrderResponse, Error, PlaceOrderPayload>({
+    return useMutation<PlaceOrderSuccessData, Error, PlaceOrderPayload>({
+        // Do not queue a purchase for automatic replay when connectivity returns.
+        networkMode: 'always',
         mutationFn: async (payload: PlaceOrderPayload) => {
             const { data } = await apiClient.post<PlaceOrderResponse>('/api/orders/place', payload);
-            return data;
+            return data.data;
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['orders'] });
             queryClient.invalidateQueries({ queryKey: ['cart'] });
-            queryClient.invalidateQueries({ queryKey: ['checkout-data'] });
+            queryClient.invalidateQueries({ queryKey: ['locations-delivery'] });
+
+            if (data.tracking) {
+                if (!data.requires_payment) {
+                    emitCommerceEvent('Purchase', { tracking: data.tracking });
+                } else {
+                    try {
+                        sessionStorage.setItem(`meta:purchase:${data.order_id}`, JSON.stringify(data.tracking));
+                    } catch {
+                        // ignore sessionStorage quota or private browsing errors
+                    }
+                }
+            }
         },
     });
 }

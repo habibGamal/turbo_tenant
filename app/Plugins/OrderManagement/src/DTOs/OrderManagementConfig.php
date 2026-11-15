@@ -4,18 +4,31 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\DTOs;
 
+use App\Core\Contracts\SettingsRepository;
 use App\Enums\SettingKey;
-use App\Plugins\StoreSettings\src\Services\SettingService;
+use App\Plugins\OrderManagement\src\Settings\OrderSettingKey;
+use App\Support\TimeWindow;
 
 final readonly class OrderManagementConfig
 {
     public function __construct(
-        private ?SettingService $settingService = null
+        private ?SettingsRepository $settingService = null
     ) {}
 
     public function getTaxRate(): float
     {
-        return (float) config('app.tax_rate', 0.0);
+        if (! $this->settingService) {
+            return 0.0;
+        }
+
+        $taxRate = $this->settingService->get(OrderSettingKey::TAX_RATE, 0.0);
+        $rate = is_numeric($taxRate) ? (float) $taxRate : 0.0;
+
+        if ($rate <= 0.0) {
+            return 0.0;
+        }
+
+        return $rate / 100.0;
     }
 
     public function getServiceRate(): float
@@ -29,10 +42,7 @@ final readonly class OrderManagementConfig
             return true;
         }
 
-        return filter_var(
-            $this->settingService->get(SettingKey::ACCEPT_ORDERS_AFTER_WORK_TIMES, 'true'),
-            FILTER_VALIDATE_BOOLEAN
-        );
+        return (bool) $this->settingService->get(SettingKey::ACCEPT_ORDERS_AFTER_WORK_TIMES, true);
     }
 
     public function isStoreOpen(): bool
@@ -41,30 +51,75 @@ final readonly class OrderManagementConfig
             return true;
         }
 
-        $workTimesJson = $this->settingService->get(SettingKey::WORK_TIMES, '[]');
-        $workTimes = is_string($workTimesJson) ? json_decode($workTimesJson, true) ?? [] : (array) $workTimesJson;
+        $workTimes = $this->settingService->get(SettingKey::WORK_TIMES, []);
 
-        if (empty($workTimes)) {
+        if (! is_array($workTimes) || empty($workTimes)) {
             return true;
         }
 
         $now = now();
-        $currentDay = $now->format('l');
-        $currentTime = $now->format('H:i');
+        $yesterdayDay = $now->copy()->subDay()->format('l');
+        $todayDay = $now->format('l');
 
-        foreach ($workTimes as $daySchedule) {
-            if (($daySchedule['day'] ?? '') === $currentDay) {
-                if (! empty($daySchedule['closed'])) {
-                    return false;
-                }
+        // Yesterday's overnight spillover keeps the store open after midnight until its 'to' time
+        foreach ($workTimes as $schedule) {
+            if (! is_array($schedule)) {
+                continue;
+            }
 
-                $from = $daySchedule['from'] ?? '00:00';
-                $to = $daySchedule['to'] ?? '23:59';
+            if (strcasecmp((string) ($schedule['day'] ?? ''), $yesterdayDay) !== 0) {
+                continue;
+            }
 
-                return $currentTime >= $from && $currentTime <= $to;
+            $isClosed = filter_var($schedule['closed'] ?? $schedule['is_closed'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            if ($isClosed) {
+                continue;
+            }
+
+            $from = (string) ($schedule['from'] ?? $schedule['open_at'] ?? '00:00');
+            $to = (string) ($schedule['to'] ?? $schedule['close_at'] ?? '23:59');
+
+            $window = TimeWindow::fromStrings($from, $to);
+            if ($window->isOvernight() && $window->containsAfterMidnight($now)) {
+                return true;
             }
         }
 
-        return true;
+        // Today's schedule: if no schedule entry exists for today, the store is open
+        $todaySchedules = [];
+        foreach ($workTimes as $schedule) {
+            if (is_array($schedule) && strcasecmp((string) ($schedule['day'] ?? ''), $todayDay) === 0) {
+                $todaySchedules[] = $schedule;
+            }
+        }
+
+        if (empty($todaySchedules)) {
+            return true;
+        }
+
+        foreach ($todaySchedules as $schedule) {
+            $isClosed = filter_var($schedule['closed'] ?? $schedule['is_closed'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            if ($isClosed) {
+                continue;
+            }
+
+            $from = (string) ($schedule['from'] ?? $schedule['open_at'] ?? '00:00');
+            $to = (string) ($schedule['to'] ?? $schedule['close_at'] ?? '23:59');
+
+            $window = TimeWindow::fromStrings($from, $to);
+            if ($window->isOvernight()) {
+                if ($window->containsBeforeMidnight($now)) {
+                    return true;
+                }
+
+                continue;
+            }
+
+            if ($window->contains($now)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

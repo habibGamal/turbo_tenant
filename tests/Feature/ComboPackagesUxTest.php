@@ -35,6 +35,7 @@ it('has expected package table columns', function (string $column) {
     livewire(ListPackages::class)
         ->assertTableColumnExists($column);
 })->with([
+    'image',
     'name',
     'name_ar',
     'price',

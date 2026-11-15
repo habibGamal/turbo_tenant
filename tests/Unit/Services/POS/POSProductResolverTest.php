@@ -305,4 +305,85 @@ describe('POSProductResolver', function () {
             ->and($result['posRefObj'][0]['productRef'])->toBe('MAIN-BURGER')
             ->and($result['notes'])->toBe('json::'.json_encode(['اضافات' => 'Custom Spice (x1)'], JSON_UNESCAPED_UNICODE));
     });
+
+    it('returns a clone carrying preloaded mappings without mutating original instance', function () {
+        $branch = Branch::factory()->create();
+        $product = Product::factory()->create();
+
+        $mapping = ProductPosMapping::factory()->make([
+            'product_id' => $product->id,
+            'pos_item_id' => 'PRELOADED-REF',
+            'branch_id' => $branch->id,
+        ]);
+
+        $mappings = collect([$mapping]);
+
+        $clonedResolver = $this->resolver->withMappings($mappings);
+
+        expect($clonedResolver)->not->toBe($this->resolver)
+            ->and($clonedResolver)->toBeInstanceOf(POSProductResolver::class);
+
+        expect(method_exists($this->resolver, 'setMappings'))->toBeFalse()
+            ->and(method_exists($this->resolver, 'getMappings'))->toBeFalse();
+
+        $order = Order::factory()->create(['branch_id' => $branch->id]);
+        $item = OrderItem::factory()->create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'variant_id' => null,
+            'quantity' => 1,
+        ]);
+
+        // Resolving with cloned resolver uses preloaded mappings (in-memory mapping)
+        $result = $clonedResolver->resolveOrderItem($item, $branch->id);
+
+        expect($result)->not->toBeNull()
+            ->and($result['posRefObj'][0]['productRef'])->toBe('PRELOADED-REF');
+
+        // Resolving with original resolver does not have preloaded mappings and finds nothing in DB
+        $originalResult = $this->resolver->resolveOrderItem($item, $branch->id);
+        expect($originalResult)->toBeNull();
+    });
+
+    it('respects the branch filter when both productIds and extraOptionItemIds are present', function () {
+        $branch1 = Branch::factory()->create();
+        $branch2 = Branch::factory()->create();
+
+        $product1 = Product::factory()->create();
+        $extraOptionItem1 = ExtraOptionItem::factory()->create();
+
+        // Branch 1 mapping for product 1
+        ProductPosMapping::factory()->create([
+            'product_id' => $product1->id,
+            'extra_option_item_id' => null,
+            'pos_item_id' => 'BRANCH1-PROD',
+            'branch_id' => $branch1->id,
+        ]);
+
+        // Branch 2 mapping for extra option item 1
+        ProductPosMapping::factory()->create([
+            'product_id' => null,
+            'extra_option_item_id' => $extraOptionItem1->id,
+            'pos_item_id' => 'BRANCH2-EXTRA',
+            'branch_id' => $branch2->id,
+        ]);
+
+        $order = Order::factory()->create(['branch_id' => $branch1->id]);
+        $item = OrderItem::factory()->create([
+            'order_id' => $order->id,
+            'product_id' => $product1->id,
+            'quantity' => 1,
+        ]);
+        $itemExtra = OrderItemExtra::factory()->create([
+            'order_item_id' => $item->id,
+            'extra_option_item_id' => $extraOptionItem1->id,
+            'quantity' => 1,
+        ]);
+        $item->setRelation('extras', collect([$itemExtra]));
+
+        $mappings = $this->resolver->loadMappingsForItems([$item], $branch1->id);
+
+        expect($mappings->pluck('pos_item_id')->toArray())->toBe(['BRANCH1-PROD'])
+            ->and($mappings->pluck('pos_item_id')->toArray())->not->toContain('BRANCH2-EXTRA');
+    });
 });

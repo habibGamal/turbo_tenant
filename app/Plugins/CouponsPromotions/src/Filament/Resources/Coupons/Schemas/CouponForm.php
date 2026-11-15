@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace App\Plugins\CouponsPromotions\src\Filament\Resources\Coupons\Schemas;
 
+use App\Core\Plugins\Contracts\LineReferenceCatalog;
+use App\Core\Plugins\Services\PluginContributions;
 use App\Models\User;
 use App\Plugins\CatalogProducts\src\Models\Category;
 use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\CouponsPromotions\src\Enums\ApplicableTo;
+use App\Plugins\CouponsPromotions\src\Enums\DiscountType;
 use App\Plugins\LocationsDelivery\src\Models\Area;
 use App\Plugins\LocationsDelivery\src\Models\Governorate;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -21,6 +26,7 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Throwable;
 
 final class CouponForm
 {
@@ -56,7 +62,7 @@ final class CouponForm
                                         ->required()
                                         ->numeric()
                                         ->minValue(0)
-                                        ->suffix(fn (Get $get) => $get('type') === 'percentage' ? '%' : 'EGP'),
+                                        ->suffix(fn (Get $get) => $get('type') === DiscountType::PERCENTAGE->value ? '%' : 'EGP'),
                                     DateTimePicker::make('expiry_date')
                                         ->label('تاريخ ووقت الانتهاء')
                                         ->required()
@@ -114,11 +120,20 @@ final class CouponForm
                                 ]),
                                 Select::make('conditions.applicable_to.type')
                                     ->label('نطاق تطبيق الكوبون')
-                                    ->options([
-                                        'all' => 'جميع منتجات المتجر',
-                                        'products' => 'منتجات محددة فقط',
-                                        'categories' => 'فئات معينة فقط',
-                                    ])
+                                    ->options(function (): array {
+                                        $options = [
+                                            'all' => 'جميع منتجات المتجر',
+                                            'products' => 'منتجات محددة فقط',
+                                            'categories' => 'فئات معينة فقط',
+                                        ];
+
+                                        $providers = self::getActiveLineReferenceProviders();
+                                        if (! empty($providers)) {
+                                            $options[ApplicableTo::LINE_TYPES->value] = $providers[0]->label();
+                                        }
+
+                                        return $options;
+                                    })
                                     ->default('all')
                                     ->live()
                                     ->required(),
@@ -134,6 +149,24 @@ final class CouponForm
                                     ->searchable()
                                     ->options(Category::where('is_active', true)->pluck('name', 'id'))
                                     ->visible(fn (Get $get) => $get('conditions.applicable_to.type') === 'categories'),
+                                Select::make('conditions.applicable_to.ids')
+                                    ->label(fn () => self::getActiveLineReferenceProvider()?->label() ?? 'اختر العناصر المشمولة')
+                                    ->multiple()
+                                    ->searchable()
+                                    ->getSearchResultsUsing(function (string $search): array {
+                                        $provider = self::getActiveLineReferenceProvider();
+
+                                        return $provider ? $provider->search($search) : [];
+                                    })
+                                    ->getOptionLabelsUsing(function (array $values): array {
+                                        $provider = self::getActiveLineReferenceProvider();
+
+                                        return $provider ? $provider->labelsFor(array_values(array_map('intval', $values))) : [];
+                                    })
+                                    ->helperText(fn () => 'اتركه فارغاً لجميع '.(self::getActiveLineReferenceProvider()?->label() ?? 'العناصر'))
+                                    ->visible(fn (Get $get) => $get('conditions.applicable_to.type') === ApplicableTo::LINE_TYPES->value),
+                                Hidden::make('conditions.applicable_to.line_type')
+                                    ->default(fn () => self::getActiveLineReferenceProvider()?->lineType() ?? 'package'),
                             ]),
 
                         Tab::make('القيود والشحن والتوقيت')
@@ -208,5 +241,34 @@ final class CouponForm
                     ])
                     ->columnSpanFull(),
             ]);
+    }
+
+    /**
+     * @return list<LineReferenceCatalog>
+     */
+    public static function getActiveLineReferenceProviders(): array
+    {
+        if (tenant() === null) {
+            return [];
+        }
+
+        try {
+            /** @var PluginContributions $contributions */
+            $contributions = app(PluginContributions::class);
+
+            /** @var list<LineReferenceCatalog> $providers */
+            $providers = $contributions->active('catalog.line-references');
+
+            return $providers;
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    public static function getActiveLineReferenceProvider(): ?LineReferenceCatalog
+    {
+        $providers = self::getActiveLineReferenceProviders();
+
+        return $providers[0] ?? null;
     }
 }

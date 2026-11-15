@@ -1,3 +1,5 @@
+import { ApiSuccess } from '@/core/api/types';
+
 /**
  * TypeScript Interfaces for CMS Pages Plugin
  */
@@ -14,12 +16,5 @@ export interface CmsPageItem {
   updated_at?: string;
 }
 
-export interface CmsPagesResponse {
-  status: string;
-  data: CmsPageItem[];
-}
-
-export interface CmsPageDetailResponse {
-  status: string;
-  data: CmsPageItem;
-}
+export type CmsPagesResponse = ApiSuccess<CmsPageItem[]>;
+export type CmsPageDetailResponse = ApiSuccess<CmsPageItem>;

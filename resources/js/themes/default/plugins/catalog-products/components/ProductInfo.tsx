@@ -1,16 +1,17 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Star, Package, Clock } from "lucide-react";
+import { Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Product } from "@/types";
+import { NormalizedProduct } from "@/plugins/catalog-products/types";
 import { ImageWithFallback } from "@/components/ui/image";
 import { useTenant } from "@/core/context/TenantContext";
 import { hasActiveDiscount, getEffectivePrice } from "@/lib/pricing";
 import { useFormatMoney } from "@/lib/money";
 
 interface ProductInfoProps {
-    product: Product;
+    product: NormalizedProduct | Product;
     totalPrice: number;
 }
 
@@ -26,7 +27,10 @@ export default function ProductInfo({ product, totalPrice }: ProductInfoProps) {
     const basePrice = Number(product.base_price || 0);
     const hasDiscount = hasActiveDiscount(product);
 
-    const categoryName = getText(product.category!.name,product.category!.name_ar);
+    const categoryName = product.category ? getText(product.category.name, product.category.name_ar) : "";
+    const rating = Number(product.rating || 0);
+    const reviewsCount = Number(product.reviewsCount ?? (product as any).reviews_count ?? 0);
+    const hasReviewsOrRating = rating > 0 || reviewsCount > 0;
 
     return (
         <div className="space-y-6">
@@ -43,25 +47,31 @@ export default function ProductInfo({ product, totalPrice }: ProductInfoProps) {
             </h1>
 
             {/* Rating */}
-            <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                        <Star
-                            key={i}
-                            className={`h-5 w-5 ${i < Math.floor(product.rating || 0)
-                                ? "fill-amber-400 text-amber-400"
-                                : "text-muted-foreground/30"
-                                }`}
-                        />
-                    ))}
+            {!hasReviewsOrRating ? (
+                <p className="text-sm text-muted-foreground">
+                    {t("noReviewsYet", "No reviews yet")}
+                </p>
+            ) : (
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                            <Star
+                                key={i}
+                                className={`h-5 w-5 ${i < Math.floor(product.rating || 0)
+                                    ? "fill-amber-400 text-amber-400"
+                                    : "text-muted-foreground/30"
+                                    }`}
+                            />
+                        ))}
+                    </div>
+                    <span className="text-lg font-medium">
+                        {product.rating}
+                    </span>
+                    <span className="text-muted-foreground">
+                        ({reviewsCount} {t("reviews")})
+                    </span>
                 </div>
-                <span className="text-lg font-medium">
-                    {product.rating}
-                </span>
-                <span className="text-muted-foreground">
-                    ({product.reviewsCount} {t("reviews")})
-                </span>
-            </div>
+            )}
 
             {/* Price */}
             <div className="flex items-center gap-4">
@@ -84,60 +94,37 @@ export default function ProductInfo({ product, totalPrice }: ProductInfoProps) {
 
             {/* Description */}
             <p className="text-lg text-muted-foreground leading-relaxed">
-                {product.description}
+                {getText(product.description || "", product.descriptionAr || (product as any).description_ar)}
             </p>
 
-            <Separator />
-
             {/* Features */}
-            <div className="grid grid-cols-2 gap-4 pt-4">
-                {settings.product_show_cards && settings.product_show_cards.length > 0 ? (
-                    settings.product_show_cards.map((card: any, index: number) => (
-                        <div key={index} className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl border border-border/50 hover:bg-muted transition-colors">
-                            <div className="h-8 w-8 relative shrink-0">
-                                <ImageWithFallback
-                                    src={card.icon}
-                                    alt={card.title}
-                                    className="object-contain"
-                                />
-                            </div>
-                            <div>
-                                <div className="font-semibold text-sm">
-                                    {card.title}
+            {settings.product_show_cards && settings.product_show_cards.length > 0 && (
+                <>
+                    <Separator />
+
+                    <div className="grid grid-cols-2 gap-4 pt-4">
+                        {settings.product_show_cards.map((card: any, index: number) => (
+                            <div key={index} className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl border border-border/50 hover:bg-muted transition-colors">
+                                <div className="h-8 w-8 relative shrink-0">
+                                    <ImageWithFallback
+                                        src={card.icon}
+                                        alt={card.title}
+                                        className="object-contain"
+                                    />
                                 </div>
-                                <div className="text-xs text-muted-foreground">
-                                    {card.description}
-                                </div>
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <>
-                        <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl border border-border/50 hover:bg-muted transition-colors">
-                            <Package className="h-6 w-6 text-primary" />
-                            <div>
-                                <div className="font-semibold text-sm">
-                                    {t("freshIngredients")}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                    {t("qualityGuaranteed")}
+                                <div>
+                                    <div className="font-semibold text-sm">
+                                        {card.title}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                        {card.description}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl border border-border/50 hover:bg-muted transition-colors">
-                            <Clock className="h-6 w-6 text-primary" />
-                            <div>
-                                <div className="font-semibold text-sm">
-                                    {t("fastDelivery")}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                    {t("30MinOrLess")}
-                                </div>
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
+                        ))}
+                    </div>
+                </>
+            )}
         </div>
     );
 }

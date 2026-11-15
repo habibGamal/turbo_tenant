@@ -1,13 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/core/api/client';
-import { ProductDetailResponse } from '../types';
+import { ApiSuccess } from '@/core/api/types';
+import { ProductDetail } from '../types';
+
+export async function fetchCatalogProduct(id: number | string): Promise<ProductDetail> {
+  const { data } = await apiClient.get<ApiSuccess<ProductDetail>>(`/api/catalog-products/${id}`);
+  return data.data;
+}
 
 export function useCatalogProduct(id: number | string | undefined | null) {
-  return useQuery<ProductDetailResponse>({
+  return useQuery<ProductDetail>({
     queryKey: ['catalog-products', 'detail', id],
     queryFn: async () => {
-      const { data } = await apiClient.get<ProductDetailResponse>(`/api/catalog-products/${id}`);
-      return data;
+      if (!id) throw new Error('Product ID is required');
+      return fetchCatalogProduct(id);
     },
     enabled: Boolean(id),
     staleTime: 1000 * 60 * 5, // 5 minutes

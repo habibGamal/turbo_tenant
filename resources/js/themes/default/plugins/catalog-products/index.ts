@@ -1,8 +1,9 @@
+import { lazy } from 'react';
 import { registerThemeOverride, SlotName } from '@/core/slots/slot-registry';
 import ThemedProductsSection from './ThemedProductsSection';
-import ThemedProductDetails from './ThemedProductDetails';
-import ThemedProductShow from './ThemedProductShow';
-import ThemedMenuPage from './ThemedMenuPage';
+const ThemedProductDetails = lazy(() => import('./ThemedProductDetails'));
+const ThemedProductShow = lazy(() => import('./ThemedProductShow'));
+const ThemedMenuPage = lazy(() => import('./ThemedMenuPage'));
 import ProductPageSkeleton from './components/ProductPageSkeleton';
 
 /**

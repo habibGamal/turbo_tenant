@@ -104,15 +104,13 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
         <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5 dark:from-background dark:via-background dark:to-primary/10">
             <Head title={`${t("order")} #${order.order_number}`} />
 
-            <div className="container mx-auto px-4 py-8 md:py-12" data-testid="order-details-container">
-                <div className="flex items-center gap-4 mb-8">
-                    <Link to="/orders">
-                        <Button variant="ghost" size="icon">
-                            <BackArrowIcon className="h-5 w-5" />
-                        </Button>
-                    </Link>
+            <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12" data-testid="order-details-container">
+                <div className="mb-8 flex items-start gap-3 sm:items-center sm:gap-4">
+                    <Button variant="outline" size="icon" asChild className="shrink-0 rounded-full" aria-label={t("backToOrders", "Back to My Orders")}>
+                        <Link to="/orders"><BackArrowIcon className="h-5 w-5" /></Link>
+                    </Button>
                     <div>
-                        <h1 className="text-3xl md:text-4xl font-bold mb-2" data-testid="order-number-display">
+                        <h1 className="mb-1 text-2xl font-bold tracking-tight md:text-4xl" data-testid="order-number-display">
                             {t("order")} #{order.order_number}
                         </h1>
                         <p className="text-muted-foreground">
@@ -121,13 +119,13 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                     </div>
                 </div>
 
-                <div className="grid lg:grid-cols-3 gap-8">
+                <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* Order Status */}
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center justify-between">
+                                <CardTitle className="flex flex-wrap items-center justify-between gap-3">
                                     <span>{t("orderStatus")}</span>
                                     <OrderStatusBadge status={order.status} />
                                 </CardTitle>
@@ -151,8 +149,8 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                 {order.items.map((item, index) => (
                                     <div key={item.id}>
                                         {index > 0 && <Separator />}
-                                        <div className="flex justify-between items-start py-3">
-                                            <div className="flex-1">
+                                        <div className="flex items-start justify-between gap-3 py-3">
+                                            <div className="min-w-0 flex-1">
                                                 <div className="font-semibold">
                                                     {item.product?.sell_by_weight ? (
                                                         <>
@@ -178,6 +176,54 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                                         </span>
                                                     </div>
                                                 )}
+                                                {item.type === 'package' && item.components && item.components.length > 0 && (
+                                                    <div className="text-sm text-muted-foreground mt-1 space-y-0.5 ps-2 border-s border-border" data-testid="order-item-components">
+                                                        {item.components.map((component, componentIndex) => {
+                                                            const adjustment = Number(component.unit_price_adjustment) || 0;
+
+                                                            return (
+                                                                <div key={componentIndex} className="space-y-0.5">
+                                                                    <div>
+                                                                        {component.group_name && (
+                                                                            <span className="font-medium">{getText(component.group_name, component.group_name_ar ?? undefined)}: </span>
+                                                                        )}
+                                                                        {Number(component.quantity) || 1}× {getText(component.product_name, component.product_name_ar ?? undefined)}
+                                                                        {component.variant_name ? ` (${getText(component.variant_name, component.variant_name_ar ?? undefined)})` : ''}
+                                                                        {adjustment > 0 ? ` +${formatMoney(adjustment)}` : ''}
+                                                                    </div>
+                                                                    {component.extras && component.extras.length > 0 && (
+                                                                        <div className="ps-2 space-y-0.5 text-xs text-muted-foreground">
+                                                                            {component.extras.map((extra: any, extraIndex: number) => {
+                                                                                const extraName = getText(extra.name || extra.extra_name, extra.name_ar || extra.extra_name_ar);
+                                                                                const extraPrice = Number(extra.price || extra.extra_price) || 0;
+                                                                                const extraQty = Number(extra.quantity) || 1;
+                                                                                return (
+                                                                                    <div key={extraIndex} className="flex items-center gap-1">
+                                                                                        <span>
+                                                                                            + {extraName}
+                                                                                            {extraQty > 1 && <span className="ms-1">×{extraQty}</span>}
+                                                                                        </span>
+                                                                                        {extraPrice > 0 && (
+                                                                                            <span className="ms-auto font-medium">+{formatMoney(extraPrice * extraQty)}</span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
+                                                                    {component.notes && (
+                                                                        <div className="ps-2 text-xs text-muted-foreground italic">
+                                                                            "{component.notes}"
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                                {item.type === 'package' && item.notes && (
+                                                    <div className="text-sm text-muted-foreground italic mt-1">"{item.notes}"</div>
+                                                )}
                                                 {item.extras.length > 0 && (
                                                     <div className="text-sm text-muted-foreground mt-1 space-y-1">
                                                         {item.extras.map((extra) => (
@@ -199,7 +245,7 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="font-bold ms-4">
+                                            <div className="shrink-0 font-bold">
                                                 {formatMoney(item.total)}
                                             </div>
                                         </div>
@@ -227,7 +273,7 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                     </div>
 
                     {/* Sidebar */}
-                    <div className="lg:col-span-1 space-y-6">
+                    <div className="space-y-6 lg:col-span-1">
                         {/* Order Summary */}
                         <Card>
                             <CardHeader>
@@ -317,6 +363,7 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                         {t("paymentStatus")}
                                     </div>
                                     <Badge
+                                        variant="outline"
                                         className={getPaymentStatusColor(
                                             order.payment_status
                                         )}
@@ -324,16 +371,6 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                         {t(order.payment_status)}
                                     </Badge>
                                 </div>
-                                {order.transaction_id && (
-                                    <div>
-                                        <div className="text-sm text-muted-foreground">
-                                            {t("transactionId")}
-                                        </div>
-                                        <div className="font-mono text-sm">
-                                            {order.transaction_id}
-                                        </div>
-                                    </div>
-                                )}
                             </CardContent>
                         </Card>
 

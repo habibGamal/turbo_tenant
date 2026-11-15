@@ -7,7 +7,7 @@ namespace App\Plugins\PaymentProcessing\src\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Plugins\PaymentProcessing\src\Contracts\PaymentWebhookServiceInterface;
 use App\Plugins\PaymentProcessing\src\Exceptions\PaymentGatewayNotConfiguredException;
-use App\Plugins\PaymentProcessing\src\Services\PaymentGatewayFactory;
+use App\Plugins\PaymentProcessing\src\Services\GatewayRegistry;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +17,7 @@ final class KashierWebhookController extends Controller
 {
     public function __construct(
         private readonly PaymentWebhookServiceInterface $webhookService,
-        private readonly PaymentGatewayFactory $gatewayFactory
+        private readonly GatewayRegistry $gatewayRegistry
     ) {}
 
     /**
@@ -41,19 +41,19 @@ final class KashierWebhookController extends Controller
             }
 
             // T1.4: Explicitly select kashier gateway
-            $gateway = $this->gatewayFactory->getGateway('kashier');
+            $gateway = $this->gatewayRegistry->get('kashier');
             $result = $this->webhookService->handleWebhook($request->all(), (string) $signature, $gateway);
 
-            if (! $result['success']) {
+            if (! $result->successful) {
                 Log::error('Kashier webhook processing failed', [
                     'gateway' => 'kashier',
-                    'error' => $result['error'] ?? 'Unknown error',
+                    'error' => $result->error ?? 'Unknown error',
                     'result' => 'failed',
                 ]);
 
                 return response()->json([
                     'success' => false,
-                    'error' => $result['error'],
+                    'error' => $result->error,
                 ], 400);
             }
 

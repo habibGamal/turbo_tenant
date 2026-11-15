@@ -19,6 +19,7 @@ export interface BootstrapResponse {
   settings: Record<string, any>;
   active_plugins: string[];
   cart_count: number;
+  is_dev_mode: boolean;
 }
 
 interface TenantContextType {
@@ -27,6 +28,7 @@ interface TenantContextType {
   activePlugins: string[];
   cartCount: number;
   isLoading: boolean;
+  isDevMode: boolean;
   hasPlugin: (pluginId: string) => boolean;
   refetchBootstrap: () => void;
 }
@@ -47,6 +49,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const settings = data?.settings || {};
   const activePlugins = data?.active_plugins || [];
   const cartCount = data?.cart_count ?? 0;
+  const isDevMode = data?.is_dev_mode ?? false;
 
   const hasPlugin = (pluginId: string): boolean => {
     return activePlugins.includes(pluginId);
@@ -57,10 +60,6 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       document.title = settings.site_name;
     }
 
-    const loader = document.getElementById('loading_container');
-    if (loader) {
-      loader.classList.add('disabled');
-    }
   }, [settings.site_name]);
 
   return (
@@ -71,6 +70,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         activePlugins,
         cartCount,
         isLoading,
+        isDevMode,
         hasPlugin,
         refetchBootstrap: refetch,
       }}

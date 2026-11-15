@@ -27,12 +27,6 @@ Route::middleware([
         return response()->file(Storage::path('manifest.json'));
     });
 
-    Route::get('/theme.css', function () {
-        return response()->file(Storage::path('theme.css'), [
-            'Content-Type' => 'text/css',
-        ]);
-    });
-
     Route::view('/', 'app')->name('home');
 
     // Profile routes (requires authentication)

@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Plugins\CouponsPromotions\src\Filament\Resources\Coupons\Tables;
 
+use App\Plugins\CouponsPromotions\src\Enums\ApplicableTo;
+use App\Plugins\CouponsPromotions\src\Enums\DiscountType;
 use App\Plugins\CouponsPromotions\src\Filament\Resources\Coupons\CouponResource;
+use App\Plugins\CouponsPromotions\src\Filament\Resources\Coupons\Schemas\CouponForm;
 use App\Plugins\CouponsPromotions\src\Models\Coupon;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -41,21 +44,30 @@ final class CouponsTable
                 TextColumn::make('type')
                     ->label('النوع')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'percentage' => 'success',
-                        'fixed' => 'info',
-                        default => 'gray',
+                    ->color(fn (DiscountType $state): string => match ($state) {
+                        DiscountType::PERCENTAGE => 'success',
+                        DiscountType::FIXED => 'info',
                     })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'percentage' => 'نسبة مئوية',
-                        'fixed' => 'مبلغ ثابت',
-                        default => $state,
+                    ->formatStateUsing(fn (DiscountType $state): string => match ($state) {
+                        DiscountType::PERCENTAGE => 'نسبة مئوية',
+                        DiscountType::FIXED => 'مبلغ ثابت',
                     }),
                 TextColumn::make('value')
                     ->label('القيمة')
                     ->sortable()
-                    ->formatStateUsing(fn (string $state, $record): string => $record->type === 'percentage' ? "{$state}%" : "{$state} EGP"
+                    ->formatStateUsing(fn (string $state, Coupon $record): string => $record->type === DiscountType::PERCENTAGE ? "{$state}%" : "{$state} EGP"
                     ),
+                TextColumn::make('applicable_to')
+                    ->label('نطاق التطبيق')
+                    ->badge()
+                    ->state(fn (Coupon $record): string => $record->applicable_to_label)
+                    ->color(fn (Coupon $record): string => match (ApplicableTo::fromConditions($record->conditions)) {
+                        ApplicableTo::ALL => 'gray',
+                        ApplicableTo::PRODUCTS => 'info',
+                        ApplicableTo::CATEGORIES => 'warning',
+                        ApplicableTo::LINE_TYPES => 'success',
+                    })
+                    ->toggleable(),
                 TextColumn::make('status')
                     ->label('الحالة')
                     ->badge()
@@ -125,6 +137,22 @@ final class CouponsTable
                         'percentage' => 'نسبة مئوية',
                         'fixed' => 'مبلغ ثابت',
                     ]),
+                SelectFilter::make('applicable_to')
+                    ->label('نطاق التطبيق')
+                    ->options(function (): array {
+                        $options = [
+                            'all' => 'جميع منتجات المتجر',
+                            'products' => 'منتجات محددة',
+                            'categories' => 'فئات معينة',
+                        ];
+                        $providers = CouponForm::getActiveLineReferenceProviders();
+                        if (! empty($providers)) {
+                            $options['line_types'] = $providers[0]->label();
+                        }
+
+                        return $options;
+                    })
+                    ->query(fn ($query, array $data) => ! empty($data['value']) ? $query->where('conditions->applicable_to->type', $data['value']) : $query),
                 Filter::make('exhausted')
                     ->label('كوبونات مستنفذة')
                     ->query(fn ($query) => $query->whereNotNull('max_usage')->whereColumn('usage_count', '>=', 'max_usage')),

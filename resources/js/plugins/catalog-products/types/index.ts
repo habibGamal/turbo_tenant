@@ -15,7 +15,7 @@ export interface Variant {
   id: number;
   name: string;
   name_ar?: string;
-  price: number;
+  price: number | null;
   is_available: boolean;
   sort_order: number;
 }
@@ -76,7 +76,16 @@ export interface ProductSummary {
     name_ar?: string;
     description?: string;
   } | null;
-  rating?: number;
+  rating?: number | null;
+}
+
+export interface ProductComboPackageUpsell {
+  id: number;
+  name: string;
+  name_ar?: string | null;
+  price: number;
+  image?: string | null;
+  original_price?: number | null;
 }
 
 export interface ProductDetail extends ProductSummary {
@@ -84,6 +93,35 @@ export interface ProductDetail extends ProductSummary {
   extra_option?: ExtraOption | null;
   weight_option?: WeightOption | null;
   reviews_count?: number;
+  related_products?: ProductSummary[];
+  promotional_products?: ProductSummary[];
+  combo_packages?: ProductComboPackageUpsell[];
+}
+
+export interface NormalizedProduct extends Omit<ProductDetail, 'category'> {
+  category: {
+    id: number;
+    name: string;
+    name_ar?: string;
+    description?: string;
+    image?: string;
+    sort_order?: number;
+  } | null;
+  variants: Variant[];
+  extraOption?: ExtraOption | null;
+  extra_option?: ExtraOption | null;
+  weightOption?: WeightOption | null;
+  weight_option?: WeightOption | null;
+  reviewsCount?: number;
+  reviews_count?: number;
+  descriptionAr?: string;
+  categoryAr?: string;
+  badge?: string;
+  badgeAr?: string;
+  isNew?: boolean;
+  isTrending?: boolean;
+  combo_packages?: ProductComboPackageUpsell[];
+  comboPackages?: ProductComboPackageUpsell[];
 }
 
 export interface Section {
@@ -95,36 +133,32 @@ export interface Section {
   products: ProductSummary[];
 }
 
-export interface PaginationMeta {
-  current_page: number;
-  last_page: number;
-  per_page: number;
-  total: number;
-}
-
 export interface CatalogProductsQueryParams {
   page?: number;
   per_page?: number;
   search?: string;
+  category_ids?: number[];
   category?: string | string[] | number | number[];
   min_price?: number | string;
   max_price?: number | string;
-  sort_by?: 'name' | 'base_price' | 'created_at' | 'id' | string;
+  sort_by?: 'name' | 'price' | 'created_at' | string;
   sort_order?: 'asc' | 'desc' | string;
 }
 
 export interface CatalogProductsResponse {
   status: string;
   data: ProductSummary[];
-  meta: PaginationMeta;
-  filters?: Record<string, any>;
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
 }
 
 export interface ProductDetailResponse {
   status: string;
   data: ProductDetail;
-  related_products?: ProductSummary[];
-  promotional_products?: ProductSummary[];
 }
 
 export interface SectionsResponse {

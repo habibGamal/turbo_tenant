@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Http\Requests;
 
-use App\Enums\OrderStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class OrderStatusUpdateRequest extends FormRequest
+final class OrderStatusUpdateRequest extends FormRequest
 {
     public function authorize(): bool
     {

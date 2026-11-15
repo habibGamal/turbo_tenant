@@ -1,6 +1,7 @@
+import { lazy } from 'react';
 import { registerPluginDefault } from '@/core/slots/slot-registry';
-import DefaultPaymentCallback from './components/DefaultPaymentCallback';
-import DefaultKashierPayment from './components/DefaultKashierPayment';
+const DefaultPaymentCallback = lazy(() => import('./components/DefaultPaymentCallback'));
+const DefaultKashierPayment = lazy(() => import('./components/DefaultKashierPayment'));
 
 export function registerPaymentProcessingPlugin(): void {
   registerPluginDefault('payment.callback', DefaultPaymentCallback);

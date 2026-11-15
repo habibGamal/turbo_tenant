@@ -1,7 +1,8 @@
+import { lazy } from 'react';
 import { registerPluginDefault, SlotName } from '@/core/slots/slot-registry';
 import DefaultProductsSection from './components/DefaultProductsSection';
-import DefaultProductDetails from './components/DefaultProductDetails';
-import DefaultMenuPage from './components/DefaultMenuPage';
+const DefaultProductDetails = lazy(() => import('./components/DefaultProductDetails'));
+const DefaultMenuPage = lazy(() => import('./components/DefaultMenuPage'));
 
 /**
  * Register default fallback components for CatalogProducts plugin

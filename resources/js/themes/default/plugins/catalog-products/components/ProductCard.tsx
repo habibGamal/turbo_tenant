@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ImageWithFallback } from '@/components/ui/image';
-import { ShoppingCart, Star, Heart, Flame, Loader2 } from 'lucide-react';
+import { ShoppingCart, Star, Heart, Flame, LoaderIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { apiClient } from '@/core/api/client';
+import { fetchCatalogProduct } from '@/plugins/catalog-products/api/useCatalogProduct';
+import { normalizeProduct } from '@/plugins/catalog-products/utils/normalizeProduct';
+import { NormalizedProduct } from '@/plugins/catalog-products/types';
 
 import { Product } from '@/types';
 import ProductOptionsModal from './ProductOptionsModal';
@@ -17,7 +19,7 @@ import { useFormatMoney } from '@/lib/money';
 import { useAddToCart } from '@/plugins/cart-engine/api';
 
 interface ProductCardProps {
-    product: Product;
+    product: Product | NormalizedProduct;
     onAddToCart?: (e: React.MouseEvent, productId: number) => void;
     addingToCart?: boolean;
     showFavorite?: boolean;
@@ -52,7 +54,7 @@ export default function ProductCard({
 
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
-    const fullProduct = useRef<Product | null>(null);
+    const fullProduct = useRef<NormalizedProduct | null>(null);
 
     const hasOptions = Boolean(
         (product as any).has_options ||
@@ -62,9 +64,7 @@ export default function ProductCard({
         (product.variants && product.variants.length > 0) ||
         (product as any).extra_option_id ||
         (product as any).extra_option ||
-        (product as any).extraOption ||
-        (product as any).weight_option ||
-        (product as any).weightOption
+        (product as any).weight_option
     );
 
     const handleAddToCartClick = async (e: React.MouseEvent) => {
@@ -76,8 +76,8 @@ export default function ProductCard({
 
         setIsLoading(true);
         try {
-            const response = await apiClient.get<any>(`/api/catalog-products/${product.id}`);
-            fullProduct.current = response.data.product || response.data.data;
+            const productData = await fetchCatalogProduct(product.id);
+            fullProduct.current = normalizeProduct(productData);
             setIsModalOpen(true);
         } catch (error) {
             console.error("Failed to fetch product details", error);
@@ -190,7 +190,7 @@ export default function ProductCard({
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                toggleFavorite(product.id);
+                                toggleFavorite(product.id, getEffectivePrice(product));
                             }}
                             aria-label={
                                 isFavorite(product.id)
@@ -236,11 +236,11 @@ export default function ProductCard({
                     </h3>
 
                     {/* Rating */}
-                    {product.rating && (
+                    {Number(product.rating) > 0 && (
                         <div className="flex items-center gap-1 mt-1">
                             <Star className="h-4 w-4 fill-primary text-primary" />
                             <span className="text-xs font-medium">{product.rating}</span>
-                            {product.reviewsCount && (
+                            {Number(product.reviewsCount) > 0 && (
                                 <span className="text-xs text-muted-foreground">
                                     ({product.reviewsCount})
                                 </span>
@@ -253,7 +253,7 @@ export default function ProductCard({
                     {/* Description */}
                     <div className="flex-1 mb-4">
                         <p className="text-sm text-muted-foreground line-clamp-2">
-                            {getText(product.description, product.descriptionAr)}
+                            {getText(product.description || '', product.descriptionAr)}
                         </p>
                     </div>
 
@@ -279,17 +279,17 @@ export default function ProductCard({
 
                         <Button
                             data-testid="product-add-to-cart"
-                            size="sm"
-                            className="rounded-full shadow-sm hover:shadow transition-all"
+                            size="icon"
+                            aria-label={t('addToCart')}
+                            className="rounded-full shrink-0 shadow-none"
                             onClick={handleButtonClick}
                             disabled={isLoading || addingToCart || isAddingDirect || !isProductActive}
                         >
                             {isLoading || addingToCart || isAddingDirect ? (
-                                <Loader2 className="h-4 w-4 animate-spin me-1" />
+                                <LoaderIcon className="h-4 w-4 animate-spin" />
                             ) : (
-                                <ShoppingCart className="h-4 w-4 me-1" />
+                                <ShoppingCart className="h-4 w-4" />
                             )}
-                            {t('addToCart')}
                         </Button>
                     </div>
                 </CardContent>

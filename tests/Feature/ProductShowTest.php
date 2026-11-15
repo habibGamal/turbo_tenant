@@ -128,8 +128,8 @@ it('loads related products from the same category via REST API', function () {
     $response = $this->getJson(route('api.catalog-products.show', $product->id));
 
     $response->assertSuccessful()
-        ->assertJsonStructure(['status', 'related_products']);
-    expect($response->json('related_products'))->toHaveCount(3);
+        ->assertJsonStructure(['status', 'data' => ['related_products']]);
+    expect($response->json('data.related_products'))->toHaveCount(3);
 });
 
 it('loads promotional products with discounts via REST API', function () {
@@ -149,8 +149,8 @@ it('loads promotional products with discounts via REST API', function () {
     $response = $this->getJson(route('api.catalog-products.show', $product->id));
 
     $response->assertSuccessful()
-        ->assertJsonStructure(['status', 'promotional_products']);
-    expect($response->json('promotional_products'))->toHaveCount(2);
+        ->assertJsonStructure(['status', 'data' => ['promotional_products']]);
+    expect($response->json('data.promotional_products'))->toHaveCount(2);
 });
 
 it('excludes current product from related products via REST API', function () {
@@ -169,7 +169,7 @@ it('excludes current product from related products via REST API', function () {
     $response = $this->getJson(route('api.catalog-products.show', $product->id));
 
     $response->assertSuccessful();
-    $relatedProductIds = array_column($response->json('related_products'), 'id');
+    $relatedProductIds = array_column($response->json('data.related_products'), 'id');
     expect($relatedProductIds)->not->toContain($product->id);
 });
 

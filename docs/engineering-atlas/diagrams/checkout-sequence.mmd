@@ -1,0 +1,73 @@
+sequenceDiagram
+ actor Customer
+ participant UI as CheckoutGuard / checkout page
+ participant Client as apiClient / CSRF interceptor
+ participant Route as Tenant route + plugin.active
+ participant Request as PlaceOrderRequest
+ participant Controller as OrderController
+ participant Resolver as CheckoutCustomerResolver
+ participant Service as PlaceOrderService
+ participant Pipeline as Validation / pricing
+ participant Cart as CartService
+ participant Repo as OrderRepository
+ participant Payment as OrderPaymentDispatcher
+ Customer->>UI: Open /checkout
+ alt Neither authenticated nor guest plugin active
+ UI-->>Customer: Redirect to login
+ else Browser access allowed
+ opt Authenticated customer submits
+ UI->>Client: GET /api/tenant/auth/user
+ Note over UI,Client: Missing or changed session redirects to sign-in before order POST
+ end
+ opt Authenticated delivery with no saved address
+ UI->>Client: POST /api/locations-delivery/addresses
+ Note over UI,Client: Save first address before placing order. Stop on failure
+ end
+ UI->>Client: POST /api/orders/place
+ Note over Client: Offline order mutations are not queued for automatic replay
+ Note over UI: Lost response is shown as an unconfirmed outcome
+ Client->>Route: Cookie JSON request (CSRF ensured)
+ alt Tenant invalid / plugin inactive / CSRF failure
+ Route-->>Client: Middleware rejection
+ else Route accepted
+ Route->>Request: Resolve FormRequest and authorize and validate
+ Note over Request: Delivery area must be active for guest or saved address
+ alt Validation fails
+ Request-->>Client: 422 validation envelope
+ else Valid request
+ Request->>Controller: placeOrder
+ Controller->>Resolver: Resolve authenticated or active guest contributor
+ alt No customer resolved
+ Resolver-->>Controller: null
+ Controller-->>Client: 422 guest checkout not permitted
+ else Customer resolved
+ Controller->>Service: PlaceOrderData
+ Service->>Cart: getLines(customer or null)
+  Service->>Pipeline: Validation then pricing
+ alt Domain validation fails
+ Pipeline-->>Service: OrderValidationException
+ Service-->>Controller: Failure result
+ else Pipeline accepted
+ Service->>Repo: createOrderWithItems (transaction)
+ Repo-->>Service: Order
+ Note over Repo,Cart: Offline cart clears in transaction and online cart remains
+ Note over Service: Dispatch OrderCreated after repository returns
+ alt Offline payment
+ Service->>Repo: finalizeOfflineOrder
+ Note over Service: Dispatch OrderFinalized
+ else Online payment
+ Service->>Payment: dispatchPayment
+ Payment-->>Service: Checkout URL / payment data or failure
+ alt Success with checkout URL
+ Service->>Cart: Remove unchanged purchased lines under locks
+ else Failure, exception or missing URL
+ Note over Service,Cart: Cart remains for recovery
+ end
+ end
+ Service-->>Controller: OrderPlacementResult
+ Controller-->>Client: OrderPlacementResponder result
+ end
+ end
+ end
+ end
+ end

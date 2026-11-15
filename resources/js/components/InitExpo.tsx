@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import ReactPixel from 'react-facebook-pixel';
 
 declare global {
     interface Window {

@@ -2,15 +2,15 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { Check, Minus, Plus, ShoppingCart, Heart } from "lucide-react";
+import { Check, Minus, Plus, ShoppingCart, Heart, LoaderIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Product } from "@/types";
-import { Spinner } from "@/components/ui/spinner";
+import { NormalizedProduct } from "@/plugins/catalog-products/types";
 import { getEffectivePrice } from "@/lib/pricing";
 import { useFormatMoney } from "@/lib/money";
 
 interface ProductOptionsProps {
-    product: Product;
+    product: NormalizedProduct | Product;
     selectedVariant: number | null;
     setSelectedVariant: (id: number) => void;
     selectedExtras: Map<number, number>;
@@ -159,18 +159,18 @@ export default function ProductOptions({
                             )}
                             {isMissingRequired ? (
                                 <p className="text-xs text-destructive font-medium mt-1">
-                                    {t("selectAtLeast", { min: product.extraOption.min_selections })}
+                                    {t("selectAtLeast", { min: product.extraOption.min_selections ?? 0 })}
                                 </p>
                             ) : (
-                                (product.extraOption.min_selections > 0 || product.extraOption.max_selections) && (
+                                ((product.extraOption.min_selections ?? 0) > 0 || Boolean(product.extraOption.max_selections)) && (
                                     <p className="text-xs text-muted-foreground mt-1">
-                                        {product.extraOption.min_selections > 0 && product.extraOption.max_selections
+                                        {(product.extraOption.min_selections ?? 0) > 0 && product.extraOption.max_selections
                                             ? t("selectBetween", {
-                                                min: product.extraOption.min_selections,
+                                                min: product.extraOption.min_selections ?? 0,
                                                 max: product.extraOption.max_selections,
                                             })
-                                            : product.extraOption.min_selections > 0
-                                                ? t("selectAtLeast", { min: product.extraOption.min_selections })
+                                            : (product.extraOption.min_selections ?? 0) > 0
+                                                ? t("selectAtLeast", { min: product.extraOption.min_selections ?? 0 })
                                                 : t("selectUpTo", { max: product.extraOption.max_selections })}
                                     </p>
                                 )
@@ -212,7 +212,7 @@ export default function ProductOptions({
                                             </div>
                                         </label>
                                         {isSelected && item.allow_quantity && (
-                                            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-5 duration-200">
+                                            <div className="flex items-center gap-2 animate-in fade-in ltr:slide-in-from-right-5 rtl:slide-in-from-left-5 duration-200">
                                                 <Button
                                                     type="button"
                                                     data-testid="extra-qty-decrement"
@@ -255,9 +255,9 @@ export default function ProductOptions({
             )}
 
             {/* Quantity & Add to Cart */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4" >
+            <div className={`flex gap-3 pt-4 ${product.sell_by_weight ? "flex-col" : "flex-col sm:flex-row sm:items-stretch"}`} >
                 {/* Quantity Selector */}
-                <div className="w-full sm:w-auto">
+                <div className={product.sell_by_weight ? "w-full" : "w-full sm:w-auto"}>
                     {product.sell_by_weight && product.weight_option?.values ? (
                         /* Weight Options Selector */
                         <RadioGroup
@@ -269,10 +269,10 @@ export default function ProductOptions({
                                 );
                                 if (weightValue) {
                                     setSelectedWeightValue(valueId);
-                                    setQuantity(parseFloat(weightValue.value));
+                                    setQuantity(parseFloat(String(weightValue.value)));
                                 }
                             }}
-                            className="flex flex-wrap gap-2"
+                            className="flex flex-wrap gap-2" aria-label={t("weight", "Weight")}
 
                         >
                             {product.weight_option.values.map((value) => (
@@ -280,7 +280,7 @@ export default function ProductOptions({
                                     key={value.id}
                                     htmlFor={`weight-${value.id}`}
                                     data-testid="product-weight-option"
-                                    className={`flex items-center justify-center px-4 py-3 rounded-xl border-2 cursor-pointer transition-all ${selectedWeightValue === value.id
+                                    className={`flex items-center justify-center min-w-20 px-4 py-3 rounded-xl border-2 cursor-pointer transition-colors ${selectedWeightValue === value.id
                                         ? "border-primary bg-primary/10 font-semibold text-primary"
                                         : "border-border hover:border-primary/50"
                                         }`}
@@ -298,12 +298,12 @@ export default function ProductOptions({
                         </RadioGroup>
                     ) : (
                         /* Regular Quantity Selector */
-                        <div className="flex items-center justify-between sm:justify-start bg-muted/50 border border-border rounded-xl p-1 w-full sm:w-auto">
+                        <div className="flex items-center justify-between sm:justify-start bg-muted/50 border border-border rounded-xl p-1 w-full sm:w-fit">
                             <Button
                                 data-testid="product-quantity-decrement"
                                 variant="ghost"
                                 size="icon"
-                                className="h-10 w-10 rounded-lg hover:bg-background shadow-sm"
+                                className="h-10 w-10 rounded-lg hover:bg-background shadow-none"
                                 onClick={() => handleQuantityChange(-1)}
                                 disabled={quantity <= 1}
                             >
@@ -318,7 +318,7 @@ export default function ProductOptions({
                                 data-testid="product-quantity-increment"
                                 variant="ghost"
                                 size="icon"
-                                className="h-10 w-10 rounded-lg hover:bg-background shadow-sm"
+                                className="h-10 w-10 rounded-lg hover:bg-background shadow-none"
                                 onClick={() => handleQuantityChange(1)}
                             >
                                 <Plus className="h-4 w-4" />
@@ -328,12 +328,12 @@ export default function ProductOptions({
                 </div>
 
                 {/* Actions Wrapper */}
-                <div className="flex flex-1 gap-4">
+                <div className="flex w-full items-stretch gap-3">
                     {/* Add to Cart Button */}
                     <Button
                         size="lg"
                         data-testid="product-detail-add-to-cart"
-                        className="flex-1 text-lg gap-2 h-12 rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
+                        className="flex-1 text-lg gap-2 h-12 rounded-xl shadow-none transition-colors"
                         onClick={handleAddToCart}
                         disabled={isAddingToCart || !isCanAddToCart}
 
@@ -342,7 +342,7 @@ export default function ProductOptions({
                         {isAddingToCart ? (
                             <>
                                 {t("adding")}
-                                <Spinner />
+                                <LoaderIcon className="h-4 w-4 animate-spin" />
                             </>
                         ) : (
                             `${t("addToCart")} · ${formatMoney(runningTotal)}`
@@ -359,7 +359,7 @@ export default function ProductOptions({
                                 : t("addToFavorites", "Add to favorites")
                         }
                         aria-pressed={isFavorite}
-                        className="h-12 w-12 rounded-xl border-2 shrink-0"
+                        className="h-12 w-12 rounded-xl border shrink-0 shadow-none"
                         onClick={handleToggleFavorite}
                     >
                         <Heart

@@ -6,12 +6,10 @@ namespace App\Plugins\CartEngine\src\Services\Contracts;
 
 interface ProductValidatorInterface
 {
-    public function ensureProductIsActive(int $productId): void;
-
     /**
-     * @param  array<int, mixed>  $extras
+     * @param  list<array{id: int, quantity: int}>  $extras
      */
-    public function validateOptions(int $productId, ?int $variantId, ?int $weightOptionValueId, array $extras = []): void;
+    public function validateOptions(?int $productId, ?int $variantId, ?int $weightOptionValueId, array $extras = []): void;
 
-    public function validateUpdateWeightOption(int $productId, ?int $weightOptionValueId): void;
+    public function validateUpdateWeightOption(?int $productId, ?int $weightOptionValueId): void;
 }

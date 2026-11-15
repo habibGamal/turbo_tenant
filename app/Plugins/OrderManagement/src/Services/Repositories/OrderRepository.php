@@ -4,15 +4,20 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Services\Repositories;
 
-use App\Core\Plugins\Services\PluginManager;
-use App\Enums\OrderStatus;
-use App\Enums\PaymentStatus;
-use App\Plugins\CartEngine\src\Services\CartService;
+use App\Plugins\CartEngine\src\DTOs\CartLine;
+use App\Plugins\CartEngine\src\DTOs\CartLineComponent;
+use App\Plugins\CartEngine\src\DTOs\CartLineExtra;
+use App\Plugins\CartEngine\src\Services\Contracts\CartServiceInterface;
+use App\Plugins\LocationsDelivery\src\Contracts\AddressBook;
 use App\Plugins\OrderManagement\src\DTOs\OrderTotals;
 use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
-use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderType;
+use App\Plugins\OrderManagement\src\Enums\PaymentStatus;
+use App\Plugins\OrderManagement\src\Events\OrderPaymentFailed;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
+use App\Plugins\OrderManagement\src\Models\OrderItemComponent;
 use App\Plugins\OrderManagement\src\Models\OrderItemExtra;
 use App\Plugins\OrderManagement\src\Pipelines\Context\OrderValidationContext;
 use App\Plugins\OrderManagement\src\Services\Contracts\OrderRepositoryInterface;
@@ -22,60 +27,66 @@ use Illuminate\Support\Str;
 final class OrderRepository implements OrderRepositoryInterface
 {
     public function __construct(
-        private readonly CartService $cartService,
-        private readonly PluginManager $pluginManager
+        private readonly CartServiceInterface $cartService,
+        private readonly AddressBook $addressBook
     ) {}
 
     /**
-     * @param  array<int, array<string, mixed>>  $cartItems
+     * @param  list<CartLine>  $lines
      */
     public function createOrderWithItems(
         PlaceOrderData $data,
-        array $cartItems,
+        array $lines,
         OrderTotals $totals,
         ?OrderValidationContext $validationContext = null
     ): Order {
-        return DB::transaction(function () use ($data, $cartItems, $totals, $validationContext): Order {
-            $isGuest = $data->isGuest();
+        return DB::transaction(function () use ($data, $lines, $totals, $validationContext): Order {
+            $isGuest = $data->user->isGuest();
 
             $deliveryAddress = null;
-            $address = null;
-            if ($data->addressId && $this->pluginManager->isPluginActive('locations-delivery')) {
-                $address = \App\Plugins\LocationsDelivery\src\Models\Address::with(['area.governorate'])->find($data->addressId);
-                if ($address) {
-                    $deliveryAddress = $address->toArray();
-                    if ($address->area) {
-                        $deliveryAddress['area_name'] = $address->area->name;
-                        if ($address->area->governorate) {
-                            $deliveryAddress['governorate_name'] = $address->area->governorate->name;
-                        }
+            if ($data->addressId) {
+                $deliveryAddress = $this->addressBook->snapshotAddress((int) $data->addressId);
+            } elseif ($isGuest && $data->type === OrderType::WEB_DELIVERY->value) {
+                $address = $data->user->customerAddress();
+                $deliveryAddress = [
+                    'street' => $address['street'] ?? null,
+                    'building' => $address['building'] ?? null,
+                    'floor' => $address['floor'] ?? null,
+                    'apartment' => $address['apartment'] ?? null,
+                    'city' => $address['city'] ?? null,
+                    'area_id' => $address['area_id'] ?? null,
+                ];
+
+                if (! empty($address['area_id'])) {
+                    $labels = $this->addressBook->areaLabels((int) $address['area_id']);
+                    if (isset($labels['area_name'])) {
+                        $deliveryAddress['area_name'] = $labels['area_name'];
+                    }
+                    if (isset($labels['governorate_name'])) {
+                        $deliveryAddress['governorate_name'] = $labels['governorate_name'];
                     }
                 }
             }
 
-            $customerName = $data->user?->name ?? null;
-            $customerPhone = $data->user?->phone ?? $address?->phone_number ?? null;
+            $customerName = $data->user->customerName();
+            $customerPhone = $data->user->customerPhone() ?? ($deliveryAddress['phone_number'] ?? null);
+            $customerEmail = $data->user->customerEmail();
 
-            $couponId = null;
-            $couponCode = null;
-            if ($this->pluginManager->isPluginActive('coupons-promotions')) {
-                $couponId = $validationContext?->get('coupon_id') ?? $data->couponId;
-                $appliedCoupon = $validationContext?->get('applied_coupon');
-                if (! $appliedCoupon && $couponId) {
-                    $appliedCoupon = \App\Plugins\CouponsPromotions\src\Models\Coupon::find($couponId);
-                }
-                $couponCode = $appliedCoupon?->code ?? null;
-            }
+            $couponId = $validationContext?->appliedPromotionId();
+            $couponCode = $validationContext?->appliedPromotionCode();
+
+            $customerId = $data->user->customerId();
 
             $order = Order::create([
                 'order_number' => $this->generateOrderNumber(),
-                'user_id' => $isGuest ? null : $data->user->id,
-                'guest_user_id' => $isGuest ? $data->user->id : null,
+                'user_id' => $isGuest ? null : $customerId,
+                'guest_user_id' => $isGuest ? $customerId : null,
                 'branch_id' => $data->branchId,
                 'address_id' => $data->addressId,
                 'coupon_id' => $couponId,
                 'customer_name' => $customerName,
                 'customer_phone' => $customerPhone,
+                'customer_email' => $customerEmail,
                 'delivery_address' => $deliveryAddress,
                 'coupon_code' => $couponCode,
                 'note' => $data->note,
@@ -91,9 +102,13 @@ final class OrderRepository implements OrderRepositoryInterface
                 'total' => $totals->total,
             ]);
 
-            $this->createOrderItems($order, $cartItems);
+            $this->createOrderItems($order, $lines);
 
-            $this->cartService->clearCart($data->user);
+            // Online payment initialization may fail; retain the cart until a
+            // usable checkout URL has actually been created.
+            if (! $data->paymentMethod->requiresOnlinePayment()) {
+                $this->cartService->clearCart($data->user);
+            }
 
             return $order;
         });
@@ -104,10 +119,9 @@ final class OrderRepository implements OrderRepositoryInterface
         $order->update([
             'payment_status' => PaymentStatus::PENDING,
             'status' => OrderStatus::PENDING,
-            'pos_status' => OrderPosStatus::READY,
         ]);
 
-        return $order->fresh(['items.extras', 'user', 'branch', 'address']);
+        return $order->fresh(['items.extras', 'items.components', 'user', 'branch', 'address']);
     }
 
     public function markOrderAsPaymentFailed(Order $order): void
@@ -118,71 +132,90 @@ final class OrderRepository implements OrderRepositoryInterface
                 'payment_status' => PaymentStatus::FAILED,
             ]);
         });
+
+        OrderPaymentFailed::dispatch($order);
     }
 
     /**
-     * @param  array<int, array<string, mixed>>  $cartItems
+     * @param  list<CartLine>  $lines
      */
-    private function createOrderItems(Order $order, array $cartItems): void
+    private function createOrderItems(Order $order, array $lines): void
     {
-        foreach ($cartItems as $cartItem) {
-            $product = $cartItem['product'];
-            $variant = $cartItem['variant'] ?? null;
-            $weightOptionValue = $cartItem['weight_option_value'] ?? null;
-
-            $weightLabel = null;
-            if (! empty($weightOptionValue)) {
-                $weightLabel = $weightOptionValue['label'] ?? (isset($weightOptionValue['value']) ? (string) $weightOptionValue['value'] : null);
-            }
-
-            $extrasUnitTotal = 0.0;
-            if (! empty($cartItem['extras'])) {
-                foreach ($cartItem['extras'] as $extra) {
-                    $extraPrice = (float) ($extra['price'] ?? 0);
-                    $extraQty = (int) ($extra['quantity'] ?? 1);
-                    $extrasUnitTotal += $extraPrice * $extraQty;
-                }
-            }
-
+        foreach ($lines as $line) {
             $orderItem = OrderItem::create([
                 'order_id' => $order->id,
-                'product_id' => $product['id'],
-                'variant_id' => $variant['id'] ?? null,
-                'weight_option_value_id' => $weightOptionValue['id'] ?? null,
-                'weight_multiplier' => $cartItem['weight_multiplier'] ?? 1,
-                'product_name' => $product['name'],
-                'product_name_ar' => $product['name_ar'] ?? null,
-                'variant_name' => $variant['name'] ?? null,
-                'variant_name_ar' => $variant['name_ar'] ?? null,
-                'notes' => $cartItem['notes'] ?? null,
-                'weight_label' => $weightLabel,
-                'extras_unit_total' => $extrasUnitTotal,
-                'quantity' => $cartItem['quantity'],
-                'unit_price' => $cartItem['price'],
-                'total' => $cartItem['subtotal'],
+                'line_type' => $line->type,
+                'line_reference_id' => $line->referenceId,
+                'product_id' => $line->productId,
+                'variant_id' => $line->variantId,
+                'weight_option_value_id' => $line->weightOptionValueId,
+                'weight_multiplier' => $line->weightMultiplier,
+                'product_name' => $line->productName,
+                'product_name_ar' => $line->productNameAr,
+                'variant_name' => $line->variantName,
+                'variant_name_ar' => $line->variantNameAr,
+                'notes' => $line->notes,
+                'weight_label' => $line->weightLabel,
+                'extras_unit_total' => $line->extrasUnitTotal,
+                'quantity' => $line->quantity,
+                'unit_price' => $line->unitPrice,
+                'total' => $line->subtotal,
             ]);
 
-            if (! empty($cartItem['extras'])) {
-                $this->createOrderItemExtras($orderItem, $cartItem['extras']);
-            }
+            $this->createOrderItemExtras($orderItem, $line->extras);
+            $this->createOrderItemComponents($orderItem, $line->components);
         }
     }
 
     /**
-     * @param  array<int, array<string, mixed>>  $extras
+     * @param  list<CartLineComponent>  $components
+     */
+    private function createOrderItemComponents(OrderItem $orderItem, array $components): void
+    {
+        foreach ($components as $component) {
+            $extrasSnapshot = ! empty($component->extras)
+                ? array_values(array_map(fn (CartLineExtra $extra): array => [
+                    'extra_option_item_id' => $extra->extraOptionItemId,
+                    'name' => $extra->name,
+                    'name_ar' => $extra->nameAr,
+                    'price' => $extra->unitPrice,
+                    'quantity' => $extra->quantity,
+                ], $component->extras))
+                : null;
+
+            OrderItemComponent::create([
+                'order_item_id' => $orderItem->id,
+                'source_id' => $component->sourceId,
+                'group_name' => $component->groupName,
+                'group_name_ar' => $component->groupNameAr,
+                'product_id' => $component->productId,
+                'variant_id' => $component->variantId,
+                'product_name' => $component->productName,
+                'product_name_ar' => $component->productNameAr,
+                'variant_name' => $component->variantName,
+                'variant_name_ar' => $component->variantNameAr,
+                'quantity' => $component->quantity,
+                'unit_price_adjustment' => $component->unitPriceAdjustment,
+                'sort_order' => $component->sortOrder,
+                'extras' => $extrasSnapshot,
+                'notes' => $component->notes,
+            ]);
+        }
+    }
+
+    /**
+     * @param  list<CartLineExtra>  $extras
      */
     private function createOrderItemExtras(OrderItem $orderItem, array $extras): void
     {
         foreach ($extras as $extra) {
-            $extraOptionItem = $extra['extra_option_item'] ?? null;
-
             OrderItemExtra::create([
                 'order_item_id' => $orderItem->id,
-                'extra_option_item_id' => $extra['id'] ?? ($extraOptionItem['id'] ?? null),
-                'extra_name' => $extra['name'] ?? ($extraOptionItem['name'] ?? 'Extra'),
-                'extra_name_ar' => $extra['name_ar'] ?? ($extraOptionItem['name_ar'] ?? null),
-                'extra_price' => $extra['price'],
-                'quantity' => $extra['quantity'] ?? 1,
+                'extra_option_item_id' => $extra->extraOptionItemId,
+                'extra_name' => $extra->name,
+                'extra_name_ar' => $extra->nameAr,
+                'extra_price' => $extra->unitPrice,
+                'quantity' => $extra->quantity,
             ]);
         }
     }

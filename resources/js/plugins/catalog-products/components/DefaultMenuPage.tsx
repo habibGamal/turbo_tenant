@@ -5,7 +5,12 @@ import { useInfiniteCatalogProducts, useCatalogCategories } from '../api';
 export default function DefaultMenuPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const search = searchParams.get('search') || '';
-  const categories = searchParams.getAll('category[]').concat(searchParams.getAll('category'));
+  const categoryIds = searchParams.getAll('category_ids[]')
+    .concat(searchParams.getAll('category_ids'))
+    .concat(searchParams.getAll('category[]'))
+    .concat(searchParams.getAll('category'))
+    .map(Number)
+    .filter((n) => !isNaN(n) && n > 0);
   const sortBy = searchParams.get('sort_by') || 'name';
   const sortOrder = searchParams.get('sort_order') || 'asc';
 
@@ -18,7 +23,7 @@ export default function DefaultMenuPage() {
     isFetchingNextPage,
   } = useInfiniteCatalogProducts({
     search: search || undefined,
-    category: categories.length > 0 ? categories : undefined,
+    category_ids: categoryIds.length > 0 ? categoryIds : undefined,
     sort_by: sortBy,
     sort_order: sortOrder,
   });

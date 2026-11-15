@@ -3,9 +3,10 @@ import { test, expect } from '../../helpers/live-fixture';
 test.describe('CatalogProducts Suite 02: Category Listings & Navigation', () => {
   test('verifies live category listing and category data integrity', async ({ page, theme }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await page.waitForResponse(
-      (r) => r.url().includes('/api/catalog-products/categories') && r.status() === 200
-    );
+
+    // Wait for rendered data whether it came from bootstrap or a query.
+    const categoryTabs = theme.catalog.getCategoryTabs();
+    await expect(categoryTabs.first()).toBeVisible();
 
     // Fetch categories via browser network stack
     const json = await page.evaluate(async () => {
@@ -22,8 +23,6 @@ test.describe('CatalogProducts Suite 02: Category Listings & Navigation', () => 
     expect(firstCat).toHaveProperty('name');
 
     // Check category elements on storefront - rendered in the default theme
-    const categoryTabs = theme.catalog.getCategoryTabs();
-    await expect(categoryTabs.first()).toBeVisible({ timeout: 10000 });
     const count = await categoryTabs.count();
 
     // Must match json.data.length exactly as rendered in the default theme

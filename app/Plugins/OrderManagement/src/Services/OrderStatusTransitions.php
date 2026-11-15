@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Services;
 
-use App\Enums\OrderStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
 
 final class OrderStatusTransitions
 {

@@ -1,0 +1,6 @@
+flowchart LR
+  B["HTTP request"]
+  B --> n53d2f0aa3ae6["GET|HEAD /api/cms-pages"]
+  n53d2f0aa3ae6 -->|"cms-pages"| n20f312511617["CmsPagesApiController@index"]
+  B --> n22ab7e41b550["GET|HEAD /api/cms-pages/{slug}"]
+  n22ab7e41b550 -->|"cms-pages"| n21fda0877c8a["CmsPagesApiController@show"]

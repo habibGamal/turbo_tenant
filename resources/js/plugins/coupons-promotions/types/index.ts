@@ -9,14 +9,14 @@ export interface AppliedCoupon {
 
 export interface ValidateCouponPayload {
   code: string;
-  cart_items: any[];
-  sub_total: number;
   address_id?: number | null;
   guest_phone?: string | null;
 }
 
+export interface ValidateCouponData {
+  coupon: AppliedCoupon;
+}
+
 export interface ValidateCouponResponse {
-  valid: boolean;
-  message: string;
-  coupon?: AppliedCoupon;
+  coupon: AppliedCoupon;
 }

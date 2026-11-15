@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature\PosIntegration\Support;
 
-use App\Enums\OrderType;
-use App\Enums\PaymentMethod;
 use App\Models\User;
 use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Plugins\LocationsDelivery\src\Models\Address;
 use App\Plugins\LocationsDelivery\src\Models\Area;
 use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\LocationsDelivery\src\Models\Governorate;
+use App\Plugins\OrderManagement\src\Enums\OrderType;
+use App\Plugins\OrderManagement\src\Enums\PaymentMethod;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
 use App\Plugins\PosIntegration\src\Models\ProductPosMapping;
@@ -63,9 +63,17 @@ final class PosOrderFixture
         ]);
 
         $order = Order::factory()->create([
+            'status' => 'pending',
             'user_id' => $user->id,
             'address_id' => $address->id,
             'branch_id' => $branch->id,
+            'customer_name' => 'أحمد مصطفى',
+            'customer_phone' => '01012345678',
+            'delivery_address' => [
+                'full_address' => 'شارع 9، عمارة 15، الدور 3، شقة 7',
+                'area_name' => 'المعادي',
+                'phone_number' => '01012345678',
+            ],
             'type' => OrderType::WEB_DELIVERY,
             'shift_id' => 42,
             'order_number' => 'WEB-10542',

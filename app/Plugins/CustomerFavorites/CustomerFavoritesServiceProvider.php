@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Plugins\CustomerFavorites;
 
+use App\Core\Contracts\SettingsRepository;
 use App\Plugins\CustomerFavorites\src\DTOs\CustomerFavoritesConfig;
-use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Support\ServiceProvider;
 
 final class CustomerFavoritesServiceProvider extends ServiceProvider
@@ -14,7 +14,7 @@ final class CustomerFavoritesServiceProvider extends ServiceProvider
     {
         // Composition Root: Bind typed Config DTO (Pattern 1)
         $this->app->singleton(CustomerFavoritesConfig::class, function ($app) {
-            $settings = $app->make(SettingService::class);
+            $settings = $app->make(SettingsRepository::class);
 
             return new CustomerFavoritesConfig(
                 enabled: (bool) $settings->get('customer-favorites.enabled', true)

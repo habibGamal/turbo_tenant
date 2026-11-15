@@ -2,7 +2,7 @@ import React from 'react';
 import { useCatalogProduct } from '@/plugins/catalog-products/api/useCatalogProduct';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Info, CheckCircle2 } from 'lucide-react';
+import { Info, CheckCircle2, XCircle } from 'lucide-react';
 
 export interface ThemedProductDetailsProps {
   productId?: number | string;
@@ -10,14 +10,13 @@ export interface ThemedProductDetailsProps {
 
 export default function ThemedProductDetails({ productId }: ThemedProductDetailsProps) {
   const { t, i18n } = useTranslation();
-  const { data, isLoading } = useCatalogProduct(productId);
+  const { data: product, isLoading } = useCatalogProduct(productId);
 
-  if (isLoading || !data?.data) {
+  if (isLoading || !product) {
     return null;
   }
-
-  const product = data.data;
   const isRTL = i18n.language === 'ar';
+  const isAvailable = (product.is_active ?? true) && (product as any).is_available !== false;
 
   return (
     <div className="themed-catalog-product my-8">
@@ -44,10 +43,17 @@ export default function ThemedProductDetails({ productId }: ThemedProductDetails
               <span className="text-muted-foreground block text-xs">
                 {t('availability', { defaultValue: 'Availability' })}
               </span>
-              <span className="font-medium flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                {t('inStock', { defaultValue: 'In Stock' })}
-              </span>
+              {isAvailable ? (
+                <span className="font-medium flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  {t('inStock', { defaultValue: 'In Stock' })}
+                </span>
+              ) : (
+                <span className="font-medium flex items-center gap-1 text-destructive">
+                  <XCircle className="h-3.5 w-3.5" />
+                  {t('unavailable', { defaultValue: 'Unavailable' })}
+                </span>
+              )}
             </div>
             {(product as any).sku && (
               <div>

@@ -119,4 +119,132 @@ final class LocationsDeliveryApiTest extends TestCase
 
         $this->assertDatabaseMissing('addresses', ['id' => $addressId]);
     }
+
+    public function test_address_request_validation_returns_422_envelope(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/api/locations-delivery/addresses', []);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('status', 'error')
+            ->assertJsonStructure([
+                'status',
+                'message',
+                'errors' => [
+                    'area_id',
+                    'phone_number',
+                    'street',
+                    'building',
+                    'floor',
+                    'apartment',
+                ],
+            ]);
+    }
+
+    public function test_address_policy_forbids_updating_other_users_address_with_403_envelope(): void
+    {
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $branch = Branch::create(['name' => 'B1', 'link' => 'https://maps.example.com', 'is_active' => true]);
+        $gov = Governorate::create(['name' => 'G1', 'is_active' => true, 'sort_order' => 1]);
+        $area = Area::create(['name' => 'A1', 'shipping_cost' => 20.0, 'governorate_id' => $gov->id, 'branch_id' => $branch->id, 'is_active' => true, 'sort_order' => 1]);
+
+        $address = Address::create([
+            'user_id' => $owner->id,
+            'area_id' => $area->id,
+            'phone_number' => '+201012345678',
+            'street' => 'Owner St',
+            'building' => '1',
+            'floor' => '1',
+            'apartment' => '1',
+        ]);
+
+        $response = $this->actingAs($otherUser)->patchJson("/api/locations-delivery/addresses/{$address->id}", [
+            'area_id' => $area->id,
+            'phone_number' => '+201012345678',
+            'street' => 'Hacked St',
+            'building' => '2',
+            'floor' => '2',
+            'apartment' => '2',
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJsonPath('status', 'error')
+            ->assertJsonStructure(['status', 'message']);
+    }
+
+    public function test_address_policy_forbids_deleting_other_users_address_with_403_envelope(): void
+    {
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $branch = Branch::create(['name' => 'B1', 'link' => 'https://maps.example.com', 'is_active' => true]);
+        $gov = Governorate::create(['name' => 'G1', 'is_active' => true, 'sort_order' => 1]);
+        $area = Area::create(['name' => 'A1', 'shipping_cost' => 20.0, 'governorate_id' => $gov->id, 'branch_id' => $branch->id, 'is_active' => true, 'sort_order' => 1]);
+
+        $address = Address::create([
+            'user_id' => $owner->id,
+            'area_id' => $area->id,
+            'phone_number' => '+201012345678',
+            'street' => 'Owner St',
+            'building' => '1',
+            'floor' => '1',
+            'apartment' => '1',
+        ]);
+
+        $response = $this->actingAs($otherUser)->deleteJson("/api/locations-delivery/addresses/{$address->id}");
+
+        $response->assertStatus(403)
+            ->assertJsonPath('status', 'error')
+            ->assertJsonStructure(['status', 'message']);
+
+        $this->assertDatabaseHas('addresses', ['id' => $address->id]);
+    }
+
+    public function test_updating_or_deleting_unknown_address_returns_404_envelope(): void
+    {
+        $user = User::factory()->create();
+
+        $patchResponse = $this->actingAs($user)->patchJson('/api/locations-delivery/addresses/999999', [
+            'area_id' => 1,
+            'phone_number' => '+201012345678',
+            'street' => 'St',
+            'building' => '1',
+            'floor' => '1',
+            'apartment' => '1',
+        ]);
+
+        $patchResponse->assertStatus(404)
+            ->assertJsonPath('status', 'error')
+            ->assertJsonStructure(['status', 'message']);
+
+        $deleteResponse = $this->actingAs($user)->deleteJson('/api/locations-delivery/addresses/999999');
+
+        $deleteResponse->assertStatus(404)
+            ->assertJsonPath('status', 'error')
+            ->assertJsonStructure(['status', 'message']);
+    }
+
+    public function test_egyptian_phone_regex_validation(): void
+    {
+        $user = User::factory()->create();
+        $branch = Branch::create(['name' => 'B1', 'link' => 'https://maps.example.com', 'is_active' => true]);
+        $gov = Governorate::create(['name' => 'G1', 'is_active' => true, 'sort_order' => 1]);
+        $area = Area::create(['name' => 'A1', 'shipping_cost' => 20.0, 'governorate_id' => $gov->id, 'branch_id' => $branch->id, 'is_active' => true, 'sort_order' => 1]);
+
+        $invalidResponse = $this->actingAs($user)->postJson('/api/locations-delivery/addresses', [
+            'area_id' => $area->id,
+            'phone_number' => '01012345678', // missing +20
+            'street' => 'Tahrir St',
+            'building' => '10',
+            'floor' => '3',
+            'apartment' => '5',
+        ]);
+
+        $invalidResponse->assertStatus(422)
+            ->assertJsonPath('status', 'error')
+            ->assertJsonPath('errors.phone_number.0', 'رقم الهاتف يجب أن يكون رقم مصري صحيح.');
+    }
 }

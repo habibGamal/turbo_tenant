@@ -16,11 +16,6 @@ final class ProductPosMapping extends Model
 {
     use HasFactory;
 
-    protected static function newFactory()
-    {
-        return \Database\Factories\ProductPosMappingFactory::new();
-    }
-
     protected $fillable = [
         'product_id',
         'variant_id',
@@ -29,23 +24,40 @@ final class ProductPosMapping extends Model
         'pos_item_id',
     ];
 
+    /**
+     * @return BelongsTo<Product, $this>
+     */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
+    /**
+     * @return BelongsTo<ProductVariant, $this>
+     */
     public function variant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
 
+    /**
+     * @return BelongsTo<ExtraOptionItem, $this>
+     */
     public function extraOptionItem(): BelongsTo
     {
         return $this->belongsTo(ExtraOptionItem::class, 'extra_option_item_id');
     }
 
+    /**
+     * @return BelongsTo<Branch, $this>
+     */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    protected static function newFactory()
+    {
+        return \Database\Factories\ProductPosMappingFactory::new();
     }
 }

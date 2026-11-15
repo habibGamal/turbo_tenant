@@ -143,28 +143,51 @@ The `posRefObj` array bridges the web catalog and the POS catalog:
    ```
    *Result*: Creates 1 POS order item for `BURGER-BEEF-SINGLE` with quantity = `2 * 1 = 2`.
 
-2. **Combo / Meal Bundle**:
+2. **Combo Packages**:
+   Combo packages support two POS payload shapes depending on whether the combo has a package-level POS mapping (`pos_line_mappings`) or explodes into its components:
+
+   **A. Package-Level Mapped Combo (Single POS Product)**:
+   When the package is mapped directly to a POS item (branch mapping preferred over global), it is sent as ONE `posRefObj` entry with `quantity: 1`. The item's `quantity` is the ordered quantity of the combo. All component selections, along with their extras and notes, are embedded in the item's `notes` string.
    ```json
    {
-     "quantity": 1,
-     "notes": "بيبسي دايت",
+     "quantity": 2,
+     "notes": "json::{\"components\":\"برجر: برجر دبل x1 + جبنة إضافية (x2) [بدون مخلل], مشروبات: كانز كولا x1\",\"notes\":\"يرجى زيادة الصوص\"}",
      "posRefObj": [
        {
-         "productRef": "BURGER-BEEF-SINGLE",
-         "quantity": 1
-       },
-       {
-         "productRef": "FRIES-LARGE",
-         "quantity": 1
-       },
-       {
-         "productRef": "PEPSI-CAN",
+         "productRef": "COMBO-FAMILY-PKG",
          "quantity": 1
        }
      ]
    }
    ```
-   *Result*: Creates 3 distinct POS order item rows under the order, accurately deducting inventory and computing individual item costs.
+   *Result*: Creates 1 POS item for `COMBO-FAMILY-PKG` with quantity = `2 * 1 = 2`, and details in the POS notes.
+
+   **B. Exploded Combo (Component-Level Mapping)**:
+   When no package-level mapping exists, the combo explodes into individual POS items for each component:
+   - Components are resolved by variant or base product mapping.
+   - Component extras with `pos_mapping_type = 'pos_item'` and an active POS mapping are added as additional `posRefObj` entries with their extra quantity.
+   - Component extras with `pos_mapping_type = 'notes'` (or unmapped) and component-level notes are placed in the item's notes.
+   ```json
+   {
+     "quantity": 1,
+     "notes": "json::{\"components\":\"برجر: برجر دبل x1 + صوص حار (x1) [بدون بصل], مشروبات: كانز كولا x1\",\"notes\":\"\"}",
+     "posRefObj": [
+       {
+         "productRef": "BURGER-BEEF-DBL",
+         "quantity": 1
+       },
+       {
+         "productRef": "PEPSI-CAN",
+         "quantity": 1
+       },
+       {
+         "productRef": "EXTRA-CHEESE",
+         "quantity": 2
+       }
+     ]
+   }
+   ```
+   *Result*: Creates distinct POS order items for each component and mapped extra, accurately deducting inventory.
 
 ---
 

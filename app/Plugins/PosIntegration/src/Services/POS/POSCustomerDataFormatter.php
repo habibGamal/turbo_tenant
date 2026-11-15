@@ -4,144 +4,82 @@ declare(strict_types=1);
 
 namespace App\Plugins\PosIntegration\src\Services\POS;
 
-use App\Models\User;
-use App\Plugins\LocationsDelivery\src\Models\Address;
 use App\Plugins\OrderManagement\src\Models\Order;
 
 final class POSCustomerDataFormatter
 {
     /**
-     * Format customer data for the POS payload.
+     * Format customer data for the POS payload using order snapshots only.
      *
      * @return array{name: string, phone: string, area: string, address: string}
      */
     public function format(Order $order): array
     {
-        if ($order->user) {
-            return $this->formatRegularCustomer($order->user, $order->address);
-        }
+        $deliveryAddress = is_array($order->delivery_address) ? $order->delivery_address : null;
 
-        if ($order->guestUser) {
-            return $this->formatGuestCustomer($order->guestUser);
-        }
+        $name = (! empty($order->customer_name))
+            ? (string) $order->customer_name
+            : null;
+
+        $phone = (! empty($order->customer_phone))
+            ? (string) $order->customer_phone
+            : (! empty($deliveryAddress['phone_number']) ? (string) $deliveryAddress['phone_number'] : null);
+
+        $area = (! empty($deliveryAddress['area_name']))
+            ? (string) $deliveryAddress['area_name']
+            : null;
+
+        $formattedAddress = ! empty($deliveryAddress)
+            ? $this->formatDeliveryAddress($deliveryAddress)
+            : null;
 
         return [
-            'name' => 'N/A',
-            'phone' => 'N/A',
-            'area' => 'N/A',
-            'address' => 'N/A',
+            'name' => $name ?? 'N/A',
+            'phone' => $phone ?? 'N/A',
+            'area' => $area ?? 'N/A',
+            'address' => $formattedAddress ?? 'N/A',
         ];
     }
 
     /**
-     * Format regular registered user data.
+     * Format address parts from the order's delivery_address snapshot.
      *
-     * @return array{name: string, phone: string, area: string, address: string}
+     * @param  array<string, mixed>  $address
      */
-    private function formatRegularCustomer(User $user, ?Address $address): array
+    private function formatDeliveryAddress(array $address): string
     {
-        $phone = (! empty($address?->phone_number))
-            ? $address->phone_number
-            : ((! empty($user->phone)) ? $user->phone : 'N/A');
-
-        return [
-            'name' => $user->name,
-            'phone' => $phone,
-            'area' => $address?->area?->name ?? 'N/A',
-            'address' => $address ? $this->formatAddress($address) : 'N/A',
-        ];
-    }
-
-    /**
-     * Format guest customer data.
-     *
-     * @return array{name: string, phone: string, area: string, address: string}
-     */
-    private function formatGuestCustomer(object $guestUser): array
-    {
-        $phone = $guestUser->full_phone ?: $guestUser->phone;
-
-        return [
-            'name' => $guestUser->name,
-            'phone' => $phone ?: 'N/A',
-            'area' => $guestUser->area?->name ?? 'N/A',
-            'address' => $this->formatGuestAddress($guestUser),
-        ];
-    }
-
-    /**
-     * Format address parts for registered user address.
-     */
-    private function formatAddress(Address $address): string
-    {
-        if (! empty($address->full_address)) {
-            return $address->full_address;
+        if (! empty($address['full_address'])) {
+            return (string) $address['full_address'];
         }
 
         $parts = [];
 
-        if ($address->street) {
-            $parts[] = $address->street;
+        if (! empty($address['street'])) {
+            $parts[] = (string) $address['street'];
         }
 
-        if ($address->building) {
-            $parts[] = 'Building '.$address->building;
+        if (! empty($address['building'])) {
+            $parts[] = 'Building '.$address['building'];
         }
 
-        if ($address->floor) {
-            $parts[] = 'Floor '.$address->floor;
+        if (! empty($address['floor'])) {
+            $parts[] = 'Floor '.$address['floor'];
         }
 
-        if ($address->apartment) {
-            $parts[] = 'Apartment '.$address->apartment;
+        if (! empty($address['apartment'])) {
+            $parts[] = 'Apartment '.$address['apartment'];
         }
 
-        if ($address->area) {
-            $parts[] = $address->area->name;
+        if (! empty($address['city'])) {
+            $parts[] = (string) $address['city'];
         }
 
-        if ($address->area?->governorate) {
-            $parts[] = $address->area->governorate->name;
+        if (! empty($address['area_name'])) {
+            $parts[] = (string) $address['area_name'];
         }
 
-        $formatted = implode(', ', $parts);
-
-        return $formatted !== '' ? $formatted : 'N/A';
-    }
-
-    /**
-     * Format address parts for guest user address.
-     */
-    private function formatGuestAddress(object $guestUser): string
-    {
-        $parts = [];
-
-        if ($guestUser->street) {
-            $parts[] = $guestUser->street;
-        }
-
-        if ($guestUser->building) {
-            $parts[] = 'Building '.$guestUser->building;
-        }
-
-        if ($guestUser->floor) {
-            $parts[] = 'Floor '.$guestUser->floor;
-        }
-
-        if ($guestUser->apartment) {
-            $parts[] = 'Apartment '.$guestUser->apartment;
-        }
-
-        if ($guestUser->city) {
-            $parts[] = $guestUser->city;
-        }
-
-        if ($guestUser->area) {
-            $parts[] = $guestUser->area->name;
-        }
-
-        if ($guestUser->area?->governorate) {
-            $parts[] = $guestUser->area->governorate->name;
+        if (! empty($address['governorate_name'])) {
+            $parts[] = (string) $address['governorate_name'];
         }
 
         $formatted = implode(', ', $parts);

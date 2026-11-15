@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCatalogProduct } from '../api/useCatalogProduct';
 import { ProductDetail } from '../types';
+import ProductComboUpsell from './ProductComboUpsell';
 
 export interface DefaultProductDetailsProps {
   productId?: number | string;
@@ -13,8 +14,8 @@ export default function DefaultProductDetails({
   initialProduct,
   onAddToCart,
 }: DefaultProductDetailsProps) {
-  const { data, isLoading, error } = useCatalogProduct(productId);
-  const product = data?.data || initialProduct;
+  const { data: productData, isLoading, error } = useCatalogProduct(productId);
+  const product = productData || initialProduct;
 
   if (isLoading && !product) {
     return (
@@ -75,7 +76,7 @@ export default function DefaultProductDetails({
                       key={v.id}
                       className="px-2 py-1 text-xs border rounded bg-background"
                     >
-                      {v.name} ({v.price.toFixed(2)})
+                      {v.name} ({v.price !== null ? v.price.toFixed(2) : ''})
                     </span>
                   ))}
                 </div>
@@ -92,6 +93,10 @@ export default function DefaultProductDetails({
           </button>
         </div>
       </div>
+
+      {product.combo_packages && product.combo_packages.length > 0 && (
+        <ProductComboUpsell packages={product.combo_packages} />
+      )}
     </div>
   );
 }

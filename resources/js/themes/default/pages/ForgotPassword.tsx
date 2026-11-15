@@ -1,3 +1,4 @@
+import { LoaderIcon } from "lucide-react";
 import React, { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import MainLayout from "@/themes/default/layouts/MainLayout";
@@ -136,7 +137,7 @@ export default function ForgotPassword({ status: initialStatus }: ForgotPassword
                                 >
                                     {processing ? (
                                         <span className="flex items-center gap-2">
-                                            <span className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                                            <LoaderIcon className="h-4 w-4 animate-spin" />
                                             {t("sendingLink")}
                                         </span>
                                     ) : (

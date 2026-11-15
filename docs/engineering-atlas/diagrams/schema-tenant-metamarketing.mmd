@@ -1,0 +1,24 @@
+erDiagram
+  n3e752c009f2c["meta_capi_events"] {
+    string event_name
+    string event_id
+    unsignedBigInteger order_id
+    string status
+    unsignedInteger attempts
+    unsignedSmallInteger http_status
+    string fbtrace_id
+    unsignedInteger events_received
+    text error
+    json payload
+    timestamp sent_at
+  }
+  ne20f37c2a26c["meta_order_tracking"] {
+    unsignedBigInteger order_id
+    string fbp
+    string fbc
+    string client_ip
+    text user_agent
+    text event_source_url
+    string purchase_event_id
+    timestamp purchase_sent_at
+  }

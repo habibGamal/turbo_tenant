@@ -4,17 +4,21 @@ declare(strict_types=1);
 
 namespace App\Plugins\ProductReviews\src\Http\Controllers\Api;
 
+use App\Core\Contracts\SettingsRepository;
 use App\Http\Controllers\Controller;
+use App\Http\Responses\ApiResponse;
 use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\ProductReviews\src\Http\Requests\StoreReviewRequest;
+use App\Plugins\ProductReviews\src\Http\Resources\ReviewResource;
 use App\Plugins\ProductReviews\src\Models\Review;
-use App\Plugins\StoreSettings\src\Services\SettingService;
+use App\Plugins\ProductReviews\src\Services\ReviewImageStorageService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class ProductReviewsApiController extends Controller
 {
     public function __construct(
-        private readonly SettingService $settingService
+        private readonly SettingsRepository $settingService,
+        private readonly ReviewImageStorageService $imageStorageService,
     ) {}
 
     /**
@@ -30,44 +34,27 @@ final class ProductReviewsApiController extends Controller
             ->latest()
             ->paginate(10);
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $reviews->items(),
-            'total' => $reviews->total(),
-            'current_page' => $reviews->currentPage(),
-            'last_page' => $reviews->lastPage(),
-        ]);
+        return ApiResponse::paginated($reviews, ReviewResource::class);
     }
 
     /**
      * Store a newly created review in storage.
      */
-    public function store(Request $request, Product $product): JsonResponse
+    public function store(StoreReviewRequest $request, Product $product): JsonResponse
     {
-        $isAuthenticated = auth()->check();
+        $isAuthenticated = $request->user() !== null;
+        $validated = $request->validated();
 
-        $validated = $request->validate([
-            'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'required|string|max:2000',
-            'guest_name' => $isAuthenticated ? 'nullable|string|max:255' : 'required|string|max:255',
-            'guest_email' => 'nullable|email|max:255',
-            'images.*' => 'image|max:2048',
-        ]);
-
-        $images = [];
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-                $path = $image->store('reviews', 'public');
-                $images[] = "/storage/{$path}";
-            }
-        }
+        $images = $request->hasFile('images')
+            ? $this->imageStorageService->storeImages($request->file('images'))
+            : [];
 
         $autoApproveSetting = $this->settingService->get(Review::SETTING_AUTO_APPROVE, false);
         $autoApprove = filter_var($autoApproveSetting, FILTER_VALIDATE_BOOLEAN);
 
         $review = Review::query()->create([
             'product_id' => $product->id,
-            'user_id' => $isAuthenticated ? auth()->id() : null,
+            'user_id' => $isAuthenticated ? $request->user()->id : null,
             'guest_name' => $isAuthenticated ? null : ($validated['guest_name'] ?? null),
             'guest_email' => $isAuthenticated ? null : ($validated['guest_email'] ?? null),
             'rating' => (int) $validated['rating'],
@@ -81,10 +68,8 @@ final class ProductReviewsApiController extends Controller
             ? 'Review submitted successfully!'
             : 'Review submitted successfully and is awaiting approval.';
 
-        return response()->json([
-            'status' => 'success',
-            'message' => $message,
-            'review' => $review->load('user:id,name'),
-        ], 201);
+        $review->load('user:id,name');
+
+        return ApiResponse::success(new ReviewResource($review), $message, 201);
     }
 }

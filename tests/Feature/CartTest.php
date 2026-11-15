@@ -21,7 +21,7 @@ it('can view cart page via api', function () {
     $response = $this->getJson(route('api.cart.index'));
 
     $response->assertSuccessful();
-    $response->assertJsonStructure(['status', 'cart']);
+    $response->assertJsonStructure(['status', 'data' => ['items', 'total']]);
 });
 
 it('can add item to cart as guest', function () {
@@ -36,7 +36,7 @@ it('can add item to cart as guest', function () {
     $response->assertSuccessful();
     $response->assertJsonStructure([
         'message',
-        'cart' => [
+        'data' => [
             'items',
             'total',
         ],
@@ -299,7 +299,7 @@ it('validates extra option items exist', function () {
     ]);
 
     $response->assertUnprocessable();
-    $response->assertJsonValidationErrors(['extras.0']);
+    $response->assertJsonValidationErrors(['extras.0.id']);
 });
 
 it('updates cart last_activity_at when adding items', function () {

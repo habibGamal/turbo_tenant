@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Plugins\PosIntegration\src\Filament\Pages;
 
-use App\Plugins\PosIntegration\src\Services\ProductPOSImporterService;
+use App\Plugins\PosIntegration\src\Exceptions\PosMasterUnavailable;
+use App\Plugins\PosIntegration\src\Services\PosCatalogDiff;
+use App\Plugins\PosIntegration\src\Services\PosProductImporter;
 use BackedEnum;
 use Exception;
 use Filament\Actions\Action;
@@ -47,9 +49,9 @@ final class SyncPOSPrices extends Page implements HasForms, HasTable
             ->description('المنتجات التي تختلف أسعارها عن الأسعار في نقطة البيع الرئيسية')
             ->records(function (): array {
                 try {
-                    $service = app(ProductPOSImporterService::class);
+                    $diff = app(PosCatalogDiff::class);
 
-                    $productsWithChanges = $service->findProductsWithPriceChanges();
+                    $productsWithChanges = $diff->findProductsWithPriceChanges();
 
                     return $productsWithChanges->map(function ($product, $index) {
                         return [
@@ -64,7 +66,7 @@ final class SyncPOSPrices extends Page implements HasForms, HasTable
                             'index' => $index,
                         ];
                     })->values()->toArray();
-                } catch (Exception $e) {
+                } catch (PosMasterUnavailable $e) {
                     Notification::make()
                         ->title('خطأ في الاتصال')
                         ->body($e->getMessage())
@@ -153,30 +155,36 @@ final class SyncPOSPrices extends Page implements HasForms, HasTable
     protected function syncSelectedPrices(Collection $records): void
     {
         try {
-            $service = app(ProductPOSImporterService::class);
+            $importer = app(PosProductImporter::class);
             $productIds = $records->pluck('id')->toArray();
 
-            $result = $service->updateProductPrices($productIds);
+            $result = $importer->updateProductPrices($productIds);
 
-            if ($result['updated'] > 0) {
+            if ($result->count > 0) {
                 Notification::make()
                     ->title('تم التحديث بنجاح')
-                    ->body("تم تحديث أسعار {$result['updated']} منتج بنجاح")
+                    ->body("تم تحديث أسعار {$result->count} منتج بنجاح")
                     ->success()
                     ->send();
             }
 
-            if ($result['failed'] > 0) {
+            if ($result->failedCount > 0) {
                 Notification::make()
                     ->title('تحذير')
-                    ->body("فشل تحديث {$result['failed']} منتج")
+                    ->body("فشل تحديث {$result->failedCount} منتج")
                     ->warning()
                     ->send();
 
-                foreach ($result['errors'] as $error) {
+                foreach ($result->errors as $error) {
                     Log::warning($error);
                 }
             }
+        } catch (PosMasterUnavailable $e) {
+            Notification::make()
+                ->title('خطأ في الاتصال')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
         } catch (Exception $e) {
             Notification::make()
                 ->title('خطأ في التحديث')
@@ -189,8 +197,9 @@ final class SyncPOSPrices extends Page implements HasForms, HasTable
     protected function syncAllPrices(): void
     {
         try {
-            $service = app(ProductPOSImporterService::class);
-            $productsWithChanges = $service->findProductsWithPriceChanges();
+            $diff = app(PosCatalogDiff::class);
+            $importer = app(PosProductImporter::class);
+            $productsWithChanges = $diff->findProductsWithPriceChanges();
             $productIds = $productsWithChanges->pluck('id')->toArray();
 
             if (empty($productIds)) {
@@ -202,28 +211,34 @@ final class SyncPOSPrices extends Page implements HasForms, HasTable
                 return;
             }
 
-            $result = $service->updateProductPrices($productIds);
+            $result = $importer->updateProductPrices($productIds);
 
-            if ($result['updated'] > 0) {
+            if ($result->count > 0) {
                 Notification::make()
                     ->title('تم التحديث بنجاح')
-                    ->body("تم تحديث أسعار {$result['updated']} منتج بنجاح")
+                    ->body("تم تحديث أسعار {$result->count} منتج بنجاح")
                     ->success()
                     ->duration(5000)
                     ->send();
             }
 
-            if ($result['failed'] > 0) {
+            if ($result->failedCount > 0) {
                 Notification::make()
                     ->title('تحذير')
-                    ->body("فشل تحديث {$result['failed']} منتج")
+                    ->body("فشل تحديث {$result->failedCount} منتج")
                     ->warning()
                     ->send();
 
-                foreach ($result['errors'] as $error) {
+                foreach ($result->errors as $error) {
                     Log::warning($error);
                 }
             }
+        } catch (PosMasterUnavailable $e) {
+            Notification::make()
+                ->title('خطأ في الاتصال')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
         } catch (Exception $e) {
             Notification::make()
                 ->title('خطأ في التحديث')

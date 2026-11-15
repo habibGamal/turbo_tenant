@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Core\Plugins\Contracts\BootstrapContributor;
+use App\Core\Plugins\Services\PluginContributions;
 use App\Core\Plugins\Services\PluginManager;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\CustomerResource;
@@ -15,6 +16,7 @@ final class BootstrapController extends Controller
 {
     public function __construct(
         private readonly PluginManager $pluginManager,
+        private readonly PluginContributions $pluginContributions,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
@@ -29,13 +31,19 @@ final class BootstrapController extends Controller
         $contributions = [
             'settings' => [],
             'cart_count' => 0,
+            'query_data' => [],
         ];
 
-        /** @var iterable<BootstrapContributor> $contributors */
-        $contributors = app()->tagged('tenant.bootstrap.contributors');
-        foreach ($contributors as $contributor) {
-            if ($this->pluginManager->isPluginActive($contributor->pluginId(), $tenant)) {
-                $contributions = array_merge($contributions, $contributor->contribute($user));
+        foreach ($this->pluginContributions->active('tenant.bootstrap.contributors') as $contributor) {
+            if ($contributor instanceof BootstrapContributor) {
+                $payload = $contributor->contribute($user);
+                $contributions['query_data'] = array_merge($contributions['query_data'], $payload['query_data'] ?? []);
+                unset($payload['query_data']);
+                if (isset($payload['settings']) && is_array($payload['settings'])) {
+                    $contributions['settings'] = array_merge($contributions['settings'], $payload['settings']);
+                    unset($payload['settings']);
+                }
+                $contributions = array_merge($contributions, $payload);
             }
         }
 
@@ -61,6 +69,8 @@ final class BootstrapController extends Controller
             'settings' => $contributions['settings'] ?? [],
             'active_plugins' => $activePlugins,
             'cart_count' => $contributions['cart_count'] ?? 0,
+            'query_data' => $contributions['query_data'],
+            'is_dev_mode' => config('app.env') === 'local',
         ]);
     }
 }

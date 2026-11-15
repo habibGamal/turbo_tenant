@@ -68,6 +68,8 @@
 | `product-options-modal` | Slide-over / dialog modal for configuring options from card |
 | `product-not-found` | 404 container when product ID does not exist |
 | `browse-menu-button` | Button on 404 page returning to menu/catalog |
+| `product-combo-upsell` | "Make it a combo" upsell container section on product details page |
+| `product-combo-upsell-item` | Small combo package card linking to package details within upsell section |
 
 ---
 
@@ -78,7 +80,30 @@
 | `combos-section` | Container section displaying combo packages |
 | `combo-package-card` | Card representing a single combo bundle |
 | `combo-package-title` | Title of the combo package |
-| `combo-add-to-cart` | Button adding the entire combo bundle to cart |
+| `combo-package-price` | Current sell price of the package |
+| `combo-package-original-price` | Strikethrough original price when discounted |
+| `combo-package-savings` | Chip displaying savings amount / discount |
+| `combo-package-contents` | Compact contents summary list of items in the package |
+| `combo-package-availability` | Availability window / dayparts badge or reason on combo package card |
+| `combo-package-order-type` | Allowed order types badge on combo package card (e.g. delivery only, pickup only) |
+| `combo-package-stock` | Stock / daily remaining badge on combo package card (e.g. "Only N left today" or "Sold out today") |
+| `combo-unavailable-banner` | Banner inside combo configurator when package is unavailable |
+| `combo-add-to-cart` | Button opening combo configurator or adding bundle |
+| `combo-configurator` | Modal sheet/dialog or page container for configuring combo package options |
+| `combo-group-<groupId>` | Container element for a specific package group |
+| `combo-option-<itemId>` | Clickable row/card representing a package item option |
+| `combo-variant-<itemId>-<variantId>` | Button for selecting a specific product variant for customer-choice items |
+| `combo-qty-inc` | Stepper button increasing package quantity (`+`) |
+| `combo-qty-dec` | Stepper button decreasing package quantity (`-`) |
+| `combo-notes` | Textarea for customer special instructions or notes |
+| `combo-total` | Live total price display of the configured package |
+| `combo-submit` | CTA button to add configured package to cart or update in edit mode |
+| `combo-group-error-<groupId>` | Inline error message container for group validation failure |
+| `combo-component-customize-<itemId>` | Button to expand/collapse customization area (extras & notes) for a component |
+| `combo-extra-<itemId>-<extraId>` | Checkbox or toggle for a specific extra on a combo component |
+| `combo-extra-qty-inc-<itemId>-<extraId>` | Stepper button to increase quantity of an extra on a combo component |
+| `combo-component-notes-<itemId>` | Textarea input for special instructions or notes on a combo component |
+| `combo-component-error-<itemId>` | Inline error message container under a component (server or validation error) |
 
 ---
 
@@ -98,6 +123,10 @@
 | `cart-qty-increment` | Button increasing item quantity (`+`) |
 | `cart-qty-decrement` | Button decreasing item quantity (`-`) |
 | `cart-item-remove` | Button removing item from cart |
+| `cart-item-edit` | Button opening the configurator to edit a composite package cart line |
+| `cart-item-components` | Container displaying the breakdown of package components |
+| `cart-item-component` | Row displaying an individual component of a composite package |
+| `cart-item-notes` | Display of customer instructions/notes on a cart item |
 | `clear-cart-button` | Button purging all items from cart |
 | `cart-subtotal` | Subtotal price display |
 | `cart-checkout-button` | Primary CTA navigating to `/checkout` |

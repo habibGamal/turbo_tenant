@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Services;
 
-use App\Plugins\CartEngine\src\Services\CartService;
+use App\Plugins\CartEngine\src\Services\Contracts\CartServiceInterface;
 use App\Plugins\OrderManagement\src\DTOs\OrderPlacementResult;
 use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
+use App\Plugins\OrderManagement\src\Events\OrderCreated;
+use App\Plugins\OrderManagement\src\Events\OrderFinalized;
 use App\Plugins\OrderManagement\src\Exceptions\OrderValidationException;
 use App\Plugins\OrderManagement\src\Pipelines\Context\OrderValidationContext;
 use App\Plugins\OrderManagement\src\Pipelines\Context\PricingCalculationContext;
@@ -18,10 +20,10 @@ use App\Plugins\OrderManagement\src\Services\Contracts\PlaceOrderServiceInterfac
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class PlaceOrderService implements PlaceOrderServiceInterface
+final class PlaceOrderService implements PlaceOrderServiceInterface
 {
     public function __construct(
-        private CartService $cartService,
+        private CartServiceInterface $cartService,
         private OrderValidationPipeline $validationPipeline,
         private PricingCalculationPipeline $pricingPipeline,
         private OrderRepositoryInterface $orderRepository,
@@ -31,15 +33,15 @@ class PlaceOrderService implements PlaceOrderServiceInterface
     public function placeOrder(PlaceOrderData $data): OrderPlacementResult
     {
         $cartUser = $data->isGuest() ? null : $data->user;
-        $cart = $this->cartService->getCart($cartUser);
+        $lines = $this->cartService->getLines($cartUser);
 
         try {
-            $validationContext = new OrderValidationContext($data, $cart);
+            $validationContext = new OrderValidationContext($data, $lines);
             $validationContext = $this->validationPipeline->process($validationContext);
 
             $pricingContext = new PricingCalculationContext(
                 data: $data,
-                cartItems: $cart['items'] ?? [],
+                lines: $lines,
                 attributes: $validationContext->attributes()
             );
             $pricingContext = $this->pricingPipeline->process($pricingContext);
@@ -47,13 +49,16 @@ class PlaceOrderService implements PlaceOrderServiceInterface
 
             $order = $this->orderRepository->createOrderWithItems(
                 data: $data,
-                cartItems: $cart['items'] ?? [],
+                lines: $lines,
                 totals: $totals,
                 validationContext: $validationContext
             );
 
+            OrderCreated::dispatch($order, $validationContext);
+
             if (! $data->paymentMethod->requiresOnlinePayment()) {
                 $finalizedOrder = $this->orderRepository->finalizeOfflineOrder($order);
+                OrderFinalized::dispatch($finalizedOrder);
 
                 return OrderPlacementResult::success(
                     order: $finalizedOrder,
@@ -61,7 +66,12 @@ class PlaceOrderService implements PlaceOrderServiceInterface
                 );
             }
 
-            return $this->paymentDispatcher->dispatchPayment($order, $data);
+            $paymentResult = $this->paymentDispatcher->dispatchPayment($order, $data);
+            if ($paymentResult->isSuccessful() && ! empty($paymentResult->checkoutUrl)) {
+                $this->cartService->removePurchasedLines($cartUser, $lines);
+            }
+
+            return $paymentResult;
         } catch (OrderValidationException $e) {
             return OrderPlacementResult::failure($e->getMessage());
         } catch (Throwable $e) {
@@ -71,7 +81,7 @@ class PlaceOrderService implements PlaceOrderServiceInterface
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return OrderPlacementResult::failure('Failed to place order: '.$e->getMessage());
+            return OrderPlacementResult::failure('Failed to place order');
         }
     }
 }

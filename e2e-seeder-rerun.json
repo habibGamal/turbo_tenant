@@ -1,0 +1,552 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "D:\\turbo_tenant\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "tests/e2e/plugins/cart-engine/01-add-to-cart.live.spec.ts",
+      "tests/e2e/plugins/catalog-products/11-menu-page-browsing.live.spec.ts",
+      "tests/e2e/plugins/cms-pages.live.spec.ts",
+      "--reporter=line,json"
+    ],
+    "configFile": "D:\\turbo_tenant\\playwright.config.ts",
+    "rootDir": "D:/turbo_tenant/tests/e2e/plugins",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/turbo_tenant/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "theme-default",
+        "name": "theme-default",
+        "testDir": "D:/turbo_tenant/tests/e2e/plugins",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "D:\\turbo_tenant\\test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "theme-default",
+        "testDir": "D:\\turbo_tenant\\tests\\e2e\\plugins",
+        "snapshotDir": "D:\\turbo_tenant\\tests\\e2e\\plugins",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 45000,
+        "use": {
+          "baseURL": "http://e2e.localhost:8011",
+          "trace": "retain-on-failure",
+          "screenshot": "only-on-failure",
+          "video": "retain-on-failure",
+          "actionTimeout": 15000,
+          "navigationTimeout": 30000,
+          "launchOptions": {
+            "args": [
+              "--host-resolver-rules=MAP *.localhost 127.0.0.1",
+              "--disable-gpu",
+              "--no-sandbox"
+            ]
+          },
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "screen": {
+            "width": 1920,
+            "height": 1080
+          },
+          "deviceScaleFactor": 1,
+          "isMobile": false,
+          "hasTouch": false,
+          "defaultBrowserType": "chromium",
+          "activeThemeName": "default"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "theme-default"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "cart-engine\\01-add-to-cart.live.spec.ts",
+      "file": "cart-engine/01-add-to-cart.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "CartEngine Suite 01: Add to Cart & Badge Sync",
+          "file": "cart-engine/01-add-to-cart.live.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "adds standard product to cart and increments header badge",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 14083,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:18:46.618Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6c536a2082387084879e-457497dc42b8342d4e70",
+              "file": "cart-engine/01-add-to-cart.live.spec.ts",
+              "line": 4,
+              "column": 3
+            },
+            {
+              "title": "adds multiple distinct products and synchronizes badge count",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 14278,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:19:01.168Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6c536a2082387084879e-2bf26256e5f782805cf8",
+              "file": "cart-engine/01-add-to-cart.live.spec.ts",
+              "line": 24,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "catalog-products\\11-menu-page-browsing.live.spec.ts",
+      "file": "catalog-products/11-menu-page-browsing.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "CatalogProducts Suite 11: Storefront Menu Page & Infinite Scroll",
+          "file": "catalog-products/11-menu-page-browsing.live.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "renders menu page with top navigation search, categories, and initial product grid",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9570,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:19:15.505Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2c20fab65e32eb775161-96f29549255c5bd7f3f9",
+              "file": "catalog-products/11-menu-page-browsing.live.spec.ts",
+              "line": 4,
+              "column": 3
+            },
+            {
+              "title": "filters products by category and updates URL query parameters",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8730,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:19:25.110Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2c20fab65e32eb775161-8b8d65ef82ce8935a6f1",
+              "file": "catalog-products/11-menu-page-browsing.live.spec.ts",
+              "line": 28,
+              "column": 3
+            },
+            {
+              "title": "displays empty state when filtering a category with zero products",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 11106,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:19:33.883Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2c20fab65e32eb775161-9a942b599b7b4d93a56c",
+              "file": "catalog-products/11-menu-page-browsing.live.spec.ts",
+              "line": 44,
+              "column": 3
+            },
+            {
+              "title": "live search in top navigation filters products by keyword on Enter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 11356,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:19:45.031Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2c20fab65e32eb775161-00e72a61a925678369a4",
+              "file": "catalog-products/11-menu-page-browsing.live.spec.ts",
+              "line": 57,
+              "column": 3
+            },
+            {
+              "title": "top search bar pre-fills search term from URL query parameter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4686,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:19:56.413Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2c20fab65e32eb775161-eb7a86f75125b9514bb2",
+              "file": "catalog-products/11-menu-page-browsing.live.spec.ts",
+              "line": 78,
+              "column": 3
+            },
+            {
+              "title": "mobile screen hides top navigation cart icon and auto-expands search",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6082,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:20:01.117Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2c20fab65e32eb775161-b3d65adc41c376bb6eca",
+              "file": "catalog-products/11-menu-page-browsing.live.spec.ts",
+              "line": 86,
+              "column": 3
+            },
+            {
+              "title": "infinite scroll sentinel or load more fetches next page of products",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10891,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:20:07.220Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2c20fab65e32eb775161-154807a5cf167e85212f",
+              "file": "catalog-products/11-menu-page-browsing.live.spec.ts",
+              "line": 100,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cms-pages.live.spec.ts",
+      "file": "cms-pages.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Plugin: cms-pages (Live)",
+          "file": "cms-pages.live.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "navigates to cms page route and handles dynamic content",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6533,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:20:18.150Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8c69d521881e5207a100-9d0612f616c683a553f4",
+              "file": "cms-pages.live.spec.ts",
+              "line": 4,
+              "column": 3
+            },
+            {
+              "title": "handles non-existent cms page slug gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4605,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:20:24.704Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8c69d521881e5207a100-e2392313e58b162fef03",
+              "file": "cms-pages.live.spec.ts",
+              "line": 13,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-02T18:18:46.157Z",
+    "duration": 104892.795,
+    "expected": 11,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

@@ -6,10 +6,8 @@ namespace App\Core\Plugins\Contracts;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 
-interface BootstrapContributor
+interface BootstrapContributor extends PluginContribution
 {
-    public function pluginId(): string;
-
     /**
      * @return array<string, mixed>
      */

@@ -15,6 +15,7 @@
   "providers": [
     "App\\Plugins\\OrderManagement\\OrderManagementServiceProvider"
   ],
+  "plugin": "App\\Plugins\\OrderManagement\\OrderManagementPlugin",
   "filament": "App\\Plugins\\OrderManagement\\src\\Filament\\OrderManagementFilamentPlugin",
   "listeners": {
     "App\\Plugins\\OrderManagement\\src\\Events\\OrderCreated": [

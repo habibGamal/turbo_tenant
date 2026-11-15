@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Core\Plugins\Enums\PluginStatus;
+use App\Core\Plugins\Services\PluginManager;
+use App\Models\TenantPlugin;
 use App\Models\User;
 use App\Plugins\CatalogProducts\src\Filament\Resources\Categories\CategoryResource;
 use App\Plugins\CatalogProducts\src\Filament\Resources\Categories\Pages\CreateCategory;
@@ -237,9 +240,10 @@ it('exposes selection rules overrides in catalog products API', function () {
     $response = $this->getJson(route('api.catalog-products.show', ['id' => $product->id]));
 
     $response->assertSuccessful();
-    $response->assertJsonPath('data.min_selections', 2);
-    $response->assertJsonPath('data.max_selections', 5);
-    $response->assertJsonPath('data.allow_multiple', true);
+    $data = $response->json('data');
+    $this->assertArrayNotHasKey('min_selections', $data);
+    $this->assertArrayNotHasKey('max_selections', $data);
+    $this->assertArrayNotHasKey('allow_multiple', $data);
     $response->assertJsonPath('data.extra_option.min_selections', 2);
     $response->assertJsonPath('data.extra_option.max_selections', 5);
     $response->assertJsonPath('data.extra_option.allow_multiple', true);
@@ -261,4 +265,27 @@ it('can render variants relation manager with arabic labels and toggle column', 
         ->assertTableColumnExists('price')
         ->assertTableColumnExists('is_available')
         ->assertTableColumnExists('sort_order');
+});
+
+it('displays POS mapping tab when pos-integration is active and hides it when inactive', function () {
+    $category = Category::factory()->create();
+    $product = Product::factory()->create([
+        'category_id' => $category->id,
+    ]);
+
+    // 1. pos-integration is active by default -> POS tab is rendered
+    livewire(EditProduct::class, ['record' => $product->id])
+        ->assertOk()
+        ->assertSee('ربط نقطة البيع (POS)');
+
+    // 2. Deactivate pos-integration -> POS tab is absent
+    $tenant = static::$testTenant;
+    TenantPlugin::where('tenant_id', (string) $tenant->id)
+        ->where('plugin_id', 'pos-integration')
+        ->update(['status' => PluginStatus::DEACTIVATED]);
+    app(PluginManager::class)->resetTenant($tenant);
+
+    livewire(EditProduct::class, ['record' => $product->id])
+        ->assertOk()
+        ->assertDontSee('ربط نقطة البيع (POS)');
 });

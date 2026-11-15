@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Plugins\GuestCheckout\src\Models\GuestUser;
+use App\Plugins\GuestCheckout\src\Services\GuestTrackingTokenService;
 use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
@@ -11,7 +12,69 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('can successfully track guest order with correct credentials', function () {
+it('can successfully track guest order with tracking token', function () {
+    $guestUser = GuestUser::factory()->create([
+        'phone' => '1234567890',
+        'phone_country_code' => '+20',
+    ]);
+
+    $order = Order::factory()->create([
+        'order_number' => 'ORD-TOKEN123',
+        'guest_user_id' => $guestUser->id,
+        'user_id' => null,
+    ]);
+
+    $tokenService = app(GuestTrackingTokenService::class);
+    $token = $tokenService->generate($order);
+
+    $response = $this->postJson(route('api.guest-checkout.track'), [
+        'order_number' => 'ORD-TOKEN123',
+        'token' => $token,
+    ]);
+
+    $response->assertSuccessful();
+    $response->assertJson([
+        'status' => 'success',
+    ]);
+    $response->assertJsonStructure([
+        'status',
+        'data' => [
+            'id',
+            'order_number',
+            'status',
+            'total',
+        ],
+    ]);
+
+    expect($response->json('data.id'))->toBe($order->id);
+    expect($response->json('data.order_number'))->toBe('ORD-TOKEN123');
+});
+
+it('tracking fails with invalid tracking token', function () {
+    $guestUser = GuestUser::factory()->create([
+        'phone' => '1234567890',
+        'phone_country_code' => '+20',
+    ]);
+
+    Order::factory()->create([
+        'order_number' => 'ORD-TOKEN123',
+        'guest_user_id' => $guestUser->id,
+        'user_id' => null,
+    ]);
+
+    $response = $this->postJson(route('api.guest-checkout.track'), [
+        'order_number' => 'ORD-TOKEN123',
+        'token' => 'invalid-token-string',
+    ]);
+
+    $response->assertNotFound();
+    $response->assertJson([
+        'status' => 'error',
+        'message' => 'Order not found',
+    ]);
+});
+
+it('can successfully track guest order with phone number', function () {
     $guestUser = GuestUser::factory()->create([
         'phone' => '1234567890',
         'phone_country_code' => '+20',
@@ -31,11 +94,11 @@ it('can successfully track guest order with correct credentials', function () {
 
     $response->assertSuccessful();
     $response->assertJson([
-        'success' => true,
+        'status' => 'success',
     ]);
     $response->assertJsonStructure([
-        'success',
-        'order' => [
+        'status',
+        'data' => [
             'id',
             'order_number',
             'status',
@@ -43,8 +106,8 @@ it('can successfully track guest order with correct credentials', function () {
         ],
     ]);
 
-    expect($response->json('order.id'))->toBe($order->id);
-    expect($response->json('order.order_number'))->toBe('ORD-TEST123');
+    expect($response->json('data.id'))->toBe($order->id);
+    expect($response->json('data.order_number'))->toBe('ORD-TEST123');
 });
 
 it('tracking fails with wrong phone number', function () {
@@ -67,8 +130,8 @@ it('tracking fails with wrong phone number', function () {
 
     $response->assertNotFound();
     $response->assertJson([
-        'success' => false,
-        'error' => 'No orders found for this phone number',
+        'status' => 'error',
+        'message' => 'Order not found',
     ]);
 });
 
@@ -92,8 +155,8 @@ it('tracking fails with wrong order number', function () {
 
     $response->assertNotFound();
     $response->assertJson([
-        'success' => false,
-        'error' => 'Order not found',
+        'status' => 'error',
+        'message' => 'Order not found',
     ]);
 });
 
@@ -127,17 +190,17 @@ it('tracking returns order with relationships', function () {
 
     $response->assertSuccessful();
     $response->assertJsonStructure([
-        'success',
-        'order' => [
+        'status',
+        'data' => [
             'items',
             'branch' => ['id', 'name'],
             'guest_user' => ['id', 'name', 'phone'],
         ],
     ]);
 
-    expect($response->json('order.branch.name'))->toBe('Main Branch');
-    expect($response->json('order.guest_user.name'))->toBe('Test Guest');
-    expect(count($response->json('order.items')))->toBe(1);
+    expect($response->json('data.branch.name'))->toBe('Main Branch');
+    expect($response->json('data.guest_user.name'))->toBe('Test Guest');
+    expect(count($response->json('data.items')))->toBe(1);
 });
 
 it('prevents cross-guest access to orders', function () {
@@ -172,8 +235,8 @@ it('prevents cross-guest access to orders', function () {
 
     $response->assertNotFound();
     $response->assertJson([
-        'success' => false,
-        'error' => 'Order not found',
+        'status' => 'error',
+        'message' => 'Order not found',
     ]);
 
     // Verify Guest 1 can still access their order
@@ -184,7 +247,7 @@ it('prevents cross-guest access to orders', function () {
     ]);
 
     $response2->assertSuccessful();
-    expect($response2->json('order.id'))->toBe($order1->id);
+    expect($response2->json('data.id'))->toBe($order1->id);
 });
 
 it('uses default country code +20 when not provided', function () {
@@ -206,7 +269,7 @@ it('uses default country code +20 when not provided', function () {
     ]);
 
     $response->assertSuccessful();
-    expect($response->json('order.id'))->toBe($order->id);
+    expect($response->json('data.id'))->toBe($order->id);
 });
 
 it('validates order_number is required', function () {
@@ -220,15 +283,15 @@ it('validates order_number is required', function () {
     $response->assertJsonValidationErrors(['order_number']);
 });
 
-it('validates phone is required', function () {
+it('validates phone is required without token', function () {
     $response = $this->postJson(route('api.guest-checkout.track'), [
         'order_number' => 'ORD-TEST123',
-        // Missing phone
+        // Missing phone and token
         'phone_country_code' => '+20',
     ]);
 
     $response->assertUnprocessable();
-    $response->assertJsonValidationErrors(['phone']);
+    $response->assertJsonValidationErrors(['phone', 'token']);
 });
 
 it('can track order with different country codes correctly', function () {
@@ -260,7 +323,7 @@ it('can track order with different country codes correctly', function () {
     ]);
 
     $response1->assertSuccessful();
-    expect($response1->json('order.id'))->toBe($egyptianOrder->id);
+    expect($response1->json('data.id'))->toBe($egyptianOrder->id);
 
     // Track Saudi order
     $response2 = $this->postJson(route('api.guest-checkout.track'), [
@@ -270,7 +333,7 @@ it('can track order with different country codes correctly', function () {
     ]);
 
     $response2->assertSuccessful();
-    expect($response2->json('order.id'))->toBe($saudiOrder->id);
+    expect($response2->json('data.id'))->toBe($saudiOrder->id);
 
     // Egyptian guest cannot access Saudi order
     $response3 = $this->postJson(route('api.guest-checkout.track'), [
@@ -308,7 +371,7 @@ it('can track multiple orders for same guest', function () {
     ]);
 
     $response1->assertSuccessful();
-    expect($response1->json('order.id'))->toBe($order1->id);
+    expect($response1->json('data.id'))->toBe($order1->id);
 
     // Track second order
     $response2 = $this->postJson(route('api.guest-checkout.track'), [
@@ -318,7 +381,7 @@ it('can track multiple orders for same guest', function () {
     ]);
 
     $response2->assertSuccessful();
-    expect($response2->json('order.id'))->toBe($order2->id);
+    expect($response2->json('data.id'))->toBe($order2->id);
 });
 
 it('cannot track user orders as guest', function () {
@@ -339,7 +402,7 @@ it('cannot track user orders as guest', function () {
 
     $response->assertNotFound();
     $response->assertJson([
-        'success' => false,
+        'status' => 'error',
     ]);
 });
 
@@ -365,7 +428,7 @@ it('returns order with correct status information', function () {
     ]);
 
     $response->assertSuccessful();
-    expect($response->json('order.status'))->toBe('processing');
-    expect($response->json('order.payment_status'))->toBe('completed');
-    expect($response->json('order.total'))->toBe(150.50);
+    expect($response->json('data.status'))->toBe('processing');
+    expect($response->json('data.payment_status'))->toBe('completed');
+    expect($response->json('data.total'))->toBe(150.50);
 });

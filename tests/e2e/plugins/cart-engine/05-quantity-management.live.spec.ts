@@ -1,4 +1,5 @@
 import { test, expect } from '../../helpers/live-fixture';
+import { pricePattern } from '../../helpers/price';
 
 test.describe('CartEngine Suite 05: Quantity Management & Boundaries', () => {
   test('increments and decrements standard item quantity and enforces lower boundary', async ({ page, theme }) => {
@@ -21,7 +22,7 @@ test.describe('CartEngine Suite 05: Quantity Management & Boundaries', () => {
 
     // Verify initial subtotal
     const subtotal = theme.cart.getSubtotal();
-    await expect(subtotal).toContainText('166.00');
+    await expect(subtotal).toContainText(pricePattern(166));
 
     // 1. Increment quantity (1 -> 2)
     const incBtn = theme.cart.getQuantityIncrementButton(firstItem);
@@ -31,7 +32,7 @@ test.describe('CartEngine Suite 05: Quantity Management & Boundaries', () => {
     ]);
 
     // Subtotal should now reflect 2 * 166 = 332.00 EGP
-    await expect(subtotal).toContainText('332.00', { timeout: 5000 });
+    await expect(subtotal).toContainText(pricePattern(332), { timeout: 5000 });
 
     // 2. Decrement quantity (2 -> 1)
     const decBtn = theme.cart.getQuantityDecrementButton(firstItem);
@@ -43,7 +44,7 @@ test.describe('CartEngine Suite 05: Quantity Management & Boundaries', () => {
     ]);
 
     // Subtotal should return to 166.00 EGP
-    await expect(subtotal).toContainText('166.00', { timeout: 5000 });
+    await expect(subtotal).toContainText(pricePattern(166), { timeout: 5000 });
 
     // 3. Lower boundary rule: at quantity 1, decrement is disabled
     await expect(decBtn).toBeDisabled();

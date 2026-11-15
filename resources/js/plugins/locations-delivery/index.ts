@@ -1,5 +1,6 @@
+import { lazy } from 'react';
 import { registerPluginDefault, SlotName } from '@/core/slots/slot-registry';
-import DefaultLocationsDelivery from './components/DefaultLocationsDelivery';
+const DefaultLocationsDelivery = lazy(() => import('./components/DefaultLocationsDelivery'));
 
 /**
  * Register default fallback component for LocationsDelivery.

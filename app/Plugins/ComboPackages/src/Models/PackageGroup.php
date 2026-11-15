@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class PackageGroup extends Model
+final class PackageGroup extends Model
 {
     use HasFactory;
 
@@ -17,7 +17,10 @@ class PackageGroup extends Model
         'package_id',
         'name',
         'name_ar',
+        'description',
+        'description_ar',
         'selection_type',
+        'allow_repeats',
         'max_selections',
         'min_selections',
         'sort_order',
@@ -46,6 +49,7 @@ class PackageGroup extends Model
     protected function casts(): array
     {
         return [
+            'allow_repeats' => 'boolean',
             'max_selections' => 'integer',
             'min_selections' => 'integer',
             'sort_order' => 'integer',

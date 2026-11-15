@@ -1,6 +1,7 @@
 import React, { createContext, useContext } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/core/api/client';
+import { emitCommerceEvent } from '@/core/analytics';
 
 export interface User {
   id: number;
@@ -63,6 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       queryClient.setQueryData(['auth', 'user'], { user: data.user });
       queryClient.invalidateQueries({ queryKey: ['tenant', 'bootstrap'] });
       queryClient.invalidateQueries({ queryKey: ['cart'] });
+      emitCommerceEvent('CompleteRegistration', { status: true });
     },
   });
 

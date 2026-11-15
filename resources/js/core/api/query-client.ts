@@ -1,4 +1,11 @@
 import { QueryClient } from '@tanstack/react-query';
+import type { BootstrapResponse } from '@/core/context/TenantContext';
+
+declare global {
+  interface Window {
+    __TENANT_BOOTSTRAP__?: BootstrapResponse & { query_data?: { key: unknown[]; data: unknown }[] };
+  }
+}
 
 /**
  * Pre-configured TanStack Query Client for Turbo Tenant.
@@ -16,3 +23,14 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// This payload belongs to this document's tenant and session; never persist it.
+const bootstrap = window.__TENANT_BOOTSTRAP__;
+if (bootstrap) {
+  queryClient.setQueryData(['tenant', 'bootstrap'], bootstrap);
+  queryClient.setQueryData(['auth', 'user'], { user: bootstrap.user });
+  for (const query of bootstrap.query_data ?? []) {
+    queryClient.setQueryData(query.key, query.data);
+  }
+  delete window.__TENANT_BOOTSTRAP__;
+}

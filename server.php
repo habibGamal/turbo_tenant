@@ -9,6 +9,44 @@ $uri = urldecode(
     parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? ''
 );
 
+// Match production delivery for content-hashed Vite assets in the local server.
+if (str_starts_with($uri, '/build/assets/')) {
+    $assetRoot = realpath($publicPath.'/build/assets');
+    $asset = realpath($publicPath.$uri);
+    $extension = mb_strtolower(pathinfo($asset ?: '', PATHINFO_EXTENSION));
+    $types = ['js' => 'application/javascript', 'css' => 'text/css', 'woff2' => 'font/woff2', 'svg' => 'image/svg+xml'];
+    if ($assetRoot && $asset && str_starts_with($asset, $assetRoot.DIRECTORY_SEPARATOR)
+        && is_file($asset) && isset($types[$extension])
+        && preg_match('/-[a-zA-Z0-9_-]{8,}\.[a-z0-9]+$/', basename($asset))) {
+        $content = file_get_contents($asset);
+        $gzip = false;
+        foreach (explode(',', $_SERVER['HTTP_ACCEPT_ENCODING'] ?? '') as $encoding) {
+            if (preg_match('/^\s*gzip\s*(?:;\s*q=([0-9.]+))?\s*$/i', $encoding, $match)
+                && (! isset($match[1]) || (float) $match[1] > 0)) {
+                $gzip = in_array($extension, ['js', 'css', 'svg'], true) && function_exists('gzencode');
+            }
+        }
+        if ($gzip) {
+            $content = gzencode($content, 6);
+            header('Content-Encoding: gzip');
+        }
+        $etag = '"'.hash('sha256', $content).'"';
+        header('Content-Type: '.$types[$extension]);
+        header('Cache-Control: public, max-age=31536000, immutable');
+        header('Vary: Accept-Encoding');
+        header('ETag: '.$etag);
+        if (mb_trim($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === $etag) {
+            http_response_code(304);
+            exit;
+        }
+        header('Content-Length: '.mb_strlen($content, '8bit'));
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'HEAD') {
+            echo $content;
+        }
+        exit;
+    }
+}
+
 // 1. If physical file exists in public/, let PHP built-in server handle it directly
 if ($uri !== '/' && file_exists($publicPath.$uri)) {
     return false;
@@ -66,6 +104,9 @@ if ($tenant) {
 }
 
 // 4. Default Laravel routing & logging
+if (function_exists('ob_gzhandler') && ! ini_get('zlib.output_compression')) {
+    ob_start('ob_gzhandler');
+}
 $formattedDateTime = date('D M j H:i:s Y');
 $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $remoteAddress = ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1').':'.($_SERVER['REMOTE_PORT'] ?? '0');

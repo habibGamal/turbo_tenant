@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services\Auth;
 
+use App\Core\Contracts\SettingsRepository;
 use App\Enums\SettingKey;
-use App\Plugins\StoreSettings\src\Services\SettingService;
 
 final class GoogleOAuthConfigService
 {
     public function __construct(
-        private readonly SettingService $settingService
+        private readonly SettingsRepository $settingService
     ) {}
 
     /**

@@ -1,4 +1,5 @@
 import { test, expect } from '../../helpers/live-fixture';
+import { pricePattern } from '../../helpers/price';
 
 test.describe('CatalogProducts Suite 05: Variant Selection & Dynamic Pricing', () => {
   test('displays variant options with prices and dynamically recalculates total price on selection', async ({ page, theme }) => {
@@ -18,19 +19,19 @@ test.describe('CatalogProducts Suite 05: Variant Selection & Dynamic Pricing', (
 
     // 1. Assert prices are displayed on variant option cards
     const firstVariantText = await firstVariant.textContent();
-    expect(firstVariantText).toContain('600.00');
+    expect(firstVariantText).toMatch(pricePattern(600));
 
     const secondVariantText = await secondVariant.textContent();
-    expect(secondVariantText).toContain('700.00');
+    expect(secondVariantText).toMatch(pricePattern(700));
 
-    // 2. Assert initial total price reflects first variant (600.00 EGP)
+    // 2. Assert initial total reflects 125g of the first variant (75 EGP)
     const totalPrice = theme.catalog.getTotalPrice();
     await expect(totalPrice).toBeVisible();
-    await expect(totalPrice).toContainText('600.00');
+    await expect(totalPrice).toContainText(pricePattern(75));
 
-    // 3. Select second variant -> assert dynamic price updates to 700.00 EGP
+    // 3. Select second variant -> assert dynamic price updates to 87.50 EGP for 125g
     await secondVariant.click();
-    await expect(totalPrice).toContainText('700.00');
+    await expect(totalPrice).toContainText(pricePattern(87.5));
 
     // Verify checked state
     const secondRadio = secondVariant.locator('button[role="radio"], input[type="radio"]');
@@ -38,9 +39,9 @@ test.describe('CatalogProducts Suite 05: Variant Selection & Dynamic Pricing', (
       await expect(secondRadio).toHaveAttribute('data-state', 'checked');
     }
 
-    // 4. Switch back to first variant -> assert price returns to 600.00
+    // 4. Switch back to first variant -> assert price returns to 75 EGP
     await firstVariant.click();
-    await expect(totalPrice).toContainText('600.00');
+    await expect(totalPrice).toContainText(pricePattern(75));
   });
 
   test('selecting a variant preserves ability to add to cart', async ({ page, theme }) => {

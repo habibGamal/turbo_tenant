@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useParams, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { usePaymentStatus } from '../api/usePaymentStatus';
 
 export default function DefaultPaymentCallback() {
   const { id } = useParams<{ id: string }>();
-  const [searchParams] = useSearchParams();
-  const statusParam = searchParams.get('status') || 'pending';
-  const messageParam = searchParams.get('message') || '';
 
   const { data, isLoading } = usePaymentStatus(id);
   const [isTimedOut, setIsTimedOut] = useState(false);
@@ -18,10 +15,11 @@ export default function DefaultPaymentCallback() {
     return () => clearTimeout(timer);
   }, []);
 
-  const isSuccess = statusParam === 'success' || data?.is_paid || data?.order?.payment_status === 'completed';
-  const isFailed = statusParam === 'failed' || data?.order?.payment_status === 'failed';
+  const isSuccess = data?.is_paid || data?.order?.payment_status === 'completed';
+  const isFailed = data?.order?.payment_status === 'failed';
   const isConfirming = !isSuccess && !isFailed && isTimedOut;
   const isProcessing = !isSuccess && !isFailed && !isTimedOut;
+
 
   const title = isSuccess
     ? 'Payment Successful'
@@ -39,9 +37,7 @@ export default function DefaultPaymentCallback() {
     ? 'text-blue-600'
     : 'text-red-600';
 
-  const description = messageParam
-    ? decodeURIComponent(messageParam)
-    : isSuccess
+  const description = isSuccess
     ? 'Thank you! Your payment has been received.'
     : isConfirming
     ? "Your payment is still being confirmed. We'll update your order shortly."

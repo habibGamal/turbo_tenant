@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/core/api/client';
-import { Cart, CartApiResponse, UpdateCartItemPayload } from '../types';
+import { ApiSuccess } from '@/core/api/types';
+import { Cart, UpdateCartItemPayload } from '../types';
 import { CART_QUERY_KEY } from './useCart';
 
 export interface UpdateItemArgs {
@@ -15,13 +16,13 @@ interface MutationContext {
 export function useUpdateCartItem() {
     const queryClient = useQueryClient();
 
-    return useMutation<CartApiResponse, Error, UpdateItemArgs, MutationContext>({
+    return useMutation<Cart, Error, UpdateItemArgs, MutationContext>({
         mutationFn: async ({ itemId, payload }: UpdateItemArgs) => {
-            const { data } = await apiClient.patch<CartApiResponse>(
+            const { data } = await apiClient.patch<ApiSuccess<Cart>>(
                 `/api/cart/items/${itemId}`,
                 payload
             );
-            return data;
+            return data.data;
         },
         onMutate: async ({ itemId, payload }) => {
             // Cancel ongoing cart queries to avoid race conditions
@@ -38,12 +39,11 @@ export function useUpdateCartItem() {
                         if (String(item.id) === String(itemId)) {
                             return {
                                 ...item,
-                                ...(payload.quantity !== undefined ? { quantity: payload.quantity } : {}),
+                                ...(payload.quantity !== undefined
+                                    ? { quantity: typeof payload.quantity === 'string' ? parseFloat(payload.quantity) : payload.quantity }
+                                    : {}),
                                 ...(payload.weight_multiplier !== undefined
                                     ? { weight_multiplier: payload.weight_multiplier }
-                                    : {}),
-                                ...(payload.weight_option_value_id !== undefined
-                                    ? { weight_option_value_id: payload.weight_option_value_id }
                                     : {}),
                             };
                         }
@@ -60,10 +60,10 @@ export function useUpdateCartItem() {
                 queryClient.setQueryData(CART_QUERY_KEY, context.previousCart);
             }
         },
-        onSuccess: (data) => {
-            queryClient.setQueryData(CART_QUERY_KEY, data.cart);
+        onSuccess: (cart) => {
+            queryClient.setQueryData(CART_QUERY_KEY, cart);
 
-            const count = data.cart.items.length;
+            const count = cart.items.length;
             window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count } }));
         },
         onSettled: () => {

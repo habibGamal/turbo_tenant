@@ -1,0 +1,88 @@
+erDiagram
+  nd0f9b39cb853["categories"] {
+    string name
+    text description
+    string image
+    integer sort_order
+    boolean is_active
+    string name_ar
+  }
+  n5bd7fa5bd2cd["extra_option_items"] {
+    foreignId extra_option_id
+    string name
+    decimal price
+    boolean is_default
+    integer sort_order
+    string name_ar
+  }
+  n1e45139ba291["extra_options"]
+  n1e45139ba291 ||..o{ n5bd7fa5bd2cd : "extra_option_id"
+  n1e45139ba291["extra_options"] {
+    string name
+    text description
+    boolean is_active
+    integer min_selections
+    integer max_selections
+    boolean allow_multiple
+    string name_ar
+  }
+  n7112e8f7884a["product_variants"] {
+    foreignId product_id
+    string name
+    decimal price
+    boolean is_available
+    integer sort_order
+    string name_ar
+  }
+  n12d52f1ad2fe["products"]
+  n12d52f1ad2fe ||..o{ n7112e8f7884a : "product_id"
+  n12d52f1ad2fe["products"] {
+    string name
+    text description
+    string image
+    decimal base_price
+    decimal price_after_discount
+    foreignId extra_option_id
+    foreignId category_id
+    boolean is_active
+    boolean sell_by_weight
+    foreignId weight_options_id
+    string name_ar
+    integer min_selections
+    integer max_selections
+    boolean allow_multiple
+  }
+  n1e45139ba291["extra_options"]
+  n1e45139ba291 |o..o{ n12d52f1ad2fe : "extra_option_id"
+  nd0f9b39cb853["categories"]
+  nd0f9b39cb853 ||..o{ n12d52f1ad2fe : "category_id"
+  n3cf479df9a1b["weight_options"]
+  n3cf479df9a1b |o..o{ n12d52f1ad2fe : "weight_options_id"
+  nee5868a9dbc3["section_products"] {
+    foreignId section_id
+    foreignId product_id
+    integer sort_order
+  }
+  n194a2682b2a8["sections"]
+  n194a2682b2a8 ||..o{ nee5868a9dbc3 : "section_id"
+  n12d52f1ad2fe["products"]
+  n12d52f1ad2fe ||..o{ nee5868a9dbc3 : "product_id"
+  n194a2682b2a8["sections"] {
+    string title
+    string location
+    boolean is_active
+    integer sort_order
+    string title_ar
+  }
+  n4815cfc32520["weight_option_values"] {
+    foreignId weight_option_id
+    decimal value
+    string label
+    integer sort_order
+  }
+  n3cf479df9a1b["weight_options"]
+  n3cf479df9a1b ||..o{ n4815cfc32520 : "weight_option_id"
+  n3cf479df9a1b["weight_options"] {
+    string name
+    string unit
+  }

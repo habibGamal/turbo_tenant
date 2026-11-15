@@ -11,13 +11,23 @@ use App\Models\Tenant;
 use App\Models\TenantPlugin;
 use Filament\Contracts\Plugin as FilamentPluginContract;
 use Illuminate\Contracts\Foundation\Application;
+use RuntimeException;
 
 final class PluginManager
 {
     /**
+     * Memoized active plugin IDs per tenant ID.
+     *
+     * @var array<string, list<string>>
+     */
+    private array $activePluginIdsByTenant = [];
+
+    /**
+     * Booted plugin instances per tenant ID.
+     *
      * @var array<string, array<string, TenantPluginInterface>>
      */
-    private array $bootedTenantPlugins = [];
+    private array $bootedPluginInstancesByTenant = [];
 
     public function __construct(
         private readonly Application $app,
@@ -34,15 +44,12 @@ final class PluginManager
 
         $this->resetTenantScopedInstances();
 
-        $activeRecords = TenantPlugin::query()
-            ->where('tenant_id', $tenantId)
-            ->where('status', PluginStatus::ACTIVE)
-            ->get();
+        $activeIds = $this->getActivePluginIds($tenant);
 
         $activeManifests = collect();
 
-        foreach ($activeRecords as $record) {
-            $manifest = $this->registry->get($record->plugin_id);
+        foreach ($activeIds as $pluginId) {
+            $manifest = $this->registry->get($pluginId);
             if ($manifest !== null) {
                 $activeManifests->put($manifest->id, $manifest);
             }
@@ -51,26 +58,18 @@ final class PluginManager
         // Topologically sort so dependencies boot first
         $sortedManifests = $this->resolver->sort($activeManifests);
 
-        $booted = [];
+        $bootedInstances = [];
 
         foreach ($sortedManifests as $manifest) {
-            // 1. Register Service Providers
-            foreach ($manifest->providers as $providerClass) {
-                if (class_exists($providerClass)) {
-                    $this->app->register($providerClass);
-                }
-            }
-
-            // 2. Instantiate and boot plugin contract if defined
+            // Instantiate and boot plugin contract if defined
             $pluginInstance = $this->resolvePluginInstance($manifest);
             if ($pluginInstance !== null) {
                 $pluginInstance->bootForTenant($tenant);
+                $bootedInstances[$manifest->id] = $pluginInstance;
             }
-
-            $booted[$manifest->id] = $pluginInstance ?? true;
         }
 
-        $this->bootedTenantPlugins[$tenantId] = $booted;
+        $this->bootedPluginInstancesByTenant[$tenantId] = $bootedInstances;
     }
 
     /**
@@ -90,9 +89,12 @@ final class PluginManager
         $this->resetTenantScopedInstances();
 
         if ($tenant !== null) {
-            unset($this->bootedTenantPlugins[(string) $tenant->id]);
+            $tenantId = (string) $tenant->id;
+            unset($this->activePluginIdsByTenant[$tenantId]);
+            unset($this->bootedPluginInstancesByTenant[$tenantId]);
         } else {
-            $this->bootedTenantPlugins = [];
+            $this->activePluginIdsByTenant = [];
+            $this->bootedPluginInstancesByTenant = [];
         }
     }
 
@@ -103,31 +105,21 @@ final class PluginManager
 
     public function isPluginActive(string $pluginId, ?Tenant $tenant = null): bool
     {
-        $tenant = $tenant ?? (function_exists('tenant') ? tenant() : null);
+        $tenant = $tenant ?? tenant();
 
         if (! $tenant) {
             return false;
         }
 
-        $tenantId = (string) $tenant->id;
-
-        if (isset($this->bootedTenantPlugins[$tenantId])) {
-            return array_key_exists($pluginId, $this->bootedTenantPlugins[$tenantId]);
-        }
-
-        return TenantPlugin::query()
-            ->where('tenant_id', $tenantId)
-            ->where('plugin_id', $pluginId)
-            ->where('status', PluginStatus::ACTIVE)
-            ->exists();
+        return in_array($pluginId, $this->getActivePluginIds($tenant), true);
     }
 
     /**
-     * @return array<string>
+     * @return list<string>
      */
     public function getActivePluginIds(?Tenant $tenant = null): array
     {
-        $tenant = $tenant ?? (function_exists('tenant') ? tenant() : null);
+        $tenant = $tenant ?? tenant();
 
         if (! $tenant) {
             return [];
@@ -135,15 +127,17 @@ final class PluginManager
 
         $tenantId = (string) $tenant->id;
 
-        if (isset($this->bootedTenantPlugins[$tenantId])) {
-            return array_keys($this->bootedTenantPlugins[$tenantId]);
+        if (! isset($this->activePluginIdsByTenant[$tenantId])) {
+            $this->activePluginIdsByTenant[$tenantId] = TenantPlugin::query()
+                ->where('tenant_id', $tenantId)
+                ->where('status', PluginStatus::ACTIVE)
+                ->pluck('plugin_id')
+                ->map(fn ($id) => (string) $id)
+                ->values()
+                ->all();
         }
 
-        return TenantPlugin::query()
-            ->where('tenant_id', $tenantId)
-            ->where('status', PluginStatus::ACTIVE)
-            ->pluck('plugin_id')
-            ->all();
+        return $this->activePluginIdsByTenant[$tenantId];
     }
 
     /**
@@ -153,7 +147,7 @@ final class PluginManager
      */
     public function getActiveFilamentPluginsForTenant(?Tenant $tenant = null): array
     {
-        $tenant = $tenant ?? (function_exists('tenant') ? tenant() : null);
+        $tenant = $tenant ?? tenant();
 
         if (! $tenant) {
             return [];
@@ -179,18 +173,25 @@ final class PluginManager
 
     public function resolvePluginInstance(PluginManifest $manifest): ?TenantPluginInterface
     {
-        $studlyName = str_replace('-', '', ucwords($manifest->id, '-'));
-        $pluginClass = "App\\Plugins\\{$studlyName}\\{$studlyName}Plugin";
-
-        if (class_exists($pluginClass) && is_subclass_of($pluginClass, TenantPluginInterface::class)) {
-            if ($this->app->bound($pluginClass) && $this->app->isShared($pluginClass)) {
-                return $this->app->make($pluginClass);
-            }
-
-            return $this->app->make($pluginClass, ['manifest' => $manifest]);
+        if ($manifest->pluginClass === null) {
+            return null;
         }
 
-        return null;
+        $pluginClass = $manifest->pluginClass;
+
+        if (! class_exists($pluginClass)) {
+            throw new RuntimeException("Plugin class '{$pluginClass}' specified in manifest for '{$manifest->id}' does not exist.");
+        }
+
+        if (! is_subclass_of($pluginClass, TenantPluginInterface::class)) {
+            throw new RuntimeException("Plugin class '{$pluginClass}' specified in manifest for '{$manifest->id}' must implement ".TenantPluginInterface::class.'.');
+        }
+
+        if ($this->app->bound($pluginClass) && $this->app->isShared($pluginClass)) {
+            return $this->app->make($pluginClass);
+        }
+
+        return $this->app->make($pluginClass, ['manifest' => $manifest]);
     }
 
     public function resolvePluginInstanceById(string $pluginId): ?TenantPluginInterface
@@ -198,5 +199,30 @@ final class PluginManager
         $manifest = $this->registry->get($pluginId);
 
         return $manifest !== null ? $this->resolvePluginInstance($manifest) : null;
+    }
+
+    public function getBootedPluginInstance(string $pluginId, ?Tenant $tenant = null): ?TenantPluginInterface
+    {
+        $tenant = $tenant ?? tenant();
+
+        if (! $tenant) {
+            return null;
+        }
+
+        return $this->bootedPluginInstancesByTenant[(string) $tenant->id][$pluginId] ?? null;
+    }
+
+    /**
+     * @return array<string, TenantPluginInterface>
+     */
+    public function getBootedPluginInstances(?Tenant $tenant = null): array
+    {
+        $tenant = $tenant ?? tenant();
+
+        if (! $tenant) {
+            return [];
+        }
+
+        return $this->bootedPluginInstancesByTenant[(string) $tenant->id] ?? [];
     }
 }

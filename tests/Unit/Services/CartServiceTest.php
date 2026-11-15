@@ -4,22 +4,24 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
+use App\Models\User;
+use App\Plugins\CartEngine\src\Exceptions\CartItemNotFound;
 use App\Plugins\CartEngine\src\Models\Cart;
 use App\Plugins\CartEngine\src\Models\CartItem;
 use App\Plugins\CartEngine\src\Models\CartItemExtra;
+use App\Plugins\CartEngine\src\Services\CartService;
 use App\Plugins\CatalogProducts\src\Models\Category;
 use App\Plugins\CatalogProducts\src\Models\ExtraOption;
 use App\Plugins\CatalogProducts\src\Models\ExtraOptionItem;
-use App\Plugins\GuestCheckout\src\Models\GuestUser;
 use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Plugins\CatalogProducts\src\Models\ProductVariant;
-use App\Models\User;
 use App\Plugins\CatalogProducts\src\Models\WeightOption;
 use App\Plugins\CatalogProducts\src\Models\WeightOptionValue;
-use App\Plugins\CartEngine\src\Services\CartService;
+use App\Plugins\GuestCheckout\src\Models\GuestUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
+use Tests\Support\CartLines;
 use Tests\TestCase;
 
 final class CartServiceTest extends TestCase
@@ -75,11 +77,8 @@ final class CartServiceTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $resultUser = $this->cartService->getCart($user);
-        $this->assertSame(['items' => [], 'total' => 0], $resultUser);
-
-        $resultGuest = $this->cartService->getCart(null);
-        $this->assertSame(['items' => [], 'total' => 0], $resultGuest);
+        $this->assertSame([], $this->cartService->getLines($user));
+        $this->assertSame([], $this->cartService->getLines(null));
     }
 
     public function test_add_item_for_authenticated_user_persists_to_database(): void
@@ -107,11 +106,11 @@ final class CartServiceTest extends TestCase
             'quantity' => '2.000',
         ]);
 
-        $this->assertCount(1, $result['items']);
-        $this->assertEquals(50.00, $result['total']);
-        $this->assertEquals(25.00, $result['items'][0]['price']);
-        $this->assertEquals(2.0, $result['items'][0]['quantity']);
-        $this->assertEquals(50.00, $result['items'][0]['subtotal']);
+        $this->assertCount(1, $result);
+        $this->assertEquals(50.00, CartLines::total($result));
+        $this->assertEquals(25.00, $result[0]->unitPrice);
+        $this->assertEquals(2.0, $result[0]->quantity);
+        $this->assertEquals(50.00, $result[0]->subtotal);
     }
 
     public function test_add_item_for_guest_persists_with_session_identifier(): void
@@ -141,8 +140,8 @@ final class CartServiceTest extends TestCase
             'quantity' => '3.000',
         ]);
 
-        $this->assertCount(1, $result['items']);
-        $this->assertEquals(45.00, $result['total']);
+        $this->assertCount(1, $result);
+        $this->assertEquals(45.00, CartLines::total($result));
     }
 
     public function test_add_item_throws_validation_exception_when_product_is_inactive(): void
@@ -200,11 +199,11 @@ final class CartServiceTest extends TestCase
             quantity: '2'
         );
 
-        $this->assertCount(1, $result['items']);
-        $this->assertEquals(30.00, $result['items'][0]['price']);
-        $this->assertEquals(60.00, $result['items'][0]['subtotal']);
-        $this->assertEquals(60.00, $result['total']);
-        $this->assertSame($variant->id, $result['items'][0]['variant']['id']);
+        $this->assertCount(1, $result);
+        $this->assertEquals(30.00, $result[0]->unitPrice);
+        $this->assertEquals(60.00, $result[0]->subtotal);
+        $this->assertEquals(60.00, CartLines::total($result));
+        $this->assertSame($variant->id, $result[0]->variantId);
     }
 
     public function test_add_item_uses_discounted_price_when_available(): void
@@ -226,12 +225,12 @@ final class CartServiceTest extends TestCase
             quantity: '2'
         );
 
-        $this->assertEquals(32.00, $result['items'][0]['price']);
-        $this->assertEquals(64.00, $result['items'][0]['subtotal']);
-        $this->assertEquals(64.00, $result['total']);
+        $this->assertEquals(32.00, $result[0]->unitPrice);
+        $this->assertEquals(64.00, $result[0]->subtotal);
+        $this->assertEquals(64.00, CartLines::total($result));
     }
 
-    public function test_add_item_with_extras_as_ids_and_arrays(): void
+    public function test_add_item_with_extras_and_extra_quantities(): void
     {
         $user = User::factory()->create();
         $category = Category::factory()->create();
@@ -243,6 +242,7 @@ final class CartServiceTest extends TestCase
         $extraItem2 = ExtraOptionItem::factory()->create([
             'extra_option_id' => $extraOption->id,
             'price' => 3.00,
+            'allow_quantity' => true,
         ]);
 
         $product = Product::factory()->create([
@@ -254,14 +254,13 @@ final class CartServiceTest extends TestCase
             'sell_by_weight' => false,
         ]);
 
-        // Pass extras mixed: one plain ID and one array with quantity
         $result = $this->cartService->addItem(
             user: $user,
             productId: $product->id,
             variantId: null,
             quantity: '2',
             extras: [
-                $extraItem1->id,
+                ['id' => $extraItem1->id, 'quantity' => 1],
                 ['id' => $extraItem2->id, 'quantity' => 2],
             ]
         );
@@ -269,11 +268,11 @@ final class CartServiceTest extends TestCase
         // Subtotal calculation for regular product:
         // extras total = (5.00 * 1) + (3.00 * 2) = 11.00
         // item subtotal = (base_price 20 + extras 11) * quantity 2 = 62.00
-        $this->assertCount(1, $result['items']);
-        $this->assertEquals(11.00, $result['items'][0]['extras_total']);
-        $this->assertEquals(62.00, $result['items'][0]['subtotal']);
-        $this->assertEquals(62.00, $result['total']);
-        $this->assertCount(2, $result['items'][0]['extras']);
+        $this->assertCount(1, $result);
+        $this->assertEquals(11.00, $result[0]->extrasUnitTotal);
+        $this->assertEquals(62.00, $result[0]->subtotal);
+        $this->assertEquals(62.00, CartLines::total($result));
+        $this->assertCount(2, $result[0]->extras);
     }
 
     public function test_add_weight_based_item_calculates_weight_and_subtotal_correctly(): void
@@ -308,7 +307,7 @@ final class CartServiceTest extends TestCase
             productId: $product->id,
             variantId: null,
             quantity: '1',
-            extras: [$extraItem->id],
+            extras: [['id' => $extraItem->id, 'quantity' => 1]],
             weightOptionValueId: $weightValue->id,
             weightMultiplier: 3
         );
@@ -317,15 +316,15 @@ final class CartServiceTest extends TestCase
         // finalQuantity = weight_multiplier (3) * weight_value (0.500) = 1.5
         // extrasTotal = 4.00 * 1 = 4.00
         // subtotal = (price 100.00 * finalQuantity 1.5) + (extrasTotal 4.00 * weight_multiplier 3) = 150 + 12 = 162.00
-        $this->assertCount(1, $result['items']);
-        $item = $result['items'][0];
-        $this->assertEquals(1.5, $item['quantity']);
-        $this->assertSame(3, $item['weight_multiplier']);
-        $this->assertEquals(4.00, $item['extras_total']);
-        $this->assertEquals(162.00, $item['subtotal']);
-        $this->assertEquals(162.00, $result['total']);
-        $this->assertNotNull($item['weight_option_value']);
-        $this->assertSame('500g', $item['weight_option_value']['label']);
+        $this->assertCount(1, $result);
+        $item = $result[0];
+        $this->assertEquals(1.5, $item->quantity);
+        $this->assertSame(3, $item->weightMultiplier);
+        $this->assertEquals(4.00, $item->extrasUnitTotal);
+        $this->assertEquals(162.00, $item->subtotal);
+        $this->assertEquals(162.00, CartLines::total($result));
+        $this->assertNotNull($item->weightOptionValueId);
+        $this->assertSame('500g', $item->weightLabel);
     }
 
     public function test_update_item_in_database_cart(): void
@@ -359,7 +358,7 @@ final class CartServiceTest extends TestCase
             'id' => $cartItem->id,
             'quantity' => '4.000',
         ]);
-        $this->assertEquals(40.00, $result['total']);
+        $this->assertEquals(40.00, CartLines::total($result));
     }
 
     public function test_update_item_in_session_cart(): void
@@ -395,7 +394,7 @@ final class CartServiceTest extends TestCase
             'id' => $cartItem->id,
             'quantity' => '5.000',
         ]);
-        $this->assertEquals(60.00, $result['total']);
+        $this->assertEquals(60.00, CartLines::total($result));
     }
 
     public function test_remove_item_from_database_cart(): void
@@ -413,7 +412,7 @@ final class CartServiceTest extends TestCase
         $result = $this->cartService->removeItem(user: $user, itemId: $cartItem->id);
 
         $this->assertDatabaseMissing('cart_items', ['id' => $cartItem->id]);
-        $this->assertEquals(['items' => [], 'total' => 0], $result);
+        $this->assertSame([], $result);
     }
 
     public function test_remove_item_from_session_cart(): void
@@ -433,7 +432,7 @@ final class CartServiceTest extends TestCase
         $result = $this->cartService->removeItem(user: null, itemId: $cartItem->id);
 
         $this->assertDatabaseMissing('cart_items', ['id' => $cartItem->id]);
-        $this->assertEquals(['items' => [], 'total' => 0], $result);
+        $this->assertSame([], $result);
     }
 
     public function test_clear_cart_for_user_deletes_cart_and_items(): void
@@ -452,7 +451,7 @@ final class CartServiceTest extends TestCase
 
         $this->assertDatabaseMissing('carts', ['id' => $cart->id]);
         $this->assertDatabaseMissing('cart_items', ['cart_id' => $cart->id]);
-        $this->assertSame(['items' => [], 'total' => 0], $result);
+        $this->assertSame([], $result);
     }
 
     public function test_clear_cart_for_guest_deletes_cart_and_forgets_session(): void
@@ -474,7 +473,7 @@ final class CartServiceTest extends TestCase
         $this->assertFalse(Session::has('guest_cart_id'));
         $this->assertDatabaseMissing('carts', ['id' => $cart->id]);
         $this->assertDatabaseMissing('cart_items', ['cart_id' => $cart->id]);
-        $this->assertSame(['items' => [], 'total' => 0], $result);
+        $this->assertSame([], $result);
     }
 
     public function test_sync_guest_cart_to_user_migrates_items_and_extras(): void
@@ -580,14 +579,14 @@ final class CartServiceTest extends TestCase
 
         // finalQuantity = 4 * 0.5 = 2.0
         // subtotal = 50 * 2.0 = 100.00
-        $this->assertEquals(100.00, $result['total']);
+        $this->assertEquals(100.00, CartLines::total($result));
     }
 
     public function test_update_item_throws_not_found_exception_for_invalid_id(): void
     {
         $user = User::factory()->create();
 
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(CartItemNotFound::class);
 
         $this->cartService->updateItem(
             user: $user,
@@ -600,8 +599,91 @@ final class CartServiceTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(CartItemNotFound::class);
 
         $this->cartService->removeItem(user: $user, itemId: 999999);
+    }
+
+    public function test_get_lines_prices_variant_extras_and_weight_option(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->create();
+
+        // 1. Product with variant
+        $productVariant = Product::factory()->create([
+            'category_id' => $category->id,
+            'base_price' => 50.00,
+            'is_active' => true,
+            'sell_by_weight' => false,
+        ]);
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $productVariant->id,
+            'price' => 45.00,
+            'name' => 'Large',
+        ]);
+        $this->cartService->addItem($user, $productVariant->id, $variant->id, '2');
+
+        // 2. Product with extras
+        $extraOption = ExtraOption::factory()->create();
+        $extra1 = ExtraOptionItem::factory()->create([
+            'extra_option_id' => $extraOption->id,
+            'price' => 5.00,
+            'name' => 'Cheese',
+        ]);
+        $extra2 = ExtraOptionItem::factory()->create([
+            'extra_option_id' => $extraOption->id,
+            'price' => 3.00,
+            'name' => 'Sauce',
+            'allow_quantity' => true,
+        ]);
+        $productExtras = Product::factory()->create([
+            'category_id' => $category->id,
+            'base_price' => 30.00,
+            'price_after_discount' => null,
+            'is_active' => true,
+            'sell_by_weight' => false,
+            'extra_option_id' => $extraOption->id,
+        ]);
+        $this->cartService->addItem($user, $productExtras->id, null, '1', [
+            ['id' => $extra1->id, 'quantity' => 1],
+            ['id' => $extra2->id, 'quantity' => 2],
+        ]);
+
+        // 3. Product with weight option
+        $weightOption = WeightOption::factory()->create(['unit' => 'kg']);
+        $weightValue = WeightOptionValue::factory()->create([
+            'weight_option_id' => $weightOption->id,
+            'value' => 0.5,
+            'label' => '500g',
+        ]);
+        $productWeight = Product::factory()->create([
+            'category_id' => $category->id,
+            'base_price' => 100.00,
+            'price_after_discount' => null,
+            'is_active' => true,
+            'sell_by_weight' => true,
+            'weight_options_id' => $weightOption->id,
+        ]);
+        $this->cartService->addItem(
+            user: $user,
+            productId: $productWeight->id,
+            variantId: null,
+            quantity: '1',
+            extras: [],
+            weightOptionValueId: $weightValue->id,
+            weightMultiplier: 3
+        );
+
+        $lines = $this->cartService->getLines($user);
+
+        $this->assertCount(3, $lines);
+        // variant: 45 x 2; extras: (30 + 5 + 3 x 2) x 1; weight: 100 x (3 x 0.5)
+        $this->assertEquals([90.0, 41.0, 150.0], array_map(fn ($line) => $line->subtotal, $lines));
+        $this->assertEquals(11.0, $lines[1]->extrasUnitTotal);
+        $this->assertSame($category->id, $lines[0]->categoryId);
+        $this->assertSame($variant->id, $lines[0]->variantId);
+        $this->assertSame($weightValue->id, $lines[2]->weightOptionValueId);
+        $this->assertSame(3, $lines[2]->weightMultiplier);
+        $this->assertEquals(281.0, CartLines::total($lines));
     }
 }

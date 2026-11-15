@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Plugins\PushNotifications\src\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Plugins\PushNotifications\src\Models\UserNotification;
+use App\Http\Responses\ApiResponse;
+use App\Plugins\PushNotifications\src\Http\Resources\NotificationResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,26 +17,11 @@ final class NotificationController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        if (! $user) {
-            return response()->json([
-                'notifications' => [],
-                'unread_count' => 0,
-            ]);
-        }
-
-        $notifications = $user->userNotifications()
+        $notifications = $request->user()->pushNotifications()
             ->orderBy('created_at', 'desc')
-            ->limit(50)
-            ->get();
+            ->paginate(50);
 
-        $unreadCount = $user->userNotifications()->unread()->count();
-
-        return response()->json([
-            'notifications' => $notifications,
-            'unread_count' => $unreadCount,
-        ]);
+        return ApiResponse::paginated($notifications, NotificationResource::class);
     }
 
     /**
@@ -43,15 +29,9 @@ final class NotificationController extends Controller
      */
     public function unreadCount(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $count = $request->user()->pushNotifications()->unread()->count();
 
-        if (! $user) {
-            return response()->json(['count' => 0]);
-        }
-
-        $count = $user->userNotifications()->unread()->count();
-
-        return response()->json([
+        return ApiResponse::success([
             'count' => $count,
         ]);
     }
@@ -61,15 +41,15 @@ final class NotificationController extends Controller
      */
     public function markAsRead(Request $request, int $id): JsonResponse
     {
-        $notification = UserNotification::where('user_id', $request->user()->id)
+        $notification = $request->user()->pushNotifications()
             ->findOrFail($id);
 
         $notification->markAsRead();
 
-        return response()->json([
-            'message' => 'Notification marked as read',
-            'notification' => $notification,
-        ]);
+        return ApiResponse::success(
+            new NotificationResource($notification),
+            'Notification marked as read'
+        );
     }
 
     /**
@@ -77,16 +57,14 @@ final class NotificationController extends Controller
      */
     public function markAllAsRead(Request $request): JsonResponse
     {
-        $request->user()->userNotifications()
+        $request->user()->pushNotifications()
             ->unread()
             ->update([
                 'read' => true,
                 'read_at' => now(),
             ]);
 
-        return response()->json([
-            'message' => 'All notifications marked as read',
-        ]);
+        return ApiResponse::success(message: 'All notifications marked as read');
     }
 
     /**
@@ -94,14 +72,12 @@ final class NotificationController extends Controller
      */
     public function destroy(Request $request, int $id): JsonResponse
     {
-        $notification = UserNotification::where('user_id', $request->user()->id)
+        $notification = $request->user()->pushNotifications()
             ->findOrFail($id);
 
         $notification->delete();
 
-        return response()->json([
-            'message' => 'Notification deleted',
-        ]);
+        return ApiResponse::success(message: 'Notification deleted');
     }
 
     /**
@@ -109,12 +85,10 @@ final class NotificationController extends Controller
      */
     public function clearRead(Request $request): JsonResponse
     {
-        $request->user()->userNotifications()
+        $request->user()->pushNotifications()
             ->read()
             ->delete();
 
-        return response()->json([
-            'message' => 'Read notifications cleared',
-        ]);
+        return ApiResponse::success(message: 'Read notifications cleared');
     }
 }

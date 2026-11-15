@@ -1,8 +1,11 @@
 import { test, expect } from '../../helpers/live-fixture';
+import { openCheckout } from '../../helpers/checkout';
 import { loginAsCustomer } from '../../helpers/auth';
+import { integrationTokenFor } from '../../helpers/integration-token';
 
 test.describe('OrderManagement Suite 10: Order Status Lifecycle & POS Sync', () => {
-  test('transitions order status via status webhook and reflects in live UI', async ({ page, theme }) => {
+  test('transitions order status via status webhook and reflects in live UI', async ({ page, theme, baseURL }) => {
+    const integrationToken = integrationTokenFor(baseURL);
     // 1. Authenticate as customer
     await loginAsCustomer(page, 'admin@example.com', 'password');
 
@@ -19,10 +22,7 @@ test.describe('OrderManagement Suite 10: Order Status Lifecycle & POS Sync', () 
     ]);
 
     // 3. Checkout and place order
-    await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/checkout-data') && r.status() === 200),
-      page.goto('/checkout', { waitUntil: 'domcontentloaded' }),
-    ]);
+    await openCheckout(page);
 
     const placeOrderBtn = theme.orders.getPlaceOrderButton();
     const [placeOrderResponse] = await Promise.all([
@@ -31,9 +31,9 @@ test.describe('OrderManagement Suite 10: Order Status Lifecycle & POS Sync', () 
     ]);
 
     const orderResult = await placeOrderResponse.json();
-    expect(orderResult.success).toBe(true);
-    const orderNumber = orderResult.order_number;
-    const orderId = orderResult.order_id;
+    expect(orderResult.status).toBe('success');
+    const orderNumber = orderResult.data.order_number;
+    const orderId = orderResult.data.order_id;
 
     // 4. Verify landing on Order Details
     await expect(page).toHaveURL(new RegExp(`/orders/${orderId}`));
@@ -43,8 +43,8 @@ test.describe('OrderManagement Suite 10: Order Status Lifecycle & POS Sync', () 
     const statusBadge = theme.orders.getOrderStatusBadge(detailsContainer);
     await expect(statusBadge).toBeVisible();
 
-    // 5. Update Status to "processing" via POS/Webhook API
-    const updateRes1 = await page.evaluate(async (num) => {
+    // The integration endpoint must reject a request without its bearer token.
+    const unauthorized = await page.evaluate(async (num) => {
       const res = await fetch('/api/order-status', {
         method: 'POST',
         headers: {
@@ -56,8 +56,31 @@ test.describe('OrderManagement Suite 10: Order Status Lifecycle & POS Sync', () 
       });
       return { ok: res.ok, status: res.status, data: await res.json() };
     }, orderNumber);
+    expect(unauthorized.status).toBe(401);
 
-    expect(updateRes1.ok).toBe(true);
+    const updateStatus = async (status: string, token = integrationToken) => page.evaluate(async ({ num, status, token }) => {
+      const res = await fetch('/api/order-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ orderNumber: num, status }),
+      });
+      return { ok: res.ok, status: res.status, data: await res.json() };
+    }, { num: orderNumber, status, token });
+
+    // A wrong integration token must not authorize a status change.
+    expect((await updateStatus('processing', `${integrationToken}invalid`)).status).toBe(401);
+
+    // The correct token must not bypass the status transition rules.
+    const invalidTransition = await updateStatus('completed');
+    expect(invalidTransition.status).toBe(409);
+    expect(invalidTransition.data.from_status).toBe('pending');
+    expect(invalidTransition.data.to_status).toBe('completed');
+
+    expect((await updateStatus('processing')).ok).toBe(true);
 
     // 6. Reload order details and verify updated badge
     await Promise.all([
@@ -65,23 +88,11 @@ test.describe('OrderManagement Suite 10: Order Status Lifecycle & POS Sync', () 
       page.reload({ waitUntil: 'domcontentloaded' }),
     ]);
 
-    await expect(statusBadge).toContainText(/processing|قيد المعالجة/i);
+    await expect(statusBadge).toContainText(/processing|قيد التحضير|قيد المعالجة/i);
 
-    // 7. Update Status to "delivered"
-    const updateRes2 = await page.evaluate(async (num) => {
-      const res = await fetch('/api/order-status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify({ orderNumber: num, status: 'completed' }),
-      });
-      return { ok: res.ok, status: res.status, data: await res.json() };
-    }, orderNumber);
-
-    expect(updateRes2.ok).toBe(true);
+    // Delivery must pass through out_for_delivery before completion.
+    expect((await updateStatus('out_for_delivery')).ok).toBe(true);
+    expect((await updateStatus('completed')).ok).toBe(true);
 
     // 8. Reload order details and verify delivered status
     await Promise.all([

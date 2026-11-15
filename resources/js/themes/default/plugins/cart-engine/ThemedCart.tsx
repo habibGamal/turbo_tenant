@@ -46,7 +46,7 @@ export default function ThemedCart() {
     const updateItemMutation = useUpdateCartItem();
     const removeItemMutation = useRemoveCartItem();
     const clearCartMutation = useClearCart();
-    const addToCartMutation = useAddToCart({ suppressToast: true });
+    const addToCartMutation = useAddToCart({ suppressToast: true, track: false });
 
     const [updatingItems, setUpdatingItems] = useState<Set<number | string>>(new Set());
     const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
@@ -72,21 +72,21 @@ export default function ThemedCart() {
 
     const handleIncrement = (
         itemId: number | string,
-        currentQuantity: string,
+        currentQuantity: number | string,
         sellByWeight: boolean = false,
         currentMultiplier: number = 1
     ) => {
         if (sellByWeight) {
             handleUpdateWeightMultiplier(itemId, currentMultiplier + 1);
         } else {
-            const current = parseFloat(currentQuantity);
+            const current = typeof currentQuantity === 'number' ? currentQuantity : parseFloat(currentQuantity);
             handleUpdateQuantity(itemId, (current + 1).toString());
         }
     };
 
     const handleDecrement = (
         itemId: number | string,
-        currentQuantity: string,
+        currentQuantity: number | string,
         sellByWeight: boolean = false,
         currentMultiplier: number = 1
     ) => {
@@ -95,7 +95,7 @@ export default function ThemedCart() {
                 handleUpdateWeightMultiplier(itemId, currentMultiplier - 1);
             }
         } else {
-            const current = parseFloat(currentQuantity);
+            const current = typeof currentQuantity === 'number' ? currentQuantity : parseFloat(currentQuantity);
             if (current > 1) {
                 handleUpdateQuantity(itemId, (current - 1).toString());
             }
@@ -140,8 +140,8 @@ export default function ThemedCart() {
 
         const restorePayload = {
             product_id: itemToRemove.product_id,
-            variant_id: itemToRemove.variant_id ?? itemToRemove.variant?.id ?? null,
-            weight_option_value_id: itemToRemove.weight_option_value_id ?? itemToRemove.weight_option_value?.id ?? null,
+            variant_id: itemToRemove.variant?.id ?? null,
+            weight_option_value_id: itemToRemove.weight_option_value?.id ?? null,
             quantity: itemToRemove.quantity,
             weight_multiplier: itemToRemove.weight_multiplier ?? 1,
             extras: itemToRemove.extras?.map((e) => ({ id: e.id, quantity: e.quantity || 1 })),

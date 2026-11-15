@@ -5,30 +5,31 @@ declare(strict_types=1);
 namespace App\Plugins\CartEngine\src\Services\Validators;
 
 use App\Plugins\CartEngine\src\Services\Contracts\ProductValidatorInterface;
+use App\Plugins\CartEngine\src\Services\Validators\Rules\ExtrasRule;
+use App\Plugins\CartEngine\src\Services\Validators\Rules\VariantRule;
+use App\Plugins\CartEngine\src\Services\Validators\Rules\WeightRule;
 use App\Plugins\CatalogProducts\src\Models\Product;
 use Illuminate\Validation\ValidationException;
 
 final class ProductValidator implements ProductValidatorInterface
 {
-    public function ensureProductIsActive(int $productId): void
-    {
-        $isActive = Product::query()
-            ->whereKey($productId)
-            ->where('is_active', true)
-            ->exists();
+    public function __construct(
+        private readonly VariantRule $variantRule,
+        private readonly WeightRule $weightRule,
+        private readonly ExtrasRule $extrasRule,
+    ) {}
 
-        if (! $isActive) {
+    /**
+     * @param  list<array{id: int, quantity: int}>  $extras
+     */
+    public function validateOptions(?int $productId, ?int $variantId, ?int $weightOptionValueId, array $extras = []): void
+    {
+        if ($productId === null) {
             throw ValidationException::withMessages([
                 'product_id' => ['Selected product is unavailable.'],
             ]);
         }
-    }
 
-    /**
-     * @param  array<int, mixed>  $extras
-     */
-    public function validateOptions(int $productId, ?int $variantId, ?int $weightOptionValueId, array $extras = []): void
-    {
         $product = Product::with([
             'variants',
             'extraOption.items',
@@ -41,110 +42,25 @@ final class ProductValidator implements ProductValidatorInterface
             ]);
         }
 
-        $errors = [];
-
-        // 1. Variant validation
-        $hasVariants = $product->variants->isNotEmpty();
-        if ($hasVariants) {
-            if ($variantId === null) {
-                $errors['variant_id'] = ['Variant is required for this product.'];
-            } else {
-                $variant = $product->variants->firstWhere('id', $variantId);
-                if (! $variant) {
-                    $errors['variant_id'] = ['Selected variant does not belong to this product.'];
-                } elseif (! $variant->is_available) {
-                    $errors['variant_id'] = ['Selected variant is currently unavailable.'];
-                }
-            }
-        } else {
-            if ($variantId !== null) {
-                $errors['variant_id'] = ['This product does not have variants.'];
-            }
-        }
-
-        // 2. Weight option validation
-        if ($product->sell_by_weight) {
-            if ($weightOptionValueId === null) {
-                $errors['weight_option_value_id'] = ['Weight option is required for this product.'];
-            } else {
-                $isValidWeight = $product->weight_options_id
-                    && $product->weightOption?->values->contains('id', $weightOptionValueId);
-                if (! $isValidWeight) {
-                    $errors['weight_option_value_id'] = ['Selected weight option does not belong to this product.'];
-                }
-            }
-        } else {
-            if ($weightOptionValueId !== null) {
-                $errors['weight_option_value_id'] = ['This product is not sold by weight.'];
-            }
-        }
-
-        // 3. Extras validation
-        if (! empty($extras)) {
-            if ($product->extra_option_id === null || ! $product->extraOption) {
-                $errors['extras'] = ['This product does not allow extras.'];
-            } else {
-                $extraOption = $product->extraOption;
-                $extraIds = [];
-                $normalizedExtras = [];
-
-                foreach ($extras as $extra) {
-                    if (is_array($extra)) {
-                        $id = (int) ($extra['id'] ?? 0);
-                        $qty = (int) ($extra['quantity'] ?? 1);
-                    } else {
-                        $id = (int) $extra;
-                        $qty = 1;
-                    }
-                    $extraIds[] = $id;
-                    $normalizedExtras[] = ['id' => $id, 'quantity' => $qty];
-                }
-
-                // Duplicate check (reject duplicates)
-                if (count($extraIds) !== count(array_unique($extraIds))) {
-                    $errors['extras'] = ['Duplicate extras are not allowed.'];
-                } else {
-                    $count = count($extraIds);
-                    [$minSelections, $maxSelections, $allowMultiple] = $this->selectionRules($product);
-
-                    if (! $allowMultiple && $count > 1) {
-                        $errors['extras'] = ['Multiple extras are not allowed for this product.'];
-                    } elseif ($minSelections !== null && $minSelections > 0 && $count < $minSelections) {
-                        $errors['extras'] = ["Minimum {$minSelections} extra selection(s) required."];
-                    } elseif ($maxSelections !== null && $maxSelections > 0 && $count > $maxSelections) {
-                        $errors['extras'] = ["Maximum {$maxSelections} extra selection(s) allowed."];
-                    } else {
-                        foreach ($normalizedExtras as $item) {
-                            $extraItem = $extraOption->items->firstWhere('id', $item['id']);
-                            if (! $extraItem) {
-                                $errors['extras'] = ['One or more selected extras do not belong to this product.'];
-                                break;
-                            }
-                            if ($item['quantity'] > 1 && ! $extraItem->allow_quantity) {
-                                $errors['extras'] = ["Quantity greater than 1 is not allowed for extra '{$extraItem->name}'."];
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            // Check if product requires minimum extras selections
-            if ($product->extra_option_id !== null && $product->extraOption) {
-                [$minSelections] = $this->selectionRules($product);
-                if ($minSelections !== null && $minSelections > 0) {
-                    $errors['extras'] = ["Minimum {$minSelections} extra selection(s) required."];
-                }
-            }
-        }
+        $errors = array_merge(
+            $this->variantRule->validate($product, $variantId),
+            $this->weightRule->validate($product, $weightOptionValueId),
+            $this->extrasRule->validate($product, $extras),
+        );
 
         if (! empty($errors)) {
             throw ValidationException::withMessages($errors);
         }
     }
 
-    public function validateUpdateWeightOption(int $productId, ?int $weightOptionValueId): void
+    public function validateUpdateWeightOption(?int $productId, ?int $weightOptionValueId): void
     {
+        if ($productId === null) {
+            throw ValidationException::withMessages([
+                'product_id' => ['Selected product is unavailable.'],
+            ]);
+        }
+
         $product = Product::with('weightOption.values')->find($productId);
 
         if (! $product) {
@@ -153,42 +69,10 @@ final class ProductValidator implements ProductValidatorInterface
             ]);
         }
 
-        if (! $product->sell_by_weight) {
-            if ($weightOptionValueId !== null) {
-                throw ValidationException::withMessages([
-                    'weight_option_value_id' => ['This product is not sold by weight.'],
-                ]);
-            }
-        } else {
-            if ($weightOptionValueId === null) {
-                throw ValidationException::withMessages([
-                    'weight_option_value_id' => ['Weight option is required for this product.'],
-                ]);
-            }
+        $errors = $this->weightRule->validate($product, $weightOptionValueId);
 
-            $isValidWeight = $product->weight_options_id
-                && $product->weightOption?->values->contains('id', $weightOptionValueId);
-            if (! $isValidWeight) {
-                throw ValidationException::withMessages([
-                    'weight_option_value_id' => ['Selected weight option does not belong to this product.'],
-                ]);
-            }
+        if (! empty($errors)) {
+            throw ValidationException::withMessages($errors);
         }
-    }
-
-    /**
-     * Effective extra selection rules: product-level values override the extra option's defaults.
-     *
-     * @return array{0: ?int, 1: ?int, 2: bool}
-     */
-    private function selectionRules($product): array
-    {
-        $extraOption = $product->extraOption;
-
-        return [
-            $product->min_selections ?? $extraOption->min_selections,
-            $product->max_selections ?? $extraOption->max_selections,
-            (bool) ($product->allow_multiple ?? $extraOption->allow_multiple),
-        ];
     }
 }

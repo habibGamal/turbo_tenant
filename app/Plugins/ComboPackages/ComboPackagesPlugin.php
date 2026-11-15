@@ -6,26 +6,13 @@ namespace App\Plugins\ComboPackages;
 
 use App\Core\Plugins\AbstractTenantPlugin;
 use App\Models\Tenant;
+use App\Plugins\ComboPackages\src\Pipelines\ValidatePackageLinesPipe;
+use App\Plugins\OrderManagement\src\Contracts\OrderPipelineRegistrar;
 
 final class ComboPackagesPlugin extends AbstractTenantPlugin
 {
     public function bootForTenant(Tenant $tenant): void
     {
-        // Runtime tenant initialization
-    }
-
-    public function onActivate(Tenant $tenant): void
-    {
-        // Post-activation setup
-    }
-
-    public function onDeactivate(Tenant $tenant): void
-    {
-        // Deactivation cleanup
-    }
-
-    public function onUninstall(Tenant $tenant): void
-    {
-        // Pre-purge cleanup
+        app(OrderPipelineRegistrar::class)->registerValidationPipe(ValidatePackageLinesPipe::class, 210);
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Core\Contracts\Customer;
 use Database\Factories\UserFactory;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
@@ -15,7 +16,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use NotificationChannels\Expo\ExpoPushToken;
 
-final class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
+final class User extends Authenticatable implements Customer, FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -87,29 +88,53 @@ final class User extends Authenticatable implements FilamentUser, HasAppAuthenti
         $this->save();
     }
 
-    public function addresses(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(\App\Plugins\LocationsDelivery\src\Models\Address::class);
-    }
-
-    public function orders(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(\App\Plugins\OrderManagement\src\Models\Order::class);
-    }
-
-    public function userNotifications(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(\App\Plugins\PushNotifications\src\Models\UserNotification::class);
-    }
-
-    public function unreadUserNotifications(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(\App\Plugins\PushNotifications\src\Models\UserNotification::class)->where('read', false);
-    }
-
     public function routeNotificationForExpo(): ?ExpoPushToken
     {
         return $this->expo_token;
+    }
+
+    public function customerId(): int|string
+    {
+        return $this->getKey();
+    }
+
+    public function customerName(): ?string
+    {
+        $name = $this->getAttribute('name');
+
+        return is_string($name) && $name !== '' ? $name : null;
+    }
+
+    public function customerPhone(): ?string
+    {
+        $phone = array_key_exists('phone', $this->attributes) ? $this->attributes['phone'] : null;
+
+        return is_string($phone) && $phone !== '' ? $phone : null;
+    }
+
+    public function customerEmail(): ?string
+    {
+        $email = $this->getAttribute('email');
+
+        return is_string($email) && $email !== '' ? $email : null;
+    }
+
+    public function isGuest(): bool
+    {
+        return false;
+    }
+
+    public function deliveryAreaId(): ?int
+    {
+        return null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function customerAddress(): array
+    {
+        return [];
     }
 
     /**

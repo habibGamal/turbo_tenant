@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Plugins\HeroBanners\src\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Responses\ApiResponse;
+use App\Plugins\HeroBanners\src\Http\Resources\HeroBannerResource;
 use App\Plugins\HeroBanners\src\Services\HeroBannerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,9 +22,8 @@ final class HeroBannersApiController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        return response()->json([
-            'status' => 'success',
-            'data' => $this->bannerService->getActiveSliders(),
-        ]);
+        return ApiResponse::success(
+            HeroBannerResource::collection($this->bannerService->getActiveSliders())
+        );
     }
 }

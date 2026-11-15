@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Filament\Resources\Orders\Schemas;
 
-use App\Core\Plugins\Services\PluginManager;
-use App\Plugins\StoreSettings\src\Services\SettingService;
+use App\Core\Contracts\SettingsRepository;
+use App\Plugins\PosIntegration\src\Filament\Schemas\OrderDeliveryInfolist;
 use BackedEnum;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -17,11 +17,12 @@ final class OrderInfolist
 {
     public static function configure(Schema $schema): Schema
     {
-        $currency = fn (): string => (string) app(SettingService::class)->get('currency', 'EGP');
+        $currency = fn (): string => (string) app(SettingsRepository::class)->get('currency', 'EGP');
 
         return $schema
             ->columns(3)
             ->components([
+                OrderDeliveryInfolist::make(),
                 Section::make('بيانات الطلب')
                     ->schema([
                         TextEntry::make('id')
@@ -81,40 +82,29 @@ final class OrderInfolist
                             ->label('معرف المستخدم')
                             ->copyable()
                             ->visible(fn ($record) => filled($record->user_id)),
-                        TextEntry::make('guest_user_id')
-                            ->label('معرف الزائر')
-                            ->copyable()
-                            ->visible(fn ($record) => app(PluginManager::class)->isPluginActive('guest-checkout') && filled($record->guest_user_id)),
-                        TextEntry::make('address.full_address')
-                            ->label('العنوان')
-                            ->visible(fn ($record) => filled($record->address_id))
-                            ->columnSpanFull(),
-                        TextEntry::make('address.area')
-                            ->label('المنطقة')
-                            ->visible(fn ($record) => filled($record->address_id)),
-                        TextEntry::make('guest_address')
-                            ->label('عنوان الزائر')
+                        TextEntry::make('delivery_address')
+                            ->label('عنوان التوصيل')
                             ->state(function ($record) {
-                                $isGuestActive = app(PluginManager::class)->isPluginActive('guest-checkout');
+                                $address = $record->delivery_address;
+                                if (is_array($address) && ! empty($address)) {
+                                    $parts = array_filter([
+                                        $address['street'] ?? null,
+                                        isset($address['building']) ? "مبنى: {$address['building']}" : null,
+                                        isset($address['floor']) ? "الدور: {$address['floor']}" : null,
+                                        isset($address['apartment']) ? "شقة: {$address['apartment']}" : null,
+                                        $address['city'] ?? null,
+                                        $address['area_name'] ?? null,
+                                        $address['governorate_name'] ?? null,
+                                    ]);
 
-                                if (! $isGuestActive || ! $record->guestUser) {
-                                    return null;
+                                    if (! empty($parts)) {
+                                        return implode('، ', $parts);
+                                    }
                                 }
 
-                                return collect([
-                                    $record->guestUser->street,
-                                    $record->guestUser->building,
-                                    "الدور: {$record->guestUser->floor}",
-                                    "شقة: {$record->guestUser->apartment}",
-                                    $record->guestUser->city,
-                                    $record->guestUser->area?->name,
-                                ])->filter()->join('، ');
+                                return $record->address?->full_address ?? '—';
                             })
-                            ->visible(function ($record) {
-                                $isGuestActive = app(PluginManager::class)->isPluginActive('guest-checkout');
-
-                                return $isGuestActive && $record->isGuestOrder() && $record->guestUser;
-                            })
+                            ->visible(fn ($record) => filled($record->delivery_address) || filled($record->address_id))
                             ->columnSpanFull(),
                     ])
                     ->columnSpan(1),
@@ -154,9 +144,16 @@ final class OrderInfolist
                                     TextEntry::make('product_name')
                                         ->label('المنتج')
                                         ->weight('bold'),
+                                    TextEntry::make('package_badge')
+                                        ->label('نوع العنصر')
+                                        ->state(fn ($record) => ($record?->line_type ?? 'product') === 'package' ? 'باقة' : null)
+                                        ->badge()
+                                        ->color('primary')
+                                        ->visible(fn ($record) => ($record?->line_type ?? 'product') === 'package'),
                                     TextEntry::make('variant_name')
                                         ->label('التنويع')
-                                        ->placeholder('—'),
+                                        ->placeholder('—')
+                                        ->visible(fn ($record) => ($record?->line_type ?? 'product') === 'product'),
                                     TextEntry::make('weight_label')
                                         ->label('الوزن')
                                         ->placeholder('—')
@@ -176,6 +173,53 @@ final class OrderInfolist
                                         ->weight('bold')
                                         ->money($currency),
                                 ]),
+
+                                TextEntry::make('components')
+                                    ->label('مكونات الباقة')
+                                    ->state(function ($record): array {
+                                        if (! $record instanceof \App\Plugins\OrderManagement\src\Models\OrderItem) {
+                                            return [];
+                                        }
+
+                                        $components = $record->relationLoaded('components')
+                                            ? $record->components
+                                            : $record->components()->get();
+
+                                        $isAr = app()->getLocale() === 'ar';
+
+                                        return $components->map(function ($c) use ($isAr) {
+                                            $group = $isAr ? ($c->group_name_ar ?? $c->group_name) : ($c->group_name ?? $c->group_name_ar);
+                                            $groupStr = filled($group) ? "{$group}: " : '';
+                                            $qty = (float) $c->quantity;
+                                            $qtyStr = fmod($qty, 1.0) === 0.0 ? (string) (int) $qty : (string) $qty;
+                                            $product = $isAr ? ($c->product_name_ar ?? $c->product_name) : ($c->product_name ?? $c->product_name_ar);
+                                            $variant = $isAr ? ($c->variant_name_ar ?? $c->variant_name) : ($c->variant_name ?? $c->variant_name_ar);
+                                            $variantStr = filled($variant) ? " ({$variant})" : '';
+                                            $adj = (float) $c->unit_price_adjustment;
+                                            $adjStr = $adj > 0 ? (' +'.(fmod($adj, 1.0) === 0.0 ? (int) $adj : number_format($adj, 2))) : '';
+
+                                            $lines = ["{$groupStr}{$qtyStr}× {$product}{$variantStr}{$adjStr}"];
+
+                                            if (! empty($c->extras) && is_array($c->extras)) {
+                                                foreach ($c->extras as $extra) {
+                                                    $extraName = $isAr ? ($extra['name_ar'] ?? $extra['name'] ?? '') : ($extra['name'] ?? $extra['name_ar'] ?? '');
+                                                    $extraQty = $extra['quantity'] ?? 1;
+                                                    $lines[] = "+ {$extraName} ×{$extraQty}";
+                                                }
+                                            }
+
+                                            if (filled($c->notes)) {
+                                                $notePrefix = $isAr ? 'ملاحظة: ' : 'Note: ';
+                                                $lines[] = "{$notePrefix}{$c->notes}";
+                                            }
+
+                                            return implode("\n", $lines);
+                                        })->all();
+                                    })
+                                    ->listWithLineBreaks()
+                                    ->bulleted()
+                                    ->columnSpanFull()
+                                    ->visible(fn ($record) => ($record?->line_type ?? 'product') !== 'product'),
 
                                 RepeatableEntry::make('extras')
                                     ->label('الإضافات والتخصيصات المحددة')

@@ -2,20 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Core\Plugins\Routing\PluginRoutes;
 use App\Plugins\OrderManagement\src\Http\Controllers\Api\OrderController;
 use App\Plugins\OrderManagement\src\Http\Controllers\Api\OrderStatusController;
 use App\Plugins\OrderManagement\src\Http\Middleware\VerifyIntegrationToken;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
-use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
-use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 // In-flight settlement route (remains reachable regardless of plugin state)
-Route::middleware([
-    'web',
-    InitializeTenancyByDomain::class,
-    PreventAccessFromCentralDomains::class,
-])->prefix('api')->group(function () {
+PluginRoutes::tenantUngated()->prefix('api')->group(function () {
     Route::post('/order-status', [OrderStatusController::class, 'update'])
         ->middleware([
             VerifyIntegrationToken::class,
@@ -25,13 +20,7 @@ Route::middleware([
         ->withoutMiddleware([VerifyCsrfToken::class]);
 });
 
-Route::middleware([
-    'web',
-    InitializeTenancyByDomain::class,
-    PreventAccessFromCentralDomains::class,
-    'plugin.active:order-management',
-])->prefix('api')->group(function () {
-    Route::get('/checkout-data', [OrderController::class, 'checkoutData'])->name('api.orders.checkout-data');
+PluginRoutes::tenant('order-management')->prefix('api')->group(function () {
     Route::post('/orders/place', [OrderController::class, 'placeOrder'])->name('api.orders.place');
 
     Route::middleware('auth')->group(function () {

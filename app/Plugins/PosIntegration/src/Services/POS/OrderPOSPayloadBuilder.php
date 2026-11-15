@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Plugins\PosIntegration\src\Services\POS;
 
-use App\Enums\OrderType;
+use App\Plugins\OrderManagement\src\Enums\OrderType;
+use App\Plugins\OrderManagement\src\Enums\PaymentMethod;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\PosIntegration\src\Models\ProductPosMapping;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\OrderPOSPayloadBuilderInterface;
@@ -34,21 +35,19 @@ final class OrderPOSPayloadBuilder implements OrderPOSPayloadBuilderInterface
 
         // Preload all mappings for the whole order in ONE query
         $mappings = $this->loadMappingsForOrder($order);
-        if (method_exists($this->productResolver, 'setMappings')) {
-            $this->productResolver->setMappings($mappings);
-        }
+        $lineMappings = method_exists($this->productResolver, 'loadLineMappingsForOrder')
+            ? $this->productResolver->loadLineMappingsForOrder($order)
+            : collect();
 
-        try {
-            foreach ($order->items as $item) {
-                $resolvedItem = $this->productResolver->resolveOrderItem($item, $order->branch_id);
+        $resolver = method_exists($this->productResolver, 'withLineMappings')
+            ? $this->productResolver->withMappings($mappings)->withLineMappings($lineMappings)
+            : $this->productResolver->withMappings($mappings);
 
-                if ($resolvedItem !== null) {
-                    $orderItems[] = $resolvedItem;
-                }
-            }
-        } finally {
-            if (method_exists($this->productResolver, 'setMappings')) {
-                $this->productResolver->setMappings(null);
+        foreach ($order->items as $item) {
+            $resolvedItem = $resolver->resolveOrderItem($item, $order->branch_id);
+
+            if ($resolvedItem !== null) {
+                $orderItems[] = $resolvedItem;
             }
         }
 
@@ -92,9 +91,34 @@ final class OrderPOSPayloadBuilder implements OrderPOSPayloadBuilderInterface
         }
 
         $productIds = $order->items->pluck('product_id')->filter()->unique()->values()->all();
+        $variantIds = [];
         $extraOptionItemIds = $order->items->flatMap->extras->pluck('extra_option_item_id')->filter()->unique()->values()->all();
 
-        if (empty($productIds) && empty($extraOptionItemIds)) {
+        foreach ($order->items as $item) {
+            if ($item->relationLoaded('components')) {
+                foreach ($item->components as $component) {
+                    if ($component->product_id) {
+                        $productIds[] = $component->product_id;
+                    }
+                    if ($component->variant_id) {
+                        $variantIds[] = $component->variant_id;
+                    }
+                    if (! empty($component->extras) && is_array($component->extras)) {
+                        foreach ($component->extras as $extra) {
+                            $extraId = $extra['extra_option_item_id'] ?? $extra['id'] ?? null;
+                            if ($extraId) {
+                                $extraOptionItemIds[] = (int) $extraId;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        $productIds = array_values(array_unique(array_filter($productIds)));
+        $variantIds = array_values(array_unique(array_filter($variantIds)));
+
+        if (empty($productIds) && empty($variantIds) && empty($extraOptionItemIds)) {
             return collect();
         }
 
@@ -107,11 +131,19 @@ final class OrderPOSPayloadBuilder implements OrderPOSPayloadBuilderInterface
                     $query->whereNull('branch_id');
                 }
             })
-            ->where(function ($query) use ($productIds, $extraOptionItemIds) {
+            ->where(function ($query) use ($productIds, $variantIds, $extraOptionItemIds) {
                 $hasCondition = false;
                 if (! empty($productIds)) {
                     $query->whereIn('product_id', $productIds);
                     $hasCondition = true;
+                }
+                if (! empty($variantIds)) {
+                    if ($hasCondition) {
+                        $query->orWhereIn('variant_id', $variantIds);
+                    } else {
+                        $query->whereIn('variant_id', $variantIds);
+                        $hasCondition = true;
+                    }
                 }
                 if (! empty($extraOptionItemIds)) {
                     if ($hasCondition) {
@@ -137,6 +169,17 @@ final class OrderPOSPayloadBuilder implements OrderPOSPayloadBuilderInterface
     }
 
     /**
+     * Map payment method to POS expected method ('cash' or 'card').
+     */
+    private function mapPaymentMethod(PaymentMethod $method): string
+    {
+        return match ($method) {
+            PaymentMethod::COD => 'cash',
+            default => 'card',
+        };
+    }
+
+    /**
      * Build web preferences (online payment metadata) if payment method exists.
      *
      * @return array{payment_method: string, transaction_id?: string}|null
@@ -147,8 +190,12 @@ final class OrderPOSPayloadBuilder implements OrderPOSPayloadBuilderInterface
             return null;
         }
 
+        $paymentMethod = $order->payment_method instanceof PaymentMethod
+            ? $order->payment_method
+            : PaymentMethod::from((string) $order->payment_method);
+
         $preferences = [
-            'payment_method' => $order->payment_method->posMapping(),
+            'payment_method' => $this->mapPaymentMethod($paymentMethod),
         ];
 
         if (! empty($order->transaction_id)) {

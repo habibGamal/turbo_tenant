@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { emitCommerceEvent } from '@/core/analytics';
 
 const STORAGE_KEY = 'favorites';
 
@@ -50,10 +51,21 @@ export function useFavoritesStorage() {
     }
   }, []);
 
-  const addToFavorites = useCallback((productId: number) => {
+  const addToFavorites = useCallback((productId: number, price?: number) => {
     const current = getStoredFavorites();
     if (!current.includes(productId)) {
       saveFavorites([...current, productId]);
+      emitCommerceEvent('AddToWishlist', {
+        items: [
+          {
+            product_id: productId,
+            quantity: 1,
+            item_price: price ?? 0,
+          },
+        ],
+        content_type: 'product',
+        value: price ?? 0,
+      });
     }
   }, [saveFavorites]);
 
@@ -62,12 +74,23 @@ export function useFavoritesStorage() {
     saveFavorites(current.filter((id) => id !== productId));
   }, [saveFavorites]);
 
-  const toggleFavorite = useCallback((productId: number) => {
+  const toggleFavorite = useCallback((productId: number, price?: number) => {
     const current = getStoredFavorites();
     if (current.includes(productId)) {
       saveFavorites(current.filter((id) => id !== productId));
     } else {
       saveFavorites([...current, productId]);
+      emitCommerceEvent('AddToWishlist', {
+        items: [
+          {
+            product_id: productId,
+            quantity: 1,
+            item_price: price ?? 0,
+          },
+        ],
+        content_type: 'product',
+        value: price ?? 0,
+      });
     }
   }, [saveFavorites]);
 

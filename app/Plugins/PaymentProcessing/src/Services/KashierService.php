@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Plugins\PaymentProcessing\src\Services;
 
-use App\Plugins\OrderManagement\src\Contracts\PaymentGatewayInterface;
+use App\Plugins\OrderManagement\src\Contracts\PaymentIntention;
 use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\PaymentProcessing\src\Contracts\PaymentGatewayInterface;
+use App\Plugins\PaymentProcessing\src\DTOs\GatewayWebhookData;
 use App\Plugins\PaymentProcessing\src\DTOs\PaymentProcessingConfig;
+use App\Plugins\PaymentProcessing\src\DTOs\RefundResult;
 use App\Plugins\PaymentProcessing\src\Exceptions\PaymentGatewayNotConfiguredException;
 use Exception;
 use Illuminate\Support\Facades\Http;
@@ -18,6 +21,8 @@ use Illuminate\Support\Facades\Log;
  */
 final class KashierService implements PaymentGatewayInterface
 {
+    public const ID = 'kashier';
+
     private string $merchantId;
 
     private string $apiKey;
@@ -46,7 +51,7 @@ final class KashierService implements PaymentGatewayInterface
      */
     public function getGatewayId(): string
     {
-        return 'kashier';
+        return self::ID;
     }
 
     /**
@@ -66,7 +71,7 @@ final class KashierService implements PaymentGatewayInterface
         array $billingData,
         string $redirectionUrl,
         string $notificationUrl
-    ): array {
+    ): PaymentIntention {
         try {
             $merchantOrderId = $this->generateMerchantOrderId($order);
             $amount = number_format((float) $order->total, 2, '.', '');
@@ -109,22 +114,19 @@ final class KashierService implements PaymentGatewayInterface
             // We return a special checkout URL that renders our Kashier component
             $checkoutUrl = url("/payments/{$order->id}/kashier");
 
-            return [
-                'success' => true,
-                'data' => $kashierParams,
-                'checkout_url' => $checkoutUrl,
-                'kashier_params' => $kashierParams,
-            ];
+            return PaymentIntention::created(
+                checkoutUrl: $checkoutUrl,
+                data: $kashierParams,
+            );
         } catch (Exception $e) {
             Log::error('Kashier payment intention exception', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
             ]);
 
-            return [
-                'success' => false,
-                'error' => 'Payment service error: '.$e->getMessage(),
-            ];
+            return PaymentIntention::failed(
+                'Payment service error: '.$e->getMessage()
+            );
         }
     }
 
@@ -168,7 +170,7 @@ final class KashierService implements PaymentGatewayInterface
     /**
      * Process webhook callback data from Kashier.
      */
-    public function processWebhook(array $webhookData): array
+    public function processWebhook(array $webhookData): GatewayWebhookData
     {
         try {
             $data = $webhookData['data'] ?? $webhookData;
@@ -187,16 +189,16 @@ final class KashierService implements PaymentGatewayInterface
                 default => 'failed',
             };
 
-            return [
-                'transaction_id' => (string) $transactionId,
-                'merchant_order_id' => (string) $merchantOrderId,
-                'payment_status' => $paymentStatus,
-                'amount_cents' => (int) round(((float) $amount) * 100),
-                'currency' => (string) $currency,
-                'success' => $paymentStatus === 'completed',
-                'pending' => $paymentStatus === 'processing',
-                'payment_data' => json_encode($data),
-            ];
+            return new GatewayWebhookData(
+                transactionId: (string) $transactionId,
+                merchantOrderId: (string) $merchantOrderId,
+                amountCents: (int) round(((float) $amount) * 100),
+                currency: (string) $currency,
+                successful: $paymentStatus === 'completed',
+                paymentStatus: $paymentStatus,
+                raw: $data,
+                paymentData: json_encode($data) ?: null,
+            );
         } catch (Exception $e) {
             Log::error('Error processing Kashier webhook', [
                 'error' => $e->getMessage(),
@@ -209,7 +211,7 @@ final class KashierService implements PaymentGatewayInterface
     /**
      * Refund a transaction through Kashier API.
      */
-    public function refundTransaction(string $transactionId, float $amount): array
+    public function refundTransaction(string $transactionId, float $amount): RefundResult
     {
         $baseUrl = $this->mode === 'live'
             ? 'https://fep.kashier.io'
@@ -249,10 +251,7 @@ final class KashierService implements PaymentGatewayInterface
                     'refund_transaction_id' => $responseData['response']['transactionId'] ?? null,
                 ]);
 
-                return [
-                    'success' => true,
-                    'data' => $responseData,
-                ];
+                return RefundResult::success($responseData);
             }
 
             Log::error('Kashier refund failed', [
@@ -260,20 +259,14 @@ final class KashierService implements PaymentGatewayInterface
                 'status' => $response->status(),
             ]);
 
-            return [
-                'success' => false,
-                'error' => $responseData['message'] ?? 'Refund failed',
-            ];
+            return RefundResult::failure($responseData['message'] ?? 'Refund failed');
         } catch (Exception $e) {
             Log::error('Kashier refund exception', [
                 'transaction_id' => $transactionId,
                 'error' => $e->getMessage(),
             ]);
 
-            return [
-                'success' => false,
-                'error' => 'Refund service error: '.$e->getMessage(),
-            ];
+            return RefundResult::failure('Refund service error: '.$e->getMessage());
         }
     }
 

@@ -1,0 +1,538 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "D:\\turbo_tenant\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "tests/e2e/plugins/cart-engine/03-weighted-items.live.spec.ts",
+      "tests/e2e/plugins/cart-engine/04-addons-and-extras.live.spec.ts",
+      "tests/e2e/plugins/cart-engine/05-quantity-management.live.spec.ts",
+      "tests/e2e/plugins/cart-engine/06-line-item-removal.live.spec.ts",
+      "tests/e2e/plugins/cart-engine/09-persistence-continuity.live.spec.ts",
+      "tests/e2e/plugins/catalog-products/05-variants-selection.live.spec.ts",
+      "--reporter=line,json"
+    ],
+    "configFile": "D:\\turbo_tenant\\playwright.config.ts",
+    "rootDir": "D:/turbo_tenant/tests/e2e/plugins",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/turbo_tenant/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "theme-default",
+        "name": "theme-default",
+        "testDir": "D:/turbo_tenant/tests/e2e/plugins",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "D:\\turbo_tenant\\test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "theme-default",
+        "testDir": "D:\\turbo_tenant\\tests\\e2e\\plugins",
+        "snapshotDir": "D:\\turbo_tenant\\tests\\e2e\\plugins",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 45000,
+        "use": {
+          "baseURL": "http://e2e.localhost:8011",
+          "trace": "retain-on-failure",
+          "screenshot": "only-on-failure",
+          "video": "retain-on-failure",
+          "actionTimeout": 15000,
+          "navigationTimeout": 30000,
+          "launchOptions": {
+            "args": [
+              "--host-resolver-rules=MAP *.localhost 127.0.0.1",
+              "--disable-gpu",
+              "--no-sandbox"
+            ]
+          },
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "screen": {
+            "width": 1920,
+            "height": 1080
+          },
+          "deviceScaleFactor": 1,
+          "isMobile": false,
+          "hasTouch": false,
+          "defaultBrowserType": "chromium",
+          "activeThemeName": "default"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "theme-default"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "cart-engine\\03-weighted-items.live.spec.ts",
+      "file": "cart-engine/03-weighted-items.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "CartEngine Suite 03: Weighted Items",
+          "file": "cart-engine/03-weighted-items.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "calculates weighted price, handles dynamic weight changes, and enforces multiplier boundaries",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 14754,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T12:34:53.082Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c84205279e3924df7c9a-c5e834d8238f03b50130",
+              "file": "cart-engine/03-weighted-items.live.spec.ts",
+              "line": 5,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cart-engine\\04-addons-and-extras.live.spec.ts",
+      "file": "cart-engine/04-addons-and-extras.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "CartEngine Suite 04: Addons & Extras",
+          "file": "cart-engine/04-addons-and-extras.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "toggles extra option, increments addon quantity, and verifies subtotal math in cart",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4271,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T12:35:09.138Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fdcf6c9fb6da9da3c186-7f8a6a2979a6599645a0",
+              "file": "cart-engine/04-addons-and-extras.live.spec.ts",
+              "line": 5,
+              "column": 3
+            },
+            {
+              "title": "verifies ultra combo (variant + weight + addon) price accuracy in cart",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3410,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T12:35:13.418Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fdcf6c9fb6da9da3c186-112e93467cbdf7eccec7",
+              "file": "cart-engine/04-addons-and-extras.live.spec.ts",
+              "line": 51,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cart-engine\\05-quantity-management.live.spec.ts",
+      "file": "cart-engine/05-quantity-management.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "CartEngine Suite 05: Quantity Management & Boundaries",
+          "file": "cart-engine/05-quantity-management.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "increments and decrements standard item quantity and enforces lower boundary",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4637,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T12:35:16.850Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fb285add0572faad9aa5-0b9be9176c264e451eb7",
+              "file": "cart-engine/05-quantity-management.live.spec.ts",
+              "line": 5,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cart-engine\\06-line-item-removal.live.spec.ts",
+      "file": "cart-engine/06-line-item-removal.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "CartEngine Suite 06: Line Item Removal",
+          "file": "cart-engine/06-line-item-removal.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "removes item from multi-item cart and verifies subtotal and badge update",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9101,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T12:35:21.516Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7b81cfbe7981de5034d6-48a102c758ccc59f5974",
+              "file": "cart-engine/06-line-item-removal.live.spec.ts",
+              "line": 5,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cart-engine\\09-persistence-continuity.live.spec.ts",
+      "file": "cart-engine/09-persistence-continuity.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "CartEngine Suite 09: Persistence & Session Continuity",
+          "file": "cart-engine/09-persistence-continuity.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "preserves configured item across hard page reloads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4889,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T12:35:30.647Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f9d5f8da94262500b9cb-be2df0c3a16ad9c46fb4",
+              "file": "cart-engine/09-persistence-continuity.live.spec.ts",
+              "line": 5,
+              "column": 3
+            },
+            {
+              "title": "maintains cart state across multi-page client router transitions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6309,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T12:35:35.544Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f9d5f8da94262500b9cb-453dbd5ef7e6c4d33834",
+              "file": "cart-engine/09-persistence-continuity.live.spec.ts",
+              "line": 41,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "catalog-products\\05-variants-selection.live.spec.ts",
+      "file": "catalog-products/05-variants-selection.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "CatalogProducts Suite 05: Variant Selection & Dynamic Pricing",
+          "file": "catalog-products/05-variants-selection.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "displays variant options with prices and dynamically recalculates total price on selection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2716,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T12:35:41.870Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "765ea86961bddadc6903-e835ecc3a14be2b65fe9",
+              "file": "catalog-products/05-variants-selection.live.spec.ts",
+              "line": 5,
+              "column": 3
+            },
+            {
+              "title": "selecting a variant preserves ability to add to cart",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2471,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T12:35:44.593Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "765ea86961bddadc6903-64e1e1d972c5dadad66f",
+              "file": "catalog-products/05-variants-selection.live.spec.ts",
+              "line": 47,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-03T12:34:52.565Z",
+    "duration": 56235.644,
+    "expected": 9,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

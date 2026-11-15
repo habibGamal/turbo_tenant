@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Plugins\PaymentProcessing\src\Services;
 
-use App\Enums\PaymentStatus;
-use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\Contracts\OrderPaymentRecorder;
+use App\Plugins\OrderManagement\src\Enums\PaymentStatus;
+use App\Plugins\OrderManagement\src\Events\OrderPaymentCompleted;
 use App\Plugins\OrderManagement\src\Models\Order;
 use Illuminate\Support\Facades\Log;
 
@@ -40,6 +41,10 @@ final class PaymentStateMachine
         PaymentStatus::REFUNDED->value => [],
     ];
 
+    public function __construct(
+        private readonly OrderPaymentRecorder $recorder
+    ) {}
+
     /**
      * Check if a transition from current status to target status is allowed.
      */
@@ -56,7 +61,7 @@ final class PaymentStateMachine
     /**
      * Apply status transition to the order if allowed.
      * Returns true if transition was applied, false if it was an ignored no-op.
-     * Setting pos_status READY happens only on the transition into completed.
+     * Dispatches OrderPaymentCompleted event only on the transition into completed.
      *
      * @param  array<string, mixed>  $extraAttributes
      */
@@ -90,11 +95,11 @@ final class PaymentStateMachine
             'payment_status' => $targetStatusValue,
         ]);
 
-        if ($targetStatusValue === PaymentStatus::COMPLETED->value) {
-            $attributesToUpdate['pos_status'] = OrderPosStatus::READY;
-        }
+        $this->recorder->record($order, $attributesToUpdate);
 
-        $order->update($attributesToUpdate);
+        if ($targetStatusValue === PaymentStatus::COMPLETED->value) {
+            OrderPaymentCompleted::dispatch($order);
+        }
 
         return true;
     }

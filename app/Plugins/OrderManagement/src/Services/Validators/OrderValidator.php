@@ -4,23 +4,24 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Services\Validators;
 
+use App\Plugins\CartEngine\src\DTOs\CartLine;
 use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
 use App\Plugins\OrderManagement\src\Pipelines\Context\OrderValidationContext;
 use App\Plugins\OrderManagement\src\Pipelines\OrderValidationPipeline;
 use App\Plugins\OrderManagement\src\Services\Contracts\OrderValidatorInterface;
 
-class OrderValidator implements OrderValidatorInterface
+final class OrderValidator implements OrderValidatorInterface
 {
     public function __construct(
         private OrderValidationPipeline $validationPipeline
     ) {}
 
     /**
-     * @param  array<string, mixed>  $cart
+     * @param  list<CartLine>  $lines
      */
-    public function validate(PlaceOrderData $data, array $cart): OrderValidationContext
+    public function validate(PlaceOrderData $data, array $lines): OrderValidationContext
     {
-        $context = new OrderValidationContext($data, $cart);
+        $context = new OrderValidationContext($data, $lines);
 
         return $this->validationPipeline->process($context);
     }

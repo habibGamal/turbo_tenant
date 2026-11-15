@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Enums\OrderStatus;
 use App\Models\User;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\PushNotifications\src\Jobs\SendOrderStatusNotificationJob;
 use App\Plugins\PushNotifications\src\Notifications\OrderStatusNotification;
@@ -20,9 +20,11 @@ beforeEach(function () {
 it('dispatches order status notification job when order is created', function () {
     Queue::fake();
 
-    Order::factory()->create([
+    $order = Order::factory()->create([
         'user_id' => $this->user->id,
     ]);
+
+    App\Plugins\OrderManagement\src\Events\OrderCreated::dispatch($order);
 
     Queue::assertPushed(SendOrderStatusNotificationJob::class);
 });
@@ -35,11 +37,9 @@ it('dispatches order status notification job when order status is updated', func
         'status' => OrderStatus::PENDING,
     ]);
 
-    Queue::assertPushed(SendOrderStatusNotificationJob::class, 1);
-
     $order->update(['status' => OrderStatus::PREPARING]);
 
-    Queue::assertPushed(SendOrderStatusNotificationJob::class, 2);
+    Queue::assertPushed(SendOrderStatusNotificationJob::class, 1);
 });
 
 it('does not dispatch notification job when order status is not changed', function () {
@@ -50,11 +50,9 @@ it('does not dispatch notification job when order status is not changed', functi
         'status' => OrderStatus::PENDING,
     ]);
 
-    Queue::assertPushed(SendOrderStatusNotificationJob::class, 1);
-
     $order->update(['note' => 'Updated note']);
 
-    Queue::assertPushed(SendOrderStatusNotificationJob::class, 1);
+    Queue::assertNothingPushed();
 });
 
 it('sends expo notification when job is executed', function () {

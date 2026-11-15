@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\CatalogProducts\src\Filament\Resources\Products\RelationManagers;
 
-use App\Plugins\StoreSettings\src\Services\SettingService;
+use App\Core\Contracts\SettingsRepository;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -46,7 +46,7 @@ final class VariantsRelationManager extends RelationManager
                 TextInput::make('price')
                     ->label('السعر')
                     ->numeric()
-                    ->prefix(fn () => class_exists(SettingService::class) ? app(SettingService::class)->get('currency', 'EGP') : 'EGP')
+                    ->prefix(fn () => app()->bound(SettingsRepository::class) ? app(SettingsRepository::class)->get('currency', 'EGP') : 'EGP')
                     ->maxValue(99999.99)
                     ->helperText('اتركه فارغاً لاستخدام السعر الأساسي للمنتج'),
                 Toggle::make('is_available')
@@ -77,7 +77,7 @@ final class VariantsRelationManager extends RelationManager
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('price')
                     ->label('السعر')
-                    ->money(fn () => class_exists(SettingService::class) ? app(SettingService::class)->get('currency', 'EGP') : 'EGP')
+                    ->money(fn () => app()->bound(SettingsRepository::class) ? app(SettingsRepository::class)->get('currency', 'EGP') : 'EGP')
                     ->sortable()
                     ->description(fn ($record) => $record->price !== null && $record->product?->base_price
                         ? (($diff = (float) $record->price - (float) $record->product->base_price) === 0.0

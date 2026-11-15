@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\OrderType;
 use App\Models\User;
 use App\Plugins\CatalogProducts\src\Models\ExtraOption;
 use App\Plugins\CatalogProducts\src\Models\ExtraOptionItem;
@@ -11,18 +10,20 @@ use App\Plugins\CatalogProducts\src\Models\ProductVariant;
 use App\Plugins\CatalogProducts\src\Models\WeightOption;
 use App\Plugins\CatalogProducts\src\Models\WeightOptionValue;
 use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\OrderManagement\src\Enums\OrderType;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
+use App\Plugins\OrderManagement\src\Models\OrderItemComponent;
 use App\Plugins\OrderManagement\src\Models\OrderItemExtra;
 use App\Plugins\PosIntegration\src\Models\ProductPosMapping;
 use App\Plugins\PosIntegration\src\Services\OrderPOSService;
-use App\Plugins\PosIntegration\src\Services\ProductPOSImporterService;
+use App\Plugins\PosIntegration\src\Services\POS\Contracts\PosMasterClient;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
-    $this->productImporter = mock(ProductPOSImporterService::class);
-    $this->app->instance(ProductPOSImporterService::class, $this->productImporter);
+    $this->posMasterClient = mock(PosMasterClient::class);
+    $this->app->instance(PosMasterClient::class, $this->posMasterClient);
     $this->service = app(OrderPOSService::class);
     Http::preventStrayRequests();
 });
@@ -672,5 +673,208 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
                 'اضافات' => 'Live Extra Name (x1)',
                 'النوع' => 'Live Variant Name',
             ], JSON_UNESCAPED_UNICODE));
+    });
+
+    it('formats composite combo line with one posRefObj per component, applying branch and variant precedence rules', function () {
+        Http::fake([
+            'https://pos.example.com/api/web-orders/place-order' => Http::response(['message' => 'تم إنشاء الطلب بنجاح'], 200),
+        ]);
+
+        $branch = Branch::factory()->create(['link' => 'https://pos.example.com']);
+        $user = User::factory()->create();
+
+        // Product 1: branch variant mapping vs global base mapping -> branch variant wins
+        $prod1 = Product::factory()->create(['name' => 'Burger']);
+        $var1 = ProductVariant::factory()->create(['product_id' => $prod1->id, 'name' => 'Double']);
+        ProductPosMapping::factory()->create([
+            'product_id' => $prod1->id,
+            'variant_id' => null,
+            'pos_item_id' => 'GLOBAL-BASE-BURGER',
+            'branch_id' => null,
+        ]);
+        ProductPosMapping::factory()->create([
+            'product_id' => $prod1->id,
+            'variant_id' => $var1->id,
+            'pos_item_id' => 'BRANCH-VAR-BURGER',
+            'branch_id' => $branch->id,
+        ]);
+
+        // Product 2: branch-specific base mapping
+        $prod2 = Product::factory()->create(['name' => 'Fries']);
+        ProductPosMapping::factory()->create([
+            'product_id' => $prod2->id,
+            'variant_id' => null,
+            'pos_item_id' => 'BRANCH-BASE-FRIES',
+            'branch_id' => $branch->id,
+        ]);
+
+        // Product 3: global variant mapping
+        $prod3 = Product::factory()->create(['name' => 'Drink']);
+        $var3 = ProductVariant::factory()->create(['product_id' => $prod3->id, 'name' => 'Diet']);
+        ProductPosMapping::factory()->create([
+            'product_id' => $prod3->id,
+            'variant_id' => $var3->id,
+            'pos_item_id' => 'GLOBAL-VAR-DIET',
+            'branch_id' => null,
+        ]);
+
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+            'branch_id' => $branch->id,
+            'type' => OrderType::WEB_DELIVERY,
+            'shift_id' => 1,
+        ]);
+
+        $compositeItem = OrderItem::factory()->create([
+            'order_id' => $order->id,
+            'line_type' => 'package',
+            'line_reference_id' => 10,
+            'product_id' => null,
+            'product_name' => 'Mega Combo',
+            'quantity' => 2,
+            'notes' => 'بدون طماطم',
+        ]);
+
+        OrderItemComponent::create([
+            'order_item_id' => $compositeItem->id,
+            'source_id' => 1,
+            'group_name' => 'Main',
+            'group_name_ar' => 'رئيسي',
+            'product_id' => $prod1->id,
+            'variant_id' => $var1->id,
+            'product_name' => 'Burger',
+            'variant_name' => 'Double',
+            'quantity' => 1,
+            'unit_price_adjustment' => 5.0,
+            'sort_order' => 1,
+        ]);
+
+        OrderItemComponent::create([
+            'order_item_id' => $compositeItem->id,
+            'source_id' => 2,
+            'group_name' => 'Sides',
+            'group_name_ar' => 'جانبي',
+            'product_id' => $prod2->id,
+            'variant_id' => null,
+            'product_name' => 'Fries',
+            'variant_name' => null,
+            'quantity' => 2,
+            'unit_price_adjustment' => 0.0,
+            'sort_order' => 2,
+        ]);
+
+        OrderItemComponent::create([
+            'order_item_id' => $compositeItem->id,
+            'source_id' => 3,
+            'group_name' => 'Beverage',
+            'group_name_ar' => 'مشروب',
+            'product_id' => $prod3->id,
+            'variant_id' => $var3->id,
+            'product_name' => 'Drink',
+            'variant_name' => 'Diet',
+            'quantity' => 1,
+            'unit_price_adjustment' => 0.0,
+            'sort_order' => 3,
+        ]);
+
+        $this->service->placeOrder($order);
+
+        $body = Http::recorded()[0][0]->data();
+        $items = $body['order']['items'];
+
+        expect($items)->toHaveCount(1)
+            ->and($items[0]['quantity'])->toBe(2.0)
+            ->and($items[0]['posRefObj'])->toBe([
+                [
+                    'productRef' => 'BRANCH-VAR-BURGER',
+                    'quantity' => 1,
+                ],
+                [
+                    'productRef' => 'BRANCH-BASE-FRIES',
+                    'quantity' => 2,
+                ],
+                [
+                    'productRef' => 'GLOBAL-VAR-DIET',
+                    'quantity' => 1,
+                ],
+            ]);
+
+        $expectedNotes = 'json::'.json_encode([
+            'ملاحظات' => 'بدون طماطم',
+            'مكونات' => 'Main: Burger (Double) x1, Sides: Fries x2, Beverage: Drink (Diet) x1',
+        ], JSON_UNESCAPED_UNICODE);
+
+        expect($items[0]['notes'])->toBe($expectedNotes);
+    });
+
+    it('drops composite item when any component has no POS mapping (taking same failure path as unmapped product)', function () {
+        Http::fake([
+            'https://pos.example.com/api/web-orders/place-order' => Http::response(['message' => 'تم إنشاء الطلب بنجاح'], 200),
+        ]);
+
+        $branch = Branch::factory()->create(['link' => 'https://pos.example.com']);
+        $user = User::factory()->create();
+
+        $mappedProduct = Product::factory()->create(['name' => 'Regular Item']);
+        ProductPosMapping::factory()->create([
+            'product_id' => $mappedProduct->id,
+            'pos_item_id' => 'REGULAR-MAPPED',
+            'branch_id' => $branch->id,
+        ]);
+
+        $compProduct1 = Product::factory()->create(['name' => 'Comp 1']);
+        ProductPosMapping::factory()->create([
+            'product_id' => $compProduct1->id,
+            'pos_item_id' => 'COMP1-MAPPED',
+            'branch_id' => $branch->id,
+        ]);
+
+        $compProduct2Unmapped = Product::factory()->create(['name' => 'Comp 2 Unmapped']);
+
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+            'branch_id' => $branch->id,
+            'type' => OrderType::WEB_DELIVERY,
+            'shift_id' => 1,
+        ]);
+
+        // Item 1: Regular mapped
+        OrderItem::factory()->create([
+            'order_id' => $order->id,
+            'product_id' => $mappedProduct->id,
+            'quantity' => 1,
+        ]);
+
+        // Item 2: Composite item where 1 component is unmapped
+        $compositeItem = OrderItem::factory()->create([
+            'order_id' => $order->id,
+            'line_type' => 'package',
+            'line_reference_id' => 99,
+            'product_id' => null,
+            'quantity' => 1,
+        ]);
+
+        OrderItemComponent::create([
+            'order_item_id' => $compositeItem->id,
+            'product_id' => $compProduct1->id,
+            'product_name' => 'Comp 1',
+            'quantity' => 1,
+        ]);
+
+        OrderItemComponent::create([
+            'order_item_id' => $compositeItem->id,
+            'product_id' => $compProduct2Unmapped->id,
+            'product_name' => 'Comp 2 Unmapped',
+            'quantity' => 1,
+        ]);
+
+        $this->service->placeOrder($order);
+
+        $body = Http::recorded()[0][0]->data();
+        $items = $body['order']['items'];
+
+        // Composite item was dropped, only regular mapped item remains
+        expect($items)->toHaveCount(1)
+            ->and($items[0]['posRefObj'][0]['productRef'])->toBe('REGULAR-MAPPED');
     });
 });

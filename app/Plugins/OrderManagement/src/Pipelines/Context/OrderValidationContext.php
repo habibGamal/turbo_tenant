@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Pipelines\Context;
 
+use App\Plugins\CartEngine\src\DTOs\CartLine;
 use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
 
+/**
+ * Public API: other plugins' pipes receive this class. Change it compatibly.
+ */
 final class OrderValidationContext
 {
     /** @var array<string, mixed> */
@@ -13,13 +17,17 @@ final class OrderValidationContext
 
     private bool $isAuthorized = false;
 
+    private ?int $appliedPromotionId = null;
+
+    private ?string $appliedPromotionCode = null;
+
     /**
-     * @param  array<string, mixed>  $cart
+     * @param  list<CartLine>  $lines
      * @param  array<string, mixed>  $payload
      */
     public function __construct(
         public readonly PlaceOrderData $data,
-        public readonly array $cart,
+        public readonly array $lines,
         public readonly array $payload = []
     ) {
         $this->isAuthorized = ! $data->isGuest();
@@ -31,11 +39,11 @@ final class OrderValidationContext
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<CartLine>
      */
-    public function getCartItems(): array
+    public function getLines(): array
     {
-        return $this->cart['items'] ?? [];
+        return $this->lines;
     }
 
     public function set(string $key, mixed $value): self
@@ -73,5 +81,21 @@ final class OrderValidationContext
     public function isAuthorized(): bool
     {
         return $this->isAuthorized;
+    }
+
+    public function applyPromotion(int $promotionId, string $promotionCode): void
+    {
+        $this->appliedPromotionId = $promotionId;
+        $this->appliedPromotionCode = $promotionCode;
+    }
+
+    public function appliedPromotionId(): ?int
+    {
+        return $this->appliedPromotionId;
+    }
+
+    public function appliedPromotionCode(): ?string
+    {
+        return $this->appliedPromotionCode;
     }
 }

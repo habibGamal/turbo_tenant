@@ -1,18 +1,27 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { apiClient } from '@/core/api/client';
-import { CatalogProductsResponse } from '../types';
+import { Paginated, PaginationMeta } from '@/core/api/types';
+import { ProductSummary } from '../types';
+
+export interface CatalogProductsPage {
+  data: ProductSummary[];
+  meta: PaginationMeta;
+}
 
 export function useInfiniteCatalogProducts(params?: Record<string, any>) {
-  return useInfiniteQuery<CatalogProductsResponse>({
+  return useInfiniteQuery<CatalogProductsPage>({
     queryKey: ['catalog-products-infinite', params],
     queryFn: async ({ pageParam = 1 }) => {
-      const { data } = await apiClient.get<CatalogProductsResponse>('/api/catalog-products', {
+      const { data } = await apiClient.get<Paginated<ProductSummary>>('/api/catalog-products', {
         params: {
           ...params,
           page: pageParam,
         },
       });
-      return data;
+      return {
+        data: data.data,
+        meta: data.meta,
+      };
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {

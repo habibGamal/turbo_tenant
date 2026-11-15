@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Users\Tables;
 
+use App\Core\Plugins\Contracts\UsersTableColumnContributor;
+use App\Core\Plugins\Services\PluginContributions;
 use App\Filament\Resources\Users\UserResource;
-use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -20,58 +21,52 @@ final class UsersTable
 {
     public static function configure(Table $table): Table
     {
-        if (! method_exists(User::class, 'orders')) {
-            User::resolveRelationUsing('orders', function (User $user) {
-                $orderClass = '\App\Plugins\OrderManagement\src\Models\Order';
+        $columns = [
+            TextColumn::make('name')
+                ->label('الاسم')
+                ->sortable()
+                ->searchable(),
+            TextColumn::make('email')
+                ->label('بريد إلكتروني')
+                ->sortable()
+                ->searchable(),
+            TextColumn::make('addresses.phone_number')
+                ->label('رقم الهاتف')
+                ->listWithLineBreaks()
+                ->limitList(1)
+                ->searchable()
+                ->copyable()
+                ->visible(fn ($livewire): bool => ($livewire->activeTab ?? 'customers') !== 'admins'),
+            TextColumn::make('email_verified_at')
+                ->label('تاريخ التحقق من البريد')
+                ->dateTime()
+                ->sortable()
+                ->toggleable(isToggledHiddenByDefault: true),
+            TextColumn::make('created_at')
+                ->label('تاريخ الإنشاء')
+                ->dateTime()
+                ->sortable()
+                ->toggleable(),
+            TextColumn::make('updated_at')
+                ->label('تاريخ التحديث')
+                ->dateTime()
+                ->sortable()
+                ->toggleable(isToggledHiddenByDefault: true),
+        ];
 
-                return $user->hasMany(
-                    class_exists($orderClass) ? $orderClass : \Illuminate\Database\Eloquent\Model::class,
-                    'user_id'
-                );
-            });
+        /** @var PluginContributions $contributions */
+        $contributions = app(PluginContributions::class);
+        foreach ($contributions->active('admin.users.table.columns') as $contributor) {
+            if ($contributor instanceof UsersTableColumnContributor) {
+                foreach ($contributor->columns() as $column) {
+                    $columns[] = $column;
+                }
+            }
         }
 
         return $table
             ->defaultSort('created_at', 'desc')
-            ->columns([
-                TextColumn::make('name')
-                    ->label('الاسم')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('email')
-                    ->label('بريد إلكتروني')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('addresses.phone_number')
-                    ->label('رقم الهاتف')
-                    ->listWithLineBreaks()
-                    ->limitList(1)
-                    ->searchable()
-                    ->copyable()
-                    ->visible(fn ($livewire): bool => ($livewire->activeTab ?? 'customers') !== 'admins'),
-                TextColumn::make('orders_count')
-                    ->counts('orders')
-                    ->label('عدد الطلبات')
-                    ->badge()
-                    ->color('success')
-                    ->sortable()
-                    ->visible(fn ($livewire): bool => ($livewire->activeTab ?? 'customers') !== 'admins'),
-                TextColumn::make('email_verified_at')
-                    ->label('تاريخ التحقق من البريد')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('created_at')
-                    ->label('تاريخ الإنشاء')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(),
-                TextColumn::make('updated_at')
-                    ->label('تاريخ التحديث')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
+            ->columns($columns)
             ->filters([
                 Filter::make('has_orders')
                     ->label('لديه طلبات')

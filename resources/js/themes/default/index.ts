@@ -1,13 +1,15 @@
+import { lazy } from 'react';
 import { ThemeDefinition } from '@/themes/registry';
 import MainLayout from './layouts/MainLayout';
-import Checkout from './pages/Checkout';
-import OrderShow from './pages/OrderShow';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import Profile from './pages/Profile';
-import HomePage from './pages/HomePage';
+const Checkout = lazy(() => import('./pages/Checkout'));
+const OrderShow = lazy(() => import('./pages/OrderShow'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const Profile = lazy(() => import('./pages/Profile'));
+const HomePage = lazy(() => import('./pages/HomePage'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 import { ThemedCmsPages, registerCmsPagesThemeOverride } from './plugins/cms-pages';
 import { registerHeroBannersThemeOverride } from './plugins/hero-banners';
@@ -45,6 +47,7 @@ export const defaultTheme: ThemeDefinition = {
     ForgotPassword,
     ResetPassword,
     Profile,
+    NotFound,
   },
   plugins: {
     ThemedCmsPages,

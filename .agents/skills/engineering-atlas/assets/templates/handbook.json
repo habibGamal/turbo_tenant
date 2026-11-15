@@ -1,0 +1,24 @@
+{
+  "index": "docs/README.md",
+  "required": [
+    "docs/README.md",
+    "docs/overview.md",
+    "docs/getting-started.md",
+    "docs/architecture.md",
+    "docs/data-model.md",
+    "docs/interfaces.md|docs/api.md|docs/api/README.md",
+    "docs/configuration.md",
+    "docs/development.md",
+    "docs/features/README.md",
+    "docs/deployment.md",
+    "docs/operations.md|docs/runbook.md",
+    "docs/coverage.md",
+    "CHANGELOG.md|docs/changelog.md"
+  ],
+  "not_applicable": [],
+  "feature_dir": "docs/features",
+  "feature_catalog": "docs/features/README.md",
+  "scan": ["docs", "README.md", "CHANGELOG.md"],
+  "exclude": [],
+  "changelog": "CHANGELOG.md|docs/changelog.md"
+}

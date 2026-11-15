@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Security;
 
-use App\Enums\OrderStatus;
 use App\Models\User;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\Pages\ListOrders;
 use App\Plugins\OrderManagement\src\Http\Middleware\VerifyIntegrationToken;
 use App\Plugins\OrderManagement\src\Models\Order;

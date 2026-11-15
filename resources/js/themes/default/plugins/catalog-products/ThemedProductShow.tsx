@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
-import ReactPixel from "react-facebook-pixel";
+import { emitCommerceEvent } from "@/core/analytics";
 import { Head } from "@/components/Head";
 import MainLayout from "@/themes/default/layouts/MainLayout";
 import { PluginSlot } from "@/core/slots/PluginSlot";
@@ -10,12 +10,15 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { Product, Review, ExtraOptionItem, ProductVariant } from "@/types";
+import { normalizeProduct } from "@/plugins/catalog-products/utils/normalizeProduct";
+import { NormalizedProduct } from "@/plugins/catalog-products/types";
 import { useProductOptions } from "@/hooks/useProductOptions";
 import ProductImage from "./components/ProductImage";
 import ProductInfo from "./components/ProductInfo";
 import ProductOptions from "./components/ProductOptions";
 import ProductCard from "./components/ProductCard";
 import ProductPageSkeleton from "./components/ProductPageSkeleton";
+import ProductComboUpsell from "./components/ProductComboUpsell";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCatalogProduct } from "@/plugins/catalog-products/api/useCatalogProduct";
 import { getEffectivePrice } from "@/lib/pricing";
@@ -43,7 +46,7 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
   const { id: paramProductId } = useParams<{ id: string }>();
   const productId = propProductId || paramProductId;
 
-  const { data: responseData, isLoading, isError } = useCatalogProduct(productId);
+  const { data: rawProduct, isLoading, isError } = useCatalogProduct(productId);
   const { t, i18n } = useTranslation();
   const formatMoney = useFormatMoney();
   const currency = useCurrency();
@@ -53,36 +56,15 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
     return isRTL && textAr ? textAr : text;
   };
 
-  const rawProduct = (responseData?.data || (responseData as any)?.product) as any;
-
   // Normalize product options and relations
-  const product: (Product & {
-    variants?: ProductVariant[];
-    extraOption?: {
-      id: number;
-      name: string;
-      description?: string;
-      items: ExtraOptionItem[];
-      min_selections?: number;
-      max_selections?: number;
-      allow_multiple?: boolean;
-    };
-    weight_option?: any;
-  }) | null = useMemo(() => {
-    if (!rawProduct) return null;
-    return {
-      ...rawProduct,
-      category: rawProduct.category || null,
-      variants: rawProduct.variants || [],
-      extraOption: rawProduct.extra_option || rawProduct.extraOption || null,
-      weight_option: rawProduct.weight_option || rawProduct.weightOption || null,
-    };
+  const product: NormalizedProduct | null = useMemo(() => {
+    return rawProduct ? normalizeProduct(rawProduct) : null;
   }, [rawProduct]);
 
   const { isFavorite, toggleFavorite } = useFavorites();
 
   const productOptions = useProductOptions({
-    product: product || ({} as any),
+    product,
   });
 
   const {
@@ -106,26 +88,52 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
 
   const handleToggleFavorite = () => {
     if (product?.id) {
-      toggleFavorite(product.id);
+      toggleFavorite(product.id, getEffectivePrice(product));
     }
   };
 
+  const lastViewedRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!product) return;
-    try {
-      const defaultProductPrice = getEffectivePrice(product);
 
-      ReactPixel.track("ViewContent", {
-        content_ids: [product.id],
-        contents: [{ id: product.id, quantity: 1 }],
-        content_type: "product",
-        value: defaultProductPrice,
-        currency,
-      });
-    } catch {
-      // Safe fallback if Pixel not configured
+    const viewKey = `${product.id}:${selectedVariant ?? 'none'}`;
+    if (lastViewedRef.current === viewKey) return;
+    lastViewedRef.current = viewKey;
+
+    const hasVariants = Boolean(product.variants && product.variants.length > 0);
+    const isVariantSelected = selectedVariant !== null && selectedVariant !== undefined;
+
+    let effectivePrice = getEffectivePrice(product);
+    let contentType: 'product' | 'product_group' = 'product';
+
+    if (hasVariants && !isVariantSelected) {
+      contentType = 'product_group';
+    } else if (isVariantSelected && product.variants) {
+      const variant = product.variants.find((v) => v.id === selectedVariant);
+      if (variant && variant.price !== null && variant.price !== undefined) {
+        effectivePrice = Number(variant.price);
+      }
     }
-  }, [selectedVariant, product]);
+
+    emitCommerceEvent('ViewContent', {
+      items: [
+        {
+          product_id: product.id,
+          variant_id: isVariantSelected ? selectedVariant : null,
+          quantity: 1,
+          item_price: effectivePrice,
+          name: product.name,
+          category: (product as any).category?.name,
+        },
+      ],
+      value: effectivePrice,
+      currency,
+      content_type: contentType,
+      content_name: product.name,
+      content_category: (product as any).category?.name,
+    });
+  }, [product?.id, selectedVariant, currency]);
 
   if (isLoading) {
     return (
@@ -156,8 +164,8 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
     ? getText(product.category.name, product.category.name_ar)
     : "";
 
-  const relatedProducts = (responseData?.related_products || (responseData as any)?.relatedProducts || []) as Product[];
-  const promotionalProducts = (responseData?.promotional_products || (responseData as any)?.promotionalProducts || []) as Product[];
+  const relatedProducts = (rawProduct?.related_products || []) as unknown as Product[];
+  const promotionalProducts = (rawProduct?.promotional_products || []) as unknown as Product[];
 
   return (
     <MainLayout>
@@ -173,7 +181,7 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
             {product.category && (
               <>
                 <Link
-                  to={`/menu?category=${encodeURIComponent(categoryName)}`}
+                  to={`/menu?category_ids[]=${product.category.id}`}
                   className="hover:text-foreground transition-colors"
                 >
                   {categoryName}
@@ -214,30 +222,7 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
                   setQuantity={setQuantity}
                   handleAddToCart={() => {
                     if (!isProductActive || !canAddToCart) return;
-                    handleAddToCart(() => {
-                      try {
-                        let price = getEffectivePrice(product);
-                        let contentId = product.id;
-
-                        if (selectedVariant && product.variants) {
-                          const variant = product.variants.find((v) => v.id === selectedVariant);
-                          if (variant) {
-                            price = variant.price || price;
-                            contentId = variant.id;
-                          }
-                        }
-
-                        ReactPixel.track("AddToCart", {
-                          content_ids: [contentId],
-                          content_type: "product",
-                          contents: [{ id: contentId, quantity }],
-                          value: price,
-                          currency,
-                        });
-                      } catch {
-                        // ignore pixel error
-                      }
-                    });
+                    handleAddToCart();
                   }}
                   isAddingToCart={isAddingToCart}
                   isFavorite={isFavorite(product.id)}
@@ -250,6 +235,11 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
               </div>
             </div>
           </div>
+
+          {/* Make it a combo upsell section */}
+          {product.combo_packages && product.combo_packages.length > 0 && (
+            <ProductComboUpsell packages={product.combo_packages} />
+          )}
 
           {/* Product Extension Slot (e.g. Additional Information / Badges) */}
           <PluginSlot

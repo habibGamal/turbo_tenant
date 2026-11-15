@@ -27,6 +27,7 @@ final class PluginDiscoverCommand extends Command
         }
 
         $registry->syncDatabase();
+        $registry->writeCache();
 
         $rows = $manifests->map(fn ($m) => [
             $m->id,

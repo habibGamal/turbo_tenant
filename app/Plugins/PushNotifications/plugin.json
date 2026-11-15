@@ -21,7 +21,5 @@
             "App\\Plugins\\PushNotifications\\src\\Listeners\\SendOrderStatusNotificationListener"
         ]
     },
-    "tenant_scoped": [
-        "App\\Plugins\\PushNotifications\\src\\DTOs\\PushNotificationsConfig"
-    ]
+    "tenant_scoped": []
 }

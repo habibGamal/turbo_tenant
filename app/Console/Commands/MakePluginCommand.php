@@ -61,6 +61,7 @@ final class MakePluginCommand extends Command
             'providers' => [
                 "App\\Plugins\\{$studly}\\{$studly}ServiceProvider",
             ],
+            'plugin' => "App\\Plugins\\{$studly}\\{$studly}Plugin",
         ];
 
         if ($withFilament) {
@@ -97,7 +98,7 @@ declare(strict_types=1);
 namespace App\Plugins\\{$studly};
 
 use App\Plugins\\{$studly}\\src\\DTOs\\{$studly}Config;
-use App\Plugins\StoreSettings\src\Services\SettingService;
+use App\Core\Contracts\SettingsRepository;
 use Illuminate\Support\ServiceProvider;
 
 final class {$studly}ServiceProvider extends ServiceProvider
@@ -106,7 +107,7 @@ final class {$studly}ServiceProvider extends ServiceProvider
     {
         // Composition Root: Bind typed Config DTO (Pattern 1)
         \$this->app->singleton({$studly}Config::class, function (\$app) {
-            \$settings = \$app->make(SettingService::class);
+            \$settings = \$app->make(SettingsRepository::class);
 
             return new {$studly}Config(
                 enabled: (bool) \$settings->get('{$slug}.enabled', true)
@@ -141,21 +142,6 @@ final class {$studly}Plugin extends AbstractTenantPlugin
     public function bootForTenant(Tenant \$tenant): void
     {
         // Runtime tenant initialization
-    }
-
-    public function onActivate(Tenant \$tenant): void
-    {
-        // Post-activation setup
-    }
-
-    public function onDeactivate(Tenant \$tenant): void
-    {
-        // Deactivation cleanup
-    }
-
-    public function onUninstall(Tenant \$tenant): void
-    {
-        // Pre-purge cleanup
     }
 }
 

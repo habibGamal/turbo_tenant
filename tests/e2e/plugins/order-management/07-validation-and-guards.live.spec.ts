@@ -1,4 +1,5 @@
 import { test, expect } from '../../helpers/live-fixture';
+import { openCheckout } from '../../helpers/checkout';
 
 test.describe('OrderManagement Suite 07: Validation Safeguards & Boundary Conditions', () => {
   test('guards /checkout when cart is empty and renders empty cart notice', async ({ page, theme }) => {
@@ -32,10 +33,7 @@ test.describe('OrderManagement Suite 07: Validation Safeguards & Boundary Condit
     ]);
 
     // 2. Go to checkout
-    await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/checkout-data') && r.status() === 200),
-      page.goto('/checkout', { waitUntil: 'domcontentloaded' }),
-    ]);
+    await openCheckout(page);
 
     // 3. Validation errors render inline (no browser alert dialogs)
     let dialogCount = 0;

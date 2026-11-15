@@ -1,4 +1,6 @@
 import { test, expect } from '../../helpers/live-fixture';
+import { openCheckout } from '../../helpers/checkout';
+import { pricePattern } from '../../helpers/price';
 
 test.describe('OrderManagement Suite 06: Checkout Calculations & Dynamic Fees', () => {
   test('dynamically updates order summary totals when switching order types and areas', async ({ page, theme }) => {
@@ -15,13 +17,9 @@ test.describe('OrderManagement Suite 06: Checkout Calculations & Dynamic Fees', 
     ]);
 
     // 2. Go to checkout
-    const [bootstrapResponse] = await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/checkout-data') && r.status() === 200),
-      page.goto('/checkout', { waitUntil: 'domcontentloaded' }),
-    ]);
+    const { cart, locations } = await openCheckout(page);
 
-    const bootstrapJson = await bootstrapResponse.json();
-    const cartTotal = Number(bootstrapJson.data.cart.total);
+    const cartTotal = Number(cart.total);
 
     const orderSummary = theme.orders.getOrderSummary();
     await expect(orderSummary).toBeVisible();
@@ -31,7 +29,7 @@ test.describe('OrderManagement Suite 06: Checkout Calculations & Dynamic Fees', 
     await takeawayRadio.click();
 
     // In takeaway mode, delivery fee is 0 (or free), so total equals cart subtotal
-    await expect(orderSummary).toContainText(cartTotal.toFixed(2));
+    await expect(orderSummary).toContainText(pricePattern(cartTotal));
 
     // 4. Switch back to Delivery
     const deliveryRadio = theme.orders.getOrderTypeDelivery();
@@ -46,8 +44,10 @@ test.describe('OrderManagement Suite 06: Checkout Calculations & Dynamic Fees', 
     await expect(firstOption).toBeVisible({ timeout: 5000 });
     await firstOption.click();
 
-    // Delivery fee is now applied to total
-    const summaryText = await orderSummary.innerText();
-    expect(summaryText).toBeTruthy();
+    // The selected area's fee contributes to the delivery total.
+    const firstArea = locations.governorates.flatMap((governorate: { areas?: { shipping_cost: number }[] }) => governorate.areas ?? [])[0];
+    expect(firstArea).toBeDefined();
+    expect(Number(firstArea.shipping_cost)).toBeGreaterThan(0);
+    await expect(orderSummary).toContainText(pricePattern(cartTotal + Number(firstArea.shipping_cost)));
   });
 });

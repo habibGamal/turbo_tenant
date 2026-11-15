@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\Enums\PaymentMethod;
-use App\Enums\PaymentStatus;
 use App\Enums\SettingKey;
 use App\Models\User;
 use App\Plugins\CartEngine\src\Services\CartService;
@@ -18,19 +16,25 @@ use App\Plugins\LocationsDelivery\src\Models\Address;
 use App\Plugins\LocationsDelivery\src\Models\Area;
 use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\LocationsDelivery\src\Models\Governorate;
-use App\Plugins\OrderManagement\src\Contracts\PaymentGatewayInterface;
+use App\Plugins\OrderManagement\src\Contracts\PaymentInitiator;
 use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
 use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderType;
+use App\Plugins\OrderManagement\src\Enums\PaymentMethod;
+use App\Plugins\OrderManagement\src\Enums\PaymentStatus;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Pipelines\OrderPipelineRegistry;
 use App\Plugins\OrderManagement\src\Services\Contracts\PlaceOrderServiceInterface;
 use App\Plugins\PaymentProcessing\src\Contracts\PaymentCallbackServiceInterface;
+use App\Plugins\PaymentProcessing\src\Contracts\PaymentGatewayInterface;
 use App\Plugins\PaymentProcessing\src\Contracts\PaymentWebhookServiceInterface;
+use App\Plugins\PaymentProcessing\src\Settings\PaymentSettingKey;
 use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Session;
 use Mockery;
+use RuntimeException;
 use Tests\TestCase;
 
 final class PlaceOrderServiceTest extends TestCase
@@ -233,7 +237,7 @@ final class PlaceOrderServiceTest extends TestCase
     {
         Config::set('app.tax_rate', 0.14);
         Config::set('app.service_rate', 0.05);
-        $this->settingService->set(SettingKey::COD_FEE, 10.00);
+        $this->settingService->set(PaymentSettingKey::COD_FEE, 10.00);
 
         $governorate = Governorate::factory()->create();
         $area = Area::factory()->create([
@@ -267,7 +271,7 @@ final class PlaceOrderServiceTest extends TestCase
             productId: $product->id,
             variantId: null,
             quantity: '2',
-            extras: [$extraItem->id]
+            extras: [['id' => $extraItem->id, 'quantity' => 1]]
         );
 
         $data = new PlaceOrderData(
@@ -292,7 +296,7 @@ final class PlaceOrderServiceTest extends TestCase
         $this->assertSame($this->branch->id, $order->branch_id);
         $this->assertSame($address->id, $order->address_id);
         $this->assertSame('Deliver quickly', $order->note);
-        $this->assertSame('web_delivery', $order->type);
+        $this->assertSame(OrderType::WEB_DELIVERY, $order->type);
         $this->assertSame(PaymentStatus::PENDING, $order->payment_status);
         $this->assertSame(OrderPosStatus::READY, $order->pos_status);
         $this->assertStringStartsWith('ORD-', $order->order_number);
@@ -319,8 +323,7 @@ final class PlaceOrderServiceTest extends TestCase
         $this->assertEquals(15.00, (float) $firstExtra->extra_price);
 
         // Cart is cleared
-        $cart = $this->cartService->getCart($user);
-        $this->assertEmpty($cart['items']);
+        $this->assertSame([], $this->cartService->getLines($user));
     }
 
     public function test_places_order_for_guest_user(): void
@@ -439,17 +442,16 @@ final class PlaceOrderServiceTest extends TestCase
         ]);
         $this->cartService->addItem($user, $product->id, null, '1');
 
-        $mockGateway = Mockery::mock(PaymentGatewayInterface::class);
+        $mockGateway = Mockery::mock(PaymentInitiator::class);
         $mockGateway->shouldReceive('getGatewayId')->andReturn('paymob');
         $mockGateway->shouldReceive('createPaymentIntention')
             ->once()
-            ->andReturn([
-                'success' => true,
-                'checkout_url' => 'https://accept.paymob.com/checkout/12345',
-                'data' => ['id' => 12345],
-            ]);
+            ->andReturn(\App\Plugins\OrderManagement\src\Contracts\PaymentIntention::created(
+                checkoutUrl: 'https://accept.paymob.com/checkout/12345',
+                data: ['id' => 12345],
+            ));
 
-        $this->app->instance(PaymentGatewayInterface::class, $mockGateway);
+        $this->app->instance(PaymentInitiator::class, $mockGateway);
         $service = $this->app->make(PlaceOrderServiceInterface::class);
 
         $data = new PlaceOrderData(
@@ -478,16 +480,13 @@ final class PlaceOrderServiceTest extends TestCase
         ]);
         $this->cartService->addItem($user, $product->id, null, '1');
 
-        $mockGateway = Mockery::mock(PaymentGatewayInterface::class);
+        $mockGateway = Mockery::mock(PaymentInitiator::class);
         $mockGateway->shouldReceive('getGatewayId')->andReturn('paymob');
         $mockGateway->shouldReceive('createPaymentIntention')
             ->once()
-            ->andReturn([
-                'success' => false,
-                'error' => 'Gateway error',
-            ]);
+            ->andReturn(\App\Plugins\OrderManagement\src\Contracts\PaymentIntention::failed('Gateway error'));
 
-        $this->app->instance(PaymentGatewayInterface::class, $mockGateway);
+        $this->app->instance(PaymentInitiator::class, $mockGateway);
         $service = $this->app->make(PlaceOrderServiceInterface::class);
 
         $data = new PlaceOrderData(
@@ -570,12 +569,16 @@ final class PlaceOrderServiceTest extends TestCase
 
         $mockGateway = Mockery::mock(PaymentGatewayInterface::class);
         $mockGateway->shouldReceive('validateHmac')->andReturn(true);
-        $mockGateway->shouldReceive('processWebhook')->andReturn([
-            'merchant_order_id' => 'MERCH-777',
-            'transaction_id' => 'TXN-999',
-            'payment_status' => 'completed',
-            'payment_data' => ['source' => 'card'],
-        ]);
+        $mockGateway->shouldReceive('processWebhook')->andReturn(new \App\Plugins\PaymentProcessing\src\DTOs\GatewayWebhookData(
+            transactionId: 'TXN-999',
+            merchantOrderId: 'MERCH-777',
+            amountCents: 10000,
+            currency: 'EGP',
+            successful: true,
+            paymentStatus: 'completed',
+            raw: ['source' => 'card'],
+            paymentData: json_encode(['source' => 'card']) ?: null,
+        ));
 
         $this->app->instance(PaymentGatewayInterface::class, $mockGateway);
         $webhookService = $this->app->make(PaymentWebhookServiceInterface::class);
@@ -620,6 +623,7 @@ final class PlaceOrderServiceTest extends TestCase
         // Prior completed order for this guest
         Order::factory()->create([
             'guest_user_id' => $guest->id,
+            'customer_phone' => $guest->phone,
             'status' => 'completed',
         ]);
 
@@ -653,5 +657,42 @@ final class PlaceOrderServiceTest extends TestCase
 
         $this->assertFalse($result->isSuccessful());
         $this->assertStringContainsString('not available for your account', (string) $result->errorMessage);
+    }
+
+    public function test_thrown_exception_message_does_not_leak_to_result(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create([
+            'base_price' => 50.00,
+            'is_active' => true,
+        ]);
+        $this->cartService->addItem($user, $product->id, null, '1');
+
+        /** @var \App\Plugins\OrderManagement\src\Services\Contracts\OrderRepositoryInterface&Mockery\MockInterface $failingRepository */
+        $failingRepository = Mockery::mock(\App\Plugins\OrderManagement\src\Services\Contracts\OrderRepositoryInterface::class);
+        /** @var Mockery\Expectation $expectation */
+        $expectation = $failingRepository->shouldReceive('createOrderWithItems');
+        $expectation->andThrow(new RuntimeException('Secret database connection string error with password'));
+
+        $service = new \App\Plugins\OrderManagement\src\Services\PlaceOrderService(
+            $this->cartService,
+            app(\App\Plugins\OrderManagement\src\Pipelines\OrderValidationPipeline::class),
+            app(\App\Plugins\OrderManagement\src\Pipelines\PricingCalculationPipeline::class),
+            $failingRepository,
+            app(\App\Plugins\OrderManagement\src\Services\Contracts\OrderPaymentDispatcherInterface::class)
+        );
+
+        $data = new PlaceOrderData(
+            user: $user,
+            branchId: $this->branch->id,
+            paymentMethod: PaymentMethod::COD,
+            type: 'web_takeaway'
+        );
+
+        $result = $service->placeOrder($data);
+
+        $this->assertFalse($result->isSuccessful());
+        $this->assertSame('Failed to place order', $result->errorMessage);
+        $this->assertStringNotContainsString('Secret database connection', (string) $result->errorMessage);
     }
 }

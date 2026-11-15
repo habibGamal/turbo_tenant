@@ -29,6 +29,7 @@ export interface Category {
     name_ar?: string;
     description?: string;
     image?: string;
+    sort_order?: number;
 }
 
 export interface ProductVariant {
@@ -97,9 +98,15 @@ export interface Product {
     category?: Category;
     categoryAr?: string;
     variants?: ProductVariant[];
+    extra_option?: ExtraOption;
     extraOption?: ExtraOption;
     rating?: number;
+    reviews_count?: number;
     reviewsCount?: number;
+    has_variants?: boolean;
+    has_extras?: boolean;
+    has_options?: boolean;
+    extra_option_id?: number | null;
     badge?: string;
     badgeAr?: string;
     isNew?: boolean;
@@ -113,6 +120,10 @@ export interface Review {
     comment: string;
     images?: string[];
     created_at: string;
+    user?: {
+        id: number;
+        name: string;
+    };
 }
 
 export interface CartItemExtra {
@@ -126,25 +137,20 @@ export interface CartItemExtra {
 export interface CartItem {
     id: number | string;
     product_id: number;
-    variant_id?: number | null;
-    weight_option_value_id?: number | null;
-    quantity: string;
+    quantity: number;
     weight_multiplier: number;
     product: {
         id: number;
         name: string;
         name_ar?: string;
         image?: string;
-        base_price: number;
-        price_after_discount?: number;
         sell_by_weight?: boolean;
-        weight_option?: WeightOption;
+        weight_option?: WeightOption | null;
     };
     variant?: {
         id: number;
         name: string;
         name_ar?: string;
-        price: number | null;
     } | null;
     weight_option_value?: {
         id: number;
@@ -174,6 +180,8 @@ export interface Address {
     full_address?: string;
     notes?: string;
     is_default: boolean;
+    created_at?: string;
+    updated_at?: string;
     area?: {
         id: number;
         name: string;
@@ -211,6 +219,7 @@ export interface Branch {
     name: string;
     phone_number?: string;
     address?: string;
+    link?: string;
     is_active: boolean;
 }
 
@@ -224,10 +233,37 @@ export interface OrderItemExtra {
     quantity: number;
 }
 
+export interface OrderItemComponent {
+    source_id: number | null;
+    group_name: string | null;
+    group_name_ar: string | null;
+    product_id: number | null;
+    variant_id: number | null;
+    product_name: string;
+    product_name_ar: string | null;
+    variant_name: string | null;
+    variant_name_ar: string | null;
+    quantity: number | string;
+    unit_price_adjustment: number | string;
+    extras?: Array<{
+        id: number;
+        name: string;
+        name_ar?: string | null;
+        price: number;
+        quantity: number;
+    }>;
+    notes?: string | null;
+}
+
 export interface OrderItem {
     id: number;
     order_id: number;
-    product_id: number;
+    product_id: number | null;
+    /** 'package' lines are combos: product_id is null and `components` lists what was picked. */
+    type?: 'product' | 'package';
+    reference_id?: number | null;
+    notes?: string | null;
+    components?: OrderItemComponent[];
     variant_id?: number;
     weight_option_value_id?: number;
     weight_multiplier: number;
@@ -257,8 +293,6 @@ export interface OrderItem {
 export interface Order {
     id: number;
     order_number: string;
-    merchant_order_id?: string;
-    transaction_id?: string;
     user_id?: number;
     guest_user_id?: number;
     branch_id: number;
@@ -274,7 +308,11 @@ export interface Order {
     delivery_fee: number;
     discount: number;
     total: number;
-    note?: string;
+    note?: string | null;
+    customer_name?: string | null;
+    customer_phone?: string | null;
+    customer_email?: string | null;
+    delivery_address?: Record<string, any> | null;
     created_at: string;
     updated_at: string;
     user?: User;
@@ -306,12 +344,13 @@ export type PageProps<
 
 
 export interface Filters {
-    search: string;
-    category: string | string[];
+    search?: string;
+    category_ids?: number[];
+    category?: string | string[];
     min_price?: number;
     max_price?: number;
-    sort_by: string;
-    sort_order: string;
+    sort_by?: string;
+    sort_order?: string;
 }
 
 export interface PaginatedProducts {

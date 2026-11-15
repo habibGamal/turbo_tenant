@@ -23,15 +23,6 @@ final class Branch extends Model
         return $this->hasMany(Area::class);
     }
 
-    public function orders(): HasMany
-    {
-        $orderClass = '\App\Plugins\OrderManagement\src\Models\Order';
-
-        return class_exists($orderClass)
-            ? $this->hasMany($orderClass)
-            : $this->hasMany(Model::class);
-    }
-
     protected function casts(): array
     {
         return [

@@ -1,0 +1,21 @@
+erDiagram
+  na934a1c28f6e["guest_users"] {
+    string name
+    string email
+    string phone
+    string phone_country_code
+    string street
+    string building
+    string floor
+    string apartment
+    string city
+    foreignId area_id
+  }
+  n3e12e580b649["areas"]
+  n3e12e580b649 |o..o{ na934a1c28f6e : "area_id"
+  n0c3b5ea58ff8["orders"] {
+    foreignId user_id
+    foreignId guest_user_id
+  }
+  na934a1c28f6e["guest_users"]
+  na934a1c28f6e |o..o{ n0c3b5ea58ff8 : "guest_user_id"

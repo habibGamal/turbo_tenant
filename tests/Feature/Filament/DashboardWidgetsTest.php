@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-use App\Enums\OrderStatus;
 use App\Filament\Widgets\StoreSetupChecklist;
 use App\Models\User;
+use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
 use App\Plugins\OrderManagement\src\Filament\Widgets\LatestOrdersTable;
 use App\Plugins\OrderManagement\src\Filament\Widgets\OrdersStatsOverview;
 use App\Plugins\OrderManagement\src\Filament\Widgets\TopProductsChart;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
-use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use App\Plugins\PosIntegration\src\Filament\Widgets\PosFailedOrdersTable;
 use App\Plugins\ProductReviews\src\Filament\Widgets\PendingReviewsStat;
 use App\Plugins\ProductReviews\src\Models\Review;

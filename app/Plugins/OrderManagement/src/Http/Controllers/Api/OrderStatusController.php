@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Http\Controllers\Api;
 
-use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
 use App\Plugins\OrderManagement\src\Http\Requests\OrderStatusUpdateRequest;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderStatusEvent;

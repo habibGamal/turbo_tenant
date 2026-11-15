@@ -9,9 +9,12 @@ export default function ThemedPackagesSection() {
 
     const sortedPackages = React.useMemo(() => {
         if (!packages) return [];
-        const active = packages.filter((p) => p.is_active ?? true);
-        const inactive = packages.filter((p) => !(p.is_active ?? true));
-        return [...active, ...inactive];
+        return [...packages].sort((a, b) => {
+            if (a.is_featured !== b.is_featured) {
+                return a.is_featured ? -1 : 1;
+            }
+            return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+        });
     }, [packages]);
 
     if (isLoading || !packages || packages.length === 0) {

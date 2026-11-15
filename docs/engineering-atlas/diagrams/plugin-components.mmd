@@ -1,0 +1,17 @@
+flowchart LR
+ Manifests["app/Plugins/*/plugin.json"] --> Registry["PluginManifestLoader / PluginRegistry"]
+ Registry --> Provider["PluginServiceProvider"]
+ Provider -->|register all discovered providers| Bindings["Service bindings and route registration"]
+ Registry --> Manager["PluginManager"]
+ Active[("Central tenant_plugins
+status = active")] --> Manager
+ Manager -->|dependency order| Boot["bootForTenant"]
+ Boot --> Contributions["PluginContributions / tagged contracts"]
+ Contributions --> Pipelines["Validation / pricing pipelines"]
+ Provider --> Wrapper["ActivationGatedListener"]
+ Wrapper --> Events["Plugin listener handlers"]
+ Bindings --> API["Tenant bootstrap API"]
+ API --> Context["React TenantContext"]
+ Context --> Guards["RequirePlugin / CheckoutGuard"]
+ Guards --> Slots["PluginSlot / slot registry"]
+ Theme["Theme registry / overrides"] --> Slots

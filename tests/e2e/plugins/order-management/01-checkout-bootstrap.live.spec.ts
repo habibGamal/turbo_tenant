@@ -1,7 +1,8 @@
 import { test, expect } from '../../helpers/live-fixture';
+import { openCheckout } from '../../helpers/checkout';
 
-test.describe('OrderManagement Suite 01: Checkout Data Bootstrap & Form Initialization', () => {
-  test('fetches bootstrap payload and renders complete checkout form for guest', async ({ page, theme }) => {
+test.describe('OrderManagement Suite 01: Checkout Data & Form Initialization', () => {
+  test('loads cart and delivery locations and renders the guest checkout form', async ({ page, theme }) => {
     // 1. Add an item to ensure active cart session
     await Promise.all([
       page.waitForResponse(r => r.url().includes('/api/catalog-products/5') && r.status() === 200),
@@ -14,18 +15,13 @@ test.describe('OrderManagement Suite 01: Checkout Data Bootstrap & Form Initiali
       addBtn.click(),
     ]);
 
-    // 2. Navigate to /checkout and intercept bootstrap data
-    const [bootstrapResponse] = await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/checkout-data') && r.status() === 200),
-      page.goto('/checkout', { waitUntil: 'domcontentloaded' }),
-    ]);
+    // 2. Navigate to /checkout and read the cart and locations responses
+    const { cart, locations } = await openCheckout(page);
 
-    const json = await bootstrapResponse.json();
-    expect(json.status).toBe('success');
-    expect(json.data.cart).toBeDefined();
-    expect(json.data.branches.length).toBeGreaterThan(0);
-    expect(json.data.governorates.length).toBeGreaterThan(0);
-    expect(json.data.is_guest).toBe(true);
+    expect(cart.items.length).toBeGreaterThan(0);
+    expect(locations.branches.length).toBeGreaterThan(0);
+    expect(locations.governorates.length).toBeGreaterThan(0);
+    expect(locations.addresses).toEqual([]);
 
     // 3. Verify storefront DOM renders components
     const checkoutForm = theme.orders.getCheckoutForm();

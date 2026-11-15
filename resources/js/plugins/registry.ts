@@ -11,6 +11,7 @@ import { registerProductReviewsPlugin } from './product-reviews';
 import { registerCouponsPromotionsPlugin } from './coupons-promotions';
 import { registerPushNotificationsPlugin } from './push-notifications';
 import { registerComboPackagesPlugin } from './combo-packages';
+import { registerMetaMarketingPlugin } from './meta-marketing';
 
 let initialized = false;
 
@@ -35,4 +36,5 @@ export function initializePlugins(): void {
   registerCouponsPromotionsPlugin();
   registerPushNotificationsPlugin();
   registerComboPackagesPlugin();
+  registerMetaMarketingPlugin();
 }

@@ -1,451 +1,213 @@
-# Facebook Pixel Implementation Documentation
+# Meta (Facebook) Pixel & Conversions API Tracking Architecture
 
-## Overview
+## 1. Executive Summary
 
-This document describes the complete implementation of Facebook Pixel (Meta Pixel) tracking across the Moda Corner e-commerce application using the `react-facebook-pixel` library.
+This document describes the modern, decoupled Meta (Facebook) Pixel and Conversions API (CAPI) tracking architecture implemented in the Turbo Tenant React 18 SPA storefront (`resources/js`).
 
-## Architecture
+Previous implementations scattered direct `react-facebook-pixel` calls across theme components (`ThemedProductShow.tsx`, `ProductOptionsModal.tsx`, `CartSummary.tsx`, `ThemedFavoriteButton.tsx`, `pages/Checkout.tsx`), omitted initialization (`InitPixel.tsx` was unmounted), lacked deduplication `eventID`s, and missed quick-add tracking entirely.
 
-### Initialization
-
-
-The Facebook Pixel is initialized at the application root level with the Facebook App ID stored in settings.
-
-```tsx
-ReactPixel.init(fbID, undefined, { autoConfig: true, debug: false });
-```
-
-**Key Features:**
-- Conditional initialization (only if `fbID` is provided)
-- Auto-configuration enabled for automatic event tracking
-- Debug mode disabled for production
-- Initialized once on component mount
+The new architecture adopts a **vendor-neutral event bus** in core and a standalone **`meta-marketing` frontend plugin**, keeping storefront themes thin and decoupled.
 
 ---
 
-## Tracked Events
+## 2. High-Level Architecture
 
-### 1. ViewContent Event
-
-
-**Trigger:** When a user views a product detail page
-
-**Implementation:**
-```tsx
-useEffect(() => {
-    if (selectedVariant)
-        ReactPixel.track("ViewContent", {
-            content_ids: [selectedVariant.id],
-            contents: [{ id: selectedVariant.id, quantity: 1 }],
-            content_type: "product",
-            value: selectedVariant?.sale_price,
-            currency: "EGP",
-        });
-    else
-        ReactPixel.track("ViewContent", {
-            content_ids: [product.id],
-            contents: [{ id: product.id, quantity: 1 }],
-            content_type: "product",
-            value: product?.sale_price,
-            currency: "EGP",
-        });
-}, [selectedVariant]);
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Turbo Tenant Storefront                         │
+│                                                                        │
+│  Themes / Pages / Hooks / Plugins                                      │
+│  (PDP, Menu, Cart, Quick-Add, Favorites, Checkout, Auth)               │
+│                                │                                       │
+│                                ▼                                       │
+│                emitCommerceEvent(eventName, payload)                   │
+│                                │                                       │
+│                                ▼                                       │
+│        ┌───────────────────────────────────────────────┐               │
+│        │   Vendor-Neutral Commerce Event Bus           │               │
+│        │   (resources/js/core/analytics/index.ts)      │               │
+│        └───────────────────────────────────────────────┘               │
+│                                │                                       │
+│                                ▼ onCommerceEvent(...)                  │
+│        ┌───────────────────────────────────────────────┐               │
+│        │   Meta Marketing Frontend Plugin              │               │
+│        │   (resources/js/plugins/meta-marketing/)      │               │
+│        └───────┬───────────────────────────────┬───────┘               │
+└────────────────┼───────────────────────────────┼───────────────────────┘
+                 │                               │
+                 ▼ (ReactPixel.fbq)              ▼ (fetch POST /api/meta/events)
+     ┌───────────────────────┐       ┌───────────────────────┐
+     │   Meta Browser Pixel  │       │  CAPI Server Relay    │
+     │   (fbevents.js)       │       │  (Conversions API)    │
+     └───────────────────────┘       └───────────────────────┘
 ```
 
-**Parameters:**
-- `content_ids`: Array containing variant ID or product ID
-- `contents`: Array of objects with id and quantity
-- `content_type`: Always "product"
-- `value`: Sale price of the variant or product
-- `currency`: "EGP" (Egyptian Pound)
+### 2.1 Component Layering & Separation of Concerns
 
-**Behavior:**
-- Tracks when a product page loads
-- Re-tracks when user switches variants
-- Uses variant data if available, otherwise falls back to product data
+1. **Vendor-Neutral Commerce Event Bus (`resources/js/core/analytics/`)**:
+   - Exposes `emitCommerceEvent` and `onCommerceEvent`.
+   - Core has zero knowledge of Facebook or Meta specifics; core never imports any plugin.
+   - Standard event names: `PageView`, `ViewContent`, `Search`, `AddToWishlist`, `AddToCart`, `InitiateCheckout`, `AddPaymentInfo`, `CompleteRegistration`, `Purchase`.
+   - Neutral payload formats with generic items: `{ product_id, variant_id?, quantity, item_price, name?, category? }`, `value`, `currency`, and opaque `tracking` DTO.
+
+2. **Meta Marketing Plugin (`resources/js/plugins/meta-marketing/`)**:
+   - Registered in `resources/js/plugins/registry.ts` at application bootstrap (`registerMetaMarketingPlugin()`).
+   - Listens to the bus, manages Pixel initialization once (`settings.meta_pixel_id`), hashes/formats advanced matching data, generates deduplication event IDs, formats parameters according to Meta's catalog specifications, and mirrors funnel events to the backend relay (`POST /api/meta/events`).
+
+3. **Route Tracker Slot (`router.tracking`)**:
+   - Rendered inside `<BrowserRouter>` in `resources/js/core/router/AppRouter.tsx` via `<PluginSlot name="router.tracking" />`.
+   - Observes `location.pathname + location.search` changes and fires `PageView` exactly once on initial load (no double PageView) and on every client-side navigation.
 
 ---
 
-### 2. AddToCart Event
+## 3. Content ID Scheme (Catalog & Feed Alignment)
 
+To guarantee dynamic product ads and catalog matching succeed with high match rates, event `content_ids` match the Meta Product Catalog feed IDs:
 
-**Trigger:** When a user successfully adds a product to their cart
+| Catalog Item Type | Meta Content ID Format | `content_type` |
+|---|---|---|
+| Product **without** variants | `"{productId}"` | `"product"` |
+| Product **with** selected variant | `"{productId}-{variantId}"` | `"product"` |
+| ViewContent on product with variants (none selected yet) | `["{productId}"]` | `"product_group"` |
 
-**Implementation:**
-```tsx
-ReactPixel.track("AddToCart", {
-    content_ids: [variantId || productId],
-    content_type: "product",
-    contents: [{id: variantId || productId, quantity}],
-    value: product?.sale_price,
-    currency: "EGP",
-});
-```
-
-**Used In:**
-- Product card quick add button (`ProductCard.tsx`)
-- Product detail page add to cart (`ProductActions.tsx`)
-- Cart hook after successful API call
-
-**Parameters:**
-- `content_ids`: Variant ID (preferred) or product ID
-- `content_type`: Always "product"
-- `contents`: Array with id and actual quantity being added
-- `value`: Sale price of the product/variant
-- `currency`: "EGP"
+- Implemented on the frontend in `metaContentId(productId, variantId?)` (`resources/js/plugins/meta-marketing/utils/content-id.ts`).
+- Matches the backend contract in `App\Plugins\MetaMarketing\src\Support\MetaContentId::for($productId, $variantId)`.
+- All IDs are cast to strings in event payloads.
 
 ---
 
-### 3. AddToWishlist Event
+## 4. Tracked Events Specification
 
-**Location:** Multiple components
-
-**Trigger:** When a user adds a product to their wishlist
-
-**Implementation:**
-
-**In ProductCard.tsx:**
-```tsx
-const addToWishlist = () => {
-    router.post(
-        route("wishlist.add"),
-        { product_id: product.id },
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                const variantId = displayData.variantId || product.id;
-                ReactPixel.track("AddToWishlist", {
-                    content_ids: [variantId],
-                    contents: [{ id: variantId, quantity: 1 }],
-                    value: displayData.salePrice || product?.sale_price,
-                    currency: "EGP",
-                });
-            },
-        }
-    );
-};
-```
-
-**In ProductActions.tsx:**
-```tsx
-const addToWishlist = () => {
-    router.post(
-        route("wishlist.add"),
-        { product_id: product.id },
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                const variantId = selectedVariant?.id || product.id;
-                const value = selectedVariant?.sale_price || product?.sale_price;
-                ReactPixel.track("AddToWishlist", {
-                    content_ids: [variantId],
-                    contents: [{ id: variantId, quantity: 1 }],
-                    value: value,
-                    currency: "EGP",
-                });
-            },
-        }
-    );
-};
-```
-
-**Parameters:**
-- `content_ids`: Variant ID (if selected) or product ID
-- `contents`: Array with id and quantity (always 1 for wishlist)
-- `value`: Sale price of the variant or product
-- `currency`: "EGP"
-
-**Behavior:**
-- Only fires on successful server response
-- Tracks the specific variant if one is selected
-- Falls back to product data if no variant
+| Event | Source / Location | Trigger Condition | Key Parameters | Server Relay (`POST /api/meta/events`) |
+|---|---|---|---|:---:|
+| **PageView** | `MetaPixelRouteTracker.tsx` (via `router.tracking` slot) | Every `pathname + search` change; exactly once on first load | `event_source_url` | Yes |
+| **ViewContent** | `ThemedProductShow.tsx` | PDP mount (once per `product.id`) and whenever a new variant is selected | `content_ids`, `content_type` (`"product"` or `"product_group"`), `contents`, `value` (effective price), `currency`, `content_name` | Yes |
+| **Search** | `ThemedMenuPage.tsx` | Committed query in URL (`?search=`), debounced ~800ms, once per distinct query | `search_string` | Yes |
+| **AddToWishlist** | `useFavoritesStorage.ts` | When product heart is toggled into favorites (card + PDP) | `content_ids`, `contents`, `content_type: "product"`, `value`, `currency` | Yes |
+| **AddToCart** | `useAddToCart.ts` (`onSuccess`) | All cart additions (PDP, modal, card quick-add, menu row quick-add). Suppressed when `track: false` (e.g. undo/restore) | `content_ids`, `contents` (`[{ id, quantity, item_price }]`), `content_type: "product"`, `value` (`qty * unit_price_incl_extras`), `currency` (resolved from `settings.currency`) | Yes |
+| **InitiateCheckout** | `Checkout.tsx` (page mount) | When checkout mounts with a non-empty cart (once per cart signature) | `content_ids`, `contents`, `content_type: "product"`, `value` (subtotal), `currency`, `num_items` (total units) | Yes |
+| **AddPaymentInfo** | `Checkout.tsx` (`handlePlaceOrder`) | When order is submitted with an online payment method (`payment_method !== 'cod'`) | `value`, `currency` | Yes |
+| **CompleteRegistration**| `AuthContext.tsx` (`registerMutation.onSuccess`) | Successful user registration | `status: true` | Yes |
+| **Purchase** | `usePlaceOrder.ts` (COD) / `usePaymentStatus.ts` (Online) | At order placement for COD (`requires_payment=false`) via `usePlaceOrder`; inside `usePaymentStatus` once polling confirms paid | `tracking.*` server-verified values (`purchase_event_id`, `order_id`, `value`, `currency`, `content_ids`, `contents`, `num_items`) | **No** (Server sends CAPI Purchase directly) |
 
 ---
 
-### 4. InitiateCheckout Event
+## 5. Pricing, Line Calculation & Cart Item Conversion
 
-**Location:** `resources/js/Components/cart/OrderSummary.tsx`
+To ensure strict consistency between `AddToCart` and `InitiateCheckout`, line conversions to `CommerceItem` are centralized in a single helper in the `cart-engine` plugin:
+`resources/js/plugins/cart-engine/utils/cart-item-converter.ts` (`cartItemToCommerceItem`).
 
-**Trigger:** When a user clicks "Proceed to Checkout" from the cart page
+### 5.1 Standard Products
+- `item_price`: Unit price including extras (`Number(item.price) + Number(item.extras_total)`).
+- `quantity`: Number of units (`Number(item.quantity) || 1`).
 
-**Implementation:**
-```tsx
-const checkout = () => {
-    router.get(route("checkout.index"));
-    ReactPixel.track("InitiateCheckout", {
-        content_ids: items.map((item) => item.variant_id || item.product_id),
-        contents: items.map((item) => ({
-            id: item.variant_id || item.product_id, 
-            quantity: item.quantity
-        })),
-        value: cartSummary.totalPrice,
-        num_items: cartSummary.totalItems,
-        currency: "EGP",
-    });
-};
-```
+### 5.2 Sell-By-Weight Products
+- In the storefront cart, line pricing represents `weight_multiplier * weight_option_value`.
+- To prevent catalog ad discrepancies where the catalog item expects line unit price, the converter computes:
+  - `quantity`: Multiplier steps added (`weight_multiplier`, default 1).
+  - `item_price`: Charged unit amount (`subtotal / weight_multiplier`).
+  - Total line value: `quantity * item_price` = total charged line amount (`subtotal`).
 
-**Parameters:**
-- `content_ids`: Array of all variant IDs or product IDs in cart
-- `contents`: Array of objects with id and quantity for each item
-- `value`: Total cart price
-- `num_items`: Total number of items in cart
-- `currency`: "EGP"
-
-**Behavior:**
-- Tracks entire cart contents
-- Includes total value and item count
-- Fires before navigation to checkout page
+### 5.3 Currency Fallback in Meta Marketing Tracker
+- When an event emits `value` without an explicit `currency` (such as `AddToCart` or `AddToWishlist`), the `meta-marketing` tracker automatically falls back to `settings.currency` resolved from tenant bootstrap.
+- Emitters may still specify `currency` explicitly (e.g. `InitiateCheckout` or `Purchase`), which takes precedence.
 
 ---
 
-## Event Flow Through Customer Journey
+## 6. Deduplication, Buffering & Conversions API Relay
 
-### 1. Product Discovery
-```
-User browses → Views product → ViewContent event fired
-```
-
-### 2. Product Interest
-```
-User views product details → ViewContent event fired
-User changes variant → ViewContent event re-fired with new variant
-```
-
-### 3. Add to Cart
-```
-User clicks "Add to Cart" → API call → Success → AddToCart event fired
-```
-
-### 4. Wishlist Addition
-```
-User clicks heart icon → API call → Success → AddToWishlist event fired
-```
-
-### 5. Checkout Initiation
-```
-User in cart → Clicks "Proceed to Checkout" → InitiateCheckout event fired → Navigate
-```
-
----
-
-## Data Consistency
-
-### Product vs Variant Tracking
-
-The implementation intelligently handles products with and without variants:
-
-**With Variants:**
-- Uses `variant.id` as content_id
-- Uses `variant.sale_price` as value
-- Uses `variant.images[0]` for display
-
-**Without Variants:**
-- Uses `product.id` as content_id
-- Uses `product.sale_price` as value
-- Uses `product.featured_image` for display
-
-### Priority Logic
-```
-variantId || productId
-variant?.sale_price || product?.sale_price
-variant?.quantity || product?.quantity
-```
-
----
-
-## Currency
-
-All events consistently use **"EGP"** (Egyptian Pound) as the currency parameter.
-
----
-
-## Error Handling
-
-### Initialization
-- Pixel only initializes if `fbID` is provided
-- Graceful failure if Facebook SDK fails to load
-- No blocking of application functionality
-
-### Event Tracking
-- Events fire in `onSuccess` callbacks to ensure data accuracy
-- No events fired for failed operations
-- Silent failure doesn't affect user experience
-
----
-
-## Testing & Debugging
-
-### Enable Debug Mode
-Change in `InitPixel.tsx`:
-```tsx
-ReactPixel.init(fbID, undefined, { autoConfig: true, debug: true });
-```
-
-### Facebook Pixel Helper
-- Install Chrome extension: "Facebook Pixel Helper"
-- Events will appear in the extension popup
-- Verify parameters are being sent correctly
-
-### Console Logging
-Add before event tracking:
-```tsx
-console.log('Tracking event:', eventName, parameters);
-ReactPixel.track(eventName, parameters);
-```
-
----
-
-## Best Practices Implemented
-
-1. **Event Deduplication:** Events only fire once per action using proper React hooks
-2. **Accurate Values:** All monetary values use actual sale prices
-3. **Proper IDs:** Variant IDs preferred over product IDs for accurate tracking
-4. **Currency Consistency:** All events use "EGP"
-5. **Success-Based Tracking:** Events only fire after successful operations
-6. **Quantity Tracking:** Actual quantities tracked, not just "1"
-7. **Cart Context:** InitiateCheckout includes full cart details
-
----
-
-## Future Enhancements
-
-### Potential Additional Events
-
-1. **Purchase Event** - Track completed orders
-   ```tsx
-   ReactPixel.track("Purchase", {
-       content_ids: orderItems.map(item => item.variant_id),
-       contents: orderItems.map(item => ({
-           id: item.variant_id,
-           quantity: item.quantity
-       })),
-       value: order.total,
-       currency: "EGP",
-       order_id: order.id
-   });
+### 6.1 Funnel Events Deduplication
+1. For every standard funnel event, `generateEventId()` produces a unique UUID (`crypto.randomUUID()` with fallback).
+2. The browser Pixel tracks the event with:
+   ```ts
+   ReactPixel.fbq('track', name, customData, { eventID });
    ```
-
-2. **Search Event** - Track product searches
-   ```tsx
-   ReactPixel.track("Search", {
-       search_string: searchQuery,
-       content_category: category,
-       currency: "EGP"
-   });
+3. If `settings.meta_server_events_enabled` is active, the frontend sends a `POST /api/meta/events` request with the **exact same `event_id`**:
+   ```json
+   {
+     "event_name": "AddToCart",
+     "event_id": "8f8b89d4-1a32-475a-bc82-d2780f295b92",
+     "event_source_url": "https://tenant.example/menu",
+     "custom_data": {
+       "content_ids": ["12"],
+       "contents": [{ "id": "12", "quantity": 1, "item_price": 50 }],
+       "content_type": "product",
+       "value": 50,
+       "currency": "EGP"
+     }
+   }
    ```
+4. Request uses `ensureCsrfToken()` with `X-XSRF-TOKEN` header and `fetch(..., { keepalive: true })` so navigations never drop in-flight events.
+5. Meta's Conversions API uses `(event_name, event_id)` to deduplicate browser and server hits into a single conversion.
 
-3. **CompleteRegistration** - Track user signups
-   ```tsx
-   ReactPixel.track("CompleteRegistration", {
-       status: "registered",
-       currency: "EGP"
-   });
-   ```
+### 6.2 Purchase Deduplication & Hook-Level Tracking
+Purchase tracking is fully decoupled from theme and page components:
+- **COD (Cash on Delivery / No Payment Gateway Required)**:
+  - In `usePlaceOrder.ts` (`onSuccess`), when `data.tracking` is present and `!data.requires_payment`, `emitCommerceEvent('Purchase', { tracking: data.tracking })` fires immediately with `tracking.purchase_event_id`.
+- **Online Payments (Card / Mobile Wallet)**:
+  - In `usePlaceOrder.ts` (`onSuccess`), when `data.requires_payment` is true, the tracking payload is saved to `sessionStorage` under `meta:purchase:{order_id}`.
+  - In `usePaymentStatus.ts`, polling checks order status. As soon as status becomes paid (`is_paid` or `order.payment_status === 'completed'`), it reads and removes the key from `sessionStorage`, setting a `hasEmittedPurchaseRef` sentinel.
+  - This guarantees:
+    1. Zero theme dependency (works identically across default and custom themes).
+    2. Protection against React Query polling refetches.
+    3. Protection against page refresh (the key is destroyed immediately on first execution).
+- The server sends the CAPI Purchase directly from queued backend listeners (`OrderFinalized` / `OrderPaymentCompleted`), ensuring 100% server-side revenue accuracy.
+
+### 6.3 Event Buffering Before Bootstrap Sync
+To avoid losing events emitted before bootstrap data resolves (e.g. initial `PageView` before `MetaPixelRouteTracker`'s effect runs):
+- `handleCommerceEvent` buffers up to 50 events in memory while awaiting the first `updateTrackerConfig()` call.
+- Upon the first sync:
+  - If a valid `pixelId` is present, all buffered events are sequentially flushed through the normal tracking and relay pipeline.
+  - If no `pixelId` is configured, the buffer is emptied and discarded cleanly.
+- Subsequent events bypass the buffer and execute immediately.
 
 ---
 
-## Integration Points
+## 7. Advanced Matching
 
-### Components Using Pixel Tracking
-
-| Component | Events | Purpose |
-|-----------|--------|---------|
-| `InitPixel.tsx` | Initialization | Root-level pixel setup |
-| `Show.tsx` | ViewContent | Product page views |
-| `use-cart.tsx` | AddToCart | Cart additions |
-| `ProductCard.tsx` | AddToCart, AddToWishlist | Quick actions from product cards |
-| `ProductActions.tsx` | AddToCart, AddToWishlist | Product detail actions |
-| `OrderSummary.tsx` | InitiateCheckout | Checkout initiation |
+On initialization, if an authenticated user session is active (`AuthContext`), customer parameters are passed to `ReactPixel.init`:
+- `em`: Customer email address (trimmed and lowercased).
+- `external_id`: Deterministic customer identifier in format `"u:{user.id}"` (matches server-side external ID format).
+- Note: Users in this system do not store phone numbers in the primary users table; phone parameters are captured during checkout by server-side CAPI.
 
 ---
 
-## Configuration
+## 8. Debug Mode
 
-### Environment Setup
+Debug mode outputs detailed console diagnostics for all Pixel calls and CAPI relays:
+- Enabled when `settings.meta_debug_mode === true` OR URL query string contains `?meta_debug=1`.
+- `meta_debug=1` is automatically remembered in `sessionStorage` for the duration of the browser session.
+- Diagnostic logs:
+  - `console.info('[MetaPixel]', { name, eventID, payload })`
+  - `console.info('[MetaRelay]', { name, eventID, body })`
 
-Facebook App ID should be stored in application settings and passed to `InitPixel` component:
+---
 
-```tsx
-<InitPixel fbID={settings?.facebook_app_id}>
-    {children}
-</InitPixel>
+## 9. Verification & Acceptance Testing
+
+### 9.1 Meta Pixel Helper (Chrome Extension)
+1. Open the storefront in Chrome with Meta Pixel Helper installed.
+2. Browse pages, add products to cart, and observe that:
+   - Pixel ID matches `settings.meta_pixel_id`.
+   - `PageView` fires once per page navigation.
+   - `AddToCart` fires with string `content_ids` (e.g. `["14"]` or `["14-2"]`).
+   - `eventID` parameter is present on every event.
+
+### 9.2 Events Manager -> Test Events
+1. In Meta Events Manager, navigate to **Data Sources** -> Select Dataset / Pixel -> **Test Events**.
+2. Enter the tenant URL with `?meta_debug=1`.
+3. Complete an end-to-end checkout.
+4. Verify in the Test Events activity table:
+   - Browser events show green with source **Browser**.
+   - Server relay events show source **Server**.
+   - Events sharing the same `event_id` are grouped and marked as **Deduplicated**.
+   - Purchase shows correct server total and currency.
+
+### 9.3 Automated E2E Test Suite
+The Playwright test spec is located at:
+`tests/e2e/plugins/meta-marketing.live.spec.ts`
+
+To execute:
+```bash
+npx playwright test tests/e2e/plugins/meta-marketing.live.spec.ts --project=theme-default --workers=1 --retries=0 --reporter=list
 ```
-
-### Settings Structure
-The `fbID` is expected to be available from the application's settings system, likely retrieved from:
-- Database settings table
-- Environment variables via backend
-- Admin panel configuration
-
----
-
-## Troubleshooting
-
-### Events Not Firing
-1. Check Facebook App ID is configured
-2. Verify Facebook SDK loaded (check Network tab)
-3. Enable debug mode and check console
-4. Verify user has accepted tracking cookies
-
-### Incorrect Values
-1. Ensure product/variant has `sale_price` set
-2. Check cart summary calculations
-3. Verify currency is consistently "EGP"
-
-### Duplicate Events
-1. Check for multiple component mounts
-2. Verify useEffect dependencies
-3. Ensure events only fire in `onSuccess` callbacks
-
----
-
-## Compliance & Privacy
-
-### GDPR/Privacy Considerations
-- Pixel only initializes with explicit Facebook App ID
-- Consider cookie consent implementation
-- Users should be able to opt-out of tracking
-- Privacy policy should mention Facebook Pixel usage
-
-### Data Collected
-- Product IDs and variant IDs
-- Product prices and quantities
-- Cart totals
-- User actions (views, adds, checkouts)
-- No personally identifiable information (PII) sent directly
-
----
-
-## Maintenance
-
-### Regular Checks
-- Verify events are still firing after updates
-- Test pixel on staging before production deploys
-- Monitor Facebook Events Manager for data quality
-- Update event parameters if product schema changes
-
-### Version Compatibility
-- Current library: `react-facebook-pixel`
-- Facebook Pixel API version: Latest (auto-updated by SDK)
-- Compatible with React 18+
-- Works with Inertia.js SSR
-
----
-
-## Summary
-
-The Facebook Pixel implementation provides comprehensive e-commerce tracking across the customer journey, from product discovery to checkout initiation. The implementation prioritizes:
-
-- **Accuracy:** Only tracks successful operations
-- **Consistency:** Uniform data structure across all events
-- **Flexibility:** Handles both variant-based and simple products
-- **Performance:** Minimal overhead, non-blocking
-- **Maintainability:** Centralized tracking logic in custom hooks
-
-This tracking foundation enables powerful Facebook advertising capabilities including:
-- Dynamic product ads
-- Conversion tracking
-- Custom audience creation
-- Lookalike audience generation
-- Ad performance optimization

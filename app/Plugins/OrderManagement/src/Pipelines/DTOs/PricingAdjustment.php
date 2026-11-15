@@ -4,12 +4,19 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Pipelines\DTOs;
 
+/**
+ * Public API: other plugins' pipes receive this class. Change it compatibly.
+ */
 final readonly class PricingAdjustment
 {
     public const TYPE_DISCOUNT = 'discount';
+
     public const TYPE_TAX = 'tax';
+
     public const TYPE_FEE = 'fee';
+
     public const TYPE_SHIPPING = 'shipping';
+
     public const TYPE_SURCHARGE = 'surcharge';
 
     /**

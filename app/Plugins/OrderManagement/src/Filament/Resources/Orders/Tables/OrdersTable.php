@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Filament\Resources\Orders\Tables;
 
-use App\Core\Plugins\Services\PluginManager;
-use App\Enums\OrderStatus;
-use App\Enums\PaymentMethod;
-use App\Enums\PaymentStatus;
+use App\Core\Contracts\SettingsRepository;
 use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
-use App\Plugins\StoreSettings\src\Services\SettingService;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
+use App\Plugins\OrderManagement\src\Enums\PaymentMethod;
+use App\Plugins\OrderManagement\src\Enums\PaymentStatus;
+use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\PosIntegration\src\Filament\Actions\OrderDeliveryActions;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 final class OrdersTable
 {
@@ -41,33 +43,13 @@ final class OrdersTable
                     ->description(fn ($record) => $record->getCustomerPhone() ?? '—')
                     ->searchable(query: function ($query, $search) {
                         return $query->where(function ($q) use ($search) {
-                            $q->whereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%"));
-
-                            if (app(PluginManager::class)->isPluginActive('guest-checkout')) {
-                                $q->orWhereHas('guestUser', fn ($g) => $g->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%"));
-                            }
+                            $q->where('customer_name', 'like', "%{$search}%")
+                                ->orWhere('customer_phone', 'like', "%{$search}%")
+                                ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%"));
                         });
                     })
                     ->sortable(query: function ($query, $direction) {
-                        $isGuestActive = app(PluginManager::class)->isPluginActive('guest-checkout');
-
-                        if ($isGuestActive) {
-                            return $query->orderBy(
-                                \App\Models\User::select('name')
-                                    ->whereColumn('users.id', 'orders.user_id')
-                                    ->union(
-                                        \App\Plugins\GuestCheckout\src\Models\GuestUser::select('name')
-                                            ->whereColumn('guest_users.id', 'orders.guest_user_id')
-                                    ),
-                                $direction
-                            );
-                        }
-
-                        return $query->orderBy(
-                            \App\Models\User::select('name')
-                                ->whereColumn('users.id', 'orders.user_id'),
-                            $direction
-                        );
+                        return $query->orderBy('customer_name', $direction);
                     })
                     ->copyable()
                     ->copyMessage('تم نسخ الاسم'),
@@ -92,6 +74,25 @@ final class OrdersTable
                     ->badge()
                     ->sortable(),
 
+                TextColumn::make('posDelivery.failures_count')
+                    ->label('محاولات إرسال فاشلة')
+                    ->placeholder('غير متاح')
+                    ->visible(fn (): bool => OrderDeliveryActions::enabled())
+                    ->toggleable(),
+
+                TextColumn::make('posDelivery.last_attempt_at')
+                    ->label('آخر محاولة إرسال')
+                    ->since()->dateTimeTooltip()->placeholder('غير متاح')
+                    ->visible(fn (): bool => OrderDeliveryActions::enabled())
+                    ->toggleable(),
+
+                TextColumn::make('delivery_overdue')
+                    ->label('متابعة الإرسال')
+                    ->state(fn (Order $record): ?string => $record->posDelivery?->isOverdue() ? 'تأخرت المهمة' : null)
+                    ->badge()->color('warning')
+                    ->visible(fn (): bool => OrderDeliveryActions::enabled())
+                    ->toggleable(),
+
                 TextColumn::make('items_count')
                     ->counts('items')
                     ->label('العناصر')
@@ -106,7 +107,7 @@ final class OrdersTable
 
                 TextColumn::make('total')
                     ->label('الإجمالي')
-                    ->money(fn () => app(SettingService::class)->get('currency', 'EGP'))
+                    ->money(fn () => app(SettingsRepository::class)->get('currency', 'EGP'))
                     ->sortable()
                     ->weight('bold'),
 
@@ -117,6 +118,21 @@ final class OrdersTable
                     ->sortable(),
             ])
             ->filters([
+                Filter::make('pos_overdue')
+                    ->label('مهام إرسال متأخرة')
+                    ->visible(fn (): bool => OrderDeliveryActions::enabled())
+                    ->query(function (Builder $query): Builder {
+                        if (! OrderDeliveryActions::enabled()) {
+                            return $query;
+                        }
+
+                        return $query->whereHas('posDelivery', fn (Builder $delivery) => $delivery->where(function (Builder $states): void {
+                            $cutoff = now()->subMinutes(5);
+                            $states->where(fn (Builder $q) => $q->where('status', OrderPosStatus::QUEUED)->where('queued_at', '<', $cutoff))
+                                ->orWhere(fn (Builder $q) => $q->where('status', OrderPosStatus::SENDING)->where('last_attempt_at', '<', $cutoff))
+                                ->orWhere(fn (Builder $q) => $q->where('status', OrderPosStatus::RETRY_WAIT)->where('next_retry_at', '<', $cutoff));
+                        }));
+                    }),
                 Filter::make('created_at')
                     ->form([
                         DatePicker::make('created_from')->label('من تاريخ'),

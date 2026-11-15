@@ -1,5 +1,7 @@
 # Larament
 
+For the current Turbo Tenant application, see the [developer handbook](docs/README.md). The starter-kit information below may not describe the current tenant and plugin architecture.
+
 [![Pint](https://github.com/codewithdennis/larament/actions/workflows/pint.yml/badge.svg)](https://packagist.org/packages/codewithdennis/larament)
 [![PEST](https://github.com/codewithdennis/larament/actions/workflows/pest.yml/badge.svg)](https://packagist.org/packages/codewithdennis/larament)
 [![PHPStan](https://github.com/CodeWithDennis/larament/actions/workflows/phpstan.yml/badge.svg)](https://github.com/CodeWithDennis/larament/actions/workflows/phpstan.yml)

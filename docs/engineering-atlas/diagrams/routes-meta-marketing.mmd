@@ -1,0 +1,8 @@
+flowchart LR
+  B["HTTP request"]
+  B --> n057498ea77cc["POST /api/meta/events"]
+  n057498ea77cc -->|"meta-marketing"| n28540cd4493c["RelayEventController"]
+  B --> nca95eb167b89["GET|HEAD /meta/catalog/{token}.ar.csv"]
+  nca95eb167b89 -->|"meta-marketing"| nf1d0b57cfd1b["CatalogFeedController@arabicOverride"]
+  B --> nabeee3731977["GET|HEAD /meta/catalog/{token}.{format}"]
+  nabeee3731977 -->|"meta-marketing"| n313d14e61485["CatalogFeedController@primary"]

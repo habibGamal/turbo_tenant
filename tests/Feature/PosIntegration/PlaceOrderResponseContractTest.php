@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Enums\OrderType;
 use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\OrderManagement\src\Enums\OrderType;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\PosIntegration\src\Services\OrderPOSService;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\OrderPOSPayloadBuilderInterface;
-use App\Plugins\PosIntegration\src\Services\ProductPOSImporterService;
+use App\Plugins\PosIntegration\src\Services\POS\Contracts\PosMasterClient;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
@@ -60,15 +60,15 @@ beforeEach(function () {
         ->andReturn($this->minimalPayload);
     $this->app->instance(OrderPOSPayloadBuilderInterface::class, $this->mockPayloadBuilder);
 
-    $this->productImporter = mock(ProductPOSImporterService::class);
-    $this->app->instance(ProductPOSImporterService::class, $this->productImporter);
+    $this->posMasterClient = mock(PosMasterClient::class);
+    $this->app->instance(PosMasterClient::class, $this->posMasterClient);
 
     $this->service = app(OrderPOSService::class);
 });
 
 describe('PlaceOrderResponseContract', function () {
     it('handles success response with 200 OK (doc: Responses section 1 Success Response)', function () {
-        $this->productImporter->shouldNotReceive('getProductsByReferences');
+        $this->posMasterClient->shouldNotReceive('getProductsByReferences');
 
         Http::fake([
             'https://pos.example.com/api/web-orders/place-order' => Http::response([
@@ -90,7 +90,7 @@ describe('PlaceOrderResponseContract', function () {
     });
 
     it('throws shift error exception for Scenario A (doc: Responses section 3 Scenario A)', function () {
-        $this->productImporter->shouldNotReceive('getProductsByReferences');
+        $this->posMasterClient->shouldNotReceive('getProductsByReferences');
 
         Http::fake([
             'https://pos.example.com/api/web-orders/place-order' => Http::response([
@@ -112,7 +112,7 @@ describe('PlaceOrderResponseContract', function () {
     });
 
     it('handles Scenario B with one escaped ref returning mapped product name (doc: Responses section 3 Scenario B)', function () {
-        $this->productImporter->shouldReceive('getProductsByReferences')
+        $this->posMasterClient->shouldReceive('getProductsByReferences')
             ->once()
             ->with(['INVALID-REF-101'])
             ->andReturn([
@@ -144,7 +144,7 @@ describe('PlaceOrderResponseContract', function () {
     });
 
     it('handles Scenario B with two unescaped refs joining names with comma and space (doc: Responses section 3 Scenario B)', function () {
-        $this->productImporter->shouldReceive('getProductsByReferences')
+        $this->posMasterClient->shouldReceive('getProductsByReferences')
             ->once()
             ->with(['A-1', 'B-2'])
             ->andReturn([
@@ -177,7 +177,7 @@ describe('PlaceOrderResponseContract', function () {
     });
 
     it('falls back to raw refs in Scenario B message when product importer throws exception (doc: Responses section 3 Scenario B)', function () {
-        $this->productImporter->shouldReceive('getProductsByReferences')
+        $this->posMasterClient->shouldReceive('getProductsByReferences')
             ->once()
             ->with(['A-1', 'B-2'])
             ->andThrow(new Exception('Network error'));
@@ -207,7 +207,7 @@ describe('PlaceOrderResponseContract', function () {
     });
 
     it('falls back to raw refs in Scenario B message when product importer returns empty array (doc: Responses section 3 Scenario B)', function () {
-        $this->productImporter->shouldReceive('getProductsByReferences')
+        $this->posMasterClient->shouldReceive('getProductsByReferences')
             ->once()
             ->with(['A-1', 'B-2'])
             ->andReturn([]);
@@ -237,7 +237,7 @@ describe('PlaceOrderResponseContract', function () {
     });
 
     it('throws validation message exception on 422 Unprocessable Content (doc: Responses section 2 Validation Failure)', function () {
-        $this->productImporter->shouldNotReceive('getProductsByReferences');
+        $this->posMasterClient->shouldNotReceive('getProductsByReferences');
 
         Http::fake([
             'https://pos.example.com/api/web-orders/place-order' => Http::response([
@@ -269,7 +269,7 @@ describe('PlaceOrderResponseContract', function () {
     });
 
     it('throws generic branch communication exception for unrecognized or unexpected responses (doc: Responses generic fallback)', function (callable $setupFake) {
-        $this->productImporter->shouldNotReceive('getProductsByReferences');
+        $this->posMasterClient->shouldNotReceive('getProductsByReferences');
 
         $setupFake();
 

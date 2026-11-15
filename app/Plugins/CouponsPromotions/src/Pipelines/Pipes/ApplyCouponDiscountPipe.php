@@ -26,7 +26,7 @@ final readonly class ApplyCouponDiscountPipe implements PricingCalculationPipeIn
         if ($coupon instanceof Coupon) {
             $discount = (float) $this->couponService->calculateDiscount(
                 $coupon,
-                $context->cartItems,
+                $context->lines,
                 $context->subTotal
             );
 

@@ -1,0 +1,50 @@
+flowchart LR
+  nab11a5b85813["cart-engine"]
+  ne88af0372ce1["catalog-products"]
+  n3e4c9ca9ee4a["cms-pages"]
+  n8c0e3ec972fb["combo-packages"]
+  n9fad43d5ce0f["coupons-promotions"]
+  nbcf0acbde537["customer-favorites"]
+  n3cc5cba5e8e9["guest-checkout"]
+  n4ca653d39104["hero-banners"]
+  nd27c4752ae6d["locations-delivery"]
+  n73fe8a22954d["media-optimizer"]
+  nc22cbc7b1336["meta-marketing"]
+  n9559f343aaa6["order-management"]
+  na845d06e54da["payment-processing"]
+  n9d56c06044d9["pos-integration"]
+  n3aada8ab486b["product-reviews"]
+  n45767578abf9["push-notifications"]
+  n48c0f9a3ef3b["sample-greeting"]
+  nb81e769afaeb["store-settings"]
+  nab11a5b85813 -->|requires| ne88af0372ce1
+  nab11a5b85813 -->|requires| nb81e769afaeb
+  ne88af0372ce1 -->|requires| nb81e769afaeb
+  n3e4c9ca9ee4a -->|requires| nb81e769afaeb
+  n8c0e3ec972fb -->|requires| ne88af0372ce1
+  n8c0e3ec972fb -->|requires| nab11a5b85813
+  n8c0e3ec972fb -->|requires| n9559f343aaa6
+  n8c0e3ec972fb -->|requires| nd27c4752ae6d
+  n9fad43d5ce0f -->|requires| nab11a5b85813
+  n9fad43d5ce0f -->|requires| n9559f343aaa6
+  n9fad43d5ce0f -->|requires| ne88af0372ce1
+  n9fad43d5ce0f -->|requires| nd27c4752ae6d
+  nbcf0acbde537 -->|requires| ne88af0372ce1
+  n3cc5cba5e8e9 -->|requires| n9559f343aaa6
+  n3cc5cba5e8e9 -->|requires| nd27c4752ae6d
+  nd27c4752ae6d -->|requires| nb81e769afaeb
+  nc22cbc7b1336 -->|requires| n9559f343aaa6
+  nc22cbc7b1336 -->|requires| ne88af0372ce1
+  nc22cbc7b1336 -->|requires| nb81e769afaeb
+  n9559f343aaa6 -->|requires| nab11a5b85813
+  n9559f343aaa6 -->|requires| nd27c4752ae6d
+  n9559f343aaa6 -->|requires| ne88af0372ce1
+  n9559f343aaa6 -->|requires| nb81e769afaeb
+  na845d06e54da -->|requires| n9559f343aaa6
+  na845d06e54da -->|requires| nb81e769afaeb
+  n9d56c06044d9 -->|requires| n9559f343aaa6
+  n9d56c06044d9 -->|requires| ne88af0372ce1
+  n9d56c06044d9 -->|requires| nd27c4752ae6d
+  n9d56c06044d9 -->|requires| nb81e769afaeb
+  n3aada8ab486b -->|requires| ne88af0372ce1
+  n45767578abf9 -->|requires| n9559f343aaa6

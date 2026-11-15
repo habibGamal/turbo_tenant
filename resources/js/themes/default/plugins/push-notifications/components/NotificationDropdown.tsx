@@ -9,16 +9,16 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bell, Check, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useNotifications } from "@/plugins/push-notifications/api/useNotifications";
+import { useNotifications, useUnreadNotificationsCount } from "@/plugins/push-notifications/api/useNotifications";
 import { useNotificationMutations } from "@/plugins/push-notifications/api/useNotificationMutations";
 
 export function NotificationDropdown() {
     const { t, i18n } = useTranslation();
-    const { data, isLoading } = useNotifications();
+    const { data: notifications = [], isLoading } = useNotifications();
+    const { data: unreadData } = useUnreadNotificationsCount();
     const { markAsRead, markAllAsRead, deleteNotification } = useNotificationMutations();
 
-    const notifications = data?.notifications || [];
-    const unreadCount = data?.unread_count || 0;
+    const unreadCount = unreadData?.count || 0;
 
     const formatNotificationTime = (dateString: string) => {
         const date = new Date(dateString);

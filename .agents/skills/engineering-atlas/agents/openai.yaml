@@ -1,0 +1,4 @@
+interface:
+  display_name: "Engineering Atlas: Project Handbook"
+  short_description: "Document any codebase: architecture, features, deployment, changelog"
+  default_prompt: "Use $engineering-atlas to write or update this project's developer handbook: overview, getting started, architecture, data model, interfaces, configuration, a page per feature (how to use and how it works), deployment and rollback, operations, and a changelog from git history."

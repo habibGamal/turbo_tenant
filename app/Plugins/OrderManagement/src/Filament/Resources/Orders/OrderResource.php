@@ -4,18 +4,21 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Filament\Resources\Orders;
 
-use App\Enums\OrderStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\Pages\ListOrders;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\Schemas\OrderForm;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\Schemas\OrderInfolist;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\Tables\OrdersTable;
 use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\PosIntegration\src\Filament\Actions\OrderDeliveryActions;
+use App\Plugins\PosIntegration\src\Filament\RelationManagers\OrderDeliveryAttemptsRelationManager;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
@@ -73,9 +76,12 @@ final class OrderResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return OrderDeliveryActions::enabled() ? [OrderDeliveryAttemptsRelationManager::class] : [];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->when(OrderDeliveryActions::enabled(), fn (Builder $query) => $query->with('posDelivery'));
     }
 
     public static function getPages(): array

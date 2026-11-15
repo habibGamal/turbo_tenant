@@ -1,0 +1,10 @@
+flowchart LR
+  B["HTTP request"]
+  B --> n786b6e699580["GET|HEAD /api/guest-checkout"]
+  n786b6e699580 -->|"guest-checkout"| n86aa37b4529e["GuestCheckoutApiController@index"]
+  B --> n6da7d0c35ea1["POST /api/guest-checkout/track"]
+  n6da7d0c35ea1 -->|"guest-checkout"| n2dd28f03a05c["GuestCheckoutApiController@track"]
+  B --> n33e961455786["GET|HEAD /api/tenant/guest-checkout"]
+  n33e961455786 -->|"guest-checkout"| n86aa37b4529e["GuestCheckoutApiController@index"]
+  B --> nd37d536bedc1["POST /api/tenant/guest-checkout/track"]
+  nd37d536bedc1 -->|"guest-checkout"| n2dd28f03a05c["GuestCheckoutApiController@track"]

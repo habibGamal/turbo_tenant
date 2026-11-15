@@ -1,11 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/core/api/client';
+import { ApiSuccess } from '@/core/api/types';
 import {
   Address,
   AddressesResponse,
   AddressPayload,
+  Branch,
   BranchesResponse,
+  Governorate,
   GovernoratesResponse,
+  LocationsDeliveryData,
   LocationsDeliveryResponse,
   SingleAddressResponse,
 } from '../types';
@@ -14,11 +18,11 @@ import {
  * Fetch aggregate locations delivery metadata (governorates, branches, addresses).
  */
 export function useLocationsDelivery(params?: Record<string, any>) {
-  return useQuery<LocationsDeliveryResponse>({
+  return useQuery<LocationsDeliveryData>({
     queryKey: ['locations-delivery', params],
     queryFn: async () => {
       const { data } = await apiClient.get<LocationsDeliveryResponse>('/api/locations-delivery', { params });
-      return data;
+      return data.data;
     },
     staleTime: 1000 * 60 * 2,
   });
@@ -28,11 +32,11 @@ export function useLocationsDelivery(params?: Record<string, any>) {
  * Fetch active governorates with delivery areas.
  */
 export function useGovernorates() {
-  return useQuery<GovernoratesResponse>({
+  return useQuery<Governorate[]>({
     queryKey: ['locations-delivery', 'governorates'],
     queryFn: async () => {
       const { data } = await apiClient.get<GovernoratesResponse>('/api/locations-delivery/governorates');
-      return data;
+      return data.data;
     },
     staleTime: 1000 * 60 * 10,
   });
@@ -42,11 +46,11 @@ export function useGovernorates() {
  * Fetch active branches.
  */
 export function useBranches() {
-  return useQuery<BranchesResponse>({
+  return useQuery<Branch[]>({
     queryKey: ['locations-delivery', 'branches'],
     queryFn: async () => {
       const { data } = await apiClient.get<BranchesResponse>('/api/locations-delivery/branches');
-      return data;
+      return data.data;
     },
     staleTime: 1000 * 60 * 10,
   });
@@ -56,11 +60,11 @@ export function useBranches() {
  * Fetch customer delivery addresses.
  */
 export function useAddresses() {
-  return useQuery<AddressesResponse>({
+  return useQuery<Address[]>({
     queryKey: ['locations-delivery', 'addresses'],
     queryFn: async () => {
       const { data } = await apiClient.get<AddressesResponse>('/api/locations-delivery/addresses');
-      return data;
+      return data.data;
     },
     staleTime: 1000 * 60 * 2,
   });
@@ -76,10 +80,10 @@ export function useSaveAddress() {
     mutationFn: async ({ id, payload }: { id?: number; payload: AddressPayload }) => {
       if (id) {
         const { data } = await apiClient.patch<SingleAddressResponse>(`/api/locations-delivery/addresses/${id}`, payload);
-        return data;
+        return data.data;
       }
       const { data } = await apiClient.post<SingleAddressResponse>('/api/locations-delivery/addresses', payload);
-      return data;
+      return data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['locations-delivery'] });
@@ -95,8 +99,8 @@ export function useDeleteAddress() {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const { data } = await apiClient.delete(`/api/locations-delivery/addresses/${id}`);
-      return data;
+      const { data } = await apiClient.delete<ApiSuccess<null>>(`/api/locations-delivery/addresses/${id}`);
+      return data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['locations-delivery'] });

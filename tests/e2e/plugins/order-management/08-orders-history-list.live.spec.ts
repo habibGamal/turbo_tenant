@@ -14,7 +14,7 @@ test.describe('OrderManagement Suite 08: Customer Order History List (/orders)',
 
     const json = await ordersResponse.json();
     expect(json.status).toBe('success');
-    expect(json.data.data.length).toBeGreaterThan(0);
+    expect(json.data.length).toBeGreaterThan(0);
 
     // 3. Verify Orders List Container
     const ordersList = theme.orders.getOrdersList();

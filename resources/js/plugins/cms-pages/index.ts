@@ -1,5 +1,6 @@
+import { lazy } from 'react';
 import { registerPluginDefault, SlotName } from '@/core/slots/slot-registry';
-import DefaultCmsPages from './components/DefaultCmsPages';
+const DefaultCmsPages = lazy(() => import('./components/DefaultCmsPages'));
 
 /**
  * Register default fallback component for CmsPages

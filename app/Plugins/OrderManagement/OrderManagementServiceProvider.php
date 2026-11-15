@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement;
 
+use App\Core\Contracts\SettingsRepository;
+use App\Plugins\OrderManagement\src\Contracts\CustomerOrderHistory;
+use App\Plugins\OrderManagement\src\Contracts\OrderPaymentRecorder;
+use App\Plugins\OrderManagement\src\Contracts\OrderPipelineRegistrar;
 use App\Plugins\OrderManagement\src\DTOs\OrderManagementConfig;
 use App\Plugins\OrderManagement\src\Pipelines\OrderPipelineRegistry;
 use App\Plugins\OrderManagement\src\Pipelines\OrderValidationPipeline;
@@ -13,12 +17,13 @@ use App\Plugins\OrderManagement\src\Services\Contracts\OrderPricingCalculatorInt
 use App\Plugins\OrderManagement\src\Services\Contracts\OrderRepositoryInterface;
 use App\Plugins\OrderManagement\src\Services\Contracts\OrderValidatorInterface;
 use App\Plugins\OrderManagement\src\Services\Contracts\PlaceOrderServiceInterface;
+use App\Plugins\OrderManagement\src\Services\EloquentCustomerOrderHistory;
+use App\Plugins\OrderManagement\src\Services\EloquentOrderPaymentRecorder;
 use App\Plugins\OrderManagement\src\Services\Payments\OrderPaymentDispatcher;
 use App\Plugins\OrderManagement\src\Services\PlaceOrderService;
 use App\Plugins\OrderManagement\src\Services\Pricing\OrderPricingCalculator;
 use App\Plugins\OrderManagement\src\Services\Repositories\OrderRepository;
 use App\Plugins\OrderManagement\src\Services\Validators\OrderValidator;
-use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Support\ServiceProvider;
 
 final class OrderManagementServiceProvider extends ServiceProvider
@@ -28,16 +33,19 @@ final class OrderManagementServiceProvider extends ServiceProvider
         // 1. Composition Root: Bind typed Config DTO
         $this->app->singleton(OrderManagementConfig::class, function ($app) {
             return new OrderManagementConfig(
-                $app->make(SettingService::class)
+                $app->make(SettingsRepository::class)
             );
         });
 
         // 2. Pipeline Bus
         $this->app->singleton(OrderPipelineRegistry::class);
+        $this->app->bind(OrderPipelineRegistrar::class, OrderPipelineRegistry::class);
         $this->app->singleton(OrderValidationPipeline::class);
         $this->app->singleton(PricingCalculationPipeline::class);
 
         // 3. Domain Services
+        $this->app->bind(CustomerOrderHistory::class, EloquentCustomerOrderHistory::class);
+        $this->app->bind(OrderPaymentRecorder::class, EloquentOrderPaymentRecorder::class);
         $this->app->bind(OrderRepositoryInterface::class, OrderRepository::class);
         $this->app->bind(OrderPaymentDispatcherInterface::class, OrderPaymentDispatcher::class);
         $this->app->bind(OrderPricingCalculatorInterface::class, OrderPricingCalculator::class);
@@ -45,6 +53,14 @@ final class OrderManagementServiceProvider extends ServiceProvider
         $this->app->bind(PlaceOrderServiceInterface::class, PlaceOrderService::class);
         $this->app->bind(PlaceOrderService::class);
 
+        $this->app->singleton(src\Filament\Checklist\FirstOrderSetupChecklistItem::class);
+        $this->app->tag([src\Filament\Checklist\FirstOrderSetupChecklistItem::class], 'admin.setup-checklist');
+
+        $this->app->singleton(src\Filament\Tables\OrdersCountUsersTableColumnContributor::class);
+        $this->app->tag([src\Filament\Tables\OrdersCountUsersTableColumnContributor::class], 'admin.users.table.columns');
+
+        $this->app->singleton(src\Settings\OrderSettingsSection::class);
+        $this->app->tag([src\Settings\OrderSettingsSection::class], 'store-settings.sections');
     }
 
     public function boot(): void

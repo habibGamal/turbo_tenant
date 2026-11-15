@@ -2,19 +2,24 @@
 
 declare(strict_types=1);
 
-use App\Enums\OrderStatus;
 use App\Models\User;
+use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
+use App\Plugins\OrderManagement\src\Events\OrderCreated;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\OrderResource;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\Pages\ListOrders;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
-use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use Illuminate\Support\Facades\DB;
 
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\assertDatabaseMissing;
 use function Pest\Livewire\livewire;
+
+beforeEach(function () {
+    $this->actingAs(User::factory()->create(['is_admin' => true]));
+});
 
 it('can render the index page', function () {
     livewire(ListOrders::class)
@@ -87,6 +92,8 @@ it('notifies admin users in database when an order is created', function () {
         'customer_name' => 'Ahmed Ali',
         'total' => 350.00,
     ]);
+
+    OrderCreated::dispatch($order);
 
     assertDatabaseHas('notifications', [
         'notifiable_type' => $admin->getMorphClass(),

@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCatalogSections } from '@/plugins/catalog-products/api/useCatalogSections';
 import { useCatalogCategories } from '@/plugins/catalog-products/api/useCatalogCategories';
-import { Section, ProductSummary } from '@/plugins/catalog-products/types';
+import { Section, ProductSummary, Category } from '@/plugins/catalog-products/types';
 import { Button } from '@/components/ui/button';
 import { Star, TrendingUp, Flame } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import ProductCard from './components/ProductCard';
+import { ImageWithFallback } from '@/components/ui/image';
 import { CatalogSectionsSkeleton } from '@/components/ui/page-skeletons';
 import { useAddToCart } from '@/plugins/cart-engine/api';
 
@@ -31,14 +32,14 @@ export interface ThemedProductsSectionProps {
 
 export default function ThemedProductsSection({ sections: propSections }: ThemedProductsSectionProps) {
   const { t, i18n } = useTranslation();
-  const { data, isLoading } = useCatalogSections();
-  const { data: categoriesData } = useCatalogCategories();
+  const { data: sections, isLoading } = useCatalogSections();
+  const { data: categoriesData, isLoading: categoriesLoading } = useCatalogCategories();
   const { mutate: addToCartMutation } = useAddToCart();
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [addingToCart, setAddingToCart] = useState<Record<number, boolean>>({});
 
-  const sectionsToUse: Section[] = propSections || data?.data || [];
-  const categories = categoriesData?.data || [];
+  const sectionsToUse: Section[] = propSections || sections || [];
+  const categories: Category[] = categoriesData || [];
 
   const displayedSections = selectedCategory
     ? sectionsToUse
@@ -84,7 +85,7 @@ export default function ThemedProductsSection({ sections: propSections }: Themed
     }
   };
 
-  if (isLoading && sectionsToUse.length === 0) {
+  if ((isLoading && sectionsToUse.length === 0) || categoriesLoading) {
     return <CatalogSectionsSkeleton />;
   }
 
@@ -96,9 +97,9 @@ export default function ThemedProductsSection({ sections: propSections }: Themed
     <>
       {/* Category Navigation Tabs */}
       {categories.length > 0 && (
-        <section className="py-6 bg-background border-b sticky top-0 z-20 backdrop-blur-md bg-background/80">
+        <section className="py-8 bg-background border-b">
           <div className="container mx-auto px-4">
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none" role="tablist">
+            <div className="flex items-start gap-4 sm:gap-6 overflow-x-auto pb-2 scrollbar-none" role="tablist">
               {categories.map((cat) => {
                 const isSelected = selectedCategory === cat.id;
                 return (
@@ -108,13 +109,14 @@ export default function ThemedProductsSection({ sections: propSections }: Themed
                     role="tab"
                     aria-selected={isSelected}
                     onClick={() => setSelectedCategory(isSelected ? null : cat.id)}
-                    className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all shrink-0 border ${
-                      isSelected
-                        ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                        : 'bg-card text-foreground hover:bg-muted border-border'
-                    }`}
+                    className={`group flex w-24 sm:w-32 shrink-0 flex-col items-center gap-2 rounded-xl border border-transparent p-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isSelected ? "border-primary" : ""}`}
                   >
-                    {i18n.language === 'ar' && cat.name_ar ? cat.name_ar : cat.name}
+                    <span className={`block w-full aspect-square overflow-hidden rounded-2xl border-2 transition-colors ${isSelected ? 'border-primary' : 'border-transparent group-hover:border-primary/50'}`}>
+                      <ImageWithFallback src={cat.image} alt="" className="h-full w-full object-cover" />
+                    </span>
+                    <span className={`text-sm font-semibold ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                      {i18n.language === 'ar' && cat.name_ar ? cat.name_ar : cat.name}
+                    </span>
                   </button>
                 );
               })}
@@ -146,11 +148,11 @@ export default function ThemedProductsSection({ sections: propSections }: Themed
                   </h2>
                 </div>
               </div>
-              <Link to={`/sections/${section.id}`}>
-                <Button data-testid="section-view-all" variant="outline" className="gap-2">
-                  {t('View All')}
-                </Button>
-              </Link>
+              <Button asChild variant="outline">
+                <Link to="/menu" data-testid="section-view-all">
+                  {t('viewAll')}
+                </Link>
+              </Button>
             </div>
 
             {/* Products Grid */}

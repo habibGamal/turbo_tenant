@@ -19,9 +19,10 @@ export function OrderStatusBadge({
 
     return (
         <Badge
+            variant="outline"
             data-testid="order-status-badge"
             className={cn(
-                "flex items-center gap-1.5 font-medium transition-colors",
+                "inline-flex w-fit items-center gap-1.5 rounded-full border-transparent px-3 py-1 font-medium [&_svg]:h-4 [&_svg]:w-4",
                 getStatusColor(status),
                 className
             )}

@@ -20,7 +20,7 @@ export default defineConfig({
   ],
 
   use: {
-    baseURL: process.env.E2E_BASE_URL || 'http://kofe.localhost:8000',
+    baseURL: process.env.E2E_BASE_URL || 'http://e2e.localhost:8000',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

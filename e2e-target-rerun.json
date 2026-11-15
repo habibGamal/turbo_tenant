@@ -1,0 +1,501 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "D:\\turbo_tenant\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "tests/e2e/plugins/cart-engine/02-variants.live.spec.ts",
+      "tests/e2e/plugins/cart-engine/03-weighted-items.live.spec.ts",
+      "tests/e2e/plugins/order-management/08-orders-history-list.live.spec.ts",
+      "tests/e2e/plugins/order-management/02-guest-cod-delivery.live.spec.ts",
+      "--reporter=line,json"
+    ],
+    "configFile": "D:\\turbo_tenant\\playwright.config.ts",
+    "rootDir": "D:/turbo_tenant/tests/e2e/plugins",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/turbo_tenant/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "theme-default",
+        "name": "theme-default",
+        "testDir": "D:/turbo_tenant/tests/e2e/plugins",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "D:\\turbo_tenant\\test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "theme-default",
+        "testDir": "D:\\turbo_tenant\\tests\\e2e\\plugins",
+        "snapshotDir": "D:\\turbo_tenant\\tests\\e2e\\plugins",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 45000,
+        "use": {
+          "baseURL": "http://e2e.localhost:8011",
+          "trace": "retain-on-failure",
+          "screenshot": "only-on-failure",
+          "video": "retain-on-failure",
+          "actionTimeout": 15000,
+          "navigationTimeout": 30000,
+          "launchOptions": {
+            "args": [
+              "--host-resolver-rules=MAP *.localhost 127.0.0.1",
+              "--disable-gpu",
+              "--no-sandbox"
+            ]
+          },
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "screen": {
+            "width": 1920,
+            "height": 1080
+          },
+          "deviceScaleFactor": 1,
+          "isMobile": false,
+          "hasTouch": false,
+          "defaultBrowserType": "chromium",
+          "activeThemeName": "default"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "theme-default"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "cart-engine\\02-variants.live.spec.ts",
+      "file": "cart-engine/02-variants.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "CartEngine Suite 02: Product Variants",
+          "file": "cart-engine/02-variants.live.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "selects variant on product details page and renders variant badge in cart",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 11525,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:22:06.940Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f75bf743bedac0dba924-5d4c66ed01720740db07",
+              "file": "cart-engine/02-variants.live.spec.ts",
+              "line": 4,
+              "column": 3
+            },
+            {
+              "title": "creates separate line items for distinct variants and aggregates same variant",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 19122,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:22:18.595Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f75bf743bedac0dba924-9344c3fefed3265fa691",
+              "file": "cart-engine/02-variants.live.spec.ts",
+              "line": 40,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cart-engine\\03-weighted-items.live.spec.ts",
+      "file": "cart-engine/03-weighted-items.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "CartEngine Suite 03: Weighted Items",
+          "file": "cart-engine/03-weighted-items.live.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "calculates weighted price, handles dynamic weight changes, and enforces multiplier boundaries",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 18866,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[data-testid=\"cart-subtotal\"]')\nExpected substring: \u001b[32m\"150\u001b[7m.00\u001b[27m\"\u001b[39m\nReceived string:    \u001b[31m\"\u001b[7m‏\u001b[27m150\u001b[7m ج.م.‏\u001b[27m\"\u001b[39m\nTimeout: 10000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" locator('[data-testid=\"cart-subtotal\"]') with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=\"cart-subtotal\"]')\u001b[22m\n\u001b[2m    23 × locator resolved to <span class=\"font-medium\" data-testid=\"cart-subtotal\">‏150 ج.م.‏</span>\u001b[22m\n\u001b[2m       - unexpected value \"‏150 ج.م.‏\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[data-testid=\"cart-subtotal\"]')\nExpected substring: \u001b[32m\"150\u001b[7m.00\u001b[27m\"\u001b[39m\nReceived string:    \u001b[31m\"\u001b[7m‏\u001b[27m150\u001b[7m ج.م.‏\u001b[27m\"\u001b[39m\nTimeout: 10000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" locator('[data-testid=\"cart-subtotal\"]') with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=\"cart-subtotal\"]')\u001b[22m\n\u001b[2m    23 × locator resolved to <span class=\"font-medium\" data-testid=\"cart-subtotal\">‏150 ج.م.‏</span>\u001b[22m\n\u001b[2m       - unexpected value \"‏150 ج.م.‏\"\u001b[22m\n\n    at D:\\turbo_tenant\\tests\\e2e\\plugins\\cart-engine\\03-weighted-items.live.spec.ts:35:28",
+                        "location": {
+                          "file": "D:\\turbo_tenant\\tests\\e2e\\plugins\\cart-engine\\03-weighted-items.live.spec.ts",
+                          "column": 28,
+                          "line": 35
+                        },
+                        "snippet": "  33 |     // Verify initial subtotal for 250g (0.250 * 600 = 150.00 EGP)\n  34 |     const subtotal = theme.cart.getSubtotal();\n> 35 |     await expect(subtotal).toContainText('150.00');\n     |                            ^\n  36 |\n  37 |     // 2. Dynamic in-cart weight change: Switch from 250g to 500g (0.500 kg)\n  38 |     await weightSelect.click();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\turbo_tenant\\tests\\e2e\\plugins\\cart-engine\\03-weighted-items.live.spec.ts",
+                            "column": 28,
+                            "line": 35
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[data-testid=\"cart-subtotal\"]')\nExpected substring: \u001b[32m\"150\u001b[7m.00\u001b[27m\"\u001b[39m\nReceived string:    \u001b[31m\"\u001b[7m‏\u001b[27m150\u001b[7m ج.م.‏\u001b[27m\"\u001b[39m\nTimeout: 10000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" locator('[data-testid=\"cart-subtotal\"]') with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=\"cart-subtotal\"]')\u001b[22m\n\u001b[2m    23 × locator resolved to <span class=\"font-medium\" data-testid=\"cart-subtotal\">‏150 ج.م.‏</span>\u001b[22m\n\u001b[2m       - unexpected value \"‏150 ج.م.‏\"\u001b[22m\n\n\n  33 |     // Verify initial subtotal for 250g (0.250 * 600 = 150.00 EGP)\n  34 |     const subtotal = theme.cart.getSubtotal();\n> 35 |     await expect(subtotal).toContainText('150.00');\n     |                            ^\n  36 |\n  37 |     // 2. Dynamic in-cart weight change: Switch from 250g to 500g (0.500 kg)\n  38 |     await weightSelect.click();\n    at D:\\turbo_tenant\\tests\\e2e\\plugins\\cart-engine\\03-weighted-items.live.spec.ts:35:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:22:37.772Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\turbo_tenant\\test-results\\cart-engine-03-weighted-it-8b578-orces-multiplier-boundaries-theme-default\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\turbo_tenant\\test-results\\cart-engine-03-weighted-it-8b578-orces-multiplier-boundaries-theme-default\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\turbo_tenant\\test-results\\cart-engine-03-weighted-it-8b578-orces-multiplier-boundaries-theme-default\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\turbo_tenant\\test-results\\cart-engine-03-weighted-it-8b578-orces-multiplier-boundaries-theme-default\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\turbo_tenant\\tests\\e2e\\plugins\\cart-engine\\03-weighted-items.live.spec.ts",
+                        "column": 28,
+                        "line": 35
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "c84205279e3924df7c9a-c5e834d8238f03b50130",
+              "file": "cart-engine/03-weighted-items.live.spec.ts",
+              "line": 4,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\02-guest-cod-delivery.live.spec.ts",
+      "file": "order-management/02-guest-cod-delivery.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 02: Guest Cash On Delivery (COD) Order Placement",
+          "file": "order-management/02-guest-cod-delivery.live.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "places guest delivery order with COD and redirects to order tracking",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 26102,
+                      "error": {
+                        "message": "TimeoutError: page.waitForResponse: Timeout 15000ms exceeded while waiting for event \"response\"",
+                        "stack": "TimeoutError: page.waitForResponse: Timeout 15000ms exceeded while waiting for event \"response\"\n    at D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\02-guest-cod-delivery.live.spec.ts:19:12",
+                        "location": {
+                          "file": "D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\02-guest-cod-delivery.live.spec.ts",
+                          "column": 12,
+                          "line": 19
+                        },
+                        "snippet": "  17 |     // 2. Go to checkout\n  18 |     await Promise.all([\n> 19 |       page.waitForResponse(r => r.url().includes('/api/checkout-data') && r.status() === 200),\n     |            ^\n  20 |       page.goto('/checkout', { waitUntil: 'domcontentloaded' }),\n  21 |     ]);\n  22 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\02-guest-cod-delivery.live.spec.ts",
+                            "column": 12,
+                            "line": 19
+                          },
+                          "message": "TimeoutError: page.waitForResponse: Timeout 15000ms exceeded while waiting for event \"response\"\n\n  17 |     // 2. Go to checkout\n  18 |     await Promise.all([\n> 19 |       page.waitForResponse(r => r.url().includes('/api/checkout-data') && r.status() === 200),\n     |            ^\n  20 |       page.goto('/checkout', { waitUntil: 'domcontentloaded' }),\n  21 |     ]);\n  22 |\n    at D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\02-guest-cod-delivery.live.spec.ts:19:12"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:22:59.443Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-02-guest--1ddf4-redirects-to-order-tracking-theme-default\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-02-guest--1ddf4-redirects-to-order-tracking-theme-default\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-02-guest--1ddf4-redirects-to-order-tracking-theme-default\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-02-guest--1ddf4-redirects-to-order-tracking-theme-default\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\02-guest-cod-delivery.live.spec.ts",
+                        "column": 12,
+                        "line": 19
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "5d9615372adec5de6803-3936e1b7b480b017d2a7",
+              "file": "order-management/02-guest-cod-delivery.live.spec.ts",
+              "line": 4,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\08-orders-history-list.live.spec.ts",
+      "file": "order-management/08-orders-history-list.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 08: Customer Order History List (/orders)",
+          "file": "order-management/08-orders-history-list.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "renders customer past orders with status badges and item summaries",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 12186,
+                      "error": {
+                        "message": "Error: Failed to log in as admin@example.com: 419 {\"status\":\"error\",\"message\":\"CSRF token mismatch.\"}",
+                        "stack": "Error: Failed to log in as admin@example.com: 419 {\"status\":\"error\",\"message\":\"CSRF token mismatch.\"}\n    at loginAsCustomer (D:\\turbo_tenant\\tests\\e2e\\helpers\\auth.ts:40:11)\n    at D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\08-orders-history-list.live.spec.ts:7:5",
+                        "location": {
+                          "file": "D:\\turbo_tenant\\tests\\e2e\\helpers\\auth.ts",
+                          "column": 11,
+                          "line": 40
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m..\\helpers\\auth.ts:40\n\n  38 |\n  39 |   if (!result.success) {\n> 40 |     throw new Error(`Failed to log in as ${email}: ${result.status} ${JSON.stringify(result.data)}`);\n     |           ^\n  41 |   }\n  42 | }\n  43 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\turbo_tenant\\tests\\e2e\\helpers\\auth.ts",
+                            "column": 11,
+                            "line": 40
+                          },
+                          "message": "Error: Failed to log in as admin@example.com: 419 {\"status\":\"error\",\"message\":\"CSRF token mismatch.\"}\n\n   at ..\\helpers\\auth.ts:40\n\n  38 |\n  39 |   if (!result.success) {\n> 40 |     throw new Error(`Failed to log in as ${email}: ${result.status} ${JSON.stringify(result.data)}`);\n     |           ^\n  41 |   }\n  42 | }\n  43 |\n    at loginAsCustomer (D:\\turbo_tenant\\tests\\e2e\\helpers\\auth.ts:40:11)\n    at D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\08-orders-history-list.live.spec.ts:7:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T18:23:28.338Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-08-orders-c8dd8-s-badges-and-item-summaries-theme-default\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-08-orders-c8dd8-s-badges-and-item-summaries-theme-default\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-08-orders-c8dd8-s-badges-and-item-summaries-theme-default\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-08-orders-c8dd8-s-badges-and-item-summaries-theme-default\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\turbo_tenant\\tests\\e2e\\helpers\\auth.ts",
+                        "column": 11,
+                        "line": 40
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "532526902d21e033bb67-dd873729a5e280fda4c5",
+              "file": "order-management/08-orders-history-list.live.spec.ts",
+              "line": 5,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-02T18:22:06.455Z",
+    "duration": 96127.34999999999,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 3,
+    "flaky": 0
+  }
+}

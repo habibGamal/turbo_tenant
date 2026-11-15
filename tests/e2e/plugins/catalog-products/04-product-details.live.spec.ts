@@ -3,9 +3,6 @@ import { test, expect } from '../../helpers/live-fixture';
 test.describe('CatalogProducts Suite 04: Product Detail Page & Meta Information', () => {
   test('navigates from card click to product details page and renders all sections', async ({ page, theme }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await page.waitForResponse(
-      (r) => r.url().includes('/api/catalog-products/sections') && r.status() === 200
-    );
 
     const firstCard = theme.catalog.getProductCard(0);
     await expect(firstCard).toBeVisible({ timeout: 10000 });

@@ -7,20 +7,12 @@ namespace App\Plugins\GuestCheckout;
 use App\Core\Plugins\AbstractTenantPlugin;
 use App\Models\Tenant;
 use App\Plugins\GuestCheckout\src\Pipelines\Pipes\GuestCheckoutPermissionPipe;
-use App\Plugins\OrderManagement\src\Pipelines\OrderPipelineRegistry;
+use App\Plugins\OrderManagement\src\Contracts\OrderPipelineRegistrar;
 
 final class GuestCheckoutPlugin extends AbstractTenantPlugin
 {
     public function bootForTenant(Tenant $tenant): void
     {
-        if (app()->bound(OrderPipelineRegistry::class)) {
-            app(OrderPipelineRegistry::class)->registerValidationPipe(GuestCheckoutPermissionPipe::class, 325);
-        }
+        app(OrderPipelineRegistrar::class)->registerValidationPipe(GuestCheckoutPermissionPipe::class, 325);
     }
-
-    public function onActivate(Tenant $tenant): void {}
-
-    public function onDeactivate(Tenant $tenant): void {}
-
-    public function onUninstall(Tenant $tenant): void {}
 }

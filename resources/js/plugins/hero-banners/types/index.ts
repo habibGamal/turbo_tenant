@@ -1,3 +1,5 @@
+import { ApiSuccess } from '@/core/api/types';
+
 /**
  * TypeScript Interfaces for HeroBanners Plugin
  */
@@ -25,7 +27,4 @@ export interface HeroSlide {
 
 export type HeroBannerItem = HeroSlide;
 
-export interface HeroBannersResponse {
-    status: string;
-    data: HeroSlide[];
-}
+export type HeroBannersResponse = ApiSuccess<HeroSlide[]>;

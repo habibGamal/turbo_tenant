@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Filament\Resources\Orders\Pages;
 
-use App\Enums\OrderStatus;
 use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\OrderResource;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Services\IntegrationTokenService;

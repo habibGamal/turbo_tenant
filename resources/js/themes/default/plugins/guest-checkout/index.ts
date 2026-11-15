@@ -1,6 +1,7 @@
+import { lazy } from 'react';
 import { registerThemeOverride, SlotName } from '@/core/slots/slot-registry';
-import ThemedGuestOrderTracking from './ThemedGuestOrderTracking';
-import ThemedGuestCheckout from './ThemedGuestCheckout';
+const ThemedGuestOrderTracking = lazy(() => import('./ThemedGuestOrderTracking'));
+const ThemedGuestCheckout = lazy(() => import('./ThemedGuestCheckout'));
 
 /**
  * Register theme overrides for GuestCheckout plugin in the 'default' theme.

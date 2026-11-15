@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { useNotifications } from '../api/useNotifications';
+import { useNotifications, useUnreadNotificationsCount } from '../api/useNotifications';
 import { useNotificationMutations } from '../api/useNotificationMutations';
 
 export default function DefaultNotificationBell() {
   const [open, setOpen] = useState(false);
-  const { data, isLoading } = useNotifications();
+  const { data: notifications = [], isLoading } = useNotifications();
+  const { data: unreadData } = useUnreadNotificationsCount();
   const { markAsRead, markAllAsRead, deleteNotification } = useNotificationMutations();
 
-  const notifications = data?.notifications || [];
-  const unreadCount = data?.unread_count || 0;
+  const unreadCount = unreadData?.count || 0;
 
   return (
-    <div className="relative inline-block text-left">
+    <div className="relative inline-block text-start">
       <button
         onClick={() => setOpen(!open)}
         className="relative p-2 rounded-full hover:bg-muted text-foreground"
@@ -19,14 +19,14 @@ export default function DefaultNotificationBell() {
       >
         <span className="text-xl">🔔</span>
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
+          <span className="absolute top-0 end-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform ltr:translate-x-1/4 rtl:-translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 rounded-md shadow-lg bg-card border text-card-foreground ring-1 ring-black ring-opacity-5 z-50">
+        <div className="absolute end-0 mt-2 w-80 rounded-md shadow-lg bg-card border text-card-foreground ring-1 ring-black ring-opacity-5 z-50">
           <div className="p-3 border-b flex justify-between items-center">
             <span className="font-semibold text-sm">Notifications</span>
             {unreadCount > 0 && (

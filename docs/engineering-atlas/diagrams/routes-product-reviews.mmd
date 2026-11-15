@@ -1,0 +1,6 @@
+flowchart LR
+  B["HTTP request"]
+  B --> n549f203122ef["POST /api/products/{product}/reviews"]
+  n549f203122ef -->|"product-reviews"| n4d54f8a56367["ProductReviewsApiController@store"]
+  B --> nc75245e3cc6c["GET|HEAD /api/products/{product}/reviews"]
+  nc75245e3cc6c -->|"product-reviews"| n2f702f8384cc["ProductReviewsApiController@index"]

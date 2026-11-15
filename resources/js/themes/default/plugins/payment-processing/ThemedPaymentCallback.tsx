@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import MainLayout from '@/themes/default/layouts/MainLayout';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,9 +9,6 @@ import { usePaymentStatus } from "@/plugins/payment-processing/api/usePaymentSta
 
 export default function ThemedPaymentCallback() {
   const { id } = useParams<{ id: string }>();
-  const [searchParams] = useSearchParams();
-  const statusParam = searchParams.get("status") || "pending";
-  const messageParam = searchParams.get("message") || "";
   const { t } = useTranslation();
 
   const { data: statusData, isLoading } = usePaymentStatus(id);
@@ -24,14 +21,13 @@ export default function ThemedPaymentCallback() {
     return () => clearTimeout(timer);
   }, []);
 
-  const isSuccess = statusParam === "success" || statusData?.is_paid || statusData?.order?.payment_status === "completed";
-  const isFailed = statusParam === "failed" || statusData?.order?.payment_status === "failed";
+  const isSuccess = statusData?.is_paid || statusData?.order?.payment_status === "completed";
+  const isFailed = statusData?.order?.payment_status === "failed";
   const isConfirming = !isSuccess && !isFailed && isTimedOut;
   const isProcessing = !isSuccess && !isFailed && !isTimedOut;
 
-  const displayMessage = messageParam
-    ? decodeURIComponent(messageParam)
-    : isSuccess
+
+  const displayMessage = isSuccess
     ? t("paymentSuccessful", "Payment Successful")
     : isConfirming
     ? t("paymentPendingConfirmation", "Your payment is still being confirmed. We'll update your order shortly.")

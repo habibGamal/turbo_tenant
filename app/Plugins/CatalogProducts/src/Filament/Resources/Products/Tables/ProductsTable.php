@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Plugins\CatalogProducts\src\Filament\Resources\Products\Tables;
 
+use App\Core\Contracts\SettingsRepository;
+use App\Core\Plugins\Services\PluginContributions;
+use App\Plugins\CatalogProducts\src\Contracts\ProductDeletionGuard;
 use App\Plugins\CatalogProducts\src\Filament\Resources\Products\ProductResource;
-use App\Plugins\StoreSettings\src\Services\SettingService;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -54,12 +56,12 @@ final class ProductsTable
 
                 TextColumn::make('base_price')
                     ->label('السعر الأساسي')
-                    ->money(fn () => class_exists(SettingService::class) ? app(SettingService::class)->get('currency', 'EGP') : 'EGP')
+                    ->money(fn () => app()->bound(SettingsRepository::class) ? app(SettingsRepository::class)->get('currency', 'EGP') : 'EGP')
                     ->sortable(),
 
                 TextColumn::make('price_after_discount')
                     ->label('السعر بعد الخصم')
-                    ->money(fn () => class_exists(SettingService::class) ? app(SettingService::class)->get('currency', 'EGP') : 'EGP')
+                    ->money(fn () => app()->bound(SettingsRepository::class) ? app(SettingsRepository::class)->get('currency', 'EGP') : 'EGP')
                     ->sortable()
                     ->description(fn ($record) => $record->price_after_discount && $record->base_price && $record->base_price > 0
                         ? '-'.round((($record->base_price - $record->price_after_discount) / $record->base_price) * 100).'%'
@@ -236,7 +238,48 @@ final class ProductsTable
                         ->successNotificationTitle('تم إنشاء المتغيرات')
                         ->modalWidth('md')
                         ->deselectRecordsAfterCompletion(),
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->action(function (DeleteBulkAction $action, Collection $records): void {
+                            $guards = self::getDeletionGuards();
+                            $blockedNames = [];
+                            $recordsToDelete = new Collection();
+
+                            foreach ($records as $record) {
+                                $blocked = false;
+                                foreach ($guards as $guard) {
+                                    if ($guard instanceof ProductDeletionGuard) {
+                                        $reason = $guard->blockingReason($record);
+                                        if ($reason !== null) {
+                                            $blocked = true;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if ($blocked) {
+                                    $blockedNames[] = $record->name_ar ?: $record->name;
+                                } else {
+                                    $recordsToDelete->push($record);
+                                }
+                            }
+
+                            $recordsToDelete->each(fn ($record) => $record->delete());
+
+                            if (! empty($blockedNames)) {
+                                Notification::make()
+                                    ->warning()
+                                    ->title('تعذر حذف بعض المنتجات')
+                                    ->body('تم تخطي حذف المنتجات التالية لأنها مستخدمة: '.implode('، ', $blockedNames))
+                                    ->send();
+                            }
+
+                            if ($recordsToDelete->isNotEmpty()) {
+                                Notification::make()
+                                    ->success()
+                                    ->title(__('filament-actions::delete.multiple.notifications.deleted.title'))
+                                    ->send();
+                            }
+                        }),
                 ]),
             ])
             ->emptyStateHeading('لا توجد منتجات حتى الآن')
@@ -246,5 +289,17 @@ final class ProductsTable
                 CreateAction::make()
                     ->url(fn (): string => ProductResource::getUrl('create')),
             ]);
+    }
+
+    /**
+     * @return iterable<mixed>
+     */
+    private static function getDeletionGuards(): iterable
+    {
+        if (app()->bound(PluginContributions::class) && tenant() !== null) {
+            return app(PluginContributions::class)->active('catalog-products.product-deletion-guards');
+        }
+
+        return app()->tagged('catalog-products.product-deletion-guards');
     }
 }

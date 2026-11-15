@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Plugins\StoreSettings\src\Bootstrap;
 
+use App\Core\Contracts\SettingsRepository;
 use App\Core\Plugins\Contracts\BootstrapContributor;
 use App\Enums\SettingKey;
-use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Storage;
 
 final class StoreSettingsBootstrapContributor implements BootstrapContributor
 {
     public function __construct(
-        private readonly SettingService $settingService,
+        private readonly SettingsRepository $settingService,
     ) {}
 
     public function pluginId(): string
@@ -38,11 +38,8 @@ final class StoreSettingsBootstrapContributor implements BootstrapContributor
                 'social_facebook' => $this->settingService->get(SettingKey::SOCIAL_FACEBOOK),
                 'social_instagram' => $this->settingService->get(SettingKey::SOCIAL_INSTAGRAM),
                 'social_twitter' => $this->settingService->get(SettingKey::SOCIAL_TWITTER),
-                'social_links' => json_decode($this->settingService->get(SettingKey::SOCIAL_LINKS, '[]'), true) ?? [],
-                'cod_fee' => (float) $this->settingService->get(SettingKey::COD_FEE, 0),
-                'online_payments_enabled' => $this->settingService->get(SettingKey::ONLINE_PAYMENTS_ENABLED, 'true') === 'true',
-                'facebook_app_id' => $this->settingService->get(SettingKey::FACEBOOK_APP_ID),
-                'product_show_cards' => json_decode($this->settingService->get(SettingKey::PRODUCT_SHOW_CARDS, '[]'), true) ?? [],
+                'social_links' => $this->settingService->get(SettingKey::SOCIAL_LINKS),
+                'product_show_cards' => $this->settingService->get(SettingKey::PRODUCT_SHOW_CARDS),
                 'currency' => $this->settingService->get('currency', 'EGP'),
             ],
         ];

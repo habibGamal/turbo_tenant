@@ -42,16 +42,12 @@ export default function DefaultGuestOrderTracking({
       },
       {
         onSuccess: (data) => {
-          if (data.success && data.order) {
-            setOrder(data.order);
-            onOrderFound?.(data.order);
-          } else {
-            setErrorMessage(data.error || 'Order not found.');
-          }
+          setOrder(data);
+          onOrderFound?.(data);
         },
         onError: (err: any) => {
           const apiError =
-            err.response?.data?.error ||
+            err.response?.data?.message ||
             (err.response?.data?.errors
               ? Object.values(err.response.data.errors).flat().join(', ')
               : 'Failed to track order.');

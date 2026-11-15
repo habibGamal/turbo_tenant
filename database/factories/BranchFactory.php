@@ -23,7 +23,13 @@ final class BranchFactory extends Factory
         return [
             'name' => fake()->company(),
             'link' => fake()->url(),
-            'is_active' => fake()->boolean(90),
+            // Deterministic: orders for inactive branches are rejected, so a random value makes order tests flaky.
+            'is_active' => true,
         ];
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(fn (): array => ['is_active' => false]);
     }
 }

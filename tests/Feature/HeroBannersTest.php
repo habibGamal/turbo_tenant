@@ -39,12 +39,9 @@ it('resolves legacy model alias to plugin hero slider model', function () {
     expect($legacyInstance)->toBeInstanceOf(HeroSlider::class);
 });
 
-it('resolves legacy filament resource alias to plugin hero slider resource', function () {
-    expect(class_exists(App\Filament\Resources\HeroSliderResource::class))->toBeTrue();
-
-    expect(is_subclass_of(App\Filament\Resources\HeroSliderResource::class, Filament\Resources\Resource::class))->toBeTrue();
-    expect((new ReflectionClass(App\Filament\Resources\HeroSliderResource::class))->getName())
-        ->toBe(HeroSliderResource::class);
+it('resolves plugin hero slider resource', function () {
+    expect(class_exists(HeroSliderResource::class))->toBeTrue()
+        ->and((new ReflectionClass(HeroSliderResource::class))->isSubclassOf(Filament\Resources\Resource::class))->toBeTrue();
 });
 
 it('returns active hero sliders sorted by sort_order via service', function () {

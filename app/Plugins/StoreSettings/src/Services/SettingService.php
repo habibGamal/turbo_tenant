@@ -4,49 +4,92 @@ declare(strict_types=1);
 
 namespace App\Plugins\StoreSettings\src\Services;
 
+use App\Core\Contracts\SettingDefinition;
+use App\Core\Contracts\SettingsRepository;
+use App\Core\Contracts\SettingType;
 use App\Enums\SettingKey;
 use App\Plugins\StoreSettings\src\Models\Setting;
+use BackedEnum;
 use Illuminate\Support\Collection;
 
-final class SettingService
+final class SettingService implements SettingsRepository
 {
-    public function get(SettingKey|string $key, mixed $default = null): mixed
+    /**
+     * In-memory per-request cache of all settings for the active tenant.
+     *
+     * @var array<string, mixed>|null
+     */
+    private ?array $cache = null;
+
+    public function get(BackedEnum|string $key, mixed $default = null): mixed
     {
-        $keyValue = $key instanceof SettingKey ? $key->value : $key;
+        $this->ensureCacheLoaded();
 
-        $setting = Setting::query()
-            ->where('key', $keyValue)
-            ->first();
+        $keyValue = $this->resolveKeyString($key);
+        $hasKey = array_key_exists($keyValue, $this->cache ?? []);
+        $raw = $hasKey ? $this->cache[$keyValue] : null;
 
-        $fallback = $key instanceof SettingKey ? $key->defaultValue() : null;
+        if ($key instanceof SettingDefinition) {
+            $fallback = $default ?? $key->defaultValue();
 
-        return $setting?->value ?? $default ?? $fallback;
+            if ($raw === null) {
+                return $fallback;
+            }
+
+            return $this->castValue((string) $raw, $key->type(), $fallback);
+        }
+
+        return $raw ?? $default;
     }
 
-    public function set(SettingKey|string $key, mixed $value): void
+    public function set(BackedEnum|string $key, mixed $value): void
     {
-        $keyValue = $key instanceof SettingKey ? $key->value : $key;
+        $keyValue = $this->resolveKeyString($key);
+
+        $serializedValue = match (true) {
+            is_bool($value) => $value ? 'true' : 'false',
+            is_array($value) => json_encode($value),
+            $value === null => null,
+            default => (string) $value,
+        };
 
         Setting::query()->updateOrCreate(
             ['key' => $keyValue],
-            ['value' => $value]
+            ['value' => $serializedValue]
         );
-    }
 
-    public function setMultiple(array $settings): void
-    {
-        foreach ($settings as $key => $value) {
-            $this->set($key, $value);
+        if ($this->cache !== null) {
+            $this->cache[$keyValue] = $serializedValue;
         }
     }
 
-    public function getAll(): Collection
+    /**
+     * @param  array<array-key, mixed>  $settings
+     */
+    public function setMultiple(array $settings): void
     {
-        return Setting::query()->pluck('value', 'key');
+        foreach ($settings as $key => $value) {
+            $this->set((string) $key, $value);
+        }
     }
 
+    /**
+     * @return Collection<string, mixed>
+     */
+    public function getAll(): Collection
+    {
+        $this->ensureCacheLoaded();
+
+        return collect($this->cache);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     public function getAllAsArray(): array
     {
+        $this->ensureCacheLoaded();
+
         $settings = [];
 
         foreach (SettingKey::cases() as $key) {
@@ -56,21 +99,57 @@ final class SettingService
         return $settings;
     }
 
-    public function has(SettingKey|string $key): bool
+    public function has(BackedEnum|string $key): bool
     {
-        $keyValue = $key instanceof SettingKey ? $key->value : $key;
+        $this->ensureCacheLoaded();
 
-        return Setting::query()
-            ->where('key', $keyValue)
-            ->exists();
+        $keyValue = $this->resolveKeyString($key);
+
+        return array_key_exists($keyValue, $this->cache ?? []);
     }
 
-    public function delete(SettingKey|string $key): bool
+    public function delete(BackedEnum|string $key): bool
     {
-        $keyValue = $key instanceof SettingKey ? $key->value : $key;
+        $keyValue = $this->resolveKeyString($key);
 
-        return (bool) Setting::query()
+        $deleted = (bool) Setting::query()
             ->where('key', $keyValue)
             ->delete();
+
+        if ($this->cache !== null) {
+            unset($this->cache[$keyValue]);
+        }
+
+        return $deleted;
+    }
+
+    /**
+     * Load all tenant settings into memory on first read.
+     */
+    private function ensureCacheLoaded(): void
+    {
+        if ($this->cache === null) {
+            $this->cache = Setting::query()->pluck('value', 'key')->all();
+        }
+    }
+
+    private function resolveKeyString(BackedEnum|string $key): string
+    {
+        return $key instanceof BackedEnum ? (string) $key->value : (string) $key;
+    }
+
+    /**
+     * Stored values are always strings: 'true'/'false' for booleans and JSON for arrays (see set()).
+     */
+    private function castValue(string $value, SettingType $type, mixed $fallback): mixed
+    {
+        return match ($type) {
+            SettingType::Boolean => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+            SettingType::Number => is_numeric($value)
+                ? (str_contains($value, '.') ? (float) $value : (int) $value)
+                : $fallback,
+            SettingType::Json => is_array($decoded = json_decode($value, true)) ? $decoded : ($fallback ?? []),
+            SettingType::Text => $value,
+        };
     }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Head } from "@/components/Head";
@@ -6,9 +6,14 @@ import MainLayout from '@/themes/default/layouts/MainLayout';
 import { useTranslation } from "react-i18next";
 import { Address, Branch, Cart, Governorate, PageProps } from "@/types";
 import { PluginSlot } from "@/core/slots/PluginSlot";
-import ReactPixel from "react-facebook-pixel";
+import { emitCommerceEvent } from "@/core/analytics";
 import { CheckoutSkeleton } from "@/components/ui/page-skeletons";
-import { useCheckoutData, usePlaceOrder } from "@/plugins/order-management";
+import { usePlaceOrder } from "@/plugins/order-management";
+import { useAuth } from "@/core/context/AuthContext";
+import { useTenant } from "@/core/context/TenantContext";
+import { apiClient } from "@/core/api/client";
+import { useCart, cartItemToCommerceItem } from "@/plugins/cart-engine";
+import { useLocationsDelivery } from "@/plugins/locations-delivery";
 import { useCurrency } from "@/lib/money";
 
 // Checkout Components (Colocated within respective theme plugin directories)
@@ -17,6 +22,8 @@ import OrderTypeSelection from "@/themes/default/plugins/order-management/compon
 import BranchSelection from "@/themes/default/plugins/locations-delivery/components/BranchSelection";
 import GuestInformationForm from "@/themes/default/plugins/guest-checkout/components/GuestInformationForm";
 import DeliveryAddressSection from "@/themes/default/plugins/locations-delivery/components/DeliveryAddressSection";
+import { emptyAddress } from "@/themes/default/plugins/locations-delivery/components/CheckoutAddressForm";
+import { useSaveAddress } from "@/plugins/locations-delivery/api/useLocationsDelivery";
 import PaymentMethodSelection from "@/themes/default/plugins/order-management/components/PaymentMethodSelection";
 import OrderNotesSection from "@/themes/default/plugins/order-management/components/OrderNotesSection";
 import CouponCodeSection from "@/themes/default/plugins/order-management/components/CouponCodeSection";
@@ -44,14 +51,23 @@ export default function Checkout({
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { data: bootstrapData, isLoading } = useCheckoutData();
-    const placeOrderMutation = usePlaceOrder();
+    const { user, isAuthenticated, isLoading: isAuthLoading, refetchUser } = useAuth();
+    const { settings: tenantSettings } = useTenant();
+    const checkoutSettings = settings ?? tenantSettings;
+    const { data: cartData, isLoading: isCartLoading } = useCart();
+    const { data: locationsData, isLoading: isLocationsLoading } = useLocationsDelivery();
 
-    const cart = bootstrapData?.cart || initialCart;
-    const addresses = bootstrapData?.addresses || initialAddresses || [];
-    const branches = bootstrapData?.branches || initialBranches || [];
-    const governorates = bootstrapData?.governorates || initialGovernorates || [];
-    const is_guest = bootstrapData ? bootstrapData.is_guest : (initialIsGuest ?? !auth?.user);
+    const isLoading = isAuthLoading || isCartLoading || isLocationsLoading;
+    const placeOrderMutation = usePlaceOrder();
+    const saveAddress = useSaveAddress();
+    const [addressDraft, setAddressDraft] = useState({ ...emptyAddress });
+    const [addressDraftErrors, setAddressDraftErrors] = useState<Record<string, string>>({});
+
+    const cart = (cartData || initialCart) as Cart;
+    const addresses = (locationsData?.addresses || initialAddresses || []) as Address[];
+    const branches = (locationsData?.branches || initialBranches || []) as Branch[];
+    const governorates = (locationsData?.governorates || initialGovernorates || []) as Governorate[];
+    const is_guest = !isAuthenticated;
 
     // Coupon State
     type AppliedCoupon = {
@@ -80,6 +96,31 @@ export default function Checkout({
     };
 
     const savedGuestData = getSavedGuestData();
+
+    const lastCartSignatureRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        if (!cart?.items || cart.items.length === 0) return;
+
+        const signature = cart.items
+            .map((i) => `${i.product_id}:${i.variant?.id ?? ''}:${i.quantity}:${i.subtotal}`)
+            .join('|');
+
+        if (lastCartSignatureRef.current === signature) {
+            return;
+        }
+
+        lastCartSignatureRef.current = signature;
+
+        const items = cart.items.map((i) => cartItemToCommerceItem(i));
+
+        emitCommerceEvent('InitiateCheckout', {
+            items,
+            value: Number((cart as any).subtotal ?? cart.total) || 0,
+            currency,
+            content_type: 'product',
+        });
+    }, [cart?.items, (cart as any)?.subtotal, cart?.total, currency]);
 
     const [data, setFormData] = useState({
         branch_id: branches[0]?.id || 0,
@@ -155,6 +196,9 @@ export default function Checkout({
         }
 
         // For registered users
+        if (!data.address_id && addresses.length === 0 && addressDraft.area_id) {
+            return governorates.flatMap(g => g.areas || []).find(a => a.id === Number(addressDraft.area_id))?.shipping_cost || 0;
+        }
         if (!data.address_id) return 0;
         const address = addresses.find((a) => a.id === data.address_id);
         return address?.area?.shipping_cost || 0;
@@ -167,7 +211,7 @@ export default function Checkout({
     const calculateService = (amount: number) => {
         let service = 0;
         if (data.payment_method === 'cod') {
-            service += settings?.cod_fee || 0;
+            service += checkoutSettings.cod_fee || 0;
         }
         return service;
     };
@@ -292,7 +336,16 @@ export default function Checkout({
         }
 
         if (data.type === "web_delivery" && !is_guest && !data.address_id) {
-            validationErrors.address_id = t("pleaseSelectAddress");
+            if (addresses.length > 0) {
+                validationErrors.address_id = t("pleaseSelectAddress");
+            } else {
+                const missing: Record<string, string> = {};
+                for (const field of ['area_id', 'phone_number', 'street', 'building', 'floor', 'apartment'] as const) {
+                    if (!String(addressDraft[field]).trim()) missing[field] = t('required', 'Required');
+                }
+                setAddressDraftErrors(missing);
+                if (Object.keys(missing).length) validationErrors.address_id = t('pleaseProvideAddress', 'Please complete your delivery address.');
+            }
         }
 
         if (data.type === "web_delivery" && is_guest) {
@@ -321,39 +374,61 @@ export default function Checkout({
         setIsSubmitting(true);
 
         try {
+            if (isAuthenticated) {
+                const { data: session } = await apiClient.get('/api/tenant/auth/user');
+                if (!session.user || session.user.id !== user?.id) {
+                    refetchUser();
+                    toast.error(t('checkoutSessionExpired'));
+                    navigate('/login?redirect=%2Fcheckout', { replace: true });
+                    return;
+                }
+            }
+
+            let addressId = data.address_id;
+            if (data.type === 'web_delivery' && isAuthenticated && !addressId && addresses.length === 0) {
+                try {
+                    const address = await saveAddress.mutateAsync({ payload: { ...addressDraft, area_id: Number(addressDraft.area_id) } });
+                    addressId = address.id;
+                    setData('address_id', addressId);
+                } catch (error: any) {
+                    const serverErrors = error.response?.data?.errors;
+                    if (serverErrors) {
+                        setAddressDraftErrors(Object.fromEntries(Object.entries(serverErrors).map(([key, value]) => [key, Array.isArray(value) ? String(value[0]) : String(value)])));
+                        scrollToFirstError({ address_id: t('pleaseProvideAddress', 'Please complete your delivery address.') });
+                    } else {
+                        toast.error(error.response?.data?.message || t('somethingWentWrong'));
+                    }
+                    return;
+                }
+            }
+
+            if (data.payment_method !== 'cod') {
+                emitCommerceEvent('AddPaymentInfo', {
+                    value: totalAmount,
+                    currency,
+                });
+            }
+
             const payload = {
                 ...data,
+                address_id: addressId,
                 guest_data: is_guest ? data.guest_data : null,
             };
 
-            const responseData = await placeOrderMutation.mutateAsync(payload as any);
+            const orderData = await placeOrderMutation.mutateAsync(payload as any);
 
-            if (responseData.success) {
-                // Save guest data to localStorage for future orders
-                saveGuestDataToLocalStorage();
+            // Save guest data to localStorage for future orders
+            saveGuestDataToLocalStorage();
 
-                ReactPixel.track("Purchase", {
-                    content_ids: cart?.items?.map((item) => item.product_id) || [],
-                    contents: cart?.items?.map((item) => ({
-                        id: item.product_id,
-                        quantity: parseFloat(item.quantity) || 1,
-                    })) || [],
-                    content_type: "product",
-                    value: totalAmount,
-                    currency,
-                    num_items: cart?.items?.length || 0,
-                });
+            const { requires_payment, checkout_url, order_id, order_number, tracking_token } = orderData as any;
 
-                const { redirect_type, redirect_url, order_id } = responseData;
-
-                if (redirect_type === "external") {
-                    // Redirect to external payment gateway
-                    window.location.href = redirect_url;
-                } else if (redirect_type === "internal") {
-                    navigate(redirect_url);
-                }
+            if (requires_payment && checkout_url) {
+                // Redirect to external payment gateway
+                window.location.href = checkout_url;
+            } else if (tracking_token) {
+                navigate(`/orders/track?order_number=${encodeURIComponent(order_number)}&token=${encodeURIComponent(tracking_token)}`);
             } else {
-                handleServerErrors(responseData.errors, t("failedToPlaceOrder"));
+                navigate(`/orders/${order_id}`);
             }
         } catch (error: any) {
             console.error("Order placement error:", error);
@@ -362,15 +437,17 @@ export default function Checkout({
                 handleServerErrors(error.response.data.errors, error.response.data.message);
             } else if (error.response?.data?.message) {
                 toast.error(error.response.data.message);
+            } else if (!navigator.onLine) {
+                toast.error(t('checkoutOffline'));
             } else {
-                toast.error(t("failedToPlaceOrder"));
+                toast.error(t('checkoutUnconfirmed'));
             }
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    if (isLoading && !cart) {
+    if (isLoading) {
         return (
             <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5">
                 <Head title={t("checkout")} />
@@ -404,7 +481,7 @@ export default function Checkout({
                     </p>
                 </div>
 
-                <div className="grid lg:grid-cols-3 gap-8">
+                <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
                     {/* Checkout Form */}
                     <div className="lg:col-span-2 space-y-6">
                         <OrderTypeSelection
@@ -480,6 +557,9 @@ export default function Checkout({
                                 <DeliveryAddressSection
                                     addresses={addresses}
                                     governorates={governorates}
+                                    draft={addressDraft}
+                                    onDraftChange={(draft) => { setAddressDraft(draft); setAddressDraftErrors({}); }}
+                                    draftErrors={addressDraftErrors}
                                     selectedAddressId={data.address_id}
                                     onAddressChange={(addressId) => {
                                         setData("address_id", addressId);
@@ -497,8 +577,8 @@ export default function Checkout({
                         <PaymentMethodSelection
                             value={data.payment_method}
                             onChange={(value) => setData("payment_method", value)}
-                            onlinePaymentsEnabled={Boolean(settings?.online_payments_enabled)}
-                            codFee={settings?.cod_fee}
+                            onlinePaymentsEnabled={Boolean(checkoutSettings.online_payments_enabled)}
+                            codFee={checkoutSettings.cod_fee}
                         />
 
                         <OrderNotesSection
@@ -529,7 +609,7 @@ export default function Checkout({
                             isSubmitting={isSubmitting}
                             onPlaceOrder={handlePlaceOrder}
                             orderType={data.type}
-                            hasAddressSelected={is_guest ? Boolean(data.guest_data?.area_id) : Boolean(data.address_id)}
+                            hasAddressSelected={is_guest ? Boolean(data.guest_data?.area_id) : Boolean(data.address_id || (addresses.length === 0 && addressDraft.area_id))}
                         />
                     </div>
                 </div>

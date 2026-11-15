@@ -3,17 +3,16 @@ import { test, expect } from '../../helpers/live-fixture';
 test.describe('CartEngine Suite 01: Add to Cart & Badge Sync', () => {
   test('adds standard product to cart and increments header badge', async ({ page, theme }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await page.waitForResponse(r => r.url().includes('/api/catalog-products/sections') && r.status() === 200);
 
     const activeAddButtons = page.locator('[data-testid="product-add-to-cart"]:not([disabled])');
     await expect(activeAddButtons.first()).toBeVisible({ timeout: 10000 });
 
     // Click Add to Cart on catalog card
     const [response] = await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/cart/items') && r.status() === 201),
+      page.waitForResponse(r => new URL(r.url()).pathname === '/api/cart/items' && r.request().method() === 'POST'),
       activeAddButtons.first().click(),
     ]);
-    expect(response.ok()).toBeTruthy();
+    expect(response.status()).toBe(201);
 
     // Verify header cart badge updates to 1
     const badge = theme.cart.getBadgeCount();
@@ -23,7 +22,6 @@ test.describe('CartEngine Suite 01: Add to Cart & Badge Sync', () => {
 
   test('adds multiple distinct products and synchronizes badge count', async ({ page, theme }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await page.waitForResponse(r => r.url().includes('/api/catalog-products/sections') && r.status() === 200);
 
     const activeAddButtons = page.locator('[data-testid="product-add-to-cart"]:not([disabled])');
     await expect(activeAddButtons.first()).toBeVisible({ timeout: 10000 });
@@ -31,20 +29,22 @@ test.describe('CartEngine Suite 01: Add to Cart & Badge Sync', () => {
     test.skip(count < 2, 'Need at least 2 active products to test distinct additions');
 
     // Add First Product
-    await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/cart/items') && r.status() === 201),
+    const [firstResponse] = await Promise.all([
+      page.waitForResponse(r => new URL(r.url()).pathname === '/api/cart/items' && r.request().method() === 'POST'),
       activeAddButtons.nth(0).click(),
     ]);
+    expect(firstResponse.status()).toBe(201);
 
     const badge = theme.cart.getBadgeCount();
     await expect(badge).toBeVisible({ timeout: 5000 });
     await expect(badge).toHaveText('1');
 
     // Add Second Product
-    await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/cart/items') && r.status() === 201),
+    const [secondResponse] = await Promise.all([
+      page.waitForResponse(r => new URL(r.url()).pathname === '/api/cart/items' && r.request().method() === 'POST'),
       activeAddButtons.nth(1).click(),
     ]);
+    expect(secondResponse.status()).toBe(201);
 
     // Verify header cart badge updates to 2
     await expect(badge).toHaveText('2', { timeout: 5000 });

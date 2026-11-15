@@ -1,6 +1,7 @@
+import { lazy } from 'react';
 import { registerThemeOverride } from '@/core/slots/slot-registry';
-import ThemedPaymentCallback from './ThemedPaymentCallback';
-import ThemedKashierPayment from './ThemedKashierPayment';
+const ThemedPaymentCallback = lazy(() => import('./ThemedPaymentCallback'));
+const ThemedKashierPayment = lazy(() => import('./ThemedKashierPayment'));
 
 export function registerPaymentProcessingThemeOverride(): void {
   registerThemeOverride('default', 'payment.callback', ThemedPaymentCallback);

@@ -2,45 +2,26 @@
  * TypeScript Interfaces for OrderManagement Plugin
  */
 
-import { Order, Cart, Address, Branch, Governorate } from '@/types';
+import { Order as BaseOrder, OrderItem as BaseOrderItem, OrderItemExtra, Address, Branch, Governorate } from '@/types';
+import { ApiSuccess, PaginationMeta } from '@/core/api/types';
 
-export type { Order, OrderItem, OrderItemExtra } from '@/types';
+export type { OrderItemExtra } from '@/types';
+
+export type { OrderItemComponent } from '@/types';
+
+export type OrderItem = BaseOrderItem;
+
+export interface Order extends Omit<BaseOrder, 'items'> {
+    items: OrderItem[];
+}
 
 export interface PaginatedOrders {
     data: Order[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    from?: number;
-    to?: number;
+    meta: PaginationMeta;
 }
 
-export interface OrdersListResponse {
-    status: 'success' | 'error';
-    data: PaginatedOrders;
-    message?: string;
-}
-
-export interface OrderDetailResponse {
-    status: 'success' | 'error';
-    data: Order;
-    message?: string;
-}
-
-export interface CheckoutBootstrapData {
-    cart: Cart;
-    addresses: Address[];
-    branches: Branch[];
-    governorates: Governorate[];
-    is_guest: boolean;
-}
-
-export interface CheckoutDataResponse {
-    status: 'success' | 'error';
-    data: CheckoutBootstrapData;
-    message?: string;
-}
+export type OrdersListResponse = ApiSuccess<Order[], PaginationMeta>;
+export type OrderDetailResponse = ApiSuccess<Order>;
 
 export interface GuestData {
     name: string;
@@ -72,7 +53,7 @@ export interface BillingData {
 export interface PlaceOrderPayload {
     branch_id: number;
     payment_method: 'card' | 'wallet' | 'cod' | 'kiosk' | 'bank_transfer' | string;
-    type: 'web_delivery' | 'web_takeaway' | 'pos' | string;
+    type: 'web_delivery' | 'web_takeaway';
     address_id?: number | null;
     coupon_id?: number | null;
     note?: string | null;
@@ -80,17 +61,24 @@ export interface PlaceOrderPayload {
     billing_data?: BillingData | null;
 }
 
-export interface PlaceOrderSuccessResponse {
-    success: true;
-    redirect_type: 'internal' | 'external';
-    redirect_url: string;
+export interface MetaPurchaseTracking {
+    purchase_event_id: string;
+    order_id: string;
+    value: number;
+    currency: string;
+    content_type: "product";
+    content_ids: string[];
+    contents: Array<{ id: string; quantity: number; item_price: number }>;
+    num_items: number;
+}
+
+export interface PlaceOrderSuccessData {
     order_id: number;
-    order_number?: string;
+    order_number: string;
+    requires_payment: boolean;
+    checkout_url: string | null;
+    tracking_token?: string;
+    tracking?: MetaPurchaseTracking;
 }
 
-export interface PlaceOrderErrorResponse {
-    success: false;
-    errors: Record<string, string[]>;
-}
-
-export type PlaceOrderResponse = PlaceOrderSuccessResponse | PlaceOrderErrorResponse;
+export type PlaceOrderResponse = ApiSuccess<PlaceOrderSuccessData>;

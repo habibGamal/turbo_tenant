@@ -1,5 +1,7 @@
 import { apiClient } from '@/core/api/client';
 import { queryClient } from '@/core/api/query-client';
+import { ApiSuccess } from '@/core/api/types';
+import { Cart } from '@/plugins/cart-engine/types';
 
 export interface ExtraWithQuantity {
     id: number;
@@ -56,9 +58,9 @@ export const addToCart = async (
             extras: params.extras ?? [],
         });
 
-        dispatchCartUpdated(response.data.cart);
-        callbacks?.onSuccess?.(response.data);
-        return response.data;
+        dispatchCartUpdated(response.data.data);
+        callbacks?.onSuccess?.(response.data.data);
+        return response.data.data;
     } catch (error) {
         callbacks?.onError?.(error);
         throw error;
@@ -85,9 +87,9 @@ export const updateCartItem = async (
             }
         );
 
-        dispatchCartUpdated(response.data.cart);
-        callbacks?.onSuccess?.(response.data);
-        return response.data;
+        dispatchCartUpdated(response.data.data);
+        callbacks?.onSuccess?.(response.data.data);
+        return response.data.data;
     } catch (error) {
         callbacks?.onError?.(error);
         throw error;
@@ -106,9 +108,9 @@ export const removeCartItem = async (
     try {
         const response = await apiClient.delete(`/api/cart/items/${itemId}`);
 
-        dispatchCartUpdated(response.data.cart);
-        callbacks?.onSuccess?.(response.data);
-        return response.data;
+        dispatchCartUpdated(response.data.data);
+        callbacks?.onSuccess?.(response.data.data);
+        return response.data.data;
     } catch (error) {
         callbacks?.onError?.(error);
         throw error;
@@ -124,9 +126,9 @@ export const clearCart = async (callbacks?: CartOperationCallbacks) => {
     try {
         const response = await apiClient.delete('/api/cart');
 
-        dispatchCartUpdated(response.data.cart);
-        callbacks?.onSuccess?.(response.data);
-        return response.data;
+        dispatchCartUpdated(response.data.data);
+        callbacks?.onSuccess?.(response.data.data);
+        return response.data.data;
     } catch (error) {
         callbacks?.onError?.(error);
         throw error;
@@ -142,8 +144,8 @@ export const getCart = async (callbacks?: CartOperationCallbacks) => {
     try {
         const response = await apiClient.get('/api/cart');
 
-        callbacks?.onSuccess?.(response.data);
-        return response.data;
+        callbacks?.onSuccess?.(response.data.data);
+        return response.data.data;
     } catch (error) {
         callbacks?.onError?.(error);
         throw error;

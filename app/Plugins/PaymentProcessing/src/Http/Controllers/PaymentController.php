@@ -6,8 +6,8 @@ namespace App\Plugins\PaymentProcessing\src\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Plugins\PaymentProcessing\src\Contracts\PaymentCallbackServiceInterface;
+use App\Plugins\PaymentProcessing\src\Http\Requests\PaymentCallbackRequest;
 use Exception;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 final class PaymentController extends Controller
@@ -19,7 +19,7 @@ final class PaymentController extends Controller
     /**
      * Handle payment callback (redirect from payment gateways)
      */
-    public function paymentCallback(Request $request, int $orderId): mixed
+    public function paymentCallback(PaymentCallbackRequest $request, int $orderId): mixed
     {
         // If already redirected to callback status in SPA, render SPA view
         if ($request->has('status')) {
@@ -34,6 +34,7 @@ final class PaymentController extends Controller
             Log::error('Payment callback exception', [
                 'merchant_order_id' => (string) $orderId,
                 'result' => 'error',
+                'error' => $e->getMessage(),
             ]);
 
             return redirect("/orders/{$orderId}/payment/callback?status=failed");

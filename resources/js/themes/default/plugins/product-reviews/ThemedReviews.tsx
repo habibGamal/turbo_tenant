@@ -14,11 +14,10 @@ export default function ThemedReviews(props: ThemedReviewsProps) {
   const productId = props.productId || props.context?.productId;
   const numId = Number(productId);
 
-  const { data, isLoading } = useProductReviews(numId);
+  const { data: reviews = [], isLoading } = useProductReviews(numId);
 
   if (!numId) return null;
 
-  const reviews = data?.data || [];
   const averageRating = reviews.length > 0
     ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
     : 5;

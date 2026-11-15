@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Plugins\PosIntegration\src\Filament\Widgets;
 
+use App\Core\Contracts\SettingsRepository;
 use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\OrderResource;
 use App\Plugins\OrderManagement\src\Models\Order;
-use App\Plugins\StoreSettings\src\Services\SettingService;
-use Filament\Actions\Action;
-use Filament\Notifications\Notification;
+use App\Plugins\PosIntegration\src\Filament\Actions\OrderDeliveryActions;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -23,7 +22,7 @@ final class PosFailedOrdersTable extends BaseWidget
 
     public static function canView(): bool
     {
-        if (! class_exists(Order::class)) {
+        if (! class_exists(Order::class) || ! OrderDeliveryActions::authorized()) {
             return false;
         }
 
@@ -68,32 +67,15 @@ final class PosFailedOrdersTable extends BaseWidget
                     ->dateTimeTooltip(),
             ])
             ->recordActions([
-                Action::make('resend')
-                    ->label('إعادة الإرسال')
-                    ->icon('heroicon-o-arrow-path')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->modalHeading('إعادة الإرسال لنقطة البيع')
-                    ->modalDescription('هل أنت متأكد من إعادة إرسال هذا الطلب لنقطة البيع؟')
-                    ->modalSubmitActionLabel('تأكيد')
-                    ->action(function (Order $record): void {
-                        $record->update([
-                            'pos_status' => class_exists(OrderPosStatus::class) ? OrderPosStatus::READY : 'ready',
-                        ]);
-
-                        Notification::make()
-                            ->title('تم إعادة إرسال الطلب لنقطة البيع')
-                            ->success()
-                            ->send();
-                    }),
+                OrderDeliveryActions::send(retry: true),
             ]);
     }
 
     private function getCurrency(): string
     {
-        if (class_exists(SettingService::class)) {
+        if (app()->bound(SettingsRepository::class)) {
             try {
-                return (string) (app(SettingService::class)->get('currency', 'EGP') ?? 'EGP');
+                return (string) (app(SettingsRepository::class)->get('currency', 'EGP') ?? 'EGP');
             } catch (Throwable) {
                 return 'EGP';
             }

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Tests\Feature\Security;
 
 use App\Core\Plugins\Enums\PluginStatus;
-use App\Enums\OrderStatus;
-use App\Enums\PaymentStatus;
 use App\Models\TenantPlugin;
 use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
+use App\Plugins\OrderManagement\src\Enums\PaymentStatus;
 use App\Plugins\OrderManagement\src\Models\Order;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

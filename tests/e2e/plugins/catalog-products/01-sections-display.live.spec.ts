@@ -4,11 +4,6 @@ test.describe('CatalogProducts Suite 01: Storefront Sections Display', () => {
   test('renders homepage sections and product cards with valid metadata', async ({ page, theme }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
-    // Wait for the sections live API
-    await page.waitForResponse(
-      (r) => r.url().includes('/api/catalog-products/sections') && r.status() === 200
-    );
-
     // Verify sections container
     const sections = theme.catalog.getSections();
     await expect(sections.first()).toBeVisible({ timeout: 10000 });
@@ -41,9 +36,6 @@ test.describe('CatalogProducts Suite 01: Storefront Sections Display', () => {
 
   test('renders sale badges on discounted products', async ({ page, theme }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await page.waitForResponse(
-      (r) => r.url().includes('/api/catalog-products/sections') && r.status() === 200
-    );
 
     const productCards = theme.catalog.getProductCards();
     await expect(productCards.first()).toBeVisible({ timeout: 10000 });

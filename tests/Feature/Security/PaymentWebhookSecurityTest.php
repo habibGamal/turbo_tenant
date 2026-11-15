@@ -5,16 +5,18 @@ declare(strict_types=1);
 namespace Tests\Feature\Security;
 
 use App\Core\Plugins\Enums\PluginStatus;
-use App\Enums\PaymentStatus;
 use App\Models\TenantPlugin;
 use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\Enums\PaymentStatus;
+use App\Plugins\OrderManagement\src\Events\OrderPaymentCompleted;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\PaymentProcessing\src\DTOs\PaymentProcessingConfig;
 use App\Plugins\PaymentProcessing\src\Models\PaymentEvent;
+use App\Plugins\PaymentProcessing\src\Services\GatewayRegistry;
 use App\Plugins\PaymentProcessing\src\Services\KashierService;
-use App\Plugins\PaymentProcessing\src\Services\PaymentGatewayFactory;
 use App\Plugins\PaymentProcessing\src\Services\PaymobService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 #[\PHPUnit\Framework\Attributes\Group('security')]
@@ -150,6 +152,7 @@ final class PaymentWebhookSecurityTest extends TestCase
 
         $payload = $this->buildPaymobPayload($order, 'TXN-REPLAY-99', true);
         $hmac = $this->computePaymobHmac($payload['obj'], self::PAYMOB_SECRET);
+        Event::fake([OrderPaymentCompleted::class]);
 
         // First attempt succeeds
         $firstResponse = $this->postJson("/api/webhooks/paymob?hmac={$hmac}", $payload);
@@ -166,6 +169,7 @@ final class PaymentWebhookSecurityTest extends TestCase
         // Verify state is untouched and count of payment events is 1
         $this->assertSame(1, PaymentEvent::where('gateway', 'paymob')->where('transaction_id', 'TXN-REPLAY-99')->count());
         $this->assertSame(PaymentStatus::COMPLETED, $order->fresh()->payment_status);
+        Event::assertDispatchedTimes(OrderPaymentCompleted::class, 1);
     }
 
     public function test_completed_to_failed_is_ignored(): void
@@ -290,6 +294,56 @@ final class PaymentWebhookSecurityTest extends TestCase
         $this->assertSame(OrderPosStatus::READY, $orderAfterReplay->pos_status);
     }
 
+    public function test_signed_paymob_webhook_confirms_payment_before_customer_callback(): void
+    {
+        $this->setConfig();
+        $customer = \App\Models\User::factory()->create();
+        $branch = \App\Plugins\LocationsDelivery\src\Models\Branch::factory()->create(['is_active' => true]);
+        $product = \App\Plugins\CatalogProducts\src\Models\Product::factory()->create([
+            'base_price' => 100, 'price_after_discount' => null, 'is_active' => true,
+            'sell_by_weight' => false, 'extra_option_id' => null,
+        ]);
+        app()->instance(PaymentProcessingConfig::class, new PaymentProcessingConfig(
+            activeGateway: 'paymob',
+            paymobSecretKey: 'sandbox-secret',
+            paymobPublicKey: 'sandbox-public',
+            paymobIntegrationIds: [12345],
+            paymobHmacSecret: self::PAYMOB_SECRET,
+            paymobCurrency: 'EGP',
+        ));
+        \Illuminate\Support\Facades\Http::fake([
+            'accept.paymob.com/v1/intention/' => \Illuminate\Support\Facades\Http::response([
+                'id' => 'intention-test', 'client_secret' => 'client-secret-test',
+            ]),
+        ]);
+        $this->actingAs($customer);
+        Event::fake([OrderPaymentCompleted::class]);
+
+        $this->postJson('/api/cart/items', ['product_id' => $product->id, 'quantity' => 1])->assertCreated();
+        $placement = $this->postJson('/api/orders/place', [
+            'branch_id' => $branch->id, 'payment_method' => 'card', 'type' => 'web_takeaway',
+        ])->assertOk()->assertJsonPath('data.requires_payment', true);
+        $order = Order::findOrFail($placement->json('data.order_id'));
+        $this->assertSame(PaymentStatus::PENDING, $order->payment_status);
+
+        $this->get("/orders/{$order->id}/payment/callback?success=true")
+            ->assertRedirect("/orders/{$order->id}/payment/callback?status=pending");
+        $this->getJson("/api/orders/{$order->id}/payment-status")
+            ->assertOk()->assertJsonPath('data.is_paid', false);
+
+        $payload = $this->buildPaymobPayload($order, 'TXN-CALLBACK-FLOW', true);
+        $hmac = $this->computePaymobHmac($payload['obj'], self::PAYMOB_SECRET);
+        $this->postJson("/api/webhooks/paymob?hmac={$hmac}", $payload)->assertOk();
+
+        $this->assertSame(PaymentStatus::COMPLETED, $order->fresh()->payment_status);
+        $this->getJson("/api/orders/{$order->id}/payment-status")
+            ->assertOk()->assertJsonPath('data.is_paid', true);
+        $this->get("/orders/{$order->id}/payment/callback")
+            ->assertRedirect("/orders/{$order->id}/payment/callback?status=success");
+        $this->postJson("/api/webhooks/paymob?hmac={$hmac}", $payload)->assertOk();
+        Event::assertDispatchedTimes(OrderPaymentCompleted::class, 1);
+    }
+
     private function setConfig(
         string $activeGateway = 'paymob',
         string $paymobHmac = self::PAYMOB_SECRET,
@@ -306,7 +360,7 @@ final class PaymentWebhookSecurityTest extends TestCase
         app()->instance(PaymentProcessingConfig::class, $config);
         app()->forgetInstance(PaymobService::class);
         app()->forgetInstance(KashierService::class);
-        app()->forgetInstance(PaymentGatewayFactory::class);
+        app()->forgetInstance(GatewayRegistry::class);
     }
 
     private function buildPaymobPayload(Order $order, string $txnId, bool $success, array $overrides = []): array

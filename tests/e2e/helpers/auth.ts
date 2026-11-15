@@ -12,15 +12,23 @@ export async function loginAsCustomer(
   if (page.url() === 'about:blank') {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
   }
+  // Let the storefront's initial requests finish setting the session cookies.
+  await page.waitForLoadState('networkidle');
 
   const result = await page.evaluate(async ({ email, password }) => {
     try {
+      if (!document.cookie.split('; ').some((cookie) => cookie.startsWith('XSRF-TOKEN='))) {
+        await fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' });
+      }
+      const csrfCookie = document.cookie.split('; ').find((cookie) => cookie.startsWith('XSRF-TOKEN='));
+      const csrfToken = csrfCookie ? decodeURIComponent(csrfCookie.slice('XSRF-TOKEN='.length)) : '';
       const res = await fetch('/api/tenant/auth/login', {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
+          'X-XSRF-TOKEN': csrfToken,
         },
         body: JSON.stringify({ email, password }),
         credentials: 'same-origin',

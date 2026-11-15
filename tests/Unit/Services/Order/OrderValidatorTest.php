@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Order;
 
-use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
-use App\Enums\PaymentMethod;
 use App\Enums\SettingKey;
-use App\Plugins\OrderManagement\src\Exceptions\OrderValidationException;
-use App\Plugins\LocationsDelivery\src\Models\Branch;
-use App\Plugins\CouponsPromotions\src\Models\Coupon;
-use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Models\User;
+use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\CouponsPromotions\src\Models\Coupon;
+use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
+use App\Plugins\OrderManagement\src\Enums\PaymentMethod;
+use App\Plugins\OrderManagement\src\Exceptions\OrderValidationException;
 use App\Plugins\OrderManagement\src\Services\Validators\OrderValidator;
 use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\CartLines;
 use Tests\TestCase;
 
 final class OrderValidatorTest extends TestCase
@@ -48,7 +49,7 @@ final class OrderValidatorTest extends TestCase
             paymentMethod: PaymentMethod::COD
         );
 
-        $this->validator->validate($data, ['items' => []]);
+        $this->validator->validate($data, []);
     }
 
     public function test_throws_exception_when_cart_contains_inactive_product(): void
@@ -68,14 +69,7 @@ final class OrderValidatorTest extends TestCase
             paymentMethod: PaymentMethod::COD
         );
 
-        $cart = [
-            'items' => [
-                [
-                    'product_id' => $inactiveProduct->id,
-                    'subtotal' => 50,
-                ],
-            ],
-        ];
+        $cart = [CartLines::make($inactiveProduct->id, 50)];
 
         $this->validator->validate($data, $cart);
     }
@@ -106,14 +100,7 @@ final class OrderValidatorTest extends TestCase
             paymentMethod: PaymentMethod::COD
         );
 
-        $cart = [
-            'items' => [
-                [
-                    'product_id' => $product->id,
-                    'subtotal' => 50,
-                ],
-            ],
-        ];
+        $cart = [CartLines::make($product->id, 50)];
 
         $this->validator->validate($data, $cart);
     }
@@ -137,14 +124,7 @@ final class OrderValidatorTest extends TestCase
             couponId: $coupon->id
         );
 
-        $cart = [
-            'items' => [
-                [
-                    'product_id' => $product->id,
-                    'subtotal' => 100,
-                ],
-            ],
-        ];
+        $cart = [CartLines::make($product->id, 100)];
 
         $validatedCoupon = $this->validator->validate($data, $cart);
 

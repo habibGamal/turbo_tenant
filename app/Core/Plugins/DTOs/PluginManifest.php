@@ -30,6 +30,7 @@ final readonly class PluginManifest
         public ?string $tenantMigrationsPath = null,
         public array $listeners = [],
         public array $tenantScoped = [],
+        public ?string $pluginClass = null,
     ) {}
 
     /**
@@ -63,6 +64,30 @@ final readonly class PluginManifest
             tenantMigrationsPath: $hasMigrations ? $migrationsPath : null,
             listeners: (array) ($data['listeners'] ?? []),
             tenantScoped: (array) ($data['tenant_scoped'] ?? []),
+            pluginClass: isset($data['plugin']) && (string) $data['plugin'] !== '' ? (string) $data['plugin'] : null,
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'version' => $this->version,
+            'category' => $this->category->value,
+            'basePath' => $this->basePath,
+            'description' => $this->description,
+            'author' => $this->author,
+            'is_core' => $this->isCore,
+            'dependencies' => $this->dependencies,
+            'providers' => $this->providers,
+            'filament' => $this->filamentPlugin,
+            'plugin' => $this->pluginClass,
+            'listeners' => $this->listeners,
+            'tenant_scoped' => $this->tenantScoped,
+        ];
     }
 }

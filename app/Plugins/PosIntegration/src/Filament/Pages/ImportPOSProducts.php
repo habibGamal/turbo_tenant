@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Plugins\PosIntegration\src\Filament\Pages;
 
-use App\Plugins\PosIntegration\src\Services\ProductPOSImporterService;
+use App\Plugins\PosIntegration\src\Exceptions\PosMasterUnavailable;
+use App\Plugins\PosIntegration\src\Services\PosCatalogDiff;
+use App\Plugins\PosIntegration\src\Services\PosProductImporter;
 use BackedEnum;
 use Exception;
 use Filament\Actions\Action;
@@ -48,8 +50,8 @@ final class ImportPOSProducts extends Page implements HasForms, HasTable
             ->description('اختر المنتجات التي تريد استيرادها من نقطة البيع الرئيسية')
             ->records(function (array $filters): array {
                 try {
-                    $service = app(ProductPOSImporterService::class);
-                    $newProducts = $service->findNewProducts();
+                    $diff = app(PosCatalogDiff::class);
+                    $newProducts = $diff->findNewProducts();
 
                     // Apply category filter
                     if (filled($filters['categoryName']['value'] ?? null)) {
@@ -72,7 +74,7 @@ final class ImportPOSProducts extends Page implements HasForms, HasTable
                             'index' => $index,
                         ];
                     })->values()->toArray();
-                } catch (Exception $e) {
+                } catch (PosMasterUnavailable $e) {
                     Notification::make()
                         ->title('خطأ في الاتصال')
                         ->body($e->getMessage())
@@ -124,14 +126,14 @@ final class ImportPOSProducts extends Page implements HasForms, HasTable
                     ->label('الفئة')
                     ->options(function (): array {
                         try {
-                            $service = app(ProductPOSImporterService::class);
-                            $newProducts = $service->findNewProducts();
+                            $diff = app(PosCatalogDiff::class);
+                            $newProducts = $diff->findNewProducts();
 
                             return $newProducts
                                 ->pluck('categoryName', 'categoryName')
                                 ->unique()
                                 ->toArray();
-                        } catch (Exception $e) {
+                        } catch (PosMasterUnavailable $e) {
                             return [];
                         }
                     })
@@ -195,30 +197,36 @@ final class ImportPOSProducts extends Page implements HasForms, HasTable
     protected function importSelectedProducts(Collection $records): void
     {
         try {
-            $service = app(ProductPOSImporterService::class);
+            $importer = app(PosProductImporter::class);
             $productIds = $records->pluck('id')->toArray();
 
-            $result = $service->importProducts($productIds);
+            $result = $importer->importProducts($productIds);
 
-            if ($result['imported'] > 0) {
+            if ($result->count > 0) {
                 Notification::make()
                     ->title('تم الاستيراد بنجاح')
-                    ->body("تم استيراد {$result['imported']} منتج بنجاح")
+                    ->body("تم استيراد {$result->count} منتج بنجاح")
                     ->success()
                     ->send();
             }
 
-            if ($result['failed'] > 0) {
+            if ($result->failedCount > 0) {
                 Notification::make()
                     ->title('تحذير')
-                    ->body("فشل استيراد {$result['failed']} منتج")
+                    ->body("فشل استيراد {$result->failedCount} منتج")
                     ->warning()
                     ->send();
 
-                foreach ($result['errors'] as $error) {
+                foreach ($result->errors as $error) {
                     Log::warning($error);
                 }
             }
+        } catch (PosMasterUnavailable $e) {
+            Notification::make()
+                ->title('خطأ في الاتصال')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
         } catch (Exception $e) {
             Notification::make()
                 ->title('خطأ في الاستيراد')
@@ -231,8 +239,9 @@ final class ImportPOSProducts extends Page implements HasForms, HasTable
     protected function importAllProducts(): void
     {
         try {
-            $service = app(ProductPOSImporterService::class);
-            $newProducts = $service->findNewProducts();
+            $diff = app(PosCatalogDiff::class);
+            $importer = app(PosProductImporter::class);
+            $newProducts = $diff->findNewProducts();
             $productIds = $newProducts->pluck('id')->toArray();
 
             if (empty($productIds)) {
@@ -244,28 +253,34 @@ final class ImportPOSProducts extends Page implements HasForms, HasTable
                 return;
             }
 
-            $result = $service->importProducts($productIds);
+            $result = $importer->importProducts($productIds);
 
-            if ($result['imported'] > 0) {
+            if ($result->count > 0) {
                 Notification::make()
                     ->title('تم الاستيراد بنجاح')
-                    ->body("تم استيراد {$result['imported']} منتج بنجاح")
+                    ->body("تم استيراد {$result->count} منتج بنجاح")
                     ->success()
                     ->duration(5000)
                     ->send();
             }
 
-            if ($result['failed'] > 0) {
+            if ($result->failedCount > 0) {
                 Notification::make()
                     ->title('تحذير')
-                    ->body("فشل استيراد {$result['failed']} منتج")
+                    ->body("فشل استيراد {$result->failedCount} منتج")
                     ->warning()
                     ->send();
 
-                foreach ($result['errors'] as $error) {
+                foreach ($result->errors as $error) {
                     Log::warning($error);
                 }
             }
+        } catch (PosMasterUnavailable $e) {
+            Notification::make()
+                ->title('خطأ في الاتصال')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
         } catch (Exception $e) {
             Notification::make()
                 ->title('خطأ في الاستيراد')

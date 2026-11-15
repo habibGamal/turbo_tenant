@@ -1,3 +1,4 @@
+import { LoaderIcon } from "lucide-react";
 import React, { useState } from "react";
 import { Star, Upload, X, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -163,7 +164,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
                 >
                     {isPending ? (
                         <span className="flex items-center gap-2">
-                            <span className="animate-spin">⏳</span> {t("submitting")}
+                            <LoaderIcon className="inline h-4 w-4 animate-spin" /> {t("submitting")}
                         </span>
                     ) : t("submitReview")}
                 </Button>

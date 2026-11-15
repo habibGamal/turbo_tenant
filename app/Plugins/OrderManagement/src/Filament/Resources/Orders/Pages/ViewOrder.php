@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Filament\Resources\Orders\Pages;
 
-use App\Enums\OrderStatus;
-use App\Enums\SettingKey;
-use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
+use App\Core\Contracts\SettingsRepository;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
 use App\Plugins\OrderManagement\src\Filament\Resources\Orders\OrderResource;
 use App\Plugins\OrderManagement\src\Models\Order;
-use App\Plugins\StoreSettings\src\Services\SettingService;
+use App\Plugins\OrderManagement\src\Settings\OrderSettingKey;
+use App\Plugins\PosIntegration\src\Filament\Actions\OrderDeliveryActions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -20,11 +20,19 @@ final class ViewOrder extends ViewRecord
 {
     protected static string $resource = OrderResource::class;
 
+    public function refreshPosDelivery(): void
+    {
+        $this->authorizeAccess();
+        if (OrderDeliveryActions::enabled()) {
+            $this->getRecord()->refresh()->load('posDelivery');
+        }
+    }
+
     protected function getHeaderActions(): array
     {
-        $allowManualUpdate = filter_var(
-            app(SettingService::class)->get(SettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE, false),
-            FILTER_VALIDATE_BOOLEAN
+        $allowManualUpdate = (bool) app(SettingsRepository::class)->get(
+            OrderSettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE,
+            false
         );
 
         return [
@@ -52,19 +60,9 @@ final class ViewOrder extends ViewRecord
                         ->send();
                 }),
 
-            Action::make('resend_to_pos')
-                ->label('إعادة الإرسال لنقطة البيع')
-                ->icon('heroicon-o-arrow-path')
-                ->color('warning')
-                ->requiresConfirmation()
-                ->modalHeading('إعادة الإرسال لنقطة البيع')
-                ->modalDescription('هل أنت متأكد من إعادة إرسال هذا الطلب لنقطة البيع؟')
-                ->modalSubmitActionLabel('تأكيد')
-                ->action(function (Order $record): void {
-                    $record->update(['pos_status' => class_exists(OrderPosStatus::class) ? OrderPosStatus::READY : 'ready']);
-                    Notification::make()->title('تم إعادة إرسال الطلب لنقطة البيع')->success()->send();
-                })
-                ->visible(fn (Order $record) => class_exists(OrderPosStatus::class) && ($record->pos_status === OrderPosStatus::FAILED || $record->pos_status === 'failed')),
+            OrderDeliveryActions::send(),
+            OrderDeliveryActions::send(retry: true),
+            OrderDeliveryActions::verify(),
         ];
     }
 }

@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Plugins\PaymentProcessing\src\Services;
 
-use App\Plugins\OrderManagement\src\Contracts\PaymentGatewayInterface;
+use App\Plugins\OrderManagement\src\Contracts\PaymentIntention;
 use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\PaymentProcessing\src\Contracts\PaymentGatewayInterface;
+use App\Plugins\PaymentProcessing\src\DTOs\GatewayWebhookData;
 use App\Plugins\PaymentProcessing\src\DTOs\PaymentProcessingConfig;
+use App\Plugins\PaymentProcessing\src\DTOs\RefundResult;
 use App\Plugins\PaymentProcessing\src\Exceptions\PaymentGatewayNotConfiguredException;
 use Exception;
 use Illuminate\Support\Facades\Http;
@@ -14,6 +17,8 @@ use Illuminate\Support\Facades\Log;
 
 final class PaymobService implements PaymentGatewayInterface
 {
+    public const ID = 'paymob';
+
     private string $baseUrl;
 
     private string $secretKey;
@@ -42,7 +47,7 @@ final class PaymobService implements PaymentGatewayInterface
      */
     public function getGatewayId(): string
     {
-        return 'paymob';
+        return self::ID;
     }
 
     /**
@@ -56,7 +61,7 @@ final class PaymobService implements PaymentGatewayInterface
     /**
      * Create a payment intention for an order
      */
-    public function createPaymentIntention(Order $order, array $billingData, string $redirectionUrl, string $notificationUrl): array
+    public function createPaymentIntention(Order $order, array $billingData, string $redirectionUrl, string $notificationUrl): PaymentIntention
     {
         $merchantOrderId = $this->generateMerchantOrderId($order);
         $payload = [
@@ -103,11 +108,10 @@ final class PaymobService implements PaymentGatewayInterface
                     'merchant_order_id' => $merchantOrderId,
                 ]);
 
-                return [
-                    'success' => true,
-                    'data' => $data,
-                    'checkout_url' => $this->buildCheckoutUrl($data['client_secret']),
-                ];
+                return PaymentIntention::created(
+                    checkoutUrl: $this->buildCheckoutUrl($data['client_secret']),
+                    data: $data,
+                );
             }
 
             Log::error('Paymob payment intention failed', [
@@ -116,20 +120,18 @@ final class PaymobService implements PaymentGatewayInterface
                 'response' => $response->json(),
             ]);
 
-            return [
-                'success' => false,
-                'error' => $response->json()['detail'] ?? 'Failed to create payment intention',
-            ];
+            return PaymentIntention::failed(
+                $response->json()['detail'] ?? 'Failed to create payment intention'
+            );
         } catch (Exception $e) {
             Log::error('Paymob payment intention exception', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
             ]);
 
-            return [
-                'success' => false,
-                'error' => 'Payment service error: '.$e->getMessage(),
-            ];
+            return PaymentIntention::failed(
+                'Payment service error: '.$e->getMessage()
+            );
         }
     }
 
@@ -155,7 +157,8 @@ final class PaymobService implements PaymentGatewayInterface
             return false;
         }
 
-        $concatenatedString = $this->buildHmacStringForWebhook($data);
+        $transactionData = $data['obj'] ?? $data;
+        $concatenatedString = $this->buildHmacStringForWebhook($transactionData);
         $calculatedHmac = hash_hmac('sha512', $concatenatedString, $this->hmacSecret);
 
         return hash_equals($calculatedHmac, $receivedHmac);
@@ -181,10 +184,10 @@ final class PaymobService implements PaymentGatewayInterface
     /**
      * Process webhook callback
      */
-    public function processWebhook(array $webhookData): array
+    public function processWebhook(array $webhookData): GatewayWebhookData
     {
         try {
-            $transaction = $webhookData['obj'] ?? [];
+            $transaction = $webhookData['obj'] ?? $webhookData;
 
             $transactionId = $transaction['id'] ?? null;
             $success = $transaction['success'] ?? false;
@@ -199,17 +202,16 @@ final class PaymobService implements PaymentGatewayInterface
             // Determine payment status
             $paymentStatus = $this->determinePaymentStatus($success, $pending, $isRefunded, $isVoided);
 
-            return [
-                'transaction_id' => (string) $transactionId,
-                'merchant_order_id' => (string) $merchantOrderId,
-                'payment_status' => $paymentStatus,
-                'payment_method' => $paymentMethod,
-                'amount_cents' => (int) $amountCents,
-                'currency' => (string) $currency,
-                'success' => $success,
-                'pending' => $pending,
-                'payment_data' => json_encode($transaction),
-            ];
+            return new GatewayWebhookData(
+                transactionId: (string) $transactionId,
+                merchantOrderId: (string) $merchantOrderId,
+                amountCents: (int) $amountCents,
+                currency: (string) $currency,
+                successful: (bool) $success,
+                paymentStatus: $paymentStatus,
+                raw: $transaction,
+                paymentData: json_encode($transaction) ?: null,
+            );
         } catch (Exception $e) {
             Log::error('Error processing Paymob webhook', [
                 'error' => $e->getMessage(),
@@ -222,7 +224,7 @@ final class PaymobService implements PaymentGatewayInterface
     /**
      * Refund a transaction
      */
-    public function refundTransaction(string $transactionId, float $amount): array
+    public function refundTransaction(string $transactionId, float $amount): RefundResult
     {
         $payload = [
             'transaction_id' => (int) $transactionId,
@@ -244,10 +246,7 @@ final class PaymobService implements PaymentGatewayInterface
                     'amount' => $amount,
                 ]);
 
-                return [
-                    'success' => true,
-                    'data' => $data,
-                ];
+                return RefundResult::success($data);
             }
 
             Log::error('Paymob refund failed', [
@@ -255,20 +254,14 @@ final class PaymobService implements PaymentGatewayInterface
                 'status' => $response->status(),
             ]);
 
-            return [
-                'success' => false,
-                'error' => $response->json()['detail'] ?? 'Refund failed',
-            ];
+            return RefundResult::failure($response->json()['detail'] ?? 'Refund failed');
         } catch (Exception $e) {
             Log::error('Paymob refund exception', [
                 'transaction_id' => $transactionId,
                 'error' => $e->getMessage(),
             ]);
 
-            return [
-                'success' => false,
-                'error' => 'Refund service error: '.$e->getMessage(),
-            ];
+            return RefundResult::failure('Refund service error: '.$e->getMessage());
         }
     }
 

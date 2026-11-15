@@ -1,0 +1,12 @@
+flowchart LR
+  B["HTTP request"]
+  B --> n9e3d894dde92["GET|HEAD /api/orders/{orderId}/payment-status"]
+  n9e3d894dde92 -->|"payment-processing"| n06b0809196ec["PaymentProcessingApiController@paymentStatus"]
+  B --> n7435335a3402["GET|HEAD /api/payments/{order}/kashier-config"]
+  n7435335a3402 -->|"payment-processing"| na80f9f68b8e8["PaymentProcessingApiController@kashierConfig"]
+  B --> n6f0665deb779["POST /api/webhooks/kashier"]
+  n6f0665deb779 -->|"no route plugin gate"| nd5add8f3872f["KashierWebhookController@handle"]
+  B --> n8d5e2c11ca73["POST /api/webhooks/paymob"]
+  n8d5e2c11ca73 -->|"no route plugin gate"| n3382a28c4bf1["PaymobWebhookController@handle"]
+  B --> na1b5fda96a9d["GET|HEAD /orders/{orderId}/payment/callback"]
+  na1b5fda96a9d -->|"payment-processing"| n3b386361f319["PaymentController@paymentCallback"]

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/core/api/client';
+import { ApiSuccess } from '@/core/api/types';
 import { KashierConfigData } from '../types';
 
 export function useKashierConfig(orderId?: string | number) {
@@ -9,7 +10,7 @@ export function useKashierConfig(orderId?: string | number) {
       if (!orderId) {
         throw new Error('Order ID is required to fetch Kashier configuration');
       }
-      const { data } = await apiClient.get(`/payments/${orderId}/kashier-config`);
+      const { data } = await apiClient.get<ApiSuccess<KashierConfigData>>(`/api/payments/${orderId}/kashier-config`);
       return data.data;
     },
     enabled: !!orderId,

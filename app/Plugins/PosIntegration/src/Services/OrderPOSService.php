@@ -6,9 +6,11 @@ namespace App\Plugins\PosIntegration\src\Services;
 
 use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\PosIntegration\src\Exceptions\PosDeliveryOutcomeUnknown;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\OrderPOSPayloadBuilderInterface;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\POSApiClientInterface;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\POSErrorResponseHandlerInterface;
+use Closure;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -47,7 +49,7 @@ class OrderPOSService
      *
      * @throws Exception
      */
-    public function placeOrder(Order $order): array
+    public function placeOrder(Order $order, ?Closure $beforeSend = null): array
     {
         // Ensure required relationships are loaded
         $order->loadMissing([
@@ -59,6 +61,7 @@ class OrderPOSService
             'items.variant',
             'items.weightOptionValue',
             'items.extras.extraOptionItem',
+            'items.components',
         ]);
 
         $branch = $order->branch;
@@ -75,7 +78,12 @@ class OrderPOSService
 
         // 3. Send order to POS
         try {
+            $beforeSend?->__invoke();
             $result = $this->apiClient->sendOrder($branch, $payload);
+
+            if ($result['status'] >= 500) {
+                throw new PosDeliveryOutcomeUnknown('لا يمكن التواصل مع الفرع في الوقت الحالي');
+            }
 
             if (! $result['successful']) {
                 return $this->errorHandler->handle($result['data'], $result['status'], $branch);

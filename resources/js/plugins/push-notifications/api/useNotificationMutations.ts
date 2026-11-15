@@ -1,5 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/core/api/client';
+import { ApiSuccess } from '@/core/api/types';
+import { NotificationItem, SingleNotificationResponse } from '../types';
 
 export function useNotificationMutations() {
   const queryClient = useQueryClient();
@@ -9,33 +11,33 @@ export function useNotificationMutations() {
   };
 
   const markAsRead = useMutation({
-    mutationFn: async (id: number) => {
-      const { data } = await apiClient.post(`/notifications/${id}/mark-as-read`);
-      return data;
+    mutationFn: async (id: number): Promise<NotificationItem> => {
+      const { data } = await apiClient.post<SingleNotificationResponse>(`/api/notifications/${id}/mark-as-read`);
+      return data.data;
     },
     onSuccess: invalidate,
   });
 
   const markAllAsRead = useMutation({
-    mutationFn: async () => {
-      const { data } = await apiClient.post('/notifications/mark-all-as-read');
-      return data;
+    mutationFn: async (): Promise<null> => {
+      const { data } = await apiClient.post<ApiSuccess<null>>('/api/notifications/mark-all-as-read');
+      return data.data;
     },
     onSuccess: invalidate,
   });
 
   const deleteNotification = useMutation({
-    mutationFn: async (id: number) => {
-      const { data } = await apiClient.delete(`/notifications/${id}`);
-      return data;
+    mutationFn: async (id: number): Promise<null> => {
+      const { data } = await apiClient.delete<ApiSuccess<null>>(`/api/notifications/${id}`);
+      return data.data;
     },
     onSuccess: invalidate,
   });
 
   const clearRead = useMutation({
-    mutationFn: async () => {
-      const { data } = await apiClient.post('/notifications/clear-read');
-      return data;
+    mutationFn: async (): Promise<null> => {
+      const { data } = await apiClient.post<ApiSuccess<null>>('/api/notifications/clear-read');
+      return data.data;
     },
     onSuccess: invalidate,
   });

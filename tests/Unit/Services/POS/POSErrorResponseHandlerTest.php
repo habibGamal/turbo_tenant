@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\PosIntegration\src\Services\POS\Contracts\PosMasterClient;
 use App\Plugins\PosIntegration\src\Services\POS\POSErrorResponseHandler;
-use App\Plugins\PosIntegration\src\Services\ProductPOSImporterService;
 
 beforeEach(function () {
-    $this->productImporter = mock(ProductPOSImporterService::class);
-    $this->handler = new POSErrorResponseHandler($this->productImporter);
+    $this->posMasterClient = mock(PosMasterClient::class);
+    $this->handler = new POSErrorResponseHandler($this->posMasterClient);
     $this->branch = Branch::factory()->make();
 });
 
@@ -19,7 +19,7 @@ describe('POSErrorResponseHandler', function () {
             'error' => 'منتجات غير موجودة: ["BURGER-REF-1", "DRINK-REF-2"]',
         ];
 
-        $this->productImporter->shouldReceive('getProductsByReferences')
+        $this->posMasterClient->shouldReceive('getProductsByReferences')
             ->once()
             ->with(['BURGER-REF-1', 'DRINK-REF-2'])
             ->andReturn([
@@ -42,7 +42,7 @@ describe('POSErrorResponseHandler', function () {
             'error' => 'منتجات غير موجودة: [\"ESCAPED-101\"]',
         ];
 
-        $this->productImporter->shouldReceive('getProductsByReferences')
+        $this->posMasterClient->shouldReceive('getProductsByReferences')
             ->once()
             ->with(['ESCAPED-101'])
             ->andReturn([
@@ -64,7 +64,7 @@ describe('POSErrorResponseHandler', function () {
             'error' => 'منتجات غير موجودة: ["RAW-REF-001"]',
         ];
 
-        $this->productImporter->shouldReceive('getProductsByReferences')
+        $this->posMasterClient->shouldReceive('getProductsByReferences')
             ->once()
             ->with(['RAW-REF-001'])
             ->andThrow(new Exception('Network error'));
@@ -84,7 +84,7 @@ describe('POSErrorResponseHandler', function () {
             'error' => 'منتجات غير موجودة: ["RAW-REF-002"]',
         ];
 
-        $this->productImporter->shouldReceive('getProductsByReferences')
+        $this->posMasterClient->shouldReceive('getProductsByReferences')
             ->once()
             ->with(['RAW-REF-002'])
             ->andReturn([]);
@@ -99,7 +99,7 @@ describe('POSErrorResponseHandler', function () {
     });
 
     it('throws shift error exception for Scenario A (doc: Responses section 3 Scenario A)', function () {
-        $this->productImporter->shouldNotReceive('getProductsByReferences');
+        $this->posMasterClient->shouldNotReceive('getProductsByReferences');
 
         $responseData = [
             'message' => 'فشل في إنشاء الطلب',
@@ -111,7 +111,7 @@ describe('POSErrorResponseHandler', function () {
     });
 
     it('throws validation message exception for status 422 with message (doc: Responses section 2 Validation Failure)', function () {
-        $this->productImporter->shouldNotReceive('getProductsByReferences');
+        $this->posMasterClient->shouldNotReceive('getProductsByReferences');
 
         $responseData = [
             'message' => 'The order.type field must be one of: web_delivery, web_takeaway.',
@@ -127,14 +127,14 @@ describe('POSErrorResponseHandler', function () {
     });
 
     it('throws generic communication exception for legacy formats (doc: Responses strict compliance)', function (array $responseData) {
-        $this->productImporter->shouldNotReceive('getProductsByReferences');
+        $this->posMasterClient->shouldNotReceive('getProductsByReferences');
 
         expect(fn () => $this->handler->handle($responseData, 400, $this->branch))
             ->toThrow(Exception::class, 'لا يمكن التواصل مع الفرع في الوقت الحالي');
     })->with('legacyMissingProductFormats');
 
     it('throws generic communication exception on unexpected error responses (doc: Responses generic fallback)', function (array $responseData, int $status) {
-        $this->productImporter->shouldNotReceive('getProductsByReferences');
+        $this->posMasterClient->shouldNotReceive('getProductsByReferences');
 
         expect(fn () => $this->handler->handle($responseData, $status, $this->branch))
             ->toThrow(Exception::class, 'لا يمكن التواصل مع الفرع في الوقت الحالي');

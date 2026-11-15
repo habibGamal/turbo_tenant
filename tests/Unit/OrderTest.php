@@ -54,10 +54,11 @@ describe('getCustomerName', function () {
         expect($order->getCustomerName())->toBe('John Doe');
     });
 
-    it('returns guest user name for guest orders', function () {
-        $guestUser = GuestUser::factory()->create(['name' => 'Jane Guest']);
+    it('returns snapshot name for guest orders', function () {
+        $guestUser = GuestUser::factory()->create();
 
         $order = Order::factory()->create([
+            'customer_name' => 'Jane Guest',
             'guest_user_id' => $guestUser->id,
             'user_id' => null,
         ]);
@@ -74,16 +75,16 @@ describe('getCustomerName', function () {
         expect($order->getCustomerName())->toBe('Unknown');
     });
 
-    it('prioritizes user name over guest name when both exist', function () {
+    it('prioritizes snapshot name over user name when both exist', function () {
         $user = User::factory()->create(['name' => 'Registered User']);
-        $guestUser = GuestUser::factory()->create(['name' => 'Guest User']);
 
         $order = Order::factory()->create([
+            'customer_name' => 'Snapshot Customer',
             'user_id' => $user->id,
-            'guest_user_id' => $guestUser->id, // Should not happen, but testing priority
+            'guest_user_id' => null,
         ]);
 
-        expect($order->getCustomerName())->toBe('Registered User');
+        expect($order->getCustomerName())->toBe('Snapshot Customer');
     });
 });
 
@@ -101,10 +102,11 @@ describe('getCustomerPhone', function () {
         expect($order->getCustomerPhone())->toBe('1234567890');
     });
 
-    it('returns guest user phone for guest orders', function () {
-        $guestUser = GuestUser::factory()->create(['phone' => '9876543210']);
+    it('returns snapshot phone for guest orders', function () {
+        $guestUser = GuestUser::factory()->create();
 
         $order = Order::factory()->create([
+            'customer_phone' => '9876543210',
             'guest_user_id' => $guestUser->id,
             'user_id' => null,
         ]);
@@ -121,18 +123,18 @@ describe('getCustomerPhone', function () {
         expect($order->getCustomerPhone())->toBeNull();
     });
 
-    it('prioritizes user phone over guest phone', function () {
+    it('prioritizes snapshot phone over user phone', function () {
         $user = User::factory()->create();
         $user->phone = '1111111111';
-        $guestUser = GuestUser::factory()->create(['phone' => '2222222222']);
 
         $order = Order::factory()->create([
+            'customer_phone' => '2222222222',
             'user_id' => $user->id,
-            'guest_user_id' => $guestUser->id,
+            'guest_user_id' => null,
         ]);
         $order->setRelation('user', $user);
 
-        expect($order->getCustomerPhone())->toBe('1111111111');
+        expect($order->getCustomerPhone())->toBe('2222222222');
     });
 
     it('handles null phone gracefully', function () {
@@ -159,10 +161,11 @@ describe('getCustomerEmail', function () {
         expect($order->getCustomerEmail())->toBe('user@example.com');
     });
 
-    it('returns guest user email for guest orders', function () {
-        $guestUser = GuestUser::factory()->create(['email' => 'guest@example.com']);
+    it('returns snapshot email for guest orders', function () {
+        $guestUser = GuestUser::factory()->create();
 
         $order = Order::factory()->create([
+            'customer_email' => 'guest@example.com',
             'guest_user_id' => $guestUser->id,
             'user_id' => null,
         ]);
@@ -179,22 +182,23 @@ describe('getCustomerEmail', function () {
         expect($order->getCustomerEmail())->toBeNull();
     });
 
-    it('prioritizes user email over guest email', function () {
+    it('prioritizes snapshot email over user email', function () {
         $user = User::factory()->create(['email' => 'user@example.com']);
-        $guestUser = GuestUser::factory()->create(['email' => 'guest@example.com']);
 
         $order = Order::factory()->create([
+            'customer_email' => 'snapshot@example.com',
             'user_id' => $user->id,
-            'guest_user_id' => $guestUser->id,
+            'guest_user_id' => null,
         ]);
 
-        expect($order->getCustomerEmail())->toBe('user@example.com');
+        expect($order->getCustomerEmail())->toBe('snapshot@example.com');
     });
 
     it('handles null email gracefully for guest', function () {
-        $guestUser = GuestUser::factory()->create(['email' => null]);
+        $guestUser = GuestUser::factory()->create();
 
         $order = Order::factory()->create([
+            'customer_email' => null,
             'guest_user_id' => $guestUser->id,
             'user_id' => null,
         ]);
@@ -266,28 +270,29 @@ describe('helper methods with relationships', function () {
         expect($loadedOrder->getCustomerName())->toBe('Eager User');
     });
 
-    it('getCustomerName works with eager loaded guestUser', function () {
-        $guestUser = GuestUser::factory()->create(['name' => 'Eager Guest']);
+    it('getCustomerName works with snapshot column', function () {
+        $guestUser = GuestUser::factory()->create();
 
         $order = Order::factory()->create([
+            'customer_name' => 'Snapshot Guest',
             'guest_user_id' => $guestUser->id,
             'user_id' => null,
         ]);
 
-        $loadedOrder = Order::with('guestUser')->find($order->id);
+        $loadedOrder = Order::find($order->id);
 
-        expect($loadedOrder->getCustomerName())->toBe('Eager Guest');
+        expect($loadedOrder->getCustomerName())->toBe('Snapshot Guest');
     });
 
-    it('getCustomerPhone works without eager loading', function () {
-        $guestUser = GuestUser::factory()->create(['phone' => '5555555555']);
+    it('getCustomerPhone works with snapshot column', function () {
+        $guestUser = GuestUser::factory()->create();
 
         $order = Order::factory()->create([
+            'customer_phone' => '5555555555',
             'guest_user_id' => $guestUser->id,
             'user_id' => null,
         ]);
 
-        // Fresh query without eager loading
         $freshOrder = Order::find($order->id);
 
         expect($freshOrder->getCustomerPhone())->toBe('5555555555');

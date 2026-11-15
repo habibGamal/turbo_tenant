@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Filament;
 
+use App\Core\Plugins\Services\PluginManager;
 use App\Enums\SettingKey;
 use App\Filament\Pages\ManagePlugins;
+use App\Models\TenantPlugin;
 use App\Models\User;
+use App\Plugins\OrderManagement\src\Settings\OrderSettingKey;
+use App\Plugins\PaymentProcessing\src\Settings\PaymentSettingKey;
 use App\Plugins\PosIntegration\src\Filament\Pages\ImportPOSProducts;
 use App\Plugins\PosIntegration\src\Filament\Pages\SyncPOSPrices;
+use App\Plugins\PosIntegration\src\Settings\PosSettingKey;
 use App\Plugins\StoreSettings\src\Filament\Pages\ManifestSettings;
 use App\Plugins\StoreSettings\src\Filament\Pages\Settings;
 use App\Plugins\StoreSettings\src\Services\SettingService;
@@ -88,9 +93,13 @@ final class SettingsUxTest extends TestCase
 
         $expectedTabs = [
             'الهوية والمتجر',
+            'المظهر والألوان',
+            'الطلبات',
             'المالية وبوابات الدفع',
+            'نظام نقاط البيع (POS)',
             'النظام وساعات العمل',
             'بطاقات الواجهة',
+            'تسويق ميتا (Meta)',
         ];
 
         $this->assertSame($expectedTabs, array_values(array_filter($tabLabels)));
@@ -104,12 +113,12 @@ final class SettingsUxTest extends TestCase
         $components = $schema->getFlatFields(withHidden: true);
 
         $this->assertArrayHasKey(
-            SettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE->value,
+            OrderSettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE->value,
             $components,
-            'SettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE toggle must exist in the schema.'
+            'OrderSettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE toggle must exist in the schema.'
         );
 
-        $field = $components[SettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE->value];
+        $field = $components[OrderSettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE->value];
         $this->assertSame('السماح بالتعديل اليدوي لحالة الطلبات من لوحة الإدارة', $field->getLabel());
     }
 
@@ -130,30 +139,29 @@ final class SettingsUxTest extends TestCase
             SettingKey::SITE_FAVICON->value,
             SettingKey::IMAGE_PLACEHOLDER->value,
             SettingKey::SVG_LOGO->value,
-            SettingKey::FACEBOOK_APP_ID->value,
             SettingKey::SOCIAL_LINKS->value,
             SettingKey::CURRENCY->value,
-            SettingKey::TAX_RATE->value,
-            SettingKey::COD_FEE->value,
-            SettingKey::MIN_ORDER_AMOUNT->value,
-            SettingKey::ONLINE_PAYMENTS_ENABLED->value,
-            SettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE->value,
-            SettingKey::ACTIVE_PAYMENT_GATEWAY->value,
-            SettingKey::PAYMOB_BASE_URL->value,
-            SettingKey::PAYMOB_PUBLIC_KEY->value,
-            SettingKey::PAYMOB_SECRET_KEY->value,
-            SettingKey::PAYMOB_INTEGRATION_IDS->value,
-            SettingKey::PAYMOB_HMAC_SECRET->value,
-            SettingKey::PAYMOB_CURRENCY->value,
-            SettingKey::PAYMOB_MODE->value,
-            SettingKey::KASHIER_MERCHANT_ID->value,
-            SettingKey::KASHIER_API_KEY->value,
-            SettingKey::KASHIER_SECRET_KEY->value,
-            SettingKey::KASHIER_MODE->value,
-            SettingKey::KASHIER_CURRENCY->value,
-            SettingKey::KASHIER_ALLOWED_METHODS->value,
+            OrderSettingKey::TAX_RATE->value,
+            PaymentSettingKey::COD_FEE->value,
+            OrderSettingKey::MIN_ORDER_AMOUNT->value,
+            PaymentSettingKey::ONLINE_PAYMENTS_ENABLED->value,
+            OrderSettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE->value,
+            PaymentSettingKey::ACTIVE_PAYMENT_GATEWAY->value,
+            PaymentSettingKey::PAYMOB_BASE_URL->value,
+            PaymentSettingKey::PAYMOB_PUBLIC_KEY->value,
+            PaymentSettingKey::PAYMOB_SECRET_KEY->value,
+            PaymentSettingKey::PAYMOB_INTEGRATION_IDS->value,
+            PaymentSettingKey::PAYMOB_HMAC_SECRET->value,
+            PaymentSettingKey::PAYMOB_CURRENCY->value,
+            PaymentSettingKey::PAYMOB_MODE->value,
+            PaymentSettingKey::KASHIER_MERCHANT_ID->value,
+            PaymentSettingKey::KASHIER_API_KEY->value,
+            PaymentSettingKey::KASHIER_SECRET_KEY->value,
+            PaymentSettingKey::KASHIER_MODE->value,
+            PaymentSettingKey::KASHIER_CURRENCY->value,
+            PaymentSettingKey::KASHIER_ALLOWED_METHODS->value,
             SettingKey::MAINTENANCE_MODE->value,
-            SettingKey::PRODUCTS_REPO_LINK->value,
+            PosSettingKey::PRODUCTS_REPO_LINK->value,
             SettingKey::ACCEPT_ORDERS_AFTER_WORK_TIMES->value,
             SettingKey::WORK_TIMES->value,
             SettingKey::GOOGLE_CLIENT_ID->value,
@@ -180,38 +188,38 @@ final class SettingsUxTest extends TestCase
         $settingService = app(SettingService::class);
         $settingService->setMultiple([
             SettingKey::SITE_NAME->value => 'Restaurant',
-            SettingKey::PAYMOB_BASE_URL->value => 'https://accept.paymob.com',
-            SettingKey::PAYMOB_PUBLIC_KEY->value => 'pk_test_123',
-            SettingKey::PAYMOB_SECRET_KEY->value => 'sk_test_123',
-            SettingKey::PAYMOB_INTEGRATION_IDS->value => '12345',
-            SettingKey::PAYMOB_HMAC_SECRET->value => 'hmac_123',
-            SettingKey::PAYMOB_CURRENCY->value => 'EGP',
-            SettingKey::PAYMOB_MODE->value => 'test',
+            PaymentSettingKey::PAYMOB_BASE_URL->value => 'https://accept.paymob.com',
+            PaymentSettingKey::PAYMOB_PUBLIC_KEY->value => 'pk_test_123',
+            PaymentSettingKey::PAYMOB_SECRET_KEY->value => 'sk_test_123',
+            PaymentSettingKey::PAYMOB_INTEGRATION_IDS->value => '12345',
+            PaymentSettingKey::PAYMOB_HMAC_SECRET->value => 'hmac_123',
+            PaymentSettingKey::PAYMOB_CURRENCY->value => 'EGP',
+            PaymentSettingKey::PAYMOB_MODE->value => 'test',
             SettingKey::MAIL_MAILER->value => 'smtp',
             SettingKey::MAIL_HOST->value => 'smtp.example.com',
             SettingKey::MAIL_PORT->value => '587',
             SettingKey::MAIL_FROM_ADDRESS->value => 'test@example.com',
             SettingKey::MAIL_FROM_NAME->value => 'Restaurant',
-            SettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE->value => 'false',
+            OrderSettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE->value => 'false',
         ]);
 
         $component = Livewire::test(Settings::class);
         $component->assertOk();
 
         // Check initial state
-        $this->assertFalse($component->get('data.'.SettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE->value));
+        $this->assertFalse($component->get('data.'.OrderSettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE->value));
 
         // Update toggle to true and save
-        $component->set('data.'.SettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE->value, true)
+        $component->set('data.'.OrderSettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE->value, true)
             ->call('save')
             ->assertHasNoErrors()
             ->assertNotified('تم الحفظ بنجاح');
 
-        $this->assertSame('true', $settingService->get(SettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE));
+        $this->assertTrue($settingService->get(OrderSettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE));
 
         // Re-mount and verify filled state
         $reloaded = Livewire::test(Settings::class);
-        $this->assertTrue($reloaded->get('data.'.SettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE->value));
+        $this->assertTrue($reloaded->get('data.'.OrderSettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE->value));
     }
 
     public function test_manifest_settings_page_mounts_and_contains_arabic_labels(): void
@@ -243,5 +251,112 @@ final class SettingsUxTest extends TestCase
 
         $this->assertArrayHasKey('orientation', $fields);
         $this->assertSame('اتجاه الشاشة (Orientation)', $fields['orientation']->getLabel());
+    }
+
+    public function test_settings_page_shows_active_tabs_only_and_hides_payments_tab_when_inactive(): void
+    {
+        $tenant = tenant();
+        $this->assertNotNull($tenant);
+
+        TenantPlugin::query()
+            ->where('tenant_id', (string) $tenant->id)
+            ->where('plugin_id', 'payment-processing')
+            ->delete();
+
+        app(PluginManager::class)->resetTenant($tenant);
+
+        $page = new Settings;
+        $schema = $page->form(Schema::make($page));
+
+        $components = $schema->getComponents();
+        $formComponent = $components[0];
+        $tabsComponent = null;
+
+        foreach ($formComponent->getChildComponents() as $child) {
+            if ($child instanceof Tabs) {
+                $tabsComponent = $child;
+                break;
+            }
+        }
+
+        $this->assertNotNull($tabsComponent);
+        $tabLabels = array_map(fn ($tab) => $tab instanceof Tab ? $tab->getLabel() : null, $tabsComponent->getChildComponents());
+
+        $this->assertNotContains('المالية وبوابات الدفع', $tabLabels);
+        $this->assertContains('الهوية والمتجر', $tabLabels);
+    }
+
+    public function test_saving_settings_round_trips_boolean_and_json_key(): void
+    {
+        $settingService = app(SettingService::class);
+        $settingService->setMultiple([
+            SettingKey::SITE_NAME->value => 'Restaurant',
+            PaymentSettingKey::PAYMOB_BASE_URL->value => 'https://accept.paymob.com',
+            PaymentSettingKey::PAYMOB_PUBLIC_KEY->value => 'pk_test_123',
+            PaymentSettingKey::PAYMOB_SECRET_KEY->value => 'sk_test_123',
+            PaymentSettingKey::PAYMOB_INTEGRATION_IDS->value => '12345',
+            PaymentSettingKey::PAYMOB_HMAC_SECRET->value => 'hmac_123',
+            PaymentSettingKey::PAYMOB_CURRENCY->value => 'EGP',
+            PaymentSettingKey::PAYMOB_MODE->value => 'test',
+            SettingKey::MAIL_MAILER->value => 'smtp',
+            SettingKey::MAIL_HOST->value => 'smtp.example.com',
+            SettingKey::MAIL_PORT->value => '587',
+            SettingKey::MAIL_FROM_ADDRESS->value => 'test@example.com',
+            SettingKey::MAIL_FROM_NAME->value => 'Restaurant',
+        ]);
+
+        $inputCards = [
+            [
+                'title' => 'Roundtrip Title',
+                'description' => 'Roundtrip Desc',
+                'icon' => ['card.png'],
+            ],
+        ];
+
+        Livewire::test(Settings::class)
+            ->set('data.'.SettingKey::MAINTENANCE_MODE->value, true)
+            ->set('data.'.SettingKey::PRODUCT_SHOW_CARDS->value, $inputCards)
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertNotified('تم الحفظ بنجاح');
+
+        // Check DB raw strings
+        $this->assertDatabaseHas('settings', [
+            'key' => SettingKey::MAINTENANCE_MODE->value,
+            'value' => 'true',
+        ]);
+        $this->assertDatabaseHas('settings', [
+            'key' => SettingKey::PRODUCT_SHOW_CARDS->value,
+            'value' => json_encode([
+                [
+                    'title' => 'Roundtrip Title',
+                    'description' => 'Roundtrip Desc',
+                    'icon' => 'card.png',
+                ],
+            ]),
+        ]);
+
+        // Check typed retrieval from SettingService
+        $this->assertTrue($settingService->get(SettingKey::MAINTENANCE_MODE));
+        $this->assertSame([
+            [
+                'title' => 'Roundtrip Title',
+                'description' => 'Roundtrip Desc',
+                'icon' => 'card.png',
+            ],
+        ], $settingService->get(SettingKey::PRODUCT_SHOW_CARDS));
+    }
+
+    public function test_bootstrap_json_still_has_cod_fee_and_online_payments_enabled(): void
+    {
+        $settingService = app(SettingService::class);
+        $settingService->set(PaymentSettingKey::COD_FEE, 25.50);
+        $settingService->set(PaymentSettingKey::ONLINE_PAYMENTS_ENABLED, true);
+
+        $response = $this->getJson('/api/tenant/bootstrap');
+
+        $response->assertOk()
+            ->assertJsonPath('settings.cod_fee', 25.50)
+            ->assertJsonPath('settings.online_payments_enabled', true);
     }
 }

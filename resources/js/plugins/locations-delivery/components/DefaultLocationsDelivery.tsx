@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, MapPin, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, MapPin, LoaderIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,13 +38,13 @@ export default function DefaultLocationsDelivery({
   const { t, i18n } = useTranslation();
   const isRTL = i18n.dir() === 'rtl';
 
-  const { data: addressesResponse, isLoading: isLoadingAddresses } = useAddresses();
-  const { data: governoratesResponse, isLoading: isLoadingGovs } = useGovernorates();
+  const { data: addressesData, isLoading: isLoadingAddresses } = useAddresses();
+  const { data: governoratesData, isLoading: isLoadingGovs } = useGovernorates();
   const saveMutation = useSaveAddress();
   const deleteMutation = useDeleteAddress();
 
-  const addresses: Address[] = addressesResponse?.data ?? initialAddresses ?? [];
-  const governorates = governoratesResponse?.data ?? [];
+  const addresses: Address[] = addressesData ?? initialAddresses ?? [];
+  const governorates = governoratesData ?? [];
 
   const [isOpen, setIsOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
@@ -137,8 +137,8 @@ export default function DefaultLocationsDelivery({
   );
 
   return (
-    <div className="space-y-6 w-full">
-      <div className="flex justify-between items-center">
+    <div dir={i18n.dir()} className="space-y-6 w-full text-start">
+      <div className="flex flex-wrap gap-3 justify-between items-center">
         <h3 className="text-lg font-medium">{t('yourAddresses', 'Your Addresses')}</h3>
         <Button onClick={openCreateModal} size="sm">
           <Plus className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
@@ -148,7 +148,7 @@ export default function DefaultLocationsDelivery({
 
       {isLoadingAddresses ? (
         <div className="flex items-center justify-center py-10">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <LoaderIcon className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : addresses.length === 0 ? (
         <div className="text-center py-8 border rounded-lg p-6 bg-muted/20">
@@ -163,14 +163,14 @@ export default function DefaultLocationsDelivery({
               <div
                 key={address.id}
                 onClick={() => onSelectAddress?.(address)}
-                className={`border rounded-lg p-4 relative transition-colors ${
+                className={`border rounded-lg p-4 transition-colors ${
                   onSelectAddress ? 'cursor-pointer' : ''
                 } ${
                   isSelected ? 'border-primary ring-1 ring-primary bg-primary/5' : 'hover:border-primary/50'
                 }`}
               >
                 {address.is_default && (
-                  <span className="absolute top-2 ltr:right-2 rtl:left-2 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full font-medium">
+                  <span className="mb-3 inline-flex w-fit bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full font-medium">
                     {t('default', 'Default')}
                   </span>
                 )}
@@ -189,8 +189,8 @@ export default function DefaultLocationsDelivery({
                         ? address.area.governorate.name_ar
                         : address.area?.governorate?.name}
                     </p>
-                    <p className="text-xs text-muted-foreground dir-ltr text-start">
-                      {address.phone_number}
+                    <p className="text-xs text-muted-foreground text-start">
+                      <bdi dir="ltr">{address.phone_number}</bdi>
                     </p>
                   </div>
                 </div>
@@ -230,8 +230,8 @@ export default function DefaultLocationsDelivery({
 
       {/* Address Form Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
+        <DialogContent dir={i18n.dir()} className="max-h-[90vh] overflow-y-auto text-start sm:max-w-[500px]">
+          <DialogHeader className="text-start sm:text-start rtl:pe-0 rtl:ps-6">
             <DialogTitle>
               {editingAddress ? t('editAddress', 'Edit Address') : t('addNewAddress', 'Add New Address')}
             </DialogTitle>
@@ -251,6 +251,7 @@ export default function DefaultLocationsDelivery({
               <div className="space-y-2">
                 <Label>{t('governorate', 'Governorate')}</Label>
                 <Select
+                  dir={i18n.dir()}
                   value={selectedGovernorateId}
                   onValueChange={(val) => {
                     setSelectedGovernorateId(val);
@@ -276,6 +277,7 @@ export default function DefaultLocationsDelivery({
               <div className="space-y-2">
                 <Label>{t('area', 'Area')}</Label>
                 <Select
+                  dir={i18n.dir()}
                   value={formData.area_id.toString()}
                   onValueChange={(val) => setFormData((prev) => ({ ...prev, area_id: val }))}
                   disabled={!selectedGovernorateId}
@@ -379,14 +381,14 @@ export default function DefaultLocationsDelivery({
               </Label>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:space-x-0">
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
                 {t('cancel', 'Cancel')}
               </Button>
               <Button type="submit" disabled={saveMutation.isPending}>
                 {saveMutation.isPending ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin ltr:mr-2 rtl:ml-2" />
+                    <LoaderIcon className="h-4 w-4 animate-spin ltr:mr-2 rtl:ml-2" />
                     {t('saving', 'Saving...')}
                   </>
                 ) : editingAddress ? (

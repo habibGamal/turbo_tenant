@@ -1,4 +1,5 @@
 import { test, expect } from '../../helpers/live-fixture';
+import { openCheckout } from '../../helpers/checkout';
 
 test.describe('OrderManagement Suite 02: Guest Cash On Delivery (COD) Order Placement', () => {
   test('places guest delivery order with COD and redirects to order tracking', async ({ page, theme }) => {
@@ -15,10 +16,7 @@ test.describe('OrderManagement Suite 02: Guest Cash On Delivery (COD) Order Plac
     ]);
 
     // 2. Go to checkout
-    await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/checkout-data') && r.status() === 200),
-      page.goto('/checkout', { waitUntil: 'domcontentloaded' }),
-    ]);
+    const { locations } = await openCheckout(page);
 
     // 3. Fill Guest form details
     await page.locator('[data-testid="guest-name-input"], input#guest_name').first().fill('Habib Test Customer');
@@ -45,20 +43,39 @@ test.describe('OrderManagement Suite 02: Guest Cash On Delivery (COD) Order Plac
 
     // 4. Submit Order
     const placeOrderBtn = theme.orders.getPlaceOrderButton();
+    const trackingResponsePromise = page.waitForResponse(r =>
+      new URL(r.url()).pathname === '/api/guest-checkout/track' && r.request().method() === 'POST'
+    );
     const [placeOrderResponse] = await Promise.all([
       page.waitForResponse(r => r.url().includes('/api/orders/place') && r.status() === 200),
       placeOrderBtn.click(),
     ]);
 
     const result = await placeOrderResponse.json();
-    expect(result.success).toBe(true);
-    expect(result.order_id).toBeDefined();
-    expect(result.order_number).toBeDefined();
-    expect(result.redirect_type).toBe('internal');
-    expect(result.redirect_url).toContain('/orders/track');
+    expect(result.status).toBe('success');
+    expect(result.data.order_id).toBeDefined();
+    expect(result.data.order_number).toBeDefined();
+    expect(result.data.tracking_token).toBeTruthy();
+    expect(result.data.requires_payment).toBe(false);
 
     // 5. Verify redirection to tracking page
     await expect(page).toHaveURL(/orders\/track/);
+    expect(new URL(page.url()).searchParams.get('order_number')).toBe(result.data.order_number);
+    expect(new URL(page.url()).searchParams.get('token')).toBe(result.data.tracking_token);
+    expect(new URL(page.url()).searchParams.has('phone')).toBe(false);
+    const trackingResponse = await trackingResponsePromise;
+    expect(trackingResponse.status()).toBe(200);
+    const tracked = await trackingResponse.json();
+    const selectedArea = locations.governorates.flatMap((governorate: { areas?: { id: number; shipping_cost: number }[] }) => governorate.areas ?? [])[0];
+    expect(tracked.status).toBe('success');
+    expect(tracked.data.type).toBe('web_delivery');
+    expect(tracked.data.payment_method).toBe('cod');
+    expect(tracked.data.delivery_address).toEqual(expect.objectContaining({
+      area_id: selectedArea.id,
+      street: 'El-Tahrir Street 10',
+      building: 'Building 4B',
+    }));
+    expect(Number(tracked.data.delivery_fee)).toBe(Number(selectedArea.shipping_cost));
 
     // 6. Verify cart is cleared
     await page.goto('/cart', { waitUntil: 'domcontentloaded' });

@@ -1,4 +1,5 @@
 import { test, expect } from '../../helpers/live-fixture';
+import { openCheckout } from '../../helpers/checkout';
 import { loginAsCustomer } from '../../helpers/auth';
 
 test.describe('OrderManagement Suite 04: Authenticated Customer Order Placement', () => {
@@ -19,14 +20,10 @@ test.describe('OrderManagement Suite 04: Authenticated Customer Order Placement'
     ]);
 
     // 3. Go to checkout
-    const [bootstrapResponse] = await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/checkout-data') && r.status() === 200),
-      page.goto('/checkout', { waitUntil: 'domcontentloaded' }),
-    ]);
+    const { cart, locations } = await openCheckout(page);
 
-    const bootstrapJson = await bootstrapResponse.json();
-    expect(bootstrapJson.data.is_guest).toBe(false);
-    expect(bootstrapJson.data.addresses.length).toBeGreaterThan(0);
+    expect(cart.items.length).toBeGreaterThan(0);
+    expect(locations.addresses.length).toBeGreaterThan(0);
 
     // Verify guest form is not rendered for authenticated customer
     await expect(page.locator('[data-testid="guest-name-input"]')).not.toBeVisible();
@@ -39,19 +36,19 @@ test.describe('OrderManagement Suite 04: Authenticated Customer Order Placement'
     ]);
 
     const result = await placeOrderResponse.json();
-    expect(result.success).toBe(true);
-    expect(result.order_id).toBeDefined();
-    expect(result.redirect_type).toBe('internal');
-    expect(result.redirect_url).toBe(`/orders/${result.order_id}`);
+    expect(result.status).toBe('success');
+    expect(result.data.order_id).toBeDefined();
+    expect(result.data.requires_payment).toBe(false);
+    expect(result.data.tracking_token).toBeUndefined();
 
     // 5. Verify navigation to Order Details view
-    await expect(page).toHaveURL(new RegExp(`/orders/${result.order_id}`));
+    await expect(page).toHaveURL(new RegExp(`/orders/${result.data.order_id}`));
     const detailsContainer = theme.orders.getOrderDetailsContainer();
     await expect(detailsContainer).toBeVisible({ timeout: 10000 });
 
     // 6. Verify order number displayed matches returned order
     const orderNumberEl = theme.orders.getOrderNumber(detailsContainer);
     await expect(orderNumberEl).toBeVisible();
-    await expect(orderNumberEl).toContainText(String(result.order_number || result.order_id));
+    await expect(orderNumberEl).toContainText(String(result.data.order_number || result.data.order_id));
   });
 });

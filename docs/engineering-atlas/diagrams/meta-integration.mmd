@@ -1,0 +1,30 @@
+flowchart TB
+ subgraph Browser["Storefront (React)"]
+  Emitters["Plugin hooks
+useAddToCart · usePlaceOrder · usePaymentStatus
+product page · search · favorites · register"] -->|emitCommerceEvent| Bus["core/analytics
+commerce event bus"]
+  Route["router.tracking slot
+MetaPixelRouteTracker → PageView"] --> Bus
+  Bus --> Tracker["plugins/meta-marketing
+meta-pixel-tracker"]
+ end
+ Tracker -->|"fbq track + eventID"| Pixel["Meta Pixel (fbevents.js)"]
+ Tracker -->|"POST /api/meta/events (same event_id, never Purchase)"| Relay["RelayEventController
+RelayEventRequest"]
+ subgraph Server["meta-marketing plugin (Laravel)"]
+  Relay -->|queue| RelayJob["SendMetaRelayEvent"]
+  Orders["OrderCreated · OrderFinalized · OrderPaymentCompleted"] --> Listeners["CaptureOrderTrackingContext
+SendPurchaseToMeta"]
+  Listeners -->|"queue, afterCommit"| PurchaseJob["SendMetaPurchaseEvent
+idempotent, event_id purchase.order"]
+  RelayJob --> Client["MetaConversionsClient"]
+  PurchaseJob --> Client
+  PurchaseJob --> Log[("meta_capi_events
+meta_order_tracking")]
+  Feed["CatalogFeedController
+CSV · XML · Arabic override"]
+  Admin["Settings tab · MetaDiagnostics page"] --> Client
+ end
+ Client -->|"Graph API pixel/events"| CAPI["Meta Conversions API"]
+ Commerce["Meta Commerce Manager"] -->|"scheduled fetch /meta/catalog/token"| Feed

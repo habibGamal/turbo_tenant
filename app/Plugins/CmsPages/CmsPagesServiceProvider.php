@@ -4,24 +4,13 @@ declare(strict_types=1);
 
 namespace App\Plugins\CmsPages;
 
-use App\Plugins\CmsPages\src\DTOs\CmsPagesConfig;
 use App\Plugins\CmsPages\src\Filament\Resources\Pages\PageResource;
-use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Support\ServiceProvider;
 
 final class CmsPagesServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Composition Root: Bind typed Config DTO (Pattern 1)
-        $this->app->singleton(CmsPagesConfig::class, function ($app) {
-            $settings = $app->make(SettingService::class);
-
-            return new CmsPagesConfig(
-                enabled: (bool) $settings->get('cms-pages.enabled', true)
-            );
-        });
-
         // Register legacy class alias for backward compatibility
         if (! class_exists('App\Filament\Resources\Pages\PageResource', false)) {
             class_alias(PageResource::class, 'App\Filament\Resources\Pages\PageResource');

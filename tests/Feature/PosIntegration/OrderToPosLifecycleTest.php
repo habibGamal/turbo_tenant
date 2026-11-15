@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 use App\Core\Plugins\DTOs\PluginManifest;
 use App\Core\Plugins\Listeners\ActivationGatedListener;
-use App\Enums\OrderType;
 use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderType;
 use App\Plugins\OrderManagement\src\Events\OrderCreated;
+use App\Plugins\OrderManagement\src\Events\OrderFinalized;
+use App\Plugins\OrderManagement\src\Events\OrderPaymentCompleted;
 use App\Plugins\OrderManagement\src\Events\OrderStatusUpdated;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\PosIntegration\src\Jobs\SendOrderToPosJob;
@@ -16,7 +18,7 @@ use App\Plugins\PosIntegration\src\Services\OrderPOSService;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\OrderPOSPayloadBuilderInterface;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\POSApiClientInterface;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\POSErrorResponseHandlerInterface;
-use App\Plugins\PosIntegration\src\Services\ProductPOSImporterService;
+use App\Plugins\PosIntegration\src\Services\POS\Contracts\PosMasterClient;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Event;
@@ -90,10 +92,36 @@ describe('SendOrderToPosListener', function () {
         [OrderPosStatus::SENT],
         [OrderPosStatus::FAILED],
     ]);
+
+    it('queues delivery when OrderPaymentCompleted fires', function () {
+        $order = PosOrderFixture::createDocExampleOrder();
+        $order->update(['pos_status' => OrderPosStatus::NOT_READY]);
+
+        Queue::fake();
+
+        $listener = new SendOrderToPosListener();
+        $listener->handleOrderPaymentCompleted(new OrderPaymentCompleted($order));
+
+        expect($order->fresh()->pos_status)->toBe(OrderPosStatus::QUEUED);
+        Queue::assertPushed(SendOrderToPosJob::class, 1);
+    });
+
+    it('queues delivery when OrderFinalized fires', function () {
+        $order = PosOrderFixture::createDocExampleOrder();
+        $order->update(['pos_status' => OrderPosStatus::NOT_READY]);
+
+        Queue::fake();
+
+        $listener = new SendOrderToPosListener();
+        $listener->handleOrderFinalized(new OrderFinalized($order));
+
+        expect($order->fresh()->pos_status)->toBe(OrderPosStatus::QUEUED);
+        Queue::assertPushed(SendOrderToPosJob::class, 1);
+    });
 });
 
 describe('Plugin Wiring', function () {
-    it('declares exactly the POS listener methods for OrderCreated and OrderStatusUpdated in its manifest (doc: Post-Creation Processing & Lifecycle)', function () {
+    it('declares exactly the POS listener methods for OrderCreated, OrderStatusUpdated, OrderPaymentCompleted and OrderFinalized in its manifest (doc: Post-Creation Processing & Lifecycle)', function () {
         $basePath = base_path('app/Plugins/PosIntegration');
         $manifest = PluginManifest::fromArray(
             json_decode((string) file_get_contents($basePath.'/plugin.json'), true, flags: JSON_THROW_ON_ERROR),
@@ -103,6 +131,8 @@ describe('Plugin Wiring', function () {
         expect($manifest->listeners)->toBe([
             OrderCreated::class => [SendOrderToPosListener::class.'@handleOrderCreated'],
             OrderStatusUpdated::class => [SendOrderToPosListener::class.'@handleStatusUpdated'],
+            OrderPaymentCompleted::class => [SendOrderToPosListener::class.'@handleOrderPaymentCompleted'],
+            OrderFinalized::class => [SendOrderToPosListener::class.'@handleOrderFinalized'],
         ]);
     });
 
@@ -116,7 +146,11 @@ describe('Plugin Wiring', function () {
         expect($posListeners(OrderCreated::class))->toHaveCount(1)
             ->and($posListeners(OrderCreated::class)[0]->getMethod())->toBe('handleOrderCreated')
             ->and($posListeners(OrderStatusUpdated::class))->toHaveCount(1)
-            ->and($posListeners(OrderStatusUpdated::class)[0]->getMethod())->toBe('handleStatusUpdated');
+            ->and($posListeners(OrderStatusUpdated::class)[0]->getMethod())->toBe('handleStatusUpdated')
+            ->and($posListeners(OrderPaymentCompleted::class))->toHaveCount(1)
+            ->and($posListeners(OrderPaymentCompleted::class)[0]->getMethod())->toBe('handleOrderPaymentCompleted')
+            ->and($posListeners(OrderFinalized::class))->toHaveCount(1)
+            ->and($posListeners(OrderFinalized::class)[0]->getMethod())->toBe('handleOrderFinalized');
     });
 });
 
@@ -166,8 +200,8 @@ describe('OrderPOSService DI & Container Resolution', function () {
 describe('SendOrderToPosJob Lifecycle', function () {
     beforeEach(function () {
         Http::preventStrayRequests();
-        $this->productImporter = mock(ProductPOSImporterService::class);
-        $this->app->instance(ProductPOSImporterService::class, $this->productImporter);
+        $this->posMasterClient = mock(PosMasterClient::class);
+        $this->app->instance(PosMasterClient::class, $this->posMasterClient);
     });
 
     it('successfully sends order to POS with exact sequence, payload, and updates status to SENT (doc: Endpoint 1 & Endpoint 3 Success)', function () {
@@ -233,10 +267,10 @@ describe('SendOrderToPosJob Lifecycle', function () {
 
         $job->assertReleased(delay: 3);
         Http::assertSentCount(1);
-        expect($order->fresh()->pos_status)->toBe(OrderPosStatus::SENDING);
+        expect($order->fresh()->pos_status)->toBe(OrderPosStatus::RETRY_WAIT);
     });
 
-    it('updates status to FAILED with exact error reason and rethrows on Scenario A 400 (doc: Responses section 3 Scenario A)', function () {
+    it('waits for retry with the exact reason on Scenario A 400', function () {
         $order = PosOrderFixture::createDocExampleOrder();
 
         Http::fake([
@@ -255,14 +289,14 @@ describe('SendOrderToPosJob Lifecycle', function () {
             ->toThrow(Exception::class, 'الوردية غير صحيحة');
 
         $fresh = $order->fresh();
-        expect($fresh->pos_status)->toBe(OrderPosStatus::FAILED)
+        expect($fresh->pos_status)->toBe(OrderPosStatus::RETRY_WAIT)
             ->and($fresh->pos_failure_reason)->toBe('الوردية غير صحيحة');
     });
 
     it('updates status to FAILED with resolved product names and does not rethrow or release on Scenario B 400 (doc: Responses section 3 Scenario B)', function () {
         $order = PosOrderFixture::createDocExampleOrder();
 
-        $this->productImporter->shouldReceive('getProductsByReferences')
+        $this->posMasterClient->shouldReceive('getProductsByReferences')
             ->once()
             ->with(['INVALID-REF-101'])
             ->andReturn([
@@ -289,7 +323,7 @@ describe('SendOrderToPosJob Lifecycle', function () {
         $job->assertNotReleased();
     });
 
-    it('updates status to FAILED with exact validation message and rethrows on 422 Unprocessable Content (doc: Responses section 2 Validation Failure)', function () {
+    it('waits for retry with the validation message on 422', function () {
         $order = PosOrderFixture::createDocExampleOrder();
 
         Http::fake([
@@ -318,11 +352,11 @@ describe('SendOrderToPosJob Lifecycle', function () {
             ->toThrow(Exception::class, 'The order.type field must be one of: web_delivery, web_takeaway.');
 
         $fresh = $order->fresh();
-        expect($fresh->pos_status)->toBe(OrderPosStatus::FAILED)
+        expect($fresh->pos_status)->toBe(OrderPosStatus::RETRY_WAIT)
             ->and($fresh->pos_failure_reason)->toBe('The order.type field must be one of: web_delivery, web_takeaway.');
     });
 
-    it('updates status to FAILED with exact connection message and rethrows on place-order connection failure (doc: Endpoint 3 transport)', function () {
+    it('requires verification without replaying after losing the place-order response', function () {
         $order = PosOrderFixture::createDocExampleOrder();
 
         Http::fake([
@@ -334,15 +368,15 @@ describe('SendOrderToPosJob Lifecycle', function () {
 
         $job = (new SendOrderToPosJob($order))->withFakeQueueInteractions();
 
-        expect(fn () => app()->call([$job, 'handle']))
-            ->toThrow(Exception::class, 'لا يمكن التواصل مع الفرع في الوقت الحالي');
+        app()->call([$job, 'handle']);
 
         $fresh = $order->fresh();
-        expect($fresh->pos_status)->toBe(OrderPosStatus::FAILED)
-            ->and($fresh->pos_failure_reason)->toBe('لا يمكن التواصل مع الفرع في الوقت الحالي');
+        expect($fresh->pos_status)->toBe(OrderPosStatus::NEEDS_VERIFICATION)
+            ->and($fresh->pos_failure_reason)->toContain('تحقق من استلام الفرع');
+        $job->assertNotReleased();
     });
 
-    it('updates status to FAILED with exact message, rethrows, and does not post order when can-accept-order returns HTTP 500 (doc: Endpoint 1 error handling)', function () {
+    it('waits for retry without posting when can-accept-order returns HTTP 500', function () {
         $order = PosOrderFixture::createDocExampleOrder();
 
         Http::fake([
@@ -355,13 +389,13 @@ describe('SendOrderToPosJob Lifecycle', function () {
             ->toThrow(Exception::class, 'حدث خطاء اثناء الاستعلام عن قبول الطلبات');
 
         $fresh = $order->fresh();
-        expect($fresh->pos_status)->toBe(OrderPosStatus::FAILED)
+        expect($fresh->pos_status)->toBe(OrderPosStatus::RETRY_WAIT)
             ->and($fresh->pos_failure_reason)->toBe('حدث خطاء اثناء الاستعلام عن قبول الطلبات');
 
         Http::assertSentCount(1);
     });
 
-    it('updates status to FAILED with exact message, rethrows, and does not post order when shift_id is null and get-shift-id returns null (doc: Endpoint 2 note)', function () {
+    it('waits for retry without posting when the shift id is missing', function () {
         $order = PosOrderFixture::createDocExampleOrder();
         $order->update(['shift_id' => null]);
 
@@ -380,7 +414,7 @@ describe('SendOrderToPosJob Lifecycle', function () {
             ->toThrow(Exception::class, 'حدث خطاء اثناء الاستعلام عن رقم الوردية');
 
         $fresh = $order->fresh();
-        expect($fresh->pos_status)->toBe(OrderPosStatus::FAILED)
+        expect($fresh->pos_status)->toBe(OrderPosStatus::RETRY_WAIT)
             ->and($fresh->pos_failure_reason)->toBe('حدث خطاء اثناء الاستعلام عن رقم الوردية');
 
         Http::assertSentCount(2);
@@ -401,14 +435,13 @@ describe('SendOrderToPosJob Lifecycle', function () {
 
         $job = (new SendOrderToPosJob($order))->withFakeQueueInteractions();
 
-        expect(fn () => app()->call([$job, 'handle']))
-            ->toThrow(Exception::class, 'نوع الطلب غير مدعوم في نقطة البيع: pos');
+        app()->call([$job, 'handle']);
 
         $fresh = $order->fresh();
         expect($fresh->pos_status)->toBe(OrderPosStatus::FAILED)
-            ->and($fresh->pos_failure_reason)->toBe('نوع الطلب غير مدعوم في نقطة البيع: pos');
+            ->and($fresh->pos_failure_reason)->toBe('هذا الطلب ليس طلب متجر إلكتروني.');
 
-        Http::assertSentCount(1);
+        Http::assertNothingSent();
     });
 
     it('configures exactly 5 tries and 3 seconds backoff for queue retries (doc: Post-Creation Processing & Lifecycle)', function () {

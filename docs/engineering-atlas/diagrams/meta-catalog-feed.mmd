@@ -1,0 +1,17 @@
+flowchart TD
+ Fetch["Commerce Manager scheduled fetch
+GET /meta/catalog/token.csv, .xml, .ar.csv"] --> Gate{"Catalog enabled and
+token matches?"}
+ Gate -->|no| NotFound["404"]
+ Gate -->|yes| Build["CatalogFeedService
+generated on every fetch, no cache
+products with variants and category, chunked"]
+ Build --> Item["CatalogItemBuilder
+id from MetaContentId, item_group_id for variants
+price and sale_price from the cart pricing rule
+availability, brand, absolute link and image"]
+ Item --> Writer["CSV, RSS XML, Arabic override CSV"]
+ Writer --> Body["Feed body"]
+ Admin["MetaDiagnostics catalog check"] --> Validator["CatalogFeedValidator
+checks the generated rows"]
+ Validator --> Item

@@ -1,0 +1,793 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "D:\\turbo_tenant\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "tests/e2e/plugins/order-management",
+      "--reporter=line,json"
+    ],
+    "configFile": "D:\\turbo_tenant\\playwright.config.ts",
+    "rootDir": "D:/turbo_tenant/tests/e2e/plugins",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/turbo_tenant/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "theme-default",
+        "name": "theme-default",
+        "testDir": "D:/turbo_tenant/tests/e2e/plugins",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "D:\\turbo_tenant\\test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "theme-default",
+        "testDir": "D:\\turbo_tenant\\tests\\e2e\\plugins",
+        "snapshotDir": "D:\\turbo_tenant\\tests\\e2e\\plugins",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 45000,
+        "use": {
+          "baseURL": "http://e2e.localhost:8011",
+          "trace": "retain-on-failure",
+          "screenshot": "only-on-failure",
+          "video": "retain-on-failure",
+          "actionTimeout": 15000,
+          "navigationTimeout": 30000,
+          "launchOptions": {
+            "args": [
+              "--host-resolver-rules=MAP *.localhost 127.0.0.1",
+              "--disable-gpu",
+              "--no-sandbox"
+            ]
+          },
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "screen": {
+            "width": 1920,
+            "height": 1080
+          },
+          "deviceScaleFactor": 1,
+          "isMobile": false,
+          "hasTouch": false,
+          "defaultBrowserType": "chromium",
+          "activeThemeName": "default"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "theme-default"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "order-management\\01-checkout-bootstrap.live.spec.ts",
+      "file": "order-management/01-checkout-bootstrap.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 01: Checkout Data Bootstrap & Form Initialization",
+          "file": "order-management/01-checkout-bootstrap.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "fetches bootstrap payload and renders complete checkout form for guest",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10675,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:02:20.041Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f9da36b96991328bf0ea-ccce6a8a41319f7f521d",
+              "file": "order-management/01-checkout-bootstrap.live.spec.ts",
+              "line": 5,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\02-guest-cod-delivery.live.spec.ts",
+      "file": "order-management/02-guest-cod-delivery.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 02: Guest Cash On Delivery (COD) Order Placement",
+          "file": "order-management/02-guest-cod-delivery.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "places guest delivery order with COD and redirects to order tracking",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 12759,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:02:32.438Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5d9615372adec5de6803-3936e1b7b480b017d2a7",
+              "file": "order-management/02-guest-cod-delivery.live.spec.ts",
+              "line": 5,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\03-guest-takeaway.live.spec.ts",
+      "file": "order-management/03-guest-takeaway.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 03: Guest Takeaway (Store Pickup) Order Placement",
+          "file": "order-management/03-guest-takeaway.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "places guest takeaway order with 0 delivery fee and redirects to tracking",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 12599,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:02:45.228Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11d76eb239b3f77076e6-2770e214f9b7e56ccc95",
+              "file": "order-management/03-guest-takeaway.live.spec.ts",
+              "line": 5,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\04-auth-customer-order.live.spec.ts",
+      "file": "order-management/04-auth-customer-order.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 04: Authenticated Customer Order Placement",
+          "file": "order-management/04-auth-customer-order.live.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "places delivery order as logged-in customer and navigates to order details",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 18658,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:02:57.854Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "02e17753abfed7f1f52e-560d5293d0f1ebd7ac90",
+              "file": "order-management/04-auth-customer-order.live.spec.ts",
+              "line": 6,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\05-complex-cart-order.live.spec.ts",
+      "file": "order-management/05-complex-cart-order.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 05: Complex Cart Order (Variants, Weights & Extras)",
+          "file": "order-management/05-complex-cart-order.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "persists configured product options into placed order and displays in order view",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 11676,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:03:16.543Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ef888cf597b294ab7b1e-0e24a22b41ba293e2644",
+              "file": "order-management/05-complex-cart-order.live.spec.ts",
+              "line": 5,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\06-checkout-calculations.live.spec.ts",
+      "file": "order-management/06-checkout-calculations.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 06: Checkout Calculations & Dynamic Fees",
+          "file": "order-management/06-checkout-calculations.live.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "dynamically updates order summary totals when switching order types and areas",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 12106,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:03:28.248Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "62cedb343b8158dd4370-47cca464453afbfb9549",
+              "file": "order-management/06-checkout-calculations.live.spec.ts",
+              "line": 6,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\07-validation-and-guards.live.spec.ts",
+      "file": "order-management/07-validation-and-guards.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 07: Validation Safeguards & Boundary Conditions",
+          "file": "order-management/07-validation-and-guards.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "guards /checkout when cart is empty and renders empty cart notice",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3337,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:03:40.386Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f14fdebecaf913e051c8-eab5c3983bac434a922d",
+              "file": "order-management/07-validation-and-guards.live.spec.ts",
+              "line": 5,
+              "column": 3
+            },
+            {
+              "title": "enforces client-side validation for missing guest details and unselected area",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10208,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:03:43.738Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f14fdebecaf913e051c8-33ff5fbb5f8253c3aae3",
+              "file": "order-management/07-validation-and-guards.live.spec.ts",
+              "line": 22,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\08-orders-history-list.live.spec.ts",
+      "file": "order-management/08-orders-history-list.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 08: Customer Order History List (/orders)",
+          "file": "order-management/08-orders-history-list.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "renders customer past orders with status badges and item summaries",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7246,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:03:53.979Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "532526902d21e033bb67-dd873729a5e280fda4c5",
+              "file": "order-management/08-orders-history-list.live.spec.ts",
+              "line": 5,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\09-order-details-inspection.live.spec.ts",
+      "file": "order-management/09-order-details-inspection.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 09: Order Details Inspection (/orders/:id)",
+          "file": "order-management/09-order-details-inspection.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "navigates from order list to order details and inspects timeline, items, and total",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7869,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:04:01.253Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a1c6b81b39f5074d4557-730c0ba209029fa252de",
+              "file": "order-management/09-order-details-inspection.live.spec.ts",
+              "line": 5,
+              "column": 3
+            },
+            {
+              "title": "displays order not found notice when navigating to invalid order id",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16551,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main a[href=\"/orders\"]').first()\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" locator('main a[href=\"/orders\"]').first() with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('main a[href=\"/orders\"]').first()\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main a[href=\"/orders\"]').first()\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" locator('main a[href=\"/orders\"]').first() with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('main a[href=\"/orders\"]').first()\u001b[22m\n\n    at D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\09-order-details-inspection.live.spec.ts:51:66",
+                        "location": {
+                          "file": "D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\09-order-details-inspection.live.spec.ts",
+                          "column": 66,
+                          "line": 51
+                        },
+                        "snippet": "  49 |     // 3. Verify 404 state rendered\n  50 |     await expect(page.getByRole('heading', { level: 2 })).toBeVisible({ timeout: 10000 });\n> 51 |     await expect(page.locator('main a[href=\"/orders\"]').first()).toBeVisible();\n     |                                                                  ^\n  52 |   });\n  53 | });\n  54 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\09-order-details-inspection.live.spec.ts",
+                            "column": 66,
+                            "line": 51
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main a[href=\"/orders\"]').first()\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" locator('main a[href=\"/orders\"]').first() with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('main a[href=\"/orders\"]').first()\u001b[22m\n\n\n  49 |     // 3. Verify 404 state rendered\n  50 |     await expect(page.getByRole('heading', { level: 2 })).toBeVisible({ timeout: 10000 });\n> 51 |     await expect(page.locator('main a[href=\"/orders\"]').first()).toBeVisible();\n     |                                                                  ^\n  52 |   });\n  53 | });\n  54 |\n    at D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\09-order-details-inspection.live.spec.ts:51:66"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:04:09.135Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-09-order--cc61e-igating-to-invalid-order-id-theme-default\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-09-order--cc61e-igating-to-invalid-order-id-theme-default\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-09-order--cc61e-igating-to-invalid-order-id-theme-default\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-09-order--cc61e-igating-to-invalid-order-id-theme-default\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\09-order-details-inspection.live.spec.ts",
+                        "column": 66,
+                        "line": 51
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a1c6b81b39f5074d4557-ef42a480ae3e22e1c816",
+              "file": "order-management/09-order-details-inspection.live.spec.ts",
+              "line": 42,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\10-order-status-lifecycle.live.spec.ts",
+      "file": "order-management/10-order-status-lifecycle.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 10: Order Status Lifecycle & POS Sync",
+          "file": "order-management/10-order-status-lifecycle.live.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "transitions order status via status webhook and reflects in live UI",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 36605,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[data-testid=\"order-details-container\"]').locator('[data-testid=\"order-status-badge\"]')\nExpected pattern: \u001b[32m/processing|قيد التحضير/i\u001b[39m\nReceived string:  \u001b[31m\"قيد المعالجة\"\u001b[39m\nTimeout: 10000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" locator('[data-testid=\"order-details-container\"]').locator('[data-testid=\"order-status-badge\"]') with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=\"order-details-container\"]').locator('[data-testid=\"order-status-badge\"]')\u001b[22m\n\u001b[2m    23 × locator resolved to <div data-testid=\"order-status-badge\" class=\"rounded-md border px-2.5 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent shadow hover:bg-primary/80 flex items-center gap-1.5 font-medium transition-colors bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400\">…</div>\u001b[22m\n\u001b[2m       - unexpected value \"قيد المعالجة\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[data-testid=\"order-details-container\"]').locator('[data-testid=\"order-status-badge\"]')\nExpected pattern: \u001b[32m/processing|قيد التحضير/i\u001b[39m\nReceived string:  \u001b[31m\"قيد المعالجة\"\u001b[39m\nTimeout: 10000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" locator('[data-testid=\"order-details-container\"]').locator('[data-testid=\"order-status-badge\"]') with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=\"order-details-container\"]').locator('[data-testid=\"order-status-badge\"]')\u001b[22m\n\u001b[2m    23 × locator resolved to <div data-testid=\"order-status-badge\" class=\"rounded-md border px-2.5 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent shadow hover:bg-primary/80 flex items-center gap-1.5 font-medium transition-colors bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400\">…</div>\u001b[22m\n\u001b[2m       - unexpected value \"قيد المعالجة\"\u001b[22m\n\n    at D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\10-order-status-lifecycle.live.spec.ts:82:31",
+                        "location": {
+                          "file": "D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\10-order-status-lifecycle.live.spec.ts",
+                          "column": 31,
+                          "line": 82
+                        },
+                        "snippet": "  80 |     ]);\n  81 |\n> 82 |     await expect(statusBadge).toContainText(/processing|قيد التحضير/i);\n     |                               ^\n  83 |\n  84 |     // Delivery must pass through out_for_delivery before completion.\n  85 |     expect((await updateStatus('out_for_delivery')).ok).toBe(true);"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\10-order-status-lifecycle.live.spec.ts",
+                            "column": 31,
+                            "line": 82
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[data-testid=\"order-details-container\"]').locator('[data-testid=\"order-status-badge\"]')\nExpected pattern: \u001b[32m/processing|قيد التحضير/i\u001b[39m\nReceived string:  \u001b[31m\"قيد المعالجة\"\u001b[39m\nTimeout: 10000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" locator('[data-testid=\"order-details-container\"]').locator('[data-testid=\"order-status-badge\"]') with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=\"order-details-container\"]').locator('[data-testid=\"order-status-badge\"]')\u001b[22m\n\u001b[2m    23 × locator resolved to <div data-testid=\"order-status-badge\" class=\"rounded-md border px-2.5 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent shadow hover:bg-primary/80 flex items-center gap-1.5 font-medium transition-colors bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400\">…</div>\u001b[22m\n\u001b[2m       - unexpected value \"قيد المعالجة\"\u001b[22m\n\n\n  80 |     ]);\n  81 |\n> 82 |     await expect(statusBadge).toContainText(/processing|قيد التحضير/i);\n     |                               ^\n  83 |\n  84 |     // Delivery must pass through out_for_delivery before completion.\n  85 |     expect((await updateStatus('out_for_delivery')).ok).toBe(true);\n    at D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\10-order-status-lifecycle.live.spec.ts:82:31"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:04:27.931Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-10-order--87e38-ook-and-reflects-in-live-UI-theme-default\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-10-order--87e38-ook-and-reflects-in-live-UI-theme-default\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-10-order--87e38-ook-and-reflects-in-live-UI-theme-default\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\turbo_tenant\\test-results\\order-management-10-order--87e38-ook-and-reflects-in-live-UI-theme-default\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\turbo_tenant\\tests\\e2e\\plugins\\order-management\\10-order-status-lifecycle.live.spec.ts",
+                        "column": 31,
+                        "line": 82
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "dfb8392290511d9ef425-dffcd83489b9f2df28c6",
+              "file": "order-management/10-order-status-lifecycle.live.spec.ts",
+              "line": 6,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-03T13:02:19.516Z",
+    "duration": 168819.638,
+    "expected": 10,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

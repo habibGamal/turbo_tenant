@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import ReactPixel from "react-facebook-pixel";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -29,7 +28,7 @@ export default function CartSummary({ cart, formatCurrency }: CartSummaryProps) 
     const currency = useCurrency();
 
     return (
-        <Card className="sticky top-4">
+        <Card className="sticky top-[calc(var(--header-h,4rem)+1rem)]">
             <CardHeader>
                 <CardTitle>{t("orderSummary")}</CardTitle>
             </CardHeader>
@@ -67,21 +66,6 @@ export default function CartSummary({ cart, formatCurrency }: CartSummaryProps) 
                         size="lg"
                         className="w-full gap-2"
                         disabled={cart.items.length === 0}
-                        onClick={() => {
-                            ReactPixel.track("InitiateCheckout", {
-                                content_ids: cart.items.map(
-                                    (item) => item.product_id
-                                ),
-                                contents: cart.items.map((item) => ({
-                                    id: item.product_id,
-                                    quantity: parseFloat(item.quantity) || 1,
-                                })),
-                                content_type: "product",
-                                value: cart.total,
-                                currency,
-                                num_items: cart.items.length,
-                            });
-                        }}
                     >
                         <Package className="h-5 w-5" />
                         {t("proceedToCheckout")}

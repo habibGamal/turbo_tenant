@@ -2,17 +2,17 @@ import React from 'react';
 import { useHeroBanners } from '../api/useHeroBanners';
 
 export default function DefaultHeroBanners() {
-  const { data, isLoading, error } = useHeroBanners();
+  const { data: slides, isLoading, error } = useHeroBanners();
 
   if (isLoading) {
     return <div className="py-8 text-center text-sm text-muted-foreground animate-pulse">Loading hero banners...</div>;
   }
 
-  if (error || !data?.data || data.data.length === 0) {
+  if (error || !slides || slides.length === 0) {
     return null;
   }
 
-  const slide = data.data[0];
+  const slide = slides[0];
 
   return (
     <div className="w-full my-6 p-8 border rounded-lg bg-card text-card-foreground">

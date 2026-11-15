@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\OrderType;
-use App\Enums\PaymentMethod;
 use App\Models\User;
 use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Plugins\GuestCheckout\src\Models\GuestUser;
@@ -11,6 +9,8 @@ use App\Plugins\LocationsDelivery\src\Models\Address;
 use App\Plugins\LocationsDelivery\src\Models\Area;
 use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\LocationsDelivery\src\Models\Governorate;
+use App\Plugins\OrderManagement\src\Enums\OrderType;
+use App\Plugins\OrderManagement\src\Enums\PaymentMethod;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\POSProductResolverInterface;
@@ -19,6 +19,7 @@ use App\Plugins\PosIntegration\src\Services\POS\POSCustomerDataFormatter;
 
 beforeEach(function () {
     $this->productResolver = mock(POSProductResolverInterface::class);
+    $this->productResolver->shouldReceive('withMappings')->andReturnSelf()->byDefault();
     $this->customerFormatter = new POSCustomerDataFormatter();
     $this->builder = new OrderPOSPayloadBuilder($this->productResolver, $this->customerFormatter);
 });
@@ -52,6 +53,15 @@ describe('OrderPOSPayloadBuilder', function () {
             'user_id' => $user->id,
             'branch_id' => $branch->id,
             'address_id' => $address->id,
+            'customer_name' => 'Ahmed Mostafa',
+            'customer_phone' => '01012345678',
+            'delivery_address' => [
+                'street' => 'Street 9',
+                'building' => '15',
+                'apartment' => '7',
+                'area_name' => 'Maadi',
+                'governorate_name' => 'Cairo',
+            ],
             'order_number' => 'WEB-10542',
             'shift_id' => 42,
             'type' => OrderType::WEB_DELIVERY,
@@ -134,6 +144,17 @@ describe('OrderPOSPayloadBuilder', function () {
         $order = Order::factory()->create([
             'user_id' => null,
             'guest_user_id' => $guestUser->id,
+            'customer_name' => 'Sara Guest',
+            'customer_phone' => '+201122334455',
+            'delivery_address' => [
+                'street' => 'Tahrir St',
+                'building' => '12',
+                'floor' => '4',
+                'apartment' => '402',
+                'city' => 'Giza',
+                'area_name' => 'Dokki',
+                'governorate_name' => 'Giza',
+            ],
             'branch_id' => $branch->id,
             'order_number' => 'WEB-GUEST-1',
             'shift_id' => 10,
@@ -234,6 +255,10 @@ describe('OrderPOSPayloadBuilder', function () {
             'user_id' => $user->id,
             'address_id' => $address->id,
             'branch_id' => $branch->id,
+            'customer_name' => 'Kareem',
+            'delivery_address' => [
+                'full_address' => 'Villa 12, Compound Beverly Hills, Sheikh Zayed',
+            ],
             'type' => OrderType::WEB_DELIVERY,
             'shift_id' => 1,
         ]);

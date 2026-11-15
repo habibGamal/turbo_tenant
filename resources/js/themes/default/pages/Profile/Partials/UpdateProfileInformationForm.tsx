@@ -100,6 +100,7 @@ export default function UpdateProfileInformationForm({
                     <Input
                         id="email"
                         type="email"
+                        dir="ltr"
                         className="mt-1 block w-full"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -116,6 +117,7 @@ export default function UpdateProfileInformationForm({
                     <Input
                         id="phone"
                         type="tel"
+                        dir="ltr"
                         className="mt-1 block w-full"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}

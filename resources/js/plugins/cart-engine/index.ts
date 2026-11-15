@@ -12,4 +12,5 @@ export function registerCartEnginePlugin(): void {
 
 export * from './api';
 export * from './types';
+export * from './utils/cart-item-converter';
 export { DefaultCart, DefaultCartButton };

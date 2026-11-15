@@ -12,6 +12,7 @@ import {
 import { PLATFORM_ICONS } from '@/themes/default/components/icons/social-icons';
 import { useTranslation } from 'react-i18next';
 import { useTenantSafe } from '@/core/context/TenantContext';
+import { useAuth } from '@/core/context/AuthContext';
 
 interface FooterLink {
     label: string;
@@ -32,6 +33,7 @@ interface FooterProps {
 
 export default function Footer({ sections, showNewsletter = true }: FooterProps) {
     const { t, i18n } = useTranslation();
+    const { user } = useAuth();
     const tenantContext = useTenantSafe();
     const settings = tenantContext?.settings || {};
     const pages = settings?.pages || [];
@@ -52,7 +54,7 @@ export default function Footer({ sections, showNewsletter = true }: FooterProps)
             titleAr: t('support'),
             links: [
                 { label: t('deliveryInfo'), labelAr: t('deliveryInfo'), href: '/pages/delivery-policy' },
-                { label: t('trackOrder'), labelAr: t('trackOrder'), href: '/orders' },
+                { label: t('trackOrder'), labelAr: t('trackOrder'), href: user ? '/orders' : '/track-order' },
                 { label: t('returns'), labelAr: t('returns'), href: '/pages/return-policy' },
             ],
         },
@@ -65,9 +67,9 @@ export default function Footer({ sections, showNewsletter = true }: FooterProps)
                 href: `/pages/${page.slug}`,
             })),
         },
-    ];
+    ].filter((section) => section.links.length > 0);
 
-    const sectionsToUse = sections || defaultSections;
+    const sectionsToUse = (sections || defaultSections).filter((section) => section.links.length > 0);
 
     const getText = (text: string, textAr?: string) => {
         return i18n.language === 'ar' && textAr ? textAr : text;

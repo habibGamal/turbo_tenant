@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useCmsPages, useCmsPage, CmsPageItem } from '@/plugins/cms-pages';
 import { CmsPageSkeleton } from '@/components/ui/page-skeletons';
+import NotFound from '@/themes/default/pages/NotFound';
 
 export interface ThemedCmsPagesProps {
   slug?: string;
@@ -21,17 +22,16 @@ export default function ThemedCmsPages({ slug, className = '' }: ThemedCmsPagesP
 }
 
 function ThemedSinglePage({ slug, isAr, className }: { slug: string; isAr: boolean; className: string }) {
-  const { data, isLoading, error } = useCmsPage(slug);
+  const { data: page, isLoading, error } = useCmsPage(slug);
 
   if (isLoading) {
     return <CmsPageSkeleton />;
   }
 
-  if (error || !data?.data) {
-    return null;
+  if (error || !page) {
+    return <NotFound embedded={true} />;
   }
 
-  const page = data.data;
   const title = isAr && page.title_ar ? page.title_ar : page.title;
   const content = isAr && page.content_ar ? page.content_ar : page.content;
 
@@ -70,9 +70,9 @@ function ThemedSinglePage({ slug, isAr, className }: { slug: string; isAr: boole
 }
 
 function ThemedPageLinks({ isAr, className }: { isAr: boolean; className: string }) {
-  const { data, isLoading, error } = useCmsPages();
+  const { data: pages, isLoading, error } = useCmsPages();
 
-  if (isLoading || error || !data?.data || data.data.length === 0) {
+  if (isLoading || error || !pages || pages.length === 0) {
     return null;
   }
 
@@ -84,7 +84,7 @@ function ThemedPageLinks({ isAr, className }: { isAr: boolean; className: string
             {isAr ? 'روابط هامة' : 'Important Links'}
           </div>
           <div className="flex flex-wrap gap-6">
-            {data.data.map((page: CmsPageItem) => {
+            {pages.map((page: CmsPageItem) => {
               const title = isAr && page.title_ar ? page.title_ar : page.title;
               return (
                 <Link

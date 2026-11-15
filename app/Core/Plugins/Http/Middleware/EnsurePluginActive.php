@@ -17,7 +17,7 @@ final class EnsurePluginActive
 
     public function handle(Request $request, Closure $next, string $pluginId): Response
     {
-        $tenant = function_exists('tenant') ? tenant() : null;
+        $tenant = tenant();
 
         if ($tenant !== null && ! $this->pluginManager->isPluginActive($pluginId, $tenant)) {
             return response()->json([

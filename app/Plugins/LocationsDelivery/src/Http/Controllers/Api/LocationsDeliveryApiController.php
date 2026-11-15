@@ -5,11 +5,17 @@ declare(strict_types=1);
 namespace App\Plugins\LocationsDelivery\src\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Responses\ApiResponse;
+use App\Plugins\LocationsDelivery\src\Http\Requests\AddressRequest;
+use App\Plugins\LocationsDelivery\src\Http\Resources\AddressResource;
+use App\Plugins\LocationsDelivery\src\Http\Resources\BranchResource;
+use App\Plugins\LocationsDelivery\src\Http\Resources\GovernorateResource;
 use App\Plugins\LocationsDelivery\src\Models\Address;
 use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\LocationsDelivery\src\Models\Governorate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 final class LocationsDeliveryApiController extends Controller
 {
@@ -21,28 +27,29 @@ final class LocationsDeliveryApiController extends Controller
         $user = $request->user();
 
         $addresses = $user
-            ? $user->addresses()->with(['area.governorate'])->latest()->get()
+            ? AddressResource::collection($user->addresses()->with(['area.governorate'])->latest()->get())
             : [];
 
-        $governorates = Governorate::query()
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->with(['areas' => function ($query) {
-                $query->where('is_active', true)->orderBy('sort_order');
-            }])
-            ->get();
+        $governorates = GovernorateResource::collection(
+            Governorate::query()
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->with(['areas' => function ($query) {
+                    $query->where('is_active', true)->orderBy('sort_order');
+                }])
+                ->get()
+        );
 
-        $branches = Branch::query()
-            ->where('is_active', true)
-            ->get();
+        $branches = BranchResource::collection(
+            Branch::query()
+                ->where('is_active', true)
+                ->get()
+        );
 
-        return response()->json([
-            'status' => 'success',
-            'data' => [
-                'addresses' => $addresses,
-                'governorates' => $governorates,
-                'branches' => $branches,
-            ],
+        return ApiResponse::success([
+            'addresses' => $addresses,
+            'governorates' => $governorates,
+            'branches' => $branches,
         ]);
     }
 
@@ -59,10 +66,7 @@ final class LocationsDeliveryApiController extends Controller
             }])
             ->get();
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $governorates,
-        ]);
+        return ApiResponse::success(GovernorateResource::collection($governorates));
     }
 
     /**
@@ -74,10 +78,7 @@ final class LocationsDeliveryApiController extends Controller
             ->where('is_active', true)
             ->get();
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $branches,
-        ]);
+        return ApiResponse::success(BranchResource::collection($branches));
     }
 
     /**
@@ -85,56 +86,21 @@ final class LocationsDeliveryApiController extends Controller
      */
     public function addresses(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        if (! $user) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthenticated.',
-            ], 401);
-        }
-
-        $addresses = $user->addresses()
+        $addresses = $request->user()->addresses()
             ->with(['area.governorate'])
             ->latest()
             ->get();
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $addresses,
-        ]);
+        return ApiResponse::success(AddressResource::collection($addresses));
     }
 
     /**
      * Store a newly created address for the authenticated user.
      */
-    public function storeAddress(Request $request): JsonResponse
+    public function storeAddress(AddressRequest $request): JsonResponse
     {
         $user = $request->user();
-
-        if (! $user) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthenticated.',
-            ], 401);
-        }
-
-        $validated = $request->validate([
-            'area_id' => 'required|integer|exists:areas,id',
-            'phone_number' => [
-                'required',
-                'string',
-                'regex:/^\+20[0-9]{10}$/',
-            ],
-            'street' => 'required|string|max:255',
-            'building' => 'required|string|max:255',
-            'floor' => 'required|string|max:50',
-            'apartment' => 'required|string|max:50',
-            'notes' => 'nullable|string|max:1000',
-            'is_default' => 'nullable|boolean',
-        ], [
-            'phone_number.regex' => 'رقم الهاتف يجب أن يكون رقم مصري صحيح.',
-        ]);
+        $validated = $request->validated();
 
         if (! empty($validated['is_default'])) {
             Address::where('user_id', $user->id)->update(['is_default' => false]);
@@ -143,43 +109,18 @@ final class LocationsDeliveryApiController extends Controller
         $address = $user->addresses()->create($validated);
         $address->load('area.governorate');
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Address created successfully.',
-            'data' => $address,
-        ], 201);
+        return ApiResponse::success(new AddressResource($address), 'Address created successfully.', 201);
     }
 
     /**
      * Update an address.
      */
-    public function updateAddress(Request $request, Address $address): JsonResponse
+    public function updateAddress(AddressRequest $request, Address $address): JsonResponse
     {
+        Gate::authorize('update', $address);
+
         $user = $request->user();
-
-        if (! $user || $address->user_id !== $user->id) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthorized.',
-            ], 403);
-        }
-
-        $validated = $request->validate([
-            'area_id' => 'required|integer|exists:areas,id',
-            'phone_number' => [
-                'required',
-                'string',
-                'regex:/^\+20[0-9]{10}$/',
-            ],
-            'street' => 'required|string|max:255',
-            'building' => 'required|string|max:255',
-            'floor' => 'required|string|max:50',
-            'apartment' => 'required|string|max:50',
-            'notes' => 'nullable|string|max:1000',
-            'is_default' => 'nullable|boolean',
-        ], [
-            'phone_number.regex' => 'رقم الهاتف يجب أن يكون رقم مصري صحيح.',
-        ]);
+        $validated = $request->validated();
 
         if (! empty($validated['is_default'])) {
             Address::where('user_id', $user->id)->update(['is_default' => false]);
@@ -188,11 +129,7 @@ final class LocationsDeliveryApiController extends Controller
         $address->update($validated);
         $address->load('area.governorate');
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Address updated successfully.',
-            'data' => $address,
-        ]);
+        return ApiResponse::success(new AddressResource($address), 'Address updated successfully.');
     }
 
     /**
@@ -200,20 +137,10 @@ final class LocationsDeliveryApiController extends Controller
      */
     public function destroyAddress(Request $request, Address $address): JsonResponse
     {
-        $user = $request->user();
-
-        if (! $user || $address->user_id !== $user->id) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthorized.',
-            ], 403);
-        }
+        Gate::authorize('delete', $address);
 
         $address->delete();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Address deleted successfully.',
-        ]);
+        return ApiResponse::success(null, 'Address deleted successfully.');
     }
 }

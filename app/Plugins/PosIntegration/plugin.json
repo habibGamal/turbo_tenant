@@ -22,6 +22,12 @@
         ],
         "App\\Plugins\\OrderManagement\\src\\Events\\OrderStatusUpdated": [
             "App\\Plugins\\PosIntegration\\src\\Listeners\\SendOrderToPosListener@handleStatusUpdated"
+        ],
+        "App\\Plugins\\OrderManagement\\src\\Events\\OrderPaymentCompleted": [
+            "App\\Plugins\\PosIntegration\\src\\Listeners\\SendOrderToPosListener@handleOrderPaymentCompleted"
+        ],
+        "App\\Plugins\\OrderManagement\\src\\Events\\OrderFinalized": [
+            "App\\Plugins\\PosIntegration\\src\\Listeners\\SendOrderToPosListener@handleOrderFinalized"
         ]
     },
     "tenant_scoped": [

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 use RuntimeException;
+use Throwable;
 
 final class PluginLifecycleService
 {
@@ -38,7 +39,7 @@ final class PluginLifecycleService
             ->where('plugin_id', $manifest->id)
             ->first();
 
-        if ($existingRecord?->status === PluginStatus::ACTIVE) {
+        if ($existingRecord?->isActive()) {
             return;
         }
 
@@ -69,8 +70,10 @@ final class PluginLifecycleService
         }
 
         // 4. Update tenant plugin state
-        $resolvedSettings = ! empty($settings) ? $settings : ($existingRecord?->settings ?? []);
-        $installedAt = $existingRecord?->installed_at ?? now();
+        $resolvedSettings = ! empty($settings) ? $settings : ($existingRecord !== null ? $existingRecord->settings : []);
+        $installedAt = $existingRecord !== null ? $existingRecord->installed_at : now();
+        $recordExisted = $existingRecord !== null;
+        $previousStatus = $existingRecord !== null ? $existingRecord->status : null;
 
         TenantPlugin::updateOrCreate(
             [
@@ -87,9 +90,33 @@ final class PluginLifecycleService
 
         $this->pluginManager->resetTenant($tenant);
 
-        // 5. Call onActivate hook
+        // 5. Call onActivate hook with compensation on failure
         $pluginInstance = $this->pluginManager->resolvePluginInstance($manifest);
-        $pluginInstance?->onActivate($tenant);
+        if ($pluginInstance !== null) {
+            try {
+                $pluginInstance->onActivate($tenant);
+            } catch (Throwable $e) {
+                // Compensate: restore previous record state if onActivate throws.
+                // Migrations are not rolled back (different connection); tenant schema changes remain.
+                if (! $recordExisted) {
+                    TenantPlugin::query()
+                        ->where('tenant_id', (string) $tenant->id)
+                        ->where('plugin_id', $manifest->id)
+                        ->delete();
+                } else {
+                    TenantPlugin::query()
+                        ->where('tenant_id', (string) $tenant->id)
+                        ->where('plugin_id', $manifest->id)
+                        ->update([
+                            'status' => $previousStatus,
+                        ]);
+                }
+
+                $this->pluginManager->resetTenant($tenant);
+
+                throw $e;
+            }
+        }
     }
 
     /**
@@ -105,15 +132,10 @@ final class PluginLifecycleService
         $activeIds = $this->pluginManager->getActivePluginIds($tenant);
 
         // Check if any active plugin depends on this one
-        foreach ($activeIds as $activeId) {
-            if ($activeId === $pluginId) {
-                continue;
-            }
-
-            $manifest = $this->registry->get($activeId);
-            if ($manifest !== null && in_array($pluginId, $manifest->dependencies, true)) {
-                throw new RuntimeException("Cannot deactivate '{$pluginId}'. Plugin '{$activeId}' depends on it.");
-            }
+        $dependents = $this->resolver->getDependents($pluginId, $activeIds, $this->registry->all());
+        if (! empty($dependents)) {
+            $dependentId = $dependents[0];
+            throw new RuntimeException("Cannot deactivate '{$pluginId}'. Plugin '{$dependentId}' depends on it.");
         }
 
         $record = TenantPlugin::query()

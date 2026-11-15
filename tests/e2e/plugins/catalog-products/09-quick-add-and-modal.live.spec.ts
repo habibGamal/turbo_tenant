@@ -2,11 +2,7 @@ import { test, expect } from '../../helpers/live-fixture';
 
 test.describe('CatalogProducts Suite 09: Quick-Add & Options Modal Flow', () => {
   test('opens options modal when clicking Add to Cart on product with variants or addons', async ({ page, theme }) => {
-    const sectionsPromise = page.waitForResponse(
-      (r) => r.url().includes('/api/catalog-products/sections') && r.status() === 200
-    ).catch(() => null);
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await sectionsPromise;
 
     // Product 5 (Simple Coffee) is configured with variants, weights, and addons
     const productCards = theme.catalog.getProductCards();

@@ -1,3 +1,4 @@
+import { LoaderIcon } from "lucide-react";
 import React, { FormEvent, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import MainLayout from "@/themes/default/layouts/MainLayout";
@@ -242,7 +243,7 @@ export default function ResetPassword({
                                 >
                                     {processing ? (
                                         <span className="flex items-center gap-2">
-                                            <span className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                                            <LoaderIcon className="h-4 w-4 animate-spin" />
                                             {t("resettingPassword")}
                                         </span>
                                     ) : (

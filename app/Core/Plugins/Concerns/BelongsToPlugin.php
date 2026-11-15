@@ -31,14 +31,8 @@ trait BelongsToPlugin
      */
     public static function canAccess(): bool
     {
-        $tenant = function_exists('tenant') ? tenant() : null;
-
-        if ($tenant !== null) {
-            $pluginId = static::getPluginId();
-
-            if ($pluginId !== null && ! app(PluginManager::class)->isPluginActive($pluginId, $tenant)) {
-                return false;
-            }
+        if (static::pluginIsInactiveForCurrentTenant()) {
+            return false;
         }
 
         return parent::canAccess();
@@ -49,16 +43,25 @@ trait BelongsToPlugin
      */
     public static function shouldRegisterNavigation(): bool
     {
-        $tenant = function_exists('tenant') ? tenant() : null;
+        if (static::pluginIsInactiveForCurrentTenant()) {
+            return false;
+        }
+
+        return parent::shouldRegisterNavigation();
+    }
+
+    private static function pluginIsInactiveForCurrentTenant(): bool
+    {
+        $tenant = tenant();
 
         if ($tenant !== null) {
             $pluginId = static::getPluginId();
 
             if ($pluginId !== null && ! app(PluginManager::class)->isPluginActive($pluginId, $tenant)) {
-                return false;
+                return true;
             }
         }
 
-        return parent::shouldRegisterNavigation();
+        return false;
     }
 }

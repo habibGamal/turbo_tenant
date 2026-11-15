@@ -30,6 +30,53 @@ final class PluginDependencyResolver
     }
 
     /**
+     * Check if all dependencies for a plugin are satisfied in an active set.
+     *
+     * @param  array<string>  $activePluginIds
+     * @return array<string> Missing plugin IDs
+     */
+    public function getMissingDependencies(PluginManifest $manifest, array $activePluginIds): array
+    {
+        $missing = [];
+
+        foreach ($manifest->dependencies as $requiredId) {
+            if (! in_array($requiredId, $activePluginIds, true)) {
+                $missing[] = $requiredId;
+            }
+        }
+
+        return $missing;
+    }
+
+    /**
+     * Get active plugins that declare $pluginId as a dependency.
+     *
+     * @param  array<string>  $activePluginIds
+     * @param  Collection<string, PluginManifest>|array<string, PluginManifest>  $manifests
+     * @return array<string>
+     */
+    public function getDependents(string $pluginId, array $activePluginIds, Collection|array $manifests): array
+    {
+        $dependents = [];
+
+        foreach ($activePluginIds as $activeId) {
+            if ($activeId === $pluginId) {
+                continue;
+            }
+
+            $manifest = is_array($manifests)
+                ? ($manifests[$activeId] ?? null)
+                : $manifests->get($activeId);
+
+            if ($manifest !== null && in_array($pluginId, $manifest->dependencies, true)) {
+                $dependents[] = $activeId;
+            }
+        }
+
+        return $dependents;
+    }
+
+    /**
      * @param  Collection<string, PluginManifest>  $manifests
      * @param  array<string, bool>  $visited
      * @param  array<string, bool>  $visiting
@@ -65,24 +112,5 @@ final class PluginDependencyResolver
 
         unset($visiting[$id]);
         $visited[$id] = true;
-    }
-
-    /**
-     * Check if all dependencies for a plugin are satisfied in an active set.
-     *
-     * @param  array<string>  $activePluginIds
-     * @return array<string> Missing plugin IDs
-     */
-    public function getMissingDependencies(PluginManifest $manifest, array $activePluginIds): array
-    {
-        $missing = [];
-
-        foreach ($manifest->dependencies as $requiredId) {
-            if (! in_array($requiredId, $activePluginIds, true)) {
-                $missing[] = $requiredId;
-            }
-        }
-
-        return $missing;
     }
 }

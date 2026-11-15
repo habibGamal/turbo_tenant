@@ -1,0 +1,32 @@
+{
+    "id": "meta-marketing",
+    "name": "Meta Marketing (Pixel, Conversions API, Catalog)",
+    "version": "1.0.0",
+    "category": "marketing",
+    "description": "Meta Pixel settings, Conversions API events and Meta product catalog feed",
+    "author": "Turbo Tenant Team",
+    "is_core": false,
+    "dependencies": [
+        "order-management",
+        "catalog-products",
+        "store-settings"
+    ],
+    "providers": [
+        "App\\Plugins\\MetaMarketing\\MetaMarketingServiceProvider"
+    ],
+    "filament": "App\\Plugins\\MetaMarketing\\src\\Filament\\MetaMarketingFilamentPlugin",
+    "listeners": {
+        "App\\Plugins\\OrderManagement\\src\\Events\\OrderCreated": [
+            "App\\Plugins\\MetaMarketing\\src\\Listeners\\CaptureOrderTrackingContext"
+        ],
+        "App\\Plugins\\OrderManagement\\src\\Events\\OrderFinalized": [
+            "App\\Plugins\\MetaMarketing\\src\\Listeners\\SendPurchaseToMeta"
+        ],
+        "App\\Plugins\\OrderManagement\\src\\Events\\OrderPaymentCompleted": [
+            "App\\Plugins\\MetaMarketing\\src\\Listeners\\SendPurchaseToMeta"
+        ]
+    },
+    "tenant_scoped": [
+        "App\\Plugins\\MetaMarketing\\src\\DTOs\\MetaMarketingConfig"
+    ]
+}

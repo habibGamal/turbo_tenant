@@ -2,14 +2,14 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
+import { LoaderIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useValidateCoupon } from "@/plugins/coupons-promotions/api/useValidateCoupon";
 import { AppliedCoupon } from "@/plugins/coupons-promotions/types";
 
 interface CouponFormProps {
-    cartItems: any[];
-    cartTotal: number;
+    cartItems?: any[];
+    cartTotal?: number;
     addressId?: number | null;
     guestPhone?: string | null;
     appliedCoupon?: AppliedCoupon | null;
@@ -43,18 +43,14 @@ export default function CouponForm({
         mutate(
             {
                 code: couponCode.trim(),
-                cart_items: cartItems,
-                sub_total: cartTotal,
                 address_id: addressId,
                 guest_phone: guestPhone,
             },
             {
                 onSuccess: (res) => {
-                    if (res.valid && res.coupon) {
+                    if (res?.coupon) {
                         if (onCouponApplied) onCouponApplied(res.coupon);
-                        setCouponSuccess(res.message);
-                    } else {
-                        setCouponError(res.message);
+                        setCouponSuccess(t("couponAppliedSuccessfully", "Coupon applied successfully"));
                     }
                 },
                 onError: (err: any) => {
@@ -103,7 +99,7 @@ export default function CouponForm({
                                 disabled={!couponCode.trim() || isPending}
                             >
                                 {isPending ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <LoaderIcon className="h-4 w-4 animate-spin" />
                                 ) : (
                                     t("apply", "Apply")
                                 )}

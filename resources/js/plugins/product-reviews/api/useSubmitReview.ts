@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/core/api/client';
-import { SubmitReviewPayload } from '../types';
+import { ReviewItem, SingleReviewResponse, SubmitReviewPayload } from '../types';
 
 export function useSubmitReview(productId: string | number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: SubmitReviewPayload) => {
+    mutationFn: async (payload: SubmitReviewPayload): Promise<ReviewItem> => {
       const formData = new FormData();
       formData.append('rating', String(payload.rating));
       formData.append('comment', payload.comment);
@@ -18,12 +18,12 @@ export function useSubmitReview(productId: string | number) {
         });
       }
 
-      const { data } = await apiClient.post(`/products/${productId}/reviews`, formData, {
+      const { data } = await apiClient.post<SingleReviewResponse>(`/api/products/${productId}/reviews`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-      return data;
+      return data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['product-reviews', productId] });

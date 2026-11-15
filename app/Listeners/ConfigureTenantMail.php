@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
+use App\Core\Contracts\SettingsRepository;
 use App\Enums\SettingKey;
-use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
 use Log;
@@ -15,7 +15,7 @@ final class ConfigureTenantMail
 {
     public function handle(TenancyInitialized $event): void
     {
-        $settingService = app(SettingService::class);
+        $settingService = app(SettingsRepository::class);
         if (! Schema::hasTable('settings')) {
             Log::warning('Settings table does not exist for tenant.');
 

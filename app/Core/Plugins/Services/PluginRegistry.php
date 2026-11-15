@@ -22,9 +22,20 @@ final class PluginRegistry
 
     public function __construct(
         private readonly PluginManifestLoader $loader,
-        private readonly string $pluginsPath
+        private readonly string $pluginsPath,
+        private readonly ?string $manifestCachePath = null
     ) {
         $this->manifests = collect();
+    }
+
+    public function getCachePath(): ?string
+    {
+        return $this->manifestCachePath;
+    }
+
+    public function hasCache(): bool
+    {
+        return $this->manifestCachePath !== null && file_exists($this->manifestCachePath);
     }
 
     public function discover(): self
@@ -40,7 +51,11 @@ final class PluginRegistry
     public function all(): Collection
     {
         if ($this->manifests->isEmpty()) {
-            $this->discover();
+            if ($this->hasCache()) {
+                $this->loadFromCache();
+            } else {
+                $this->discover();
+            }
         }
 
         return $this->manifests;
@@ -97,5 +112,71 @@ final class PluginRegistry
                 ]
             );
         }
+    }
+
+    /**
+     * Write manifests cache file at the specified path or default manifestCachePath.
+     */
+    public function writeCache(?string $path = null): void
+    {
+        $targetPath = $path ?? $this->manifestCachePath;
+
+        if ($targetPath === null) {
+            return;
+        }
+
+        $dir = dirname($targetPath);
+        if (! is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $cacheData = [];
+        foreach ($this->all() as $manifest) {
+            $cacheData[$manifest->id] = $manifest->toArray();
+        }
+
+        $content = "<?php\n\ndeclare(strict_types=1);\n\nreturn ".var_export($cacheData, true).";\n";
+        file_put_contents($targetPath, $content, LOCK_EX);
+    }
+
+    /**
+     * Remove the manifest cache file.
+     */
+    public function clearCache(?string $path = null): void
+    {
+        $targetPath = $path ?? $this->manifestCachePath;
+
+        if ($targetPath !== null && file_exists($targetPath)) {
+            unlink($targetPath);
+        }
+    }
+
+    private function loadFromCache(): void
+    {
+        if ($this->manifestCachePath === null || ! file_exists($this->manifestCachePath)) {
+            $this->discover();
+
+            return;
+        }
+
+        $cached = require $this->manifestCachePath;
+        if (! is_array($cached)) {
+            $this->discover();
+
+            return;
+        }
+
+        $manifests = collect();
+        foreach ($cached as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $basePath = (string) ($item['basePath'] ?? '');
+            $manifest = PluginManifest::fromArray($item, $basePath);
+            $manifests->put($manifest->id, $manifest);
+        }
+
+        $this->manifests = $manifests;
     }
 }

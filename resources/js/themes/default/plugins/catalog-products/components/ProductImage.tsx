@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { ImageWithFallback } from "@/components/ui/image";
 import { Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { Product } from "@/types";
+import { NormalizedProduct } from "@/plugins/catalog-products/types";
 import { hasActiveDiscount, getDiscountPercent } from "@/lib/pricing";
 
 interface ProductImageProps {
-    product: Product;
+    product: Product | NormalizedProduct;
 }
 
 export default function ProductImage({ product }: ProductImageProps) {
@@ -20,6 +22,36 @@ export default function ProductImage({ product }: ProductImageProps) {
 
     const hasDiscount = hasActiveDiscount(product);
     const discountPercentage = getDiscountPercent(product);
+
+    const handleShare = async () => {
+        const title = getText(product.name, product.name_ar);
+        const description = getText(
+            product.description || "",
+            product.descriptionAr || (product as any).description_ar
+        );
+        const url = window.location.href;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title,
+                    text: description,
+                    url,
+                });
+            } catch (error: any) {
+                if (error?.name !== "AbortError") {
+                    console.error("Error sharing product:", error);
+                }
+            }
+        } else {
+            try {
+                await navigator.clipboard.writeText(url);
+                toast.success(t("linkCopied", "Link copied"));
+            } catch {
+                toast.error(t("couldNotCopyLink", "Could not copy the link"));
+            }
+        }
+    };
 
     return (
         <div className="space-y-4">
@@ -42,16 +74,8 @@ export default function ProductImage({ product }: ProductImageProps) {
                     size="icon"
                     variant="secondary"
                     aria-label={t("share", "Share")}
-                    className="absolute top-4 end-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-md"
-                    onClick={() => {
-                        if (navigator.share) {
-                            navigator.share({
-                                title: getText(product.name, product.name_ar),
-                                text: product.description,
-                                url: window.location.href,
-                            });
-                        }
-                    }}
+                    className="absolute top-4 end-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100 transition-opacity duration-300 shadow-md"
+                    onClick={handleShare}
                 >
                     <Share2 className="h-5 w-5" />
                 </Button>

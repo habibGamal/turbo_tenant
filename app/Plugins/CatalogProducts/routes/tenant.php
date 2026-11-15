@@ -2,17 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Core\Plugins\Routing\PluginRoutes;
 use App\Plugins\CatalogProducts\src\Http\Controllers\Api\CatalogProductsApiController;
 use Illuminate\Support\Facades\Route;
-use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
-use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
-Route::middleware([
-    'web',
-    InitializeTenancyByDomain::class,
-    PreventAccessFromCentralDomains::class,
-    'plugin.active:catalog-products',
-])->prefix('api/catalog-products')->group(function () {
+PluginRoutes::tenant('catalog-products')->prefix('api/catalog-products')->group(function () {
     Route::get('/', [CatalogProductsApiController::class, 'index'])->name('api.catalog-products.index');
     Route::get('/sections', [CatalogProductsApiController::class, 'sections'])->name('api.catalog-products.sections');
     Route::get('/categories', [CatalogProductsApiController::class, 'categories'])->name('api.catalog-products.categories');

@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Pipelines\Context;
 
+use App\Plugins\CartEngine\src\DTOs\CartLine;
 use App\Plugins\OrderManagement\src\DTOs\OrderTotals;
 use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
 use App\Plugins\OrderManagement\src\Pipelines\DTOs\PricingAdjustment;
 
+/**
+ * Public API: other plugins' pipes receive this class. Change it compatibly.
+ */
 final class PricingCalculationContext
 {
     public float $subTotal = 0.0;
@@ -19,13 +23,13 @@ final class PricingCalculationContext
     private array $attributes = [];
 
     /**
-     * @param  array<int, array<string, mixed>>  $cartItems
+     * @param  list<CartLine>  $lines
      * @param  array<string, mixed>  $payload
      * @param  array<string, mixed>  $attributes
      */
     public function __construct(
         public readonly PlaceOrderData $data,
-        public readonly array $cartItems,
+        public readonly array $lines,
         public readonly array $payload = [],
         array $attributes = []
     ) {

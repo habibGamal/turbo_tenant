@@ -12,17 +12,21 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class CartItem extends Model
+final class CartItem extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'cart_id',
+        'line_type',
+        'line_reference_id',
+        'selection_signature',
         'product_id',
         'variant_id',
         'weight_option_value_id',
         'quantity',
         'weight_multiplier',
+        'notes',
     ];
 
     public function cart(): BelongsTo
@@ -50,11 +54,22 @@ class CartItem extends Model
         return $this->hasMany(CartItemExtra::class);
     }
 
+    public function components(): HasMany
+    {
+        return $this->hasMany(CartItemComponent::class)->orderBy('sort_order');
+    }
+
+    public function isProductLine(): bool
+    {
+        return ($this->line_type ?? 'product') === 'product';
+    }
+
     protected function casts(): array
     {
         return [
             'quantity' => 'decimal:3',
             'weight_multiplier' => 'integer',
+            'line_reference_id' => 'integer',
         ];
     }
 }

@@ -1,8 +1,9 @@
 import React from 'react';
-import ReactPixel from 'react-facebook-pixel';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Product } from '@/types';
+import { NormalizedProduct } from '@/plugins/catalog-products/types';
 import { useProductOptions } from '@/hooks/useProductOptions';
+import { useFavorites } from '@/hooks/useFavorites';
 import ProductOptions from './ProductOptions';
 import ProductInfo from './ProductInfo';
 import { ImageWithFallback } from '@/components/ui/image';
@@ -11,7 +12,7 @@ import { getEffectivePrice } from '@/lib/pricing';
 import { useFormatMoney, useCurrency } from '@/lib/money';
 
 interface ProductOptionsModalProps {
-    product: Product;
+    product: NormalizedProduct | Product;
     isOpen: boolean;
     onClose: () => void;
 }
@@ -53,22 +54,11 @@ export default function ProductOptionsModal({
         }
 
         handleAddToCart(() => {
-            let price = getEffectivePrice(product);
-            let contentId = product.id;
-            ReactPixel.track("AddToCart", {
-                content_ids: [contentId],
-                content_type: "product",
-                contents: [{ id: contentId, quantity: quantity }],
-                value: price,
-                currency,
-            });
             onClose();
         });
     };
 
-    // Mock favorite functionality for now as it's not part of the modal requirements but needed for ProductOptions
-    const isFavorite = false;
-    const handleToggleFavorite = () => { };
+    const { isFavorite, toggleFavorite } = useFavorites();
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -96,7 +86,7 @@ export default function ProductOptionsModal({
                                 {getText(product.name, product.name_ar)}
                             </h3>
                             <p className="text-sm text-muted-foreground line-clamp-2">
-                                {getText(product.description, product.descriptionAr)}
+                                {getText(product.description || '', product.descriptionAr)}
                             </p>
                         </div>
                         <div className="text-2xl font-bold text-primary">
@@ -116,8 +106,8 @@ export default function ProductOptionsModal({
                             setQuantity={setQuantity}
                             handleAddToCart={handleAddToCartWrapper}
                             isAddingToCart={isAddingToCart || !(product.is_active ?? true)}
-                            isFavorite={isFavorite}
-                            handleToggleFavorite={handleToggleFavorite}
+                            isFavorite={isFavorite(product.id)}
+                            handleToggleFavorite={() => toggleFavorite(product.id, getEffectivePrice(product))}
                             canAddToCart={canAddToCart}
                             missingRequiredSelections={missingRequiredSelections}
                             limitReachedFor={limitReachedFor}

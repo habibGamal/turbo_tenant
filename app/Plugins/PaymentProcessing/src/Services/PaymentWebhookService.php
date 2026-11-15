@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Plugins\PaymentProcessing\src\Services;
 
-use App\Enums\PaymentStatus;
-use App\Plugins\OrderManagement\src\Contracts\PaymentGatewayInterface;
+use App\Plugins\OrderManagement\src\Enums\PaymentStatus;
 use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\PaymentProcessing\src\Contracts\PaymentGatewayInterface;
 use App\Plugins\PaymentProcessing\src\Contracts\PaymentWebhookServiceInterface;
+use App\Plugins\PaymentProcessing\src\DTOs\WebhookResult;
 use App\Plugins\PaymentProcessing\src\Models\PaymentEvent;
 use Illuminate\Support\Facades\Log;
 
@@ -17,28 +18,25 @@ final readonly class PaymentWebhookService implements PaymentWebhookServiceInter
         private PaymentStateMachine $stateMachine
     ) {}
 
-    public function handleWebhook(array $webhookData, string $signature, PaymentGatewayInterface $gateway): array
+    public function handleWebhook(array $webhookData, string $signature, PaymentGatewayInterface $gateway): WebhookResult
     {
         $gatewayId = $gateway->getGatewayId();
 
-        if (! $gateway->validateHmac($webhookData['obj'] ?? $webhookData, $signature)) {
+        if (! $gateway->validateHmac($webhookData, $signature)) {
             Log::warning('Payment webhook signature invalid', [
                 'gateway' => $gatewayId,
                 'result' => 'invalid_signature',
             ]);
 
-            return [
-                'success' => false,
-                'error' => 'Invalid webhook signature',
-            ];
+            return WebhookResult::failed('Invalid webhook signature');
         }
 
         $processedData = $gateway->processWebhook($webhookData);
-        $transactionId = (string) ($processedData['transaction_id'] ?? '');
-        $merchantOrderId = (string) ($processedData['merchant_order_id'] ?? '');
-        $targetStatus = (string) ($processedData['payment_status'] ?? PaymentStatus::PENDING->value);
-        $webhookAmountCents = (int) ($processedData['amount_cents'] ?? 0);
-        $webhookCurrency = (string) ($processedData['currency'] ?? '');
+        $transactionId = $processedData->transactionId;
+        $merchantOrderId = $processedData->merchantOrderId;
+        $targetStatus = $processedData->paymentStatus !== '' ? $processedData->paymentStatus : PaymentStatus::PENDING->value;
+        $webhookAmountCents = $processedData->amountCents;
+        $webhookCurrency = $processedData->currency;
         $eventType = isset($webhookData['type']) || isset($webhookData['event'])
             ? (string) ($webhookData['type'] ?? $webhookData['event'])
             : null;
@@ -48,40 +46,26 @@ final readonly class PaymentWebhookService implements PaymentWebhookServiceInter
 
             $order = $this->findOrder($merchantOrderId);
 
-            return [
-                'success' => true,
-                'order' => $order,
-                'payment_data' => $processedData,
-                'duplicate' => true,
-            ];
+            return WebhookResult::success($order, $processedData, duplicate: true);
         }
 
         $order = $this->findOrder($merchantOrderId);
         if (! $order) {
             $this->logResult($gatewayId, $merchantOrderId, $transactionId, $targetStatus, 'order_not_found', 'warning');
 
-            return [
-                'success' => false,
-                'error' => 'Order not found',
-            ];
+            return WebhookResult::failed('Order not found');
         }
 
         if (! $this->amountMatches($order, $webhookAmountCents)) {
             $this->logResult($gatewayId, $merchantOrderId, $transactionId, $targetStatus, 'amount_mismatch', 'warning');
 
-            return [
-                'success' => false,
-                'error' => 'Amount mismatch',
-            ];
+            return WebhookResult::failed('Amount mismatch');
         }
 
         if (! $this->currencyMatches($gateway, $webhookCurrency)) {
             $this->logResult($gatewayId, $merchantOrderId, $transactionId, $targetStatus, 'currency_mismatch', 'warning');
 
-            return [
-                'success' => false,
-                'error' => 'Currency mismatch',
-            ];
+            return WebhookResult::failed('Currency mismatch');
         }
 
         $transitioned = $this->stateMachine->transition(
@@ -89,7 +73,7 @@ final readonly class PaymentWebhookService implements PaymentWebhookServiceInter
             $targetStatus,
             [
                 'transaction_id' => $transactionId,
-                'payment_data' => $processedData['payment_data'] ?? null,
+                'payment_data' => $processedData->paymentData,
             ],
             $gatewayId
         );
@@ -104,11 +88,7 @@ final readonly class PaymentWebhookService implements PaymentWebhookServiceInter
 
         $this->logResult($gatewayId, $merchantOrderId, $transactionId, $finalStatus, $transitioned ? 'success' : 'ignored_transition', 'info');
 
-        return [
-            'success' => true,
-            'order' => $freshOrder,
-            'payment_data' => $processedData,
-        ];
+        return WebhookResult::success($freshOrder, $processedData);
     }
 
     private function isDuplicate(string $gatewayId, string $transactionId): bool

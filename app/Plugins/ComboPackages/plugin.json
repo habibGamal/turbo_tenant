@@ -7,13 +7,15 @@
     "author": "Turbo Tenant Team",
     "is_core": false,
     "dependencies": [
-        "catalog-products"
+        "catalog-products",
+        "cart-engine",
+        "order-management",
+        "locations-delivery"
     ],
     "providers": [
         "App\\Plugins\\ComboPackages\\ComboPackagesServiceProvider"
     ],
     "filament": "App\\Plugins\\ComboPackages\\src\\Filament\\ComboPackagesFilamentPlugin",
-    "tenant_scoped": [
-        "App\\Plugins\\ComboPackages\\src\\DTOs\\ComboPackagesConfig"
-    ]
+    "plugin": "App\\Plugins\\ComboPackages\\ComboPackagesPlugin",
+    "tenant_scoped": []
 }

@@ -8,15 +8,16 @@ use App\Core\Plugins\Services\PluginLifecycleService;
 use App\Core\Plugins\Services\PluginManager;
 use App\Core\Plugins\Services\PluginRegistry;
 use App\Models\Tenant;
-use App\Plugins\CartEngine\src\DTOs\CartEngineConfig;
 use App\Plugins\CouponsPromotions\src\Models\Coupon;
 use App\Plugins\CouponsPromotions\src\Pipelines\Pipes\ApplyCouponDiscountPipe;
 use App\Plugins\GuestCheckout\src\Pipelines\Pipes\GuestCheckoutPermissionPipe;
+use App\Plugins\HeroBanners\src\DTOs\HeroBannersConfig;
 use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use App\Plugins\OrderManagement\src\Events\OrderCreated;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Pipelines\OrderPipelineRegistry;
 use App\Plugins\PosIntegration\src\Jobs\SendOrderToPosJob;
+use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
@@ -148,6 +149,7 @@ final class TenantIsolationTest extends TestCase
         $orderB->coupon_id = 999;
         $orderB->branch_id = 1;
         $orderB->save();
+        event(new OrderCreated($orderB));
 
         // 4. Verify RecordCouponUsageListener DOES run for Tenant A where plugin is active
         tenancy()->end();
@@ -180,6 +182,7 @@ final class TenantIsolationTest extends TestCase
         $orderA->coupon_id = $couponA->id;
         $orderA->branch_id = 1;
         $orderA->save();
+        event(new OrderCreated($orderA));
 
         $this->assertSame(1, $couponA->fresh()->usage_count, 'RecordCouponUsageListener must run for Tenant A');
     }
@@ -224,27 +227,66 @@ final class TenantIsolationTest extends TestCase
         $lifecycle->activate($this->tenantA, 'locations-delivery');
         $lifecycle->activate($this->tenantA, 'cart-engine');
         $lifecycle->activate($this->tenantA, 'order-management');
+        $lifecycle->activate($this->tenantA, 'hero-banners');
 
         $lifecycle->activate($this->tenantB, 'store-settings');
         $lifecycle->activate($this->tenantB, 'catalog-products');
         $lifecycle->activate($this->tenantB, 'locations-delivery');
         $lifecycle->activate($this->tenantB, 'cart-engine');
         $lifecycle->activate($this->tenantB, 'order-management');
+        $lifecycle->activate($this->tenantB, 'hero-banners');
 
         // Under Tenant A
         tenancy()->initialize($this->tenantA);
         $manager->bootTenant($this->tenantA);
-        $cartConfigA = app(CartEngineConfig::class);
+        $heroConfigA = app(HeroBannersConfig::class);
         $registryA = app(OrderPipelineRegistry::class);
 
         // Switch to Tenant B
         tenancy()->end();
         tenancy()->initialize($this->tenantB);
         $manager->bootTenant($this->tenantB);
-        $cartConfigB = app(CartEngineConfig::class);
+        $heroConfigB = app(HeroBannersConfig::class);
         $registryB = app(OrderPipelineRegistry::class);
 
-        $this->assertNotSame($cartConfigA, $cartConfigB, 'CartEngineConfig must be a distinct instance per tenant');
+        $this->assertNotSame($heroConfigA, $heroConfigB, 'HeroBannersConfig must be a distinct instance per tenant');
         $this->assertNotSame($registryA, $registryB, 'OrderPipelineRegistry must be a distinct instance per tenant');
+    }
+
+    public function test_tenant_b_does_not_see_tenant_a_cached_setting_value(): void
+    {
+        $lifecycle = app(PluginLifecycleService::class);
+        $manager = app(PluginManager::class);
+
+        $lifecycle->activate($this->tenantA, 'store-settings');
+        $lifecycle->activate($this->tenantB, 'store-settings');
+
+        // Under Tenant A: set and read to cache it
+        tenancy()->initialize($this->tenantA);
+        $manager->bootTenant($this->tenantA);
+
+        $settingsA = app(SettingService::class);
+        $settingsA->set('custom_isolated_key', 'tenant_a_value');
+        $this->assertSame('tenant_a_value', $settingsA->get('custom_isolated_key'));
+
+        // Switch to Tenant B
+        tenancy()->end();
+        tenancy()->initialize($this->tenantB);
+        $manager->bootTenant($this->tenantB);
+
+        $settingsB = app(SettingService::class);
+        $this->assertNotSame($settingsA, $settingsB, 'SettingService must be a fresh instance for Tenant B');
+        $this->assertNull($settingsB->get('custom_isolated_key'), 'Tenant B must not see Tenant A cached setting');
+
+        // Set on Tenant B and verify Tenant A doesn't see it when switching back
+        $settingsB->set('custom_isolated_key', 'tenant_b_value');
+        $this->assertSame('tenant_b_value', $settingsB->get('custom_isolated_key'));
+
+        tenancy()->end();
+        tenancy()->initialize($this->tenantA);
+        $manager->bootTenant($this->tenantA);
+
+        $settingsA2 = app(SettingService::class);
+        $this->assertSame('tenant_a_value', $settingsA2->get('custom_isolated_key'));
     }
 }

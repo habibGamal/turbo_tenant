@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Mockery;
+use RuntimeException;
 use Tests\TestCase;
 
 final class PluginLifecycleTest extends TestCase
@@ -169,6 +170,89 @@ final class PluginLifecycleTest extends TestCase
 
         $this->assertTrue(app(PluginManager::class)->isPluginActive('sample-greeting', $tenant));
 
+        $lifecycle->uninstall($tenant, 'sample-greeting');
+    }
+
+    public function test_activate_compensates_by_deleting_record_when_on_activate_throws_on_new_plugin(): void
+    {
+        $tenant = self::$testTenant;
+        $lifecycle = app(PluginLifecycleService::class);
+        $manager = app(PluginManager::class);
+
+        // Ensure record doesn't exist initially
+        TenantPlugin::query()
+            ->where('tenant_id', (string) $tenant->id)
+            ->where('plugin_id', 'sample-greeting')
+            ->delete();
+        $manager->resetTenant($tenant);
+
+        $mock = Mockery::mock(TenantPluginInterface::class);
+        /** @var Mockery\Expectation $expectation */
+        $expectation = $mock->shouldReceive('onActivate');
+        $expectation->andThrow(new RuntimeException('Boom! Activation failure'));
+
+        app()->instance(SampleGreetingPlugin::class, $mock);
+
+        try {
+            $lifecycle->activate($tenant, 'sample-greeting');
+            $this->fail('Expected RuntimeException was not thrown');
+        } catch (RuntimeException $e) {
+            $this->assertSame('Boom! Activation failure', $e->getMessage());
+        }
+
+        $record = TenantPlugin::query()
+            ->where('tenant_id', (string) $tenant->id)
+            ->where('plugin_id', 'sample-greeting')
+            ->first();
+
+        $this->assertNull($record, 'Record must be deleted if onActivate throws on a new plugin');
+        $this->assertFalse($manager->isPluginActive('sample-greeting', $tenant), 'Plugin must not be considered active');
+    }
+
+    public function test_activate_compensates_by_restoring_previous_status_when_on_activate_throws_on_reactivation(): void
+    {
+        $tenant = self::$testTenant;
+        $lifecycle = app(PluginLifecycleService::class);
+        $manager = app(PluginManager::class);
+
+        // Simulate an existing deactivated record
+        TenantPlugin::query()->updateOrCreate(
+            [
+                'tenant_id' => (string) $tenant->id,
+                'plugin_id' => 'sample-greeting',
+            ],
+            [
+                'status' => PluginStatus::DEACTIVATED,
+                'settings' => ['hello' => 'world'],
+                'installed_at' => now(),
+            ]
+        );
+        $manager->resetTenant($tenant);
+
+        $mock = Mockery::mock(TenantPluginInterface::class);
+        /** @var Mockery\Expectation $expectation */
+        $expectation = $mock->shouldReceive('onActivate');
+        $expectation->andThrow(new RuntimeException('Reactivation boom!'));
+
+        app()->instance(SampleGreetingPlugin::class, $mock);
+
+        try {
+            $lifecycle->activate($tenant, 'sample-greeting');
+            $this->fail('Expected RuntimeException was not thrown');
+        } catch (RuntimeException $e) {
+            $this->assertSame('Reactivation boom!', $e->getMessage());
+        }
+
+        $record = TenantPlugin::query()
+            ->where('tenant_id', (string) $tenant->id)
+            ->where('plugin_id', 'sample-greeting')
+            ->first();
+
+        $this->assertNotNull($record, 'Record must still exist after failed reactivation');
+        $this->assertSame(PluginStatus::DEACTIVATED, $record->status, 'Status must be restored to DEACTIVATED');
+        $this->assertFalse($manager->isPluginActive('sample-greeting', $tenant), 'Plugin must not be active');
+
+        app()->forgetInstance(SampleGreetingPlugin::class);
         $lifecycle->uninstall($tenant, 'sample-greeting');
     }
 }

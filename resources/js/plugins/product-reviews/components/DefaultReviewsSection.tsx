@@ -8,9 +8,7 @@ interface DefaultReviewsSectionProps {
 
 export default function DefaultReviewsSection({ productId }: DefaultReviewsSectionProps) {
   const [showForm, setShowForm] = useState(false);
-  const { data, isLoading } = useProductReviews(productId);
-
-  const reviews = data?.data || [];
+  const { data: reviews = [], isLoading } = useProductReviews(productId);
 
   return (
     <div className="space-y-6 my-8 p-4 border rounded-xl bg-card text-card-foreground">

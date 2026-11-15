@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Plugins\CartEngine\src\Http\Requests;
 
+use App\Plugins\CartEngine\src\Models\CartItem;
+use App\Plugins\CartEngine\src\Services\Contracts\ProductValidatorInterface;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Validator;
 
 final class UpdateCartItemRequest extends FormRequest
 {
@@ -25,40 +29,59 @@ final class UpdateCartItemRequest extends FormRequest
         ];
     }
 
-    public function withValidator($validator): void
+    /**
+     * @return array<int, callable(Validator): void>
+     */
+    public function after(ProductValidatorInterface $productValidator): array
     {
-        $validator->after(function ($validator) {
-            if ($validator->errors()->isNotEmpty()) {
-                return;
-            }
+        return [
+            function (Validator $formValidator) use ($productValidator): void {
+                if ($formValidator->errors()->isNotEmpty()) {
+                    return;
+                }
 
-            if ($this->has('weight_option_value_id')) {
-                $itemId = $this->route('id') ?? $this->route('item');
+                $itemId = $this->route('itemId') ?? $this->route('id') ?? $this->route('item');
                 if (! $itemId) {
                     return;
                 }
 
-                $cartItem = \App\Plugins\CartEngine\src\Models\CartItem::find((int) $itemId);
+                $cartItem = CartItem::find((int) $itemId);
                 if (! $cartItem) {
                     return;
                 }
 
-                $weightValId = $this->filled('weight_option_value_id')
-                    ? (int) $this->input('weight_option_value_id')
-                    : null;
+                if (! $cartItem->isProductLine()) {
+                    if ($this->has('weight_option_value_id') || $this->has('weight_multiplier')) {
+                        $formValidator->errors()->add('weight', 'Composite lines do not support weight options.');
+                    }
 
-                try {
-                    app(\App\Plugins\CartEngine\src\Services\Contracts\ProductValidatorInterface::class)
-                        ->validateUpdateWeightOption((int) $cartItem->product_id, $weightValId);
-                } catch (\Illuminate\Validation\ValidationException $e) {
-                    foreach ($e->errors() as $field => $messages) {
-                        foreach ($messages as $message) {
-                            $validator->errors()->add($field, $message);
+                    if ($this->has('quantity')) {
+                        $qty = (string) $this->input('quantity');
+                        if (! filter_var($qty, FILTER_VALIDATE_INT) || (int) $qty < 1) {
+                            $formValidator->errors()->add('quantity', 'Quantity for composite lines must be an integer of at least 1.');
+                        }
+                    }
+
+                    return;
+                }
+
+                if ($this->has('weight_option_value_id')) {
+                    $weightValId = $this->filled('weight_option_value_id')
+                        ? (int) $this->input('weight_option_value_id')
+                        : null;
+
+                    try {
+                        $productValidator->validateUpdateWeightOption((int) $cartItem->product_id, $weightValId);
+                    } catch (ValidationException $e) {
+                        foreach ($e->errors() as $field => $messages) {
+                            foreach ($messages as $message) {
+                                $formValidator->errors()->add($field, $message);
+                            }
                         }
                     }
                 }
-            }
-        });
+            },
+        ];
     }
 
     /**

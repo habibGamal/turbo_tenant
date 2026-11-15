@@ -6,14 +6,14 @@ namespace App\Plugins\PosIntegration\src\Services\POS;
 
 use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\POSErrorResponseHandlerInterface;
-use App\Plugins\PosIntegration\src\Services\ProductPOSImporterService;
+use App\Plugins\PosIntegration\src\Services\POS\Contracts\PosMasterClient;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
 final class POSErrorResponseHandler implements POSErrorResponseHandlerInterface
 {
     public function __construct(
-        private readonly ProductPOSImporterService $productImporter
+        private readonly PosMasterClient $posMasterClient
     ) {}
 
     /**
@@ -94,7 +94,7 @@ final class POSErrorResponseHandler implements POSErrorResponseHandlerInterface
     private function getProductNamesByReferences(array $posRefs): array
     {
         try {
-            $products = $this->productImporter->getProductsByReferences($posRefs);
+            $products = $this->posMasterClient->getProductsByReferences($posRefs);
 
             $names = collect($products)->pluck('name')->filter()->toArray();
 

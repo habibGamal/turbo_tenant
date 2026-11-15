@@ -1,0 +1,41 @@
+erDiagram
+  n88cdee222611["addresses"] {
+    foreignId user_id
+    foreignId area_id
+    string phone_number
+    string street
+    string building
+    string floor
+    string apartment
+    text full_address
+    text notes
+    boolean is_default
+  }
+  n850e6885a4ad["users"]
+  n850e6885a4ad ||..o{ n88cdee222611 : "user_id"
+  n3e12e580b649["areas"]
+  n3e12e580b649 ||..o{ n88cdee222611 : "area_id"
+  n3e12e580b649["areas"] {
+    string name
+    string name_ar
+    double shipping_cost
+    foreignId governorate_id
+    foreignId branch_id
+    boolean is_active
+    integer sort_order
+  }
+  nc9db09a1246f["governorates"]
+  nc9db09a1246f ||..o{ n3e12e580b649 : "governorate_id"
+  nf1e3efb0f08e["branches"]
+  nf1e3efb0f08e ||..o{ n3e12e580b649 : "branch_id"
+  nf1e3efb0f08e["branches"] {
+    string name
+    text link
+    boolean is_active
+  }
+  nc9db09a1246f["governorates"] {
+    string name
+    string name_ar
+    boolean is_active
+    integer sort_order
+  }

@@ -19,6 +19,7 @@ final class ExtraOptionItem extends Model
         'price',
         'is_default',
         'sort_order',
+        // The pos_mapping_type column stays on extra_option_items and stays fillable in ExtraOptionItem for now; moving the column is a later phase.
         'pos_mapping_type',
         'allow_quantity',
     ];

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Plugins\PosIntegration\src\Services\POS;
 
 use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\PosIntegration\src\Exceptions\PosDeliveryOutcomeUnknown;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\POSApiClientInterface;
 use App\Support\Network\PublicEndpointGuard;
 use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -77,7 +79,15 @@ final class POSApiClient implements POSApiClientInterface
      */
     public function sendOrder(Branch $branch, array $payload): array
     {
-        $response = $this->request($branch, 'post', '/api/web-orders/place-order', self::SEND_ORDER_FAILURE, $payload);
+        try {
+            $response = $this->request($branch, 'post', '/api/web-orders/place-order', self::SEND_ORDER_FAILURE, $payload);
+        } catch (Exception $e) {
+            if ($e->getPrevious() instanceof ConnectionException) {
+                throw new PosDeliveryOutcomeUnknown(self::SEND_ORDER_FAILURE, 0, $e);
+            }
+
+            throw $e;
+        }
 
         $data = $response->json() ?? [];
 

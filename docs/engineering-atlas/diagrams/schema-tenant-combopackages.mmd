@@ -1,0 +1,80 @@
+erDiagram
+  ndf929885efdf["package_availabilities"] {
+    foreignId package_id
+    unsignedTinyInteger day_of_week
+    time starts_at
+    time ends_at
+  }
+  nea5085a85672["packages"]
+  nea5085a85672 ||..o{ ndf929885efdf : "package_id"
+  n8e6e46546468["package_branch"] {
+    foreignId package_id
+    foreignId branch_id
+  }
+  nea5085a85672["packages"]
+  nea5085a85672 ||..o{ n8e6e46546468 : "package_id"
+  nf1e3efb0f08e["branches"]
+  nf1e3efb0f08e ||..o{ n8e6e46546468 : "branch_id"
+  n6147d1a6744d["package_groups"] {
+    foreignId package_id
+    string name
+    string name_ar
+    enum selection_type
+    integer max_selections
+    integer min_selections
+    integer sort_order
+    boolean allow_repeats
+    text description
+    text description_ar
+  }
+  nea5085a85672["packages"]
+  nea5085a85672 ||..o{ n6147d1a6744d : "package_id"
+  n38b1f413f5f8["package_items"] {
+    foreignId package_group_id
+    foreignId product_id
+    foreignId variant_id
+    integer quantity
+    decimal price_adjustment
+    boolean is_default
+    integer sort_order
+    string variant_mode
+    boolean allow_extras
+  }
+  n6147d1a6744d["package_groups"]
+  n6147d1a6744d ||..o{ n38b1f413f5f8 : "package_group_id"
+  n12d52f1ad2fe["products"]
+  n12d52f1ad2fe ||..o{ n38b1f413f5f8 : "product_id"
+  n7112e8f7884a["product_variants"]
+  n7112e8f7884a |o..o{ n38b1f413f5f8 : "variant_id"
+  nf369f23cea34["package_product"] {
+    foreignId package_id
+    foreignId product_id
+    integer quantity
+  }
+  nea5085a85672["packages"]
+  nea5085a85672 ||..o{ nf369f23cea34 : "package_id"
+  n12d52f1ad2fe["products"]
+  n12d52f1ad2fe ||..o{ nf369f23cea34 : "product_id"
+  nea5085a85672["packages"] {
+    string name
+    string name_ar
+    text description
+    text description_ar
+    decimal price
+    decimal original_price
+    integer discount_percentage
+    string badge
+    string badge_ar
+    string icon
+    string gradient
+    boolean is_active
+    boolean is_featured
+    integer sort_order
+    timestamp valid_from
+    timestamp valid_until
+    string image
+    boolean allow_coupons
+    json allowed_order_types
+    unsignedInteger max_per_order
+    unsignedInteger daily_limit
+  }

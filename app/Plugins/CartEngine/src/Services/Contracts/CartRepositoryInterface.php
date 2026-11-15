@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\CartEngine\src\Services\Contracts;
 
+use App\Plugins\CartEngine\src\DTOs\PreparedCartLine;
 use App\Plugins\CartEngine\src\Models\Cart;
 use App\Plugins\CartEngine\src\Models\CartItem;
 
@@ -15,6 +16,9 @@ interface CartRepositoryInterface
 
     public function findCartItemOrFail(int $itemId): CartItem;
 
+    /**
+     * @param  list<array{id: int, quantity: int}>  $extras
+     */
     public function createCartItem(
         Cart $cart,
         int $productId,
@@ -23,6 +27,14 @@ interface CartRepositoryInterface
         array $extras = [],
         ?int $weightOptionValueId = null,
         int $weightMultiplier = 1
+    ): CartItem;
+
+    public function createCompositeCartItem(
+        Cart $cart,
+        string $type,
+        PreparedCartLine $prepared,
+        int $quantity,
+        ?string $notes = null
     ): CartItem;
 
     public function updateCartItem(CartItem $item, array $attributes): CartItem;

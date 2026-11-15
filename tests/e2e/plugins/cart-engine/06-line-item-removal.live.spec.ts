@@ -1,4 +1,5 @@
 import { test, expect } from '../../helpers/live-fixture';
+import { pricePattern } from '../../helpers/price';
 
 test.describe('CartEngine Suite 06: Line Item Removal', () => {
   test('removes item from multi-item cart and verifies subtotal and badge update', async ({ page, theme }) => {
@@ -26,7 +27,7 @@ test.describe('CartEngine Suite 06: Line Item Removal', () => {
     await expect(items).toHaveCount(2);
 
     const subtotal = theme.cart.getSubtotal();
-    await expect(subtotal).toContainText('301.00');
+    await expect(subtotal).toContainText(pricePattern(301));
 
     // 4. Remove first item
     const firstRemoveBtn = theme.cart.getItemRemoveButton(items.nth(0));
@@ -37,7 +38,7 @@ test.describe('CartEngine Suite 06: Line Item Removal', () => {
 
     // Exactly 1 item should remain
     await expect(items).toHaveCount(1);
-    await expect(subtotal).toContainText('135.00');
+    await expect(subtotal).toContainText(pricePattern(135));
 
     // Header badge updates to 1
     const badge = theme.cart.getBadgeCount();

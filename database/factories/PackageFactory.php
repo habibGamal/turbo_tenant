@@ -39,7 +39,9 @@ final class PackageFactory extends Factory
             'name_ar' => 'باقة '.fake()->words(2, true),
             'description' => fake()->sentence(12),
             'description_ar' => fake()->sentence(10),
+            'image' => null,
             'price' => $price,
+            'allow_coupons' => true,
             'original_price' => $originalPrice,
             'discount_percentage' => $discountPercentage,
             'badge' => fake()->randomElement($badges),
@@ -51,6 +53,9 @@ final class PackageFactory extends Factory
             'sort_order' => fake()->numberBetween(0, 100),
             'valid_from' => fake()->boolean(30) ? now() : null,
             'valid_until' => fake()->boolean(30) ? now()->addDays(fake()->numberBetween(7, 90)) : null,
+            'allowed_order_types' => null,
+            'max_per_order' => null,
+            'daily_limit' => null,
         ];
     }
 

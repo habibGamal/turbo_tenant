@@ -2,20 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Core\Plugins\Routing\PluginRoutes;
 use App\Plugins\PaymentProcessing\src\Http\Controllers\KashierWebhookController;
 use App\Plugins\PaymentProcessing\src\Http\Controllers\PaymentController;
 use App\Plugins\PaymentProcessing\src\Http\Controllers\PaymobWebhookController;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
-use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
-use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 // Payment gateway webhooks (no auth, no CSRF, remain reachable regardless of plugin state)
-Route::middleware([
-    'web',
-    InitializeTenancyByDomain::class,
-    PreventAccessFromCentralDomains::class,
-])->group(function () {
+PluginRoutes::tenantUngated()->group(function () {
     Route::post('/api/webhooks/paymob', [PaymobWebhookController::class, 'handle'])
         ->name('webhooks.paymob')
         ->withoutMiddleware([VerifyCsrfToken::class]);
@@ -25,12 +20,7 @@ Route::middleware([
         ->withoutMiddleware([VerifyCsrfToken::class]);
 });
 
-Route::middleware([
-    'web',
-    InitializeTenancyByDomain::class,
-    PreventAccessFromCentralDomains::class,
-    'plugin.active:payment-processing',
-])->group(function () {
+PluginRoutes::tenant('payment-processing')->group(function () {
     // Browser redirects
     Route::get('/orders/{orderId}/payment/callback', [PaymentController::class, 'paymentCallback'])->name('orders.payment.callback');
 

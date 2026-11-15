@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Cart\Repositories;
 
+use App\Models\User;
 use App\Plugins\CartEngine\src\Models\Cart;
 use App\Plugins\CartEngine\src\Models\CartItem;
 use App\Plugins\CartEngine\src\Models\CartItemExtra;
+use App\Plugins\CartEngine\src\Services\Repositories\CartRepository;
 use App\Plugins\CatalogProducts\src\Models\Category;
 use App\Plugins\CatalogProducts\src\Models\ExtraOption;
 use App\Plugins\CatalogProducts\src\Models\ExtraOptionItem;
 use App\Plugins\CatalogProducts\src\Models\Product;
-use App\Models\User;
-use App\Plugins\CartEngine\src\Services\Repositories\CartRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -68,7 +68,7 @@ final class CartRepositoryTest extends TestCase
             productId: $product->id,
             variantId: null,
             quantity: '3.000',
-            extras: [$extraItem->id],
+            extras: [['id' => $extraItem->id, 'quantity' => 1]],
             weightOptionValueId: null,
             weightMultiplier: 1
         );

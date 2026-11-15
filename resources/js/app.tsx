@@ -1,4 +1,3 @@
-import "../css/app.css";
 import "./bootstrap";
 import "./i18n";
 

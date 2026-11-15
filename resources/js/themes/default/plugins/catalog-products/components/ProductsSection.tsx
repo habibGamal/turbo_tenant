@@ -119,11 +119,11 @@ export default function ProductsSection({ sections }: ProductsSectionProps) {
                                     </p>
                                 )}
                             </div>
-                            <Link to={`/sections/${section.id}`}>
-                                <Button variant="outline" className="gap-2">
-                                    {t("View All")}
-                                </Button>
-                            </Link>
+                            <Button asChild variant="outline">
+                                <Link to="/menu">
+                                    {t("viewAll")}
+                                </Link>
+                            </Button>
                         </div>
 
                         {/* Products Grid */}

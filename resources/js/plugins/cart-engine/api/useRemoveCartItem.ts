@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/core/api/client';
-import { Cart, CartApiResponse } from '../types';
+import { ApiSuccess } from '@/core/api/types';
+import { Cart } from '../types';
 import { CART_QUERY_KEY } from './useCart';
 
 interface MutationContext {
@@ -10,12 +11,12 @@ interface MutationContext {
 export function useRemoveCartItem() {
     const queryClient = useQueryClient();
 
-    return useMutation<CartApiResponse, Error, number | string, MutationContext>({
+    return useMutation<Cart, Error, number | string, MutationContext>({
         mutationFn: async (itemId: number | string) => {
-            const { data } = await apiClient.delete<CartApiResponse>(
+            const { data } = await apiClient.delete<ApiSuccess<Cart>>(
                 `/api/cart/items/${itemId}`
             );
-            return data;
+            return data.data;
         },
         onMutate: async (itemId) => {
             // Cancel ongoing queries
@@ -40,10 +41,10 @@ export function useRemoveCartItem() {
                 queryClient.setQueryData(CART_QUERY_KEY, context.previousCart);
             }
         },
-        onSuccess: (data) => {
-            queryClient.setQueryData(CART_QUERY_KEY, data.cart);
+        onSuccess: (cart) => {
+            queryClient.setQueryData(CART_QUERY_KEY, cart);
 
-            const count = data.cart.items.length;
+            const count = cart.items.length;
             window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count } }));
         },
         onSettled: () => {

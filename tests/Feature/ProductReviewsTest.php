@@ -80,10 +80,12 @@ it('allows authenticated users to submit reviews', function () {
     ]);
 
     $response->assertStatus(201)
-        ->assertJsonPath('review.rating', 5)
-        ->assertJsonPath('review.user_id', $user->id)
-        ->assertJsonPath('review.is_published', false)
-        ->assertJsonPath('review.is_approved', false)
+        ->assertJsonPath('status', 'success')
+        ->assertJsonPath('data.rating', 5)
+        ->assertJsonPath('data.user.id', $user->id)
+        ->assertJsonPath('data.guest_name', null)
+        ->assertJsonPath('data.is_published', false)
+        ->assertJsonPath('data.is_approved', false)
         ->assertJsonPath('message', 'Review submitted successfully and is awaiting approval.');
 
     $this->assertDatabaseHas('reviews', [
@@ -105,11 +107,12 @@ it('allows guests to submit reviews with name and optional email', function () {
     ]);
 
     $response->assertStatus(201)
-        ->assertJsonPath('review.rating', 4)
-        ->assertJsonPath('review.guest_name', 'Sara Guest')
-        ->assertJsonPath('review.user_id', null)
-        ->assertJsonPath('review.is_published', false)
-        ->assertJsonPath('review.is_approved', false)
+        ->assertJsonPath('status', 'success')
+        ->assertJsonPath('data.rating', 4)
+        ->assertJsonPath('data.guest_name', 'Sara Guest')
+        ->assertJsonPath('data.user_id', null)
+        ->assertJsonPath('data.is_published', false)
+        ->assertJsonPath('data.is_approved', false)
         ->assertJsonPath('message', 'Review submitted successfully and is awaiting approval.');
 
     $this->assertDatabaseHas('reviews', [
@@ -130,6 +133,7 @@ it('validates that guest name is required when not authenticated', function () {
     ]);
 
     $response->assertStatus(422)
+        ->assertJsonPath('status', 'error')
         ->assertJsonValidationErrors(['guest_name']);
 });
 
@@ -148,8 +152,30 @@ it('lists published reviews for a product', function () {
     $response = $this->getJson(route('reviews.index', $this->product));
 
     $response->assertSuccessful()
+        ->assertJsonPath('status', 'success')
         ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0.comment', 'Published review');
+        ->assertJsonPath('data.0.comment', 'Published review')
+        ->assertJsonMissingPath('data.0.guest_email')
+        ->assertJsonMissingPath('data.0.user_id')
+        ->assertJsonStructure([
+            'status',
+            'data' => [
+                '*' => [
+                    'id',
+                    'product_id',
+                    'guest_name',
+                    'rating',
+                    'comment',
+                    'created_at',
+                ],
+            ],
+            'meta' => [
+                'current_page',
+                'last_page',
+                'per_page',
+                'total',
+            ],
+        ]);
 });
 
 it('configures filament resource methods properly', function () {

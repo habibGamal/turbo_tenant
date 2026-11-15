@@ -15,14 +15,17 @@
   "providers": [
     "App\\Plugins\\CouponsPromotions\\CouponsPromotionsServiceProvider"
   ],
+  "plugin": "App\\Plugins\\CouponsPromotions\\CouponsPromotionsPlugin",
   "filament": "App\\Plugins\\CouponsPromotions\\src\\Filament\\CouponsPromotionsFilamentPlugin",
   "listeners": {
     "App\\Plugins\\OrderManagement\\src\\Events\\OrderCreated": [
       "App\\Plugins\\CouponsPromotions\\src\\Listeners\\RecordCouponUsageListener"
+    ],
+    "App\\Plugins\\OrderManagement\\src\\Events\\OrderPaymentFailed": [
+      "App\\Plugins\\CouponsPromotions\\src\\Listeners\\ReleaseCouponUsageListener"
     ]
   },
   "tenant_scoped": [
-    "App\\Plugins\\CouponsPromotions\\src\\DTOs\\CouponsPromotionsConfig",
     "App\\Plugins\\CouponsPromotions\\src\\Services\\CouponService"
   ]
 }

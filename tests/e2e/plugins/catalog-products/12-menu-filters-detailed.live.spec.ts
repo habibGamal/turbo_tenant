@@ -30,14 +30,16 @@ test.describe('CatalogProducts Suite 12: Detailed Menu Page Filters', () => {
     const priceAscOption = page.locator('[data-testid="sort-price-asc"]');
     await expect(priceAscOption).toBeVisible({ timeout: 5000 });
 
-    const ascResponse = page.waitForResponse(
-      (r) => r.url().includes('/api/catalog-products') && r.status() === 200
-    );
+    const ascResponse = page.waitForResponse(r => {
+      const url = new URL(r.url());
+      return url.pathname === '/api/catalog-products' && url.searchParams.get('sort_by') === 'price'
+        && url.searchParams.get('sort_order') === 'asc';
+    });
     await priceAscOption.click();
-    await ascResponse;
+    expect((await ascResponse).status()).toBe(200);
 
     // Verify URL parameter
-    await expect(page).toHaveURL(/sort_by=base_price/);
+    await expect(page).toHaveURL(/sort_by=price/);
     await expect(page).toHaveURL(/sort_order=asc/);
 
     await expect(productCards.first()).toBeVisible({ timeout: 10000 });
@@ -54,14 +56,16 @@ test.describe('CatalogProducts Suite 12: Detailed Menu Page Filters', () => {
     const priceDescOption = page.locator('[data-testid="sort-price-desc"]');
     await expect(priceDescOption).toBeVisible({ timeout: 5000 });
 
-    const descResponse = page.waitForResponse(
-      (r) => r.url().includes('/api/catalog-products') && r.status() === 200
-    );
+    const descResponse = page.waitForResponse(r => {
+      const url = new URL(r.url());
+      return url.pathname === '/api/catalog-products' && url.searchParams.get('sort_by') === 'price'
+        && url.searchParams.get('sort_order') === 'desc';
+    });
     await priceDescOption.click();
-    await descResponse;
+    expect((await descResponse).status()).toBe(200);
 
     // Verify URL parameter
-    await expect(page).toHaveURL(/sort_by=base_price/);
+    await expect(page).toHaveURL(/sort_by=price/);
     await expect(page).toHaveURL(/sort_order=desc/);
 
     await expect(productCards.first()).toBeVisible({ timeout: 10000 });
@@ -208,8 +212,8 @@ test.describe('CatalogProducts Suite 12: Detailed Menu Page Filters', () => {
     await expect(mobileSheet).toBeHidden({ timeout: 5000 });
     await expect(page).toHaveURL(/category/);
 
-    const productCards = page.locator('[data-testid="menu-product-card"]');
-    await expect(productCards.first()).toBeVisible({ timeout: 10000 });
+    const mobileProducts = page.locator('[data-category-id] [data-testid^="menu-item-add-"]');
+    await expect(mobileProducts.first()).toBeVisible({ timeout: 10000 });
   });
 
   test('clears all active filters and restores default state', async ({ page }) => {

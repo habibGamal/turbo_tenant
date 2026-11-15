@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
-use App\Core\Plugins\Services\PluginManager;
-use App\Core\Plugins\Services\PluginRegistry;
+use App\Core\Plugins\Contracts\SetupChecklistItem;
+use App\Core\Plugins\Services\PluginContributions;
 use Filament\Widgets\Widget;
 use Throwable;
 
@@ -35,145 +35,49 @@ final class StoreSetupChecklist extends Widget
     }
 
     /**
-     * @return array<int, array{id: string, title: string, description: string, is_completed: bool, url: ?string}>
+     * @return array<int, array{id: string, key: string, title: string, label: string, description: string, is_completed: bool, url: ?string, sort_order: int}>
      */
     public static function getApplicableItems(): array
     {
-        $items = [];
+        /** @var PluginContributions $contributions */
+        $contributions = app(PluginContributions::class);
 
-        // 1. Store logo set
-        if (self::isPluginActive('store-settings') && class_exists(\App\Plugins\StoreSettings\src\Services\SettingService::class)) {
-            $logo = null;
+        /** @var list<SetupChecklistItem> $items */
+        $items = array_values(array_filter(
+            $contributions->active('admin.setup-checklist'),
+            fn ($item): bool => $item instanceof SetupChecklistItem,
+        ));
+
+        usort($items, fn (SetupChecklistItem $a, SetupChecklistItem $b): int => $a->sortOrder() <=> $b->sortOrder());
+
+        return array_map(function (SetupChecklistItem $item): array {
+            $isComplete = false;
             try {
-                $logo = app(\App\Plugins\StoreSettings\src\Services\SettingService::class)->get('site_logo');
+                $isComplete = $item->isComplete();
             } catch (Throwable) {
-                $logo = null;
+                $isComplete = false;
             }
 
-            $url = class_exists(\App\Plugins\StoreSettings\src\Filament\Pages\Settings::class)
-                ? \App\Plugins\StoreSettings\src\Filament\Pages\Settings::getUrl()
-                : null;
-
-            $items[] = [
-                'id' => 'site_logo',
-                'title' => 'شعار المتجر',
-                'description' => 'قم بإعداد شعار المتجر للظهور في واجهة المتجر والفواتير',
-                'is_completed' => ! empty($logo),
-                'url' => $url,
-            ];
-        }
-
-        // 2. At least one active branch
-        if (self::isPluginActive('locations-delivery') && class_exists(\App\Plugins\LocationsDelivery\src\Models\Branch::class)) {
-            $hasActiveBranch = false;
+            $url = null;
             try {
-                $hasActiveBranch = \App\Plugins\LocationsDelivery\src\Models\Branch::query()->where('is_active', true)->exists();
+                $url = $item->url();
             } catch (Throwable) {
-                $hasActiveBranch = false;
+                $url = null;
             }
 
-            $url = class_exists(\App\Plugins\LocationsDelivery\src\Filament\Resources\Branches\BranchResource::class)
-                ? \App\Plugins\LocationsDelivery\src\Filament\Resources\Branches\BranchResource::getUrl('index')
-                : null;
+            $description = $item->description();
 
-            $items[] = [
-                'id' => 'active_branch',
-                'title' => 'فرع نشط',
-                'description' => 'إضافة فرع نشط واحد على الأقل لاستقبال وتجهيز الطلبات',
-                'is_completed' => $hasActiveBranch,
+            return [
+                'id' => $item->key(),
+                'key' => $item->key(),
+                'title' => $item->label(),
+                'label' => $item->label(),
+                'description' => $description,
+                'is_completed' => $isComplete,
                 'url' => $url,
+                'sort_order' => $item->sortOrder(),
             ];
-        }
-
-        // 3. At least one area
-        if (self::isPluginActive('locations-delivery') && class_exists(\App\Plugins\LocationsDelivery\src\Models\Area::class)) {
-            $hasArea = false;
-            try {
-                $hasArea = \App\Plugins\LocationsDelivery\src\Models\Area::query()->exists();
-            } catch (Throwable) {
-                $hasArea = false;
-            }
-
-            $url = class_exists(\App\Plugins\LocationsDelivery\src\Filament\Resources\Areas\AreaResource::class)
-                ? \App\Plugins\LocationsDelivery\src\Filament\Resources\Areas\AreaResource::getUrl('index')
-                : null;
-
-            $items[] = [
-                'id' => 'area',
-                'title' => 'منطقة توصيل',
-                'description' => 'إضافة وتحديد منطقة توصيل واحدة على الأقل وتكلفتها',
-                'is_completed' => $hasArea,
-                'url' => $url,
-            ];
-        }
-
-        // 4. At least one category
-        if (self::isPluginActive('catalog-products') && class_exists(\App\Plugins\CatalogProducts\src\Models\Category::class)) {
-            $hasCategory = false;
-            try {
-                $hasCategory = \App\Plugins\CatalogProducts\src\Models\Category::query()->exists();
-            } catch (Throwable) {
-                $hasCategory = false;
-            }
-
-            $url = class_exists(\App\Plugins\CatalogProducts\src\Filament\Resources\Categories\CategoryResource::class)
-                ? \App\Plugins\CatalogProducts\src\Filament\Resources\Categories\CategoryResource::getUrl('index')
-                : null;
-
-            $items[] = [
-                'id' => 'category',
-                'title' => 'تصنيف منتجات',
-                'description' => 'إضافة تصنيف منتجات واحد على الأقل لتنظيم قائمة المأكولات أو المنتجات',
-                'is_completed' => $hasCategory,
-                'url' => $url,
-            ];
-        }
-
-        // 5. At least one product
-        if (self::isPluginActive('catalog-products') && class_exists(\App\Plugins\CatalogProducts\src\Models\Product::class)) {
-            $hasProduct = false;
-            try {
-                $hasProduct = \App\Plugins\CatalogProducts\src\Models\Product::query()->exists();
-            } catch (Throwable) {
-                $hasProduct = false;
-            }
-
-            $url = class_exists(\App\Plugins\CatalogProducts\src\Filament\Resources\Products\ProductResource::class)
-                ? \App\Plugins\CatalogProducts\src\Filament\Resources\Products\ProductResource::getUrl('index')
-                : null;
-
-            $items[] = [
-                'id' => 'product',
-                'title' => 'إضافة منتج',
-                'description' => 'إضافة منتج واحد على الأقل في قائمة منتجات المتجر',
-                'is_completed' => $hasProduct,
-                'url' => $url,
-            ];
-        }
-
-        // 6. At least one order received
-        if (self::isPluginActive('order-management') && class_exists(\App\Plugins\OrderManagement\src\Models\Order::class)) {
-            $hasOrder = false;
-            try {
-                $hasOrder = \App\Plugins\OrderManagement\src\Models\Order::query()->exists();
-            } catch (Throwable) {
-                $hasOrder = false;
-            }
-
-            $url = class_exists(\App\Plugins\OrderManagement\src\Filament\Resources\Orders\OrderResource::class)
-                ? \App\Plugins\OrderManagement\src\Filament\Resources\Orders\OrderResource::getUrl('index')
-                : null;
-
-            $items[] = [
-                'id' => 'order',
-                'title' => 'أول طلب',
-                'description' => 'استقبال أول طلب تجريبي أو حقيقي من عميل',
-                'is_completed' => $hasOrder,
-                'url' => $url,
-            ];
-        }
-
-        return $items;
+        }, $items);
     }
 
     protected function getViewData(): array
@@ -189,28 +93,5 @@ final class StoreSetupChecklist extends Widget
             'completed' => $completed,
             'percentage' => $percentage,
         ];
-    }
-
-    private static function isPluginActive(string $pluginId): bool
-    {
-        $tenant = function_exists('tenant') ? tenant() : null;
-
-        if ($tenant && class_exists(PluginManager::class)) {
-            try {
-                return app(PluginManager::class)->isPluginActive($pluginId, $tenant);
-            } catch (Throwable) {
-                return false;
-            }
-        }
-
-        if (class_exists(PluginRegistry::class)) {
-            try {
-                return app(PluginRegistry::class)->has($pluginId);
-            } catch (Throwable) {
-                return false;
-            }
-        }
-
-        return true;
     }
 }

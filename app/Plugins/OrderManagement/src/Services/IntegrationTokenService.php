@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Services;
 
+use App\Core\Contracts\SettingsRepository;
 use App\Plugins\OrderManagement\src\Support\OrderManagementSettings;
-use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Support\Str;
 
 final class IntegrationTokenService
 {
     public function __construct(
-        private readonly SettingService $settingService
+        private readonly SettingsRepository $settingService
     ) {}
 
     public function generate(): string

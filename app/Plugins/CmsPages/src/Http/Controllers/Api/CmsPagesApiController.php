@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Plugins\CmsPages\src\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Responses\ApiResponse;
+use App\Plugins\CmsPages\src\Http\Resources\CmsPageResource;
 use App\Plugins\CmsPages\src\Models\Page;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,10 +23,7 @@ final class CmsPagesApiController extends Controller
             ->select(['id', 'title', 'title_ar', 'slug', 'created_at', 'updated_at'])
             ->get();
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $pages,
-        ]);
+        return ApiResponse::success(CmsPageResource::collection($pages));
     }
 
     /**
@@ -38,15 +37,9 @@ final class CmsPagesApiController extends Controller
             ->first();
 
         if (! $page) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Page not found.',
-            ], 404);
+            abort(404, 'Page not found.');
         }
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $page,
-        ]);
+        return ApiResponse::success(new CmsPageResource($page));
     }
 }

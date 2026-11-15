@@ -10,6 +10,7 @@
   "providers": [
     "App\\Plugins\\SampleGreeting\\SampleGreetingServiceProvider"
   ],
+  "plugin": "App\\Plugins\\SampleGreeting\\SampleGreetingPlugin",
   "tenant_scoped": [
     "App\\Plugins\\SampleGreeting\\src\\DTOs\\SampleGreetingConfig",
     "sample-greeting.message"

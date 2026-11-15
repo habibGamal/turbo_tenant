@@ -22,6 +22,7 @@ import {
 import { ProductCardSkeleton } from "@/components/ui/page-skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Head } from "@/components/Head";
+import { emitCommerceEvent } from "@/core/analytics";
 import {
     useInfiniteCatalogProducts,
     useCatalogCategories,
@@ -29,7 +30,9 @@ import {
     Category,
 } from "@/plugins/catalog-products";
 import { useFormatMoney } from "@/lib/money";
-import { apiClient } from "@/core/api/client";
+import { fetchCatalogProduct } from "@/plugins/catalog-products/api/useCatalogProduct";
+import { normalizeProduct } from "@/plugins/catalog-products/utils/normalizeProduct";
+import { NormalizedProduct } from "@/plugins/catalog-products/types";
 import {
     Filter,
     X,
@@ -57,7 +60,9 @@ export default function ThemedMenuPage() {
     const urlCategories = useMemo(() => {
         const catArray = searchParams.getAll("category[]");
         const singleCat = searchParams.getAll("category");
-        const combined = [...catArray, ...singleCat];
+        const catIdsArray = searchParams.getAll("category_ids[]");
+        const singleCatIds = searchParams.getAll("category_ids");
+        const combined = [...catArray, ...singleCat, ...catIdsArray, ...singleCatIds];
         return Array.from(new Set(combined.filter(Boolean)));
     }, [searchParams]);
 
@@ -75,7 +80,7 @@ export default function ThemedMenuPage() {
     const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
     // Modal state for products with options
-    const [modalProduct, setModalProduct] = useState<any | null>(null);
+    const [modalProduct, setModalProduct] = useState<NormalizedProduct | null>(null);
     const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
 
     // Keep local state in sync when URL changes externally (e.g. Back/Forward button)
@@ -87,6 +92,28 @@ export default function ThemedMenuPage() {
         setSortOrder(urlSortOrder);
     }, [urlCategories, urlMinPrice, urlMaxPrice, urlSortBy, urlSortOrder]);
 
+    // Track search query committed in URL (debounced ~800ms, non-empty, once per distinct query)
+    const lastSearchRef = useRef<string>("");
+    useEffect(() => {
+        const trimmed = urlSearch.trim();
+        if (!trimmed || trimmed === lastSearchRef.current) return;
+
+        const timer = setTimeout(() => {
+            if (trimmed && trimmed !== lastSearchRef.current) {
+                lastSearchRef.current = trimmed;
+                emitCommerceEvent('Search', {
+                    search_string: trimmed,
+                });
+            }
+        }, 800);
+
+        return () => clearTimeout(timer);
+    }, [urlSearch]);
+
+    // Fetch categories for sidebar filters and grouping
+    const { data: categoriesResponse } = useCatalogCategories();
+    const categories: Category[] = categoriesResponse || [];
+
     // Query parameters for products
     const queryParams = useMemo(() => {
         const params: Record<string, any> = {
@@ -97,11 +124,27 @@ export default function ThemedMenuPage() {
             params.sort_order = urlSortOrder || "asc";
         }
         if (urlSearch.trim()) params.search = urlSearch.trim();
-        if (urlCategories.length > 0) params.category = urlCategories;
+
+        if (urlCategories.length > 0) {
+            const resolvedIds = new Set<number>();
+            urlCategories.forEach((catVal) => {
+                const numeric = Number(catVal);
+                if (!Number.isNaN(numeric) && numeric > 0) {
+                    resolvedIds.add(numeric);
+                } else {
+                    const matched = categories.find((c) => c.name === catVal || c.name_ar === catVal);
+                    if (matched) resolvedIds.add(matched.id);
+                }
+            });
+            if (resolvedIds.size > 0) {
+                params.category_ids = Array.from(resolvedIds);
+            }
+        }
+
         if (urlMinPrice) params.min_price = urlMinPrice;
         if (urlMaxPrice) params.max_price = urlMaxPrice;
         return params;
-    }, [urlSearch, urlCategories, urlMinPrice, urlMaxPrice, urlSortBy, urlSortOrder]);
+    }, [urlSearch, urlCategories, urlMinPrice, urlMaxPrice, urlSortBy, urlSortOrder, categories]);
 
     // Fetch products with infinite scroll
     const {
@@ -113,10 +156,6 @@ export default function ThemedMenuPage() {
         isFetchingNextPage,
         refetch,
     } = useInfiniteCatalogProducts(queryParams);
-
-    // Fetch categories for sidebar filters and grouping
-    const { data: categoriesResponse } = useCatalogCategories();
-    const categories: Category[] = categoriesResponse?.data || [];
 
     // Sort categories client-side by admin sort_order, then id
     const sortedCategories = useMemo(() => {
@@ -301,8 +340,8 @@ export default function ThemedMenuPage() {
     // Open product options modal for products with options
     const handleOpenOptions = async (productSummary: ProductSummary) => {
         try {
-            const response = await apiClient.get<any>(`/api/catalog-products/${productSummary.id}`);
-            const full = response.data.product || response.data.data;
+            const productData = await fetchCatalogProduct(productSummary.id);
+            const full = normalizeProduct(productData);
             setModalProduct(full);
             setIsOptionsModalOpen(true);
         } catch (error) {
@@ -572,8 +611,8 @@ export default function ThemedMenuPage() {
                             <SelectItem value="default">{t("defaultOrder", "Default (Menu Order)")}</SelectItem>
                             <SelectItem value="name_asc" data-testid="sort-name-asc">{t("nameAsc", "Name: A to Z")}</SelectItem>
                             <SelectItem value="name_desc" data-testid="sort-name-desc">{t("nameDesc", "Name: Z to A")}</SelectItem>
-                            <SelectItem value="base_price_asc" data-testid="sort-price-asc">{t("priceAsc", "Price: Low to High")}</SelectItem>
-                            <SelectItem value="base_price_desc" data-testid="sort-price-desc">{t("priceDesc", "Price: High to Low")}</SelectItem>
+                            <SelectItem value="price_asc" data-testid="sort-price-asc">{t("priceAsc", "Price: Low to High")}</SelectItem>
+                            <SelectItem value="price_desc" data-testid="sort-price-desc">{t("priceDesc", "Price: High to Low")}</SelectItem>
                             <SelectItem value="created_at_desc" data-testid="sort-newest">{t("newest", "Newest Arrivals")}</SelectItem>
                         </SelectContent>
                     </Select>
@@ -804,7 +843,7 @@ export default function ThemedMenuPage() {
                                 {/* Mobile View (< md): Sticky Category Bar + Compact MenuItemRows Grouped by Category */}
                                 <div className="block md:hidden">
                                     {scrollBarCategories.length > 0 && (
-                                        <div className="sticky top-16 z-30 -mx-4 px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/40 py-2 mb-6">
+                                        <div className="sticky top-[var(--header-h,4rem)] z-30 -mx-4 px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/40 py-2 mb-6">
                                             <CategoryScrollBar
                                                 categories={scrollBarCategories}
                                                 activeCategoryId={activeCategoryId}
@@ -822,7 +861,7 @@ export default function ThemedMenuPage() {
                                                 ref={(el) => {
                                                     sectionRefs.current[group.category.id] = el;
                                                 }}
-                                                className="scroll-mt-32 space-y-3"
+                                                className="scroll-mt-[calc(var(--header-h,4rem)+3.5rem)] space-y-3"
                                             >
                                                 <div className="flex items-center justify-between border-b border-border/40 pb-2">
                                                     <h2 className="text-base font-bold tracking-tight text-foreground">

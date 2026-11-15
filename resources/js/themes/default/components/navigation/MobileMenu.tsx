@@ -54,7 +54,7 @@ export function MobileMenu({
                     <Menu className="h-5 w-5" />
                 </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] overflow-y-auto">
+            <SheetContent side={i18n.dir() === "rtl" ? "left" : "right"} className="w-[300px] overflow-y-auto">
                 <nav className="flex flex-col gap-4 mt-8">
                     <Link
                         to="/"

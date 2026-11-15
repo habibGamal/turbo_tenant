@@ -111,7 +111,7 @@ it('keeps ungated settlement routes accessible even when their plugin is deactiv
     $manager->resetTenant($tenant);
 
     // Gated order route returns 404
-    $this->getJson('/api/checkout-data')
+    $this->postJson('/api/orders/place', [])
         ->assertStatus(404)
         ->assertJson([
             'status' => 'error',

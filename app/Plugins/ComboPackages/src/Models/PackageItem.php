@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class PackageItem extends Model
+final class PackageItem extends Model
 {
     use HasFactory;
 
@@ -18,6 +18,8 @@ class PackageItem extends Model
         'package_group_id',
         'product_id',
         'variant_id',
+        'variant_mode',
+        'allow_extras',
         'quantity',
         'price_adjustment',
         'is_default',
@@ -31,8 +33,8 @@ class PackageItem extends Model
 
     public function product(): BelongsTo
     {
-        $productClass = class_exists(\App\Plugins\CatalogProducts\src\Models\Product::class)
-            ? \App\Plugins\CatalogProducts\src\Models\Product::class
+        $productClass = class_exists(Product::class)
+            ? Product::class
             : Product::class;
 
         return $this->belongsTo($productClass);
@@ -40,8 +42,8 @@ class PackageItem extends Model
 
     public function variant(): BelongsTo
     {
-        $variantClass = class_exists(\App\Plugins\CatalogProducts\src\Models\ProductVariant::class)
-            ? \App\Plugins\CatalogProducts\src\Models\ProductVariant::class
+        $variantClass = class_exists(ProductVariant::class)
+            ? ProductVariant::class
             : ProductVariant::class;
 
         return $this->belongsTo($variantClass);
@@ -75,6 +77,8 @@ class PackageItem extends Model
     protected function casts(): array
     {
         return [
+            'variant_mode' => 'string',
+            'allow_extras' => 'boolean',
             'quantity' => 'integer',
             'price_adjustment' => 'double',
             'is_default' => 'boolean',

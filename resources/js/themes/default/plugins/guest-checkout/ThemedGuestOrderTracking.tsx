@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ImageWithFallback } from "@/components/ui/image";
 import {
-    Loader2,
+    LoaderIcon,
     Package,
     MapPin,
     Store,
@@ -56,6 +56,7 @@ export default function ThemedGuestOrderTracking({
     // Read query params from URL if not provided via props
     const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
     const defaultOrderNumber = initialOrderNumber ?? urlParams?.get('order_number') ?? '';
+    const defaultToken = urlParams?.get('token') ?? '';
     const defaultPhone = initialPhone ?? urlParams?.get('phone') ?? '';
 
     const [orderNumber, setOrderNumber] = useState(defaultOrderNumber);
@@ -64,6 +65,12 @@ export default function ThemedGuestOrderTracking({
     const [isCopied, setIsCopied] = useState(false);
 
     const [searchPayload, setSearchPayload] = useState<TrackOrderPayload | null>(() => {
+        if (defaultOrderNumber && defaultToken) {
+            return {
+                order_number: defaultOrderNumber.trim(),
+                token: defaultToken.trim(),
+            };
+        }
         if (defaultOrderNumber && defaultPhone) {
             return {
                 order_number: defaultOrderNumber.trim(),
@@ -74,13 +81,13 @@ export default function ThemedGuestOrderTracking({
     });
 
     const {
-        data: queryData,
+        data: order,
         isLoading: isQueryLoading,
         error: queryError,
         refetch,
     } = useGuestOrderDetails(searchPayload, {
         refetchInterval: (query) => {
-            const currentOrder = query.state.data?.order;
+            const currentOrder = query.state.data;
             if (
                 !currentOrder ||
                 ["completed", "delivered", "cancelled"].includes(
@@ -93,16 +100,12 @@ export default function ThemedGuestOrderTracking({
         },
     });
 
-    const isSearching = isQueryLoading && !queryData;
-    const order = queryData?.success ? queryData.order : null;
+    const isSearching = isQueryLoading && !order;
 
     const displayError =
         error ||
-        (queryData && !queryData.success
-            ? queryData.error || t("orderNotFound")
-            : null) ||
         (queryError
-            ? (queryError as any)?.response?.data?.error || t("failedToTrackOrder")
+            ? (queryError as any)?.response?.data?.message || (queryError as any)?.response?.data?.error || t("failedToTrackOrder")
             : null);
 
     const formatMoney = useFormatMoney();
@@ -217,7 +220,7 @@ export default function ThemedGuestOrderTracking({
                         >
                             {isSearching ? (
                                 <>
-                                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                                    <LoaderIcon className="me-2 h-4 w-4 animate-spin" />
                                     {t("searching")}
                                 </>
                             ) : (

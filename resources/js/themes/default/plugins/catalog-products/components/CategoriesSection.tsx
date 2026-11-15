@@ -68,7 +68,7 @@ export default function CategoriesSection({
                 {/* Categories Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                     {categoriesToUse.map((category) => (
-                        <Link key={category.id} to={`/menu?category[]=${category.name}`} className="group block h-full">
+                        <Link key={category.id} to={`/menu?category_ids[]=${category.id}`} className="group block h-full">
                             <Card data-testid="category-card" className="h-full overflow-hidden border-0 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-card">
                                 <CardContent className="p-0 h-full flex flex-col">
                                     {/* Image Container */}

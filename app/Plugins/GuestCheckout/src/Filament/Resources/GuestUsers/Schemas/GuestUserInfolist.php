@@ -80,7 +80,7 @@ final class GuestUserInfolist
                                 TextEntry::make('status')
                                     ->label('الحالة')
                                     ->badge()
-                                    ->color(fn (string|\App\Enums\OrderStatus $state): string => match ($state instanceof \App\Enums\OrderStatus ? $state->value : $state) {
+                                    ->color(fn (string|\App\Plugins\OrderManagement\src\Enums\OrderStatus $state): string => match ($state instanceof \App\Plugins\OrderManagement\src\Enums\OrderStatus ? $state->value : $state) {
                                         'pending' => 'gray',
                                         'processing' => 'warning',
                                         'out_for_delivery' => 'primary',

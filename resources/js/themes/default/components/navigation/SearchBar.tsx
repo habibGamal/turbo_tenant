@@ -81,7 +81,7 @@ export function SearchBar({ className, autoFocus, onClose }: SearchBarProps) {
         if (query.length >= 2) {
             try {
                 const response = await axios.get("/api/catalog-products/suggestions", {
-                    params: { query },
+                    params: { q: query },
                 });
                 const resData = response.data;
                 setSuggestions(Array.isArray(resData) ? resData : (resData.data || []));

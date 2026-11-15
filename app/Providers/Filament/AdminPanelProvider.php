@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Providers\Filament;
 
+use App\Core\Contracts\SettingsRepository;
 use App\Enums\SettingKey;
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\ManagePlugins;
 use App\Http\Middleware\SetAdminLocale;
 use App\Models\Tenant;
-use App\Plugins\StoreSettings\src\Services\SettingService;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -48,9 +48,9 @@ final class AdminPanelProvider extends PanelProvider
             //         ->recoverable(),
             // )
             // Branding comes from Store Settings; null falls back to Filament defaults (e.g. before tenancy starts).
-            ->brandName(fn (): ?string => self::storeSetting(fn (SettingService $settings) => $settings->get(SettingKey::SITE_NAME_AR) ?: $settings->get(SettingKey::SITE_NAME)))
-            ->brandLogo(fn (): ?string => self::storeSetting(fn (SettingService $settings) => self::fileUrl($settings->get(SettingKey::SITE_LOGO))))
-            ->favicon(fn (): ?string => self::storeSetting(fn (SettingService $settings) => self::fileUrl($settings->get(SettingKey::SITE_FAVICON))))
+            ->brandName(fn (): ?string => self::storeSetting(fn (SettingsRepository $settings) => $settings->get(SettingKey::SITE_NAME_AR) ?: $settings->get(SettingKey::SITE_NAME)))
+            ->brandLogo(fn (): ?string => self::storeSetting(fn (SettingsRepository $settings) => self::fileUrl($settings->get(SettingKey::SITE_LOGO))))
+            ->favicon(fn (): ?string => self::storeSetting(fn (SettingsRepository $settings) => self::fileUrl($settings->get(SettingKey::SITE_FAVICON))))
             ->sidebarCollapsibleOnDesktop()
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
@@ -121,7 +121,7 @@ final class AdminPanelProvider extends PanelProvider
     /**
      * Read a store setting safely: returns null outside a tenant or when settings can't be read.
      *
-     * @param  callable(SettingService): mixed  $read
+     * @param  callable(SettingsRepository): mixed  $read
      */
     private static function storeSetting(callable $read): ?string
     {
@@ -130,7 +130,7 @@ final class AdminPanelProvider extends PanelProvider
                 return null;
             }
 
-            $value = $read(app(SettingService::class));
+            $value = $read(app(SettingsRepository::class));
 
             return filled($value) ? (string) $value : null;
         }, rescue: null, report: false);

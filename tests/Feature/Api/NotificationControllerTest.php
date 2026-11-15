@@ -27,13 +27,20 @@ it('returns user notifications', function () {
     $response = getJson('/api/notifications');
 
     $response->assertSuccessful()
+        ->assertJsonPath('status', 'success')
         ->assertJsonStructure([
-            'notifications' => [
+            'status',
+            'data' => [
                 '*' => ['id', 'title', 'body', 'read', 'type', 'created_at'],
             ],
-            'unread_count',
+            'meta' => [
+                'current_page',
+                'last_page',
+                'per_page',
+                'total',
+            ],
         ])
-        ->assertJsonCount(5, 'notifications');
+        ->assertJsonCount(5, 'data');
 });
 
 it('returns only user own notifications', function () {
@@ -50,7 +57,8 @@ it('returns only user own notifications', function () {
     $response = getJson('/api/notifications');
 
     $response->assertSuccessful()
-        ->assertJsonCount(3, 'notifications');
+        ->assertJsonPath('status', 'success')
+        ->assertJsonCount(3, 'data');
 });
 
 it('returns unread count', function () {
@@ -64,7 +72,8 @@ it('returns unread count', function () {
     $response = getJson('/api/notifications/unread-count');
 
     $response->assertSuccessful()
-        ->assertJson(['count' => 3]);
+        ->assertJsonPath('status', 'success')
+        ->assertJsonPath('data.count', 3);
 });
 
 it('marks notification as read', function () {
@@ -75,9 +84,9 @@ it('marks notification as read', function () {
     $response = postJson("/api/notifications/{$notification->id}/mark-as-read");
 
     $response->assertSuccessful()
-        ->assertJson([
-            'message' => 'Notification marked as read',
-        ]);
+        ->assertJsonPath('status', 'success')
+        ->assertJsonPath('message', 'Notification marked as read')
+        ->assertJsonPath('data.read', true);
 
     expect($notification->fresh()->read)->toBeTrue();
 });
@@ -90,7 +99,8 @@ it('cannot mark other user notification as read', function () {
 
     $response = postJson("/api/notifications/{$notification->id}/mark-as-read");
 
-    $response->assertNotFound();
+    $response->assertNotFound()
+        ->assertJsonPath('status', 'error');
 });
 
 it('marks all notifications as read', function () {
@@ -101,11 +111,10 @@ it('marks all notifications as read', function () {
     $response = postJson('/api/notifications/mark-all-as-read');
 
     $response->assertSuccessful()
-        ->assertJson([
-            'message' => 'All notifications marked as read',
-        ]);
+        ->assertJsonPath('status', 'success')
+        ->assertJsonPath('message', 'All notifications marked as read');
 
-    expect($this->user->userNotifications()->unread()->count())->toBe(0);
+    expect($this->user->pushNotifications()->unread()->count())->toBe(0);
 });
 
 it('deletes a notification', function () {
@@ -116,9 +125,8 @@ it('deletes a notification', function () {
     $response = deleteJson("/api/notifications/{$notification->id}");
 
     $response->assertSuccessful()
-        ->assertJson([
-            'message' => 'Notification deleted',
-        ]);
+        ->assertJsonPath('status', 'success')
+        ->assertJsonPath('message', 'Notification deleted');
 
     expect(UserNotification::find($notification->id))->toBeNull();
 });
@@ -131,7 +139,8 @@ it('cannot delete other user notification', function () {
 
     $response = deleteJson("/api/notifications/{$notification->id}");
 
-    $response->assertNotFound();
+    $response->assertNotFound()
+        ->assertJsonPath('status', 'error');
 });
 
 it('clears all read notifications', function () {
@@ -145,23 +154,22 @@ it('clears all read notifications', function () {
     $response = postJson('/api/notifications/clear-read');
 
     $response->assertSuccessful()
-        ->assertJson([
-            'message' => 'Read notifications cleared',
-        ]);
+        ->assertJsonPath('status', 'success')
+        ->assertJsonPath('message', 'Read notifications cleared');
 
-    expect($this->user->userNotifications()->count())->toBe(2)
-        ->and($this->user->userNotifications()->read()->count())->toBe(0);
+    expect($this->user->pushNotifications()->count())->toBe(2)
+        ->and($this->user->pushNotifications()->read()->count())->toBe(0);
 });
 
 it('requires authentication for all endpoints', function () {
     auth()->logout();
 
-    getJson('/api/notifications')->assertUnauthorized();
-    getJson('/api/notifications/unread-count')->assertUnauthorized();
-    postJson('/api/notifications/1/mark-as-read')->assertUnauthorized();
-    postJson('/api/notifications/mark-all-as-read')->assertUnauthorized();
-    deleteJson('/api/notifications/1')->assertUnauthorized();
-    postJson('/api/notifications/clear-read')->assertUnauthorized();
+    getJson('/api/notifications')->assertUnauthorized()->assertJsonPath('status', 'error');
+    getJson('/api/notifications/unread-count')->assertUnauthorized()->assertJsonPath('status', 'error');
+    postJson('/api/notifications/1/mark-as-read')->assertUnauthorized()->assertJsonPath('status', 'error');
+    postJson('/api/notifications/mark-all-as-read')->assertUnauthorized()->assertJsonPath('status', 'error');
+    deleteJson('/api/notifications/1')->assertUnauthorized()->assertJsonPath('status', 'error');
+    postJson('/api/notifications/clear-read')->assertUnauthorized()->assertJsonPath('status', 'error');
 });
 
 it('limits notifications to 50', function () {
@@ -172,7 +180,9 @@ it('limits notifications to 50', function () {
     $response = getJson('/api/notifications');
 
     $response->assertSuccessful()
-        ->assertJsonCount(50, 'notifications');
+        ->assertJsonPath('status', 'success')
+        ->assertJsonCount(50, 'data')
+        ->assertJsonPath('meta.per_page', 50);
 });
 
 it('orders notifications by created_at desc', function () {
@@ -193,11 +203,22 @@ it('orders notifications by created_at desc', function () {
 
     $response = getJson('/api/notifications');
 
-    $response->assertSuccessful();
+    $response->assertSuccessful()
+        ->assertJsonPath('status', 'success');
 
-    $notifications = $response->json('notifications');
+    $notifications = $response->json('data');
 
     expect($notifications[0]['id'])->toBe($newest->id)
         ->and($notifications[1]['id'])->toBe($middle->id)
         ->and($notifications[2]['id'])->toBe($oldest->id);
+});
+
+it('rejects non-integer id with 404 via typed route parameter', function () {
+    postJson('/api/notifications/abc/mark-as-read')
+        ->assertNotFound()
+        ->assertJsonPath('status', 'error');
+
+    deleteJson('/api/notifications/abc')
+        ->assertNotFound()
+        ->assertJsonPath('status', 'error');
 });

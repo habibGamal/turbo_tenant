@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Filament\Widgets;
 
-use App\Enums\OrderStatus;
+use App\Core\Contracts\SettingsRepository;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
 use App\Plugins\OrderManagement\src\Models\Order;
-use App\Plugins\StoreSettings\src\Services\SettingService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Throwable;
@@ -157,9 +157,9 @@ final class OrdersStatsOverview extends BaseWidget
 
     private function getCurrency(): string
     {
-        if (class_exists(SettingService::class)) {
+        if (app()->bound(SettingsRepository::class)) {
             try {
-                return (string) (app(SettingService::class)->get('currency', 'EGP') ?? 'EGP');
+                return (string) (app(SettingsRepository::class)->get('currency', 'EGP') ?? 'EGP');
             } catch (Throwable) {
                 return 'EGP';
             }

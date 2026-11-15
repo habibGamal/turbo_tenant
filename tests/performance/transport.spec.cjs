@@ -1,0 +1,21 @@
+const {test,expect}=require('@playwright/test');
+test('versioned assets are compressed and cached, and theme CSS needs no extra request',async({playwright,baseURL})=>{
+ const origin=new URL(baseURL);
+ const host=origin.host;
+ if(origin.hostname.endsWith('.localhost')) origin.hostname='127.0.0.1';
+ const request=await playwright.request.newContext({baseURL:origin.href,extraHTTPHeaders:{Host:host}});
+ const html=await request.get('/');
+ expect(html.headers()['content-encoding']).toBe('gzip');
+ expect(await html.text()).not.toContain('href="/theme.css"');
+ const manifest=require('../../public/build/manifest.json');
+ const js=await request.get('/build/'+manifest['resources/js/app.tsx'].file,{headers:{'Accept-Encoding':'gzip'}});
+ expect(js.headers()['content-encoding']).toBe('gzip');
+ expect(js.headers()['cache-control']).toContain('immutable');
+ expect(Number(js.headers()['content-length'])).toBeLessThan(300000);
+ const notModified=await request.get('/build/'+manifest['resources/js/app.tsx'].file,{headers:{'Accept-Encoding':'gzip','If-None-Match':js.headers()['etag']}});
+ expect(notModified.status()).toBe(304);
+ const plain=await request.get('/build/'+manifest['resources/js/app.tsx'].file,{headers:{'Accept-Encoding':'identity'}});
+ expect(plain.headers()['content-encoding']).toBeUndefined();
+ expect(await plain.text()).toBe(await js.text());
+ await request.dispose();
+});

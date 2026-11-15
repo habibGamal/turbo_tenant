@@ -25,6 +25,7 @@ export type SlotName =
   | 'home.sections.combos'
   | 'payment.callback'
   | 'payment.kashier'
+  | 'router.tracking'
   | (string & {});
 
 export type SlotComponent = React.ComponentType<any>;

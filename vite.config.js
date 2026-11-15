@@ -20,7 +20,7 @@ export default defineConfig({
     },
     plugins: [
         laravel({
-            input: ['resources/js/app.tsx', 'resources/css/filament/admin/theme.css'],
+            input: ['resources/js/app.tsx', 'resources/css/app.css', 'resources/css/filament/admin/theme.css'],
             refresh: true,
         }),
         react(),

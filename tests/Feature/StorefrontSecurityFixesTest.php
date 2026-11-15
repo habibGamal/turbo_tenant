@@ -167,7 +167,7 @@ it('returns 422 when guest places order but guest-checkout plugin is inactive fo
 
     $response->assertStatus(422);
     $response->assertJson([
-        'success' => false,
+        'status' => 'error',
         'errors' => [
             'guest_data' => ['Guest checkout is not permitted for this store. Please log in.'],
         ],
@@ -201,7 +201,7 @@ it('pushes guest order id into session after guest places order', function () {
     ]);
 
     $response->assertOk();
-    $orderId = $response->json('order_id');
+    $orderId = $response->json('data.order_id');
     expect($orderId)->not->toBeNull();
 
     $response->assertSessionHas('guest_order_ids', fn (array $ids) => in_array($orderId, $ids, false));

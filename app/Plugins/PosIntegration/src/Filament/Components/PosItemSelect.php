@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\PosIntegration\src\Filament\Components;
 
-use App\Plugins\PosIntegration\src\Services\ProductPOSImporterService;
+use App\Plugins\PosIntegration\src\Services\POS\Contracts\PosMasterClient;
 use Filament\Forms\Components\Select;
 use Throwable;
 
@@ -17,8 +17,8 @@ final class PosItemSelect extends Select
             ->required()
             ->options(function (): array {
                 try {
-                    $service = app(ProductPOSImporterService::class);
-                    $newProducts = collect($service->getAllProductReferences())->flatMap(fn ($item) => $item['products']);
+                    $client = app(PosMasterClient::class);
+                    $newProducts = collect($client->getAllProductReferences())->flatMap(fn ($item) => $item['products']);
 
                     return $newProducts
                         ->pluck('name', 'productRef')

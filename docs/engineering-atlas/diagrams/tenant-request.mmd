@@ -1,0 +1,16 @@
+flowchart TD
+ Request["Incoming HTTP request"] --> Registered["Match registered route"]
+ Registered --> RouteType{"Tenant / central / framework route?"}
+ RouteType -->|tenant routes| Identify["Tenancy middleware
+Resolve tenant by domain; reject central host"]
+ RouteType -->|panel or framework| Other["Use its declared middleware and panel controls"]
+ Identify --> Bootstrap["TenancyInitialized
+Database, cache, filesystem, queue context"]
+ Bootstrap --> Boot["Boot active tenant plugins"]
+ Boot --> Gate{"plugin.active middleware present?"}
+ Gate -->|yes, inactive| Unavailable["404 Feature not available"]
+ Gate -->|yes, active / absent| Controls["Route-specific controls
+Session, CSRF, auth, throttle, integration token"]
+ Controls --> Handler["Handler and FormRequest
+Ownership, policy and validation as declared"]
+ Handler --> Response["Response / API error envelope"]

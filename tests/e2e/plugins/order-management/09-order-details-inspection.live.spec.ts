@@ -47,7 +47,8 @@ test.describe('OrderManagement Suite 09: Order Details Inspection (/orders/:id)'
     await page.goto('/orders/99999999', { waitUntil: 'domcontentloaded' });
 
     // 3. Verify 404 state rendered
-    await expect(page.getByRole('heading', { level: 2 })).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('main a[href="/orders"]').first()).toBeVisible();
+    const heading = page.getByRole('heading', { level: 2 });
+    await expect(heading).toBeVisible({ timeout: 10000 });
+    await expect(heading.locator('..').locator('a[href="/orders"]')).toBeVisible();
   });
 });

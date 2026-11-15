@@ -47,4 +47,10 @@ return [
         ))),
     ],
 
+    'meta' => [
+        // Graph API version used for the Conversions API and token checks (v26.0 released 2026-07-29).
+        'graph_version' => env('META_GRAPH_VERSION', 'v26.0'),
+        'timeout' => (int) env('META_HTTP_TIMEOUT', 10),
+    ],
+
 ];

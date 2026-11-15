@@ -1,3 +1,4 @@
+import { LoaderIcon } from "lucide-react";
 import React, { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import MainLayout from "@/themes/default/layouts/MainLayout";
@@ -213,7 +214,7 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                                 >
                                     {processing ? (
                                         <span className="flex items-center gap-2">
-                                            <span className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                                            <LoaderIcon className="h-4 w-4 animate-spin" />
                                             {t("signingIn")}
                                         </span>
                                     ) : (

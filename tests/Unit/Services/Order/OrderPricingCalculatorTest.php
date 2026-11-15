@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Order;
 
-use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
-use App\Enums\PaymentMethod;
-use App\Enums\SettingKey;
+use App\Models\User;
+use App\Plugins\CartEngine\src\DTOs\CartLine;
+use App\Plugins\CouponsPromotions\src\Models\Coupon;
+use App\Plugins\GuestCheckout\src\Models\GuestUser;
 use App\Plugins\LocationsDelivery\src\Models\Address;
 use App\Plugins\LocationsDelivery\src\Models\Area;
-use App\Plugins\CouponsPromotions\src\Models\Coupon;
 use App\Plugins\LocationsDelivery\src\Models\Governorate;
-use App\Plugins\GuestCheckout\src\Models\GuestUser;
-use App\Models\User;
+use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
+use App\Plugins\OrderManagement\src\Enums\PaymentMethod;
 use App\Plugins\OrderManagement\src\Services\Pricing\OrderPricingCalculator;
+use App\Plugins\OrderManagement\src\Settings\OrderSettingKey;
+use App\Plugins\PaymentProcessing\src\Settings\PaymentSettingKey;
 use App\Plugins\StoreSettings\src\Services\SettingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
@@ -37,9 +39,9 @@ final class OrderPricingCalculatorTest extends TestCase
 
     public function test_calculates_subtotal_tax_service_and_delivery_for_registered_user(): void
     {
-        Config::set('app.tax_rate', 0.14);
+        $this->settingService->set(OrderSettingKey::TAX_RATE, 14.0);
         Config::set('app.service_rate', 0.05);
-        $this->settingService->set(SettingKey::COD_FEE, 10.00);
+        $this->settingService->set(PaymentSettingKey::COD_FEE, 10.00);
 
         $governorate = Governorate::factory()->create();
         $area = Area::factory()->create([
@@ -60,9 +62,9 @@ final class OrderPricingCalculatorTest extends TestCase
             type: 'web_delivery'
         );
 
-        $cartItems = [
-            ['subtotal' => 100.0],
-            ['subtotal' => 100.0],
+        $lines = [
+            $this->makeLine(100.0),
+            $this->makeLine(100.0),
         ];
 
         // Subtotal = 200.0
@@ -72,7 +74,7 @@ final class OrderPricingCalculatorTest extends TestCase
         // Delivery = 30.0
         // Total = 200 + 28 + 20 + 30 = 278.0
 
-        $totals = $this->calculator->calculate($data, $cartItems, null);
+        $totals = $this->calculator->calculate($data, $lines);
 
         $this->assertEquals(200.00, $totals->subTotal);
         $this->assertEquals(0.00, $totals->discount);
@@ -92,11 +94,11 @@ final class OrderPricingCalculatorTest extends TestCase
             type: 'web_takeaway'
         );
 
-        $cartItems = [
-            ['subtotal' => 100.0],
+        $lines = [
+            $this->makeLine(100.0),
         ];
 
-        $totals = $this->calculator->calculate($data, $cartItems, null);
+        $totals = $this->calculator->calculate($data, $lines);
 
         $this->assertEquals(0.00, $totals->deliveryFee);
     }
@@ -120,11 +122,11 @@ final class OrderPricingCalculatorTest extends TestCase
             type: 'web_delivery'
         );
 
-        $cartItems = [
-            ['subtotal' => 50.0],
+        $lines = [
+            $this->makeLine(50.0),
         ];
 
-        $totals = $this->calculator->calculate($data, $cartItems, null);
+        $totals = $this->calculator->calculate($data, $lines);
 
         $this->assertEquals(45.00, $totals->deliveryFee);
     }
@@ -146,13 +148,34 @@ final class OrderPricingCalculatorTest extends TestCase
             'is_active' => true,
         ]);
 
-        $cartItems = [
-            ['subtotal' => 100.0],
+        $lines = [
+            $this->makeLine(100.0),
         ];
 
-        $totals = $this->calculator->calculate($data, $cartItems, $coupon);
+        $totals = $this->calculator->calculate($data, $lines, ['applied_coupon' => $coupon]);
 
         $this->assertEquals(15.00, $totals->discount);
         $this->assertEquals(100.00, $totals->subTotal);
+    }
+
+    private function makeLine(float $subtotal): CartLine
+    {
+        return new CartLine(
+            itemId: 1,
+            productId: 1,
+            categoryId: null,
+            variantId: null,
+            weightOptionValueId: null,
+            weightMultiplier: 1,
+            quantity: 1.0,
+            unitPrice: $subtotal,
+            extrasUnitTotal: 0.0,
+            subtotal: $subtotal,
+            productName: 'Sample Product',
+            productNameAr: null,
+            variantName: null,
+            variantNameAr: null,
+            weightLabel: null,
+        );
     }
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { PluginSlot } from '@/core/slots/PluginSlot';
 import { RequirePlugin } from '@/core/router/RequirePlugin';
@@ -82,6 +82,20 @@ function ProductDetailsRoute() {
   );
 }
 
+function PackageDetailsRoute() {
+  const { id } = useParams<{ id: string }>();
+  const { layouts: { MainLayout } } = useActiveTheme();
+  return (
+    <MainLayout>
+      <PluginSlot
+        name="package.page"
+        pluginId="combo-packages"
+        context={{ packageId: id }}
+      />
+    </MainLayout>
+  );
+}
+
 function OrdersRoute() {
   const { layouts: { MainLayout } } = useActiveTheme();
   return (
@@ -108,10 +122,12 @@ function OrderDetailsRoute() {
 
 export function AppRouter() {
   const { pages } = useActiveTheme();
-  const { Checkout, Login, Register, ForgotPassword, ResetPassword, Profile } = pages;
+  const { Checkout, Login, Register, ForgotPassword, ResetPassword, Profile, NotFound } = pages;
 
   return (
     <BrowserRouter>
+      <PluginSlot name="router.tracking" />
+      <Suspense fallback={<div role="status" className="min-h-screen p-8" aria-label="Loading page" />} >
       <Routes>
         <Route path="/" element={<HomeRoute />} />
         <Route
@@ -127,6 +143,14 @@ export function AppRouter() {
           element={
             <RequirePlugin id="catalog-products">
               <ProductDetailsRoute />
+            </RequirePlugin>
+          }
+        />
+        <Route
+          path="/packages/:id"
+          element={
+            <RequirePlugin id="combo-packages">
+              <PackageDetailsRoute />
             </RequirePlugin>
           }
         />
@@ -215,8 +239,9 @@ export function AppRouter() {
             </RequirePlugin>
           }
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={NotFound ? <NotFound /> : <Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

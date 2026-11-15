@@ -1,3 +1,5 @@
+import { ApiSuccess, Paginated } from '@/core/api/types';
+
 export interface ReviewUser {
   id: number;
   name: string;
@@ -6,9 +8,7 @@ export interface ReviewUser {
 export interface ReviewItem {
   id: number;
   product_id: number;
-  user_id?: number | null;
   guest_name?: string | null;
-  guest_email?: string | null;
   rating: number;
   comment: string;
   images?: string[];
@@ -17,13 +17,8 @@ export interface ReviewItem {
   user?: ReviewUser | null;
 }
 
-export interface ProductReviewsResponse {
-  status: string;
-  data: ReviewItem[];
-  total: number;
-  current_page: number;
-  last_page: number;
-}
+export type ProductReviewsResponse = Paginated<ReviewItem>;
+export type SingleReviewResponse = ApiSuccess<ReviewItem>;
 
 export interface SubmitReviewPayload {
   rating: number;

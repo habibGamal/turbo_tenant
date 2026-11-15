@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Pipelines\Pipes\Validation;
 
-use App\Exceptions\OrderValidationException;
+use App\Plugins\CartEngine\src\DTOs\CartLine;
 use App\Plugins\CatalogProducts\src\Models\Product;
+use App\Plugins\OrderManagement\src\Exceptions\OrderValidationException;
 use App\Plugins\OrderManagement\src\Pipelines\Context\OrderValidationContext;
 use App\Plugins\OrderManagement\src\Pipelines\Contracts\OrderValidationPipeInterface;
 use Closure;
@@ -14,10 +15,9 @@ final class ValidateProductsActivePipe implements OrderValidationPipeInterface
 {
     public function handle(OrderValidationContext $context, Closure $next): mixed
     {
-        $productIds = collect($context->getCartItems())
-            ->pluck('product_id')
+        $productIds = collect($context->lines)
+            ->map(fn (CartLine $line): ?int => $line->productId)
             ->filter()
-            ->map(fn ($id): int => (int) $id)
             ->unique()
             ->values();
 

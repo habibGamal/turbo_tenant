@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\DTOs;
 
-use App\Enums\PaymentMethod;
-use App\Models\User;
+use App\Core\Contracts\Customer;
+use App\Plugins\OrderManagement\src\Enums\PaymentMethod;
 
-readonly class PlaceOrderData
+final readonly class PlaceOrderData
 {
     /**
      * @param  array<string, mixed>  $billingData
      */
     public function __construct(
-        public object $user,
+        public Customer $user,
         public int $branchId,
         public PaymentMethod $paymentMethod,
         public ?int $addressId = null,
@@ -25,6 +25,6 @@ readonly class PlaceOrderData
 
     public function isGuest(): bool
     {
-        return ! ($this->user instanceof User);
+        return $this->user->isGuest();
     }
 }

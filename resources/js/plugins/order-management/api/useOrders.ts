@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/core/api/client';
-import { OrdersListResponse, PaginatedOrders } from '../types';
+import { PaginatedOrders, OrdersListResponse } from '../types';
 
 export interface UseOrdersParams {
     page?: number;
@@ -13,7 +13,10 @@ export function useOrders(params?: UseOrdersParams) {
         queryKey: ['orders', params],
         queryFn: async () => {
             const { data } = await apiClient.get<OrdersListResponse>('/api/orders', { params });
-            return data.data;
+            return {
+                data: data.data,
+                meta: data.meta!,
+            };
         },
         staleTime: 1000 * 60 * 2, // 2 minutes
     });

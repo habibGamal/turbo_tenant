@@ -7,7 +7,7 @@ export interface DefaultProductsSectionProps {
 }
 
 export default function DefaultProductsSection({ onProductClick }: DefaultProductsSectionProps) {
-  const { data, isLoading, error } = useCatalogSections();
+  const { data: sections, isLoading, error } = useCatalogSections();
 
   if (isLoading) {
     return (
@@ -17,13 +17,13 @@ export default function DefaultProductsSection({ onProductClick }: DefaultProduc
     );
   }
 
-  if (error || !data || !data.data || data.data.length === 0) {
+  if (error || !sections || sections.length === 0) {
     return null;
   }
 
   return (
     <div className="w-full space-y-8 my-6">
-      {data.data.map((section: Section) => (
+      {sections.map((section: Section) => (
         <section key={section.id} className="p-4 border rounded-lg bg-card text-card-foreground">
           <div className="flex items-center justify-between mb-4 border-b pb-2">
             <h3 className="font-semibold text-lg">{section.title}</h3>

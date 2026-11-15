@@ -1,4 +1,5 @@
 import { test, expect } from '../../helpers/live-fixture';
+import { pricePattern } from '../../helpers/price';
 
 test.describe('CartEngine Suite 09: Persistence & Session Continuity', () => {
   test('preserves configured item across hard page reloads', async ({ page, theme }) => {
@@ -25,7 +26,7 @@ test.describe('CartEngine Suite 09: Persistence & Session Continuity', () => {
     const firstItem = theme.cart.getItem(0);
     await expect(firstItem).toBeVisible();
     await expect(theme.cart.getItemVariant(firstItem)).toContainText('سادة');
-    await expect(theme.cart.getSubtotal()).toContainText('150.00');
+    await expect(theme.cart.getSubtotal()).toContainText(pricePattern(175));
 
     // 3. Hard browser reload
     await page.reload({ waitUntil: 'domcontentloaded' });
@@ -33,7 +34,7 @@ test.describe('CartEngine Suite 09: Persistence & Session Continuity', () => {
     // 4. Verify all options and calculations persist identical after reload
     await expect(firstItem).toBeVisible({ timeout: 10000 });
     await expect(theme.cart.getItemVariant(firstItem)).toContainText('سادة');
-    await expect(theme.cart.getSubtotal()).toContainText('150.00');
+    await expect(theme.cart.getSubtotal()).toContainText(pricePattern(175));
     await expect(theme.cart.getBadgeCount()).toHaveText('1');
   });
 
@@ -63,6 +64,6 @@ test.describe('CartEngine Suite 09: Persistence & Session Continuity', () => {
     await expect(page).toHaveURL(/\/cart/);
     const items = theme.cart.getItems();
     await expect(items).toHaveCount(1);
-    await expect(theme.cart.getSubtotal()).toContainText('166.00');
+    await expect(theme.cart.getSubtotal()).toContainText(pricePattern(166));
   });
 });

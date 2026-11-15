@@ -3,8 +3,8 @@ import { useValidateCoupon } from '../api/useValidateCoupon';
 import { AppliedCoupon } from '../types';
 
 interface DefaultCouponFormProps {
-  cartItems: any[];
-  cartTotal: number;
+  cartItems?: any[];
+  cartTotal?: number;
   addressId?: number | null;
   guestPhone?: string | null;
   appliedCoupon?: AppliedCoupon | null;
@@ -35,18 +35,14 @@ export default function DefaultCouponForm({
     mutate(
       {
         code: code.trim(),
-        cart_items: cartItems,
-        sub_total: cartTotal,
         address_id: addressId,
         guest_phone: guestPhone,
       },
       {
         onSuccess: (res) => {
-          if (res.valid && res.coupon) {
-            setMessage({ text: res.message, isError: false });
+          if (res?.coupon) {
+            setMessage({ text: 'Coupon applied successfully', isError: false });
             if (onCouponApplied) onCouponApplied(res.coupon);
-          } else {
-            setMessage({ text: res.message || 'Invalid coupon', isError: true });
           }
         },
         onError: (err: any) => {

@@ -13,9 +13,14 @@
   "providers": [
     "App\\Plugins\\GuestCheckout\\GuestCheckoutServiceProvider"
   ],
+  "plugin": "App\\Plugins\\GuestCheckout\\GuestCheckoutPlugin",
   "filament": "App\\Plugins\\GuestCheckout\\src\\Filament\\GuestCheckoutFilamentPlugin",
+  "listeners": {
+    "App\\Plugins\\OrderManagement\\src\\Events\\OrderCreated": [
+      "App\\Plugins\\GuestCheckout\\src\\Listeners\\RememberGuestOrderSession"
+    ]
+  },
   "tenant_scoped": [
-    "App\\Plugins\\GuestCheckout\\src\\Services\\GuestUserService",
-    "guest.user.service"
+    "App\\Plugins\\GuestCheckout\\src\\Services\\GuestUserService"
   ]
 }

@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Enums\PaymentMethod;
 use App\Models\User;
+use App\Plugins\CartEngine\src\DTOs\CartLine;
+use App\Plugins\CartEngine\src\DTOs\CartLineExtra;
 use App\Plugins\CatalogProducts\src\Models\ExtraOptionItem;
 use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Plugins\CatalogProducts\src\Models\ProductVariant;
@@ -16,9 +17,11 @@ use App\Plugins\LocationsDelivery\src\Models\Branch;
 use App\Plugins\LocationsDelivery\src\Models\Governorate;
 use App\Plugins\OrderManagement\src\DTOs\OrderTotals;
 use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
+use App\Plugins\OrderManagement\src\Enums\PaymentMethod;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\OrderManagement\src\Models\OrderItem;
 use App\Plugins\OrderManagement\src\Models\OrderItemExtra;
+use App\Plugins\OrderManagement\src\Pipelines\Context\OrderValidationContext;
 use App\Plugins\OrderManagement\src\Services\Repositories\OrderRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -145,34 +148,34 @@ describe('Order and OrderItem Snapshots', function () {
             'price' => 15.00,
         ]);
 
-        $cartItems = [
-            [
-                'product' => [
-                    'id' => $product->id,
-                    'name' => 'Fresh Meat',
-                    'name_ar' => null,
+        $lines = [
+            new CartLine(
+                itemId: 1,
+                productId: $product->id,
+                categoryId: null,
+                variantId: null,
+                weightOptionValueId: $weightValue->id,
+                weightMultiplier: 2,
+                quantity: 1.0,
+                unitPrice: 100.00,
+                extrasUnitTotal: 30.00, // 15.00 * 2
+                subtotal: 230.00,
+                productName: 'Fresh Meat',
+                productNameAr: null,
+                variantName: null,
+                variantNameAr: null,
+                weightLabel: '500g',
+                notes: 'Please pack well',
+                extras: [
+                    new CartLineExtra(
+                        extraOptionItemId: $extraItem->id,
+                        name: 'Special Spice',
+                        nameAr: null,
+                        unitPrice: 15.00,
+                        quantity: 2,
+                    ),
                 ],
-                'variant' => null,
-                'weight_option_value' => [
-                    'id' => $weightValue->id,
-                    'value' => '0.500',
-                    'label' => '500g',
-                ],
-                'weight_multiplier' => 2,
-                'price' => 100.00,
-                'subtotal' => 230.00,
-                'quantity' => '1.000',
-                'notes' => 'Please pack well',
-                'extras' => [
-                    [
-                        'id' => $extraItem->id,
-                        'name' => 'Special Spice',
-                        'name_ar' => null,
-                        'price' => 15.00,
-                        'quantity' => 2,
-                    ],
-                ],
-            ],
+            ),
         ];
 
         $totals = new OrderTotals(
@@ -193,8 +196,11 @@ describe('Order and OrderItem Snapshots', function () {
             note: 'Deliver before 5 PM'
         );
 
+        $context = new OrderValidationContext($placeOrderData, $lines);
+        $context->applyPromotion($coupon->id, $coupon->code);
+
         $repo = app(OrderRepository::class);
-        $order = $repo->createOrderWithItems($placeOrderData, $cartItems, $totals, null);
+        $order = $repo->createOrderWithItems($placeOrderData, $lines, $totals, $context);
 
         expect($order->customer_name)->toBe('Sara Connor')
             ->and($order->customer_phone)->toBe('0123456789')

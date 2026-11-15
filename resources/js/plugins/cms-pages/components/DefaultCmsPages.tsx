@@ -22,7 +22,7 @@ export default function DefaultCmsPages({ slug, className = '' }: DefaultCmsPage
 }
 
 function SinglePageFallback({ slug, isAr, className }: { slug: string; isAr: boolean; className: string }) {
-  const { data, isLoading, error } = useCmsPage(slug);
+  const { data: page, isLoading, error } = useCmsPage(slug);
 
   if (isLoading) {
     return (
@@ -32,11 +32,10 @@ function SinglePageFallback({ slug, isAr, className }: { slug: string; isAr: boo
     );
   }
 
-  if (error || !data?.data) {
+  if (error || !page) {
     return null;
   }
 
-  const page = data.data;
   const title = isAr && page.title_ar ? page.title_ar : page.title;
   const content = isAr && page.content_ar ? page.content_ar : page.content;
 
@@ -54,7 +53,7 @@ function SinglePageFallback({ slug, isAr, className }: { slug: string; isAr: boo
 }
 
 function PageListFallback({ isAr, className }: { isAr: boolean; className: string }) {
-  const { data, isLoading, error } = useCmsPages();
+  const { data: pages, isLoading, error } = useCmsPages();
 
   if (isLoading) {
     return (
@@ -64,7 +63,7 @@ function PageListFallback({ isAr, className }: { isAr: boolean; className: strin
     );
   }
 
-  if (error || !data?.data || data.data.length === 0) {
+  if (error || !pages || pages.length === 0) {
     return null;
   }
 
@@ -74,7 +73,7 @@ function PageListFallback({ isAr, className }: { isAr: boolean; className: strin
         {isAr ? 'الصفحات والمعلومات' : 'Pages & Policies'}
       </h3>
       <ul className="flex flex-wrap gap-4 text-sm">
-        {data.data.map((page: CmsPageItem) => {
+        {pages.map((page: CmsPageItem) => {
           const title = isAr && page.title_ar ? page.title_ar : page.title;
           return (
             <li key={page.id}>

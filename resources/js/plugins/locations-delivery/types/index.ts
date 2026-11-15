@@ -1,3 +1,5 @@
+import { ApiSuccess } from '@/core/api/types';
+
 /**
  * TypeScript Interfaces for LocationsDelivery Plugin
  */
@@ -63,28 +65,8 @@ export interface LocationsDeliveryData {
   branches: Branch[];
 }
 
-export interface LocationsDeliveryResponse {
-  status: string;
-  data: LocationsDeliveryData;
-}
-
-export interface AddressesResponse {
-  status: string;
-  data: Address[];
-}
-
-export interface SingleAddressResponse {
-  status: string;
-  message?: string;
-  data: Address;
-}
-
-export interface GovernoratesResponse {
-  status: string;
-  data: Governorate[];
-}
-
-export interface BranchesResponse {
-  status: string;
-  data: Branch[];
-}
+export type LocationsDeliveryResponse = ApiSuccess<LocationsDeliveryData>;
+export type AddressesResponse = ApiSuccess<Address[]>;
+export type SingleAddressResponse = ApiSuccess<Address>;
+export type GovernoratesResponse = ApiSuccess<Governorate[]>;
+export type BranchesResponse = ApiSuccess<Branch[]>;

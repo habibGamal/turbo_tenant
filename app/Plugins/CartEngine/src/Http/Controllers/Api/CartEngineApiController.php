@@ -5,27 +5,27 @@ declare(strict_types=1);
 namespace App\Plugins\CartEngine\src\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Responses\ApiResponse;
 use App\Plugins\CartEngine\src\Http\Requests\StoreCartItemRequest;
 use App\Plugins\CartEngine\src\Http\Requests\UpdateCartItemRequest;
-use App\Plugins\CartEngine\src\Services\CartService;
+use App\Plugins\CartEngine\src\Http\Resources\CartResource;
+use App\Plugins\CartEngine\src\Services\Contracts\CartServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 final class CartEngineApiController extends Controller
 {
-    public function __construct(private readonly CartService $cartService) {}
+    public function __construct(private readonly CartServiceInterface $cartService) {}
 
     /**
      * Get current cart data (guest or authenticated user).
      */
     public function index(Request $request): JsonResponse
     {
-        $cart = $this->cartService->getCart($request->user());
+        $lines = $this->cartService->getLines($request->user());
 
-        return response()->json([
-            'status' => 'success',
-            'cart' => $cart,
-        ]);
+        return ApiResponse::success(new CartResource($lines));
     }
 
     /**
@@ -33,9 +33,26 @@ final class CartEngineApiController extends Controller
      */
     public function store(StoreCartItemRequest $request): JsonResponse
     {
+        $type = $request->input('type');
+
+        if ($type !== null && $type !== 'product') {
+            $validated = $request->validated();
+            $payload = Arr::except($request->all(), ['type', 'quantity', 'notes']);
+
+            $lines = $this->cartService->addCompositeItem(
+                $request->user(),
+                (string) $type,
+                $payload,
+                (int) $validated['quantity'],
+                isset($validated['notes']) ? (string) $validated['notes'] : null,
+            );
+
+            return ApiResponse::success(new CartResource($lines), 'Item added to cart successfully', 201);
+        }
+
         $validated = $request->validated();
 
-        $cart = $this->cartService->addItem(
+        $lines = $this->cartService->addItem(
             $request->user(),
             (int) $validated['product_id'],
             isset($validated['variant_id']) ? (int) $validated['variant_id'] : null,
@@ -45,11 +62,7 @@ final class CartEngineApiController extends Controller
             isset($validated['weight_multiplier']) ? (int) $validated['weight_multiplier'] : 1
         );
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Item added to cart successfully',
-            'cart' => $cart,
-        ], 201);
+        return ApiResponse::success(new CartResource($lines), 'Item added to cart successfully', 201);
     }
 
     /**
@@ -58,7 +71,7 @@ final class CartEngineApiController extends Controller
     public function update(UpdateCartItemRequest $request, string $itemId): JsonResponse
     {
         $validated = $request->validated();
-        $cart = $this->cartService->updateItem(
+        $lines = $this->cartService->updateItem(
             $request->user(),
             $itemId,
             isset($validated['quantity']) ? (string) $validated['quantity'] : null,
@@ -66,11 +79,7 @@ final class CartEngineApiController extends Controller
             isset($validated['weight_option_value_id']) ? (int) $validated['weight_option_value_id'] : null
         );
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Cart item updated successfully',
-            'cart' => $cart,
-        ]);
+        return ApiResponse::success(new CartResource($lines), 'Cart item updated successfully');
     }
 
     /**
@@ -78,16 +87,12 @@ final class CartEngineApiController extends Controller
      */
     public function destroy(Request $request, string $itemId): JsonResponse
     {
-        $cart = $this->cartService->removeItem(
+        $lines = $this->cartService->removeItem(
             $request->user(),
             $itemId
         );
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Item removed from cart successfully',
-            'cart' => $cart,
-        ]);
+        return ApiResponse::success(new CartResource($lines), 'Item removed from cart successfully');
     }
 
     /**
@@ -95,13 +100,9 @@ final class CartEngineApiController extends Controller
      */
     public function clear(Request $request): JsonResponse
     {
-        $cart = $this->cartService->clearCart($request->user());
+        $lines = $this->cartService->clearCart($request->user());
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Cart cleared successfully',
-            'cart' => $cart,
-        ]);
+        return ApiResponse::success(new CartResource($lines), 'Cart cleared successfully');
     }
 
     /**
@@ -109,20 +110,14 @@ final class CartEngineApiController extends Controller
      */
     public function sync(Request $request): JsonResponse
     {
-        if (! $request->user()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'User must be authenticated',
-            ], 401);
+        $user = $request->user();
+        if (! $user) {
+            abort(401, 'User must be authenticated');
         }
 
-        $this->cartService->syncGuestCartToUser($request->user());
-        $cart = $this->cartService->getCart($request->user());
+        $this->cartService->syncGuestCartToUser($user);
+        $lines = $this->cartService->getLines($user);
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Guest cart synced successfully',
-            'cart' => $cart,
-        ]);
+        return ApiResponse::success(new CartResource($lines), 'Guest cart synced successfully');
     }
 }

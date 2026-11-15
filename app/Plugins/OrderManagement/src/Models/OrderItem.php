@@ -18,6 +18,8 @@ final class OrderItem extends Model
 
     protected $fillable = [
         'order_id',
+        'line_type',
+        'line_reference_id',
         'product_id',
         'variant_id',
         'weight_option_value_id',
@@ -59,6 +61,16 @@ final class OrderItem extends Model
         return $this->hasMany(OrderItemExtra::class);
     }
 
+    public function components(): HasMany
+    {
+        return $this->hasMany(OrderItemComponent::class)->orderBy('sort_order');
+    }
+
+    public function isProductLine(): bool
+    {
+        return ($this->line_type ?? 'product') === 'product';
+    }
+
     protected static function newFactory()
     {
         return \Database\Factories\OrderItemFactory::new();
@@ -67,6 +79,8 @@ final class OrderItem extends Model
     protected function casts(): array
     {
         return [
+            'line_reference_id' => 'integer',
+            'product_id' => 'integer',
             'quantity' => 'decimal:3',
             'unit_price' => 'float',
             'total' => 'float',

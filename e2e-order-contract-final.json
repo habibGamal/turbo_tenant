@@ -1,0 +1,703 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "D:\\turbo_tenant\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "tests/e2e/plugins/order-management",
+      "--reporter=line,json"
+    ],
+    "configFile": "D:\\turbo_tenant\\playwright.config.ts",
+    "rootDir": "D:/turbo_tenant/tests/e2e/plugins",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/turbo_tenant/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "theme-default",
+        "name": "theme-default",
+        "testDir": "D:/turbo_tenant/tests/e2e/plugins",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "D:\\turbo_tenant\\test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "theme-default",
+        "testDir": "D:\\turbo_tenant\\tests\\e2e\\plugins",
+        "snapshotDir": "D:\\turbo_tenant\\tests\\e2e\\plugins",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 45000,
+        "use": {
+          "baseURL": "http://e2e.localhost:8011",
+          "trace": "retain-on-failure",
+          "screenshot": "only-on-failure",
+          "video": "retain-on-failure",
+          "actionTimeout": 15000,
+          "navigationTimeout": 30000,
+          "launchOptions": {
+            "args": [
+              "--host-resolver-rules=MAP *.localhost 127.0.0.1",
+              "--disable-gpu",
+              "--no-sandbox"
+            ]
+          },
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "screen": {
+            "width": 1920,
+            "height": 1080
+          },
+          "deviceScaleFactor": 1,
+          "isMobile": false,
+          "hasTouch": false,
+          "defaultBrowserType": "chromium",
+          "activeThemeName": "default"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "theme-default"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "order-management\\01-checkout-bootstrap.live.spec.ts",
+      "file": "order-management/01-checkout-bootstrap.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 01: Checkout Data Bootstrap & Form Initialization",
+          "file": "order-management/01-checkout-bootstrap.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "fetches bootstrap payload and renders complete checkout form for guest",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7283,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:07:52.841Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f9da36b96991328bf0ea-ccce6a8a41319f7f521d",
+              "file": "order-management/01-checkout-bootstrap.live.spec.ts",
+              "line": 5,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\02-guest-cod-delivery.live.spec.ts",
+      "file": "order-management/02-guest-cod-delivery.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 02: Guest Cash On Delivery (COD) Order Placement",
+          "file": "order-management/02-guest-cod-delivery.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "places guest delivery order with COD and redirects to order tracking",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8176,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:08:02.400Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5d9615372adec5de6803-3936e1b7b480b017d2a7",
+              "file": "order-management/02-guest-cod-delivery.live.spec.ts",
+              "line": 5,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\03-guest-takeaway.live.spec.ts",
+      "file": "order-management/03-guest-takeaway.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 03: Guest Takeaway (Store Pickup) Order Placement",
+          "file": "order-management/03-guest-takeaway.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "places guest takeaway order with 0 delivery fee and redirects to tracking",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10263,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:08:10.604Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11d76eb239b3f77076e6-2770e214f9b7e56ccc95",
+              "file": "order-management/03-guest-takeaway.live.spec.ts",
+              "line": 5,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\04-auth-customer-order.live.spec.ts",
+      "file": "order-management/04-auth-customer-order.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 04: Authenticated Customer Order Placement",
+          "file": "order-management/04-auth-customer-order.live.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "places delivery order as logged-in customer and navigates to order details",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 16137,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:08:20.889Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "02e17753abfed7f1f52e-560d5293d0f1ebd7ac90",
+              "file": "order-management/04-auth-customer-order.live.spec.ts",
+              "line": 6,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\05-complex-cart-order.live.spec.ts",
+      "file": "order-management/05-complex-cart-order.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 05: Complex Cart Order (Variants, Weights & Extras)",
+          "file": "order-management/05-complex-cart-order.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "persists configured product options into placed order and displays in order view",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 23203,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:08:37.049Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ef888cf597b294ab7b1e-0e24a22b41ba293e2644",
+              "file": "order-management/05-complex-cart-order.live.spec.ts",
+              "line": 5,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\06-checkout-calculations.live.spec.ts",
+      "file": "order-management/06-checkout-calculations.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 06: Checkout Calculations & Dynamic Fees",
+          "file": "order-management/06-checkout-calculations.live.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "dynamically updates order summary totals when switching order types and areas",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8295,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:09:00.281Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "62cedb343b8158dd4370-47cca464453afbfb9549",
+              "file": "order-management/06-checkout-calculations.live.spec.ts",
+              "line": 6,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\07-validation-and-guards.live.spec.ts",
+      "file": "order-management/07-validation-and-guards.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 07: Validation Safeguards & Boundary Conditions",
+          "file": "order-management/07-validation-and-guards.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "guards /checkout when cart is empty and renders empty cart notice",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2602,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:09:08.603Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f14fdebecaf913e051c8-eab5c3983bac434a922d",
+              "file": "order-management/07-validation-and-guards.live.spec.ts",
+              "line": 5,
+              "column": 3
+            },
+            {
+              "title": "enforces client-side validation for missing guest details and unselected area",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7074,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:09:11.214Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f14fdebecaf913e051c8-33ff5fbb5f8253c3aae3",
+              "file": "order-management/07-validation-and-guards.live.spec.ts",
+              "line": 22,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\08-orders-history-list.live.spec.ts",
+      "file": "order-management/08-orders-history-list.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 08: Customer Order History List (/orders)",
+          "file": "order-management/08-orders-history-list.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "renders customer past orders with status badges and item summaries",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6024,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:09:18.306Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "532526902d21e033bb67-dd873729a5e280fda4c5",
+              "file": "order-management/08-orders-history-list.live.spec.ts",
+              "line": 5,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\09-order-details-inspection.live.spec.ts",
+      "file": "order-management/09-order-details-inspection.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 09: Order Details Inspection (/orders/:id)",
+          "file": "order-management/09-order-details-inspection.live.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "navigates from order list to order details and inspects timeline, items, and total",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5498,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:09:24.360Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a1c6b81b39f5074d4557-730c0ba209029fa252de",
+              "file": "order-management/09-order-details-inspection.live.spec.ts",
+              "line": 5,
+              "column": 3
+            },
+            {
+              "title": "displays order not found notice when navigating to invalid order id",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5745,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:09:29.869Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a1c6b81b39f5074d4557-ef42a480ae3e22e1c816",
+              "file": "order-management/09-order-details-inspection.live.spec.ts",
+              "line": 42,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "order-management\\10-order-status-lifecycle.live.spec.ts",
+      "file": "order-management/10-order-status-lifecycle.live.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OrderManagement Suite 10: Order Status Lifecycle & POS Sync",
+          "file": "order-management/10-order-status-lifecycle.live.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "transitions order status via status webhook and reflects in live UI",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "theme-default",
+                  "projectName": "theme-default",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 21277,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-03T13:09:35.643Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "dfb8392290511d9ef425-dffcd83489b9f2df28c6",
+              "file": "order-management/10-order-status-lifecycle.live.spec.ts",
+              "line": 6,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-03T13:07:52.323Z",
+    "duration": 126526.75200000001,
+    "expected": 12,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

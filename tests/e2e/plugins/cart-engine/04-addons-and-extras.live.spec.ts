@@ -1,4 +1,5 @@
 import { test, expect } from '../../helpers/live-fixture';
+import { pricePattern } from '../../helpers/price';
 
 test.describe('CartEngine Suite 04: Addons & Extras', () => {
   test('toggles extra option, increments addon quantity, and verifies subtotal math in cart', async ({ page, theme }) => {
@@ -44,7 +45,7 @@ test.describe('CartEngine Suite 04: Addons & Extras', () => {
 
     // Verify subtotal matches mathematical calculation (170.00 EGP)
     const subtotal = theme.cart.getSubtotal();
-    await expect(subtotal).toContainText('170.00');
+    await expect(subtotal).toContainText(pricePattern(170));
   });
 
   test('verifies ultra combo (variant + weight + addon) price accuracy in cart', async ({ page, theme }) => {
@@ -63,7 +64,7 @@ test.describe('CartEngine Suite 04: Addons & Extras', () => {
     const extraCheckboxes = theme.catalog.getExtraCheckboxes();
     await extraCheckboxes.first().check();
 
-    // Math: (600 * 0.500) + (10 * 1) = 300 + 10 = 310.00 EGP
+    // Math: (700 * 0.500) + (10 * 1) = 350 + 10 = 360 EGP
     const detailAddBtn = theme.catalog.getDetailAddToCartButton();
     await Promise.all([
       page.waitForResponse(r => r.url().includes('/api/cart/items') && r.status() === 201),
@@ -83,6 +84,6 @@ test.describe('CartEngine Suite 04: Addons & Extras', () => {
 
     // Verify exact subtotal
     const subtotal = theme.cart.getSubtotal();
-    await expect(subtotal).toContainText('310.00');
+    await expect(subtotal).toContainText(pricePattern(360));
   });
 });

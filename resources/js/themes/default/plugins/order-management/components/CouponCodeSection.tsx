@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
+import { LoaderIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { apiClient } from "@/core/api/client";
+import { ApiSuccess } from "@/core/api/types";
 import { CartItem } from "@/types";
 
 interface AppliedCoupon {
@@ -17,8 +18,8 @@ interface AppliedCoupon {
 }
 
 interface CouponCodeSectionProps {
-    cartItems: CartItem[];
-    cartTotal: number;
+    cartItems?: CartItem[];
+    cartTotal?: number;
     addressId: number | null;
     appliedCoupon: AppliedCoupon | null;
     onCouponApplied: (coupon: AppliedCoupon) => void;
@@ -47,18 +48,15 @@ export default function CouponCodeSection({
         setCouponSuccess(null);
 
         try {
-            const response = await apiClient.post<any>("/coupons/validate", {
-                code: couponCode,
-                cart_items: cartItems,
-                sub_total: cartTotal,
+            const response = await apiClient.post<ApiSuccess<{ coupon: AppliedCoupon }>>("/coupons/validate", {
+                code: couponCode.trim(),
                 address_id: addressId,
             });
 
-            if (response.data.valid) {
-                onCouponApplied(response.data.coupon);
-                setCouponSuccess(response.data.message);
-            } else {
-                setCouponError(response.data.message);
+            const data = response.data.data;
+            if (data?.coupon) {
+                onCouponApplied(data.coupon);
+                setCouponSuccess(response.data.message || t("couponAppliedSuccessfully", "Coupon applied successfully"));
             }
         } catch (error: any) {
             if (error.response?.data?.message) {
@@ -108,7 +106,7 @@ export default function CouponCodeSection({
                                 type="button"
                             >
                                 {isValidatingCoupon ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <LoaderIcon className="h-4 w-4 animate-spin" />
                                 ) : (
                                     t("apply")
                                 )}

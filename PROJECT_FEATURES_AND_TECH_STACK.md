@@ -38,7 +38,7 @@
   - **Tailwind CSS v4** (`tailwindcss: ^4.1.17`, `@tailwindcss/vite: ^4.1.10`)
   - **Radix UI Primitives** (Dialog, Dropdown Menu, Popover, Select, Tabs, Scroll Area, Avatar, Slider, etc.)
   - **Shadcn UI** component design architecture
-  - Dynamic CSS variables system driven by tenant theme settings (`theme.css`)
+  - Dynamic CSS variables system driven by tenant theme settings
 - **Icons & UI Utilities**:
   - **Lucide React** (`lucide-react: ^0.553.0`)
   - **Embla Carousel** (`embla-carousel-react: ^8.6.0`, `embla-carousel-autoplay: ^8.6.0`)
@@ -198,5 +198,5 @@ The platform is structured into **17 modular plugins** located in `app/Plugins/`
 
 - **`/api/tenant/bootstrap`**: Single-call bootstrapping endpoint returning active tenant metadata, enabled plugins, current user state, cart item count, theme configurations, and store branding.
 - **`/api/tenant/auth/*`**: Complete Sanctum authentication flow (Register, Login, Logout, Fetch User).
-- **Dynamic CSS (`/theme.css`)**: Injects tenant-specific color palette and font declarations dynamically at runtime.
+- **Dynamic CSS**: Injects tenant-specific color palette and font declarations dynamically at runtime via tenant theme settings.
 - **PWA Ready (`/manifest.json`)**: Dynamic tenant-specific Progressive Web App web manifest.

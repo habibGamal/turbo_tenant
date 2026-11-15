@@ -3,10 +3,10 @@
 declare(strict_types=1);
 
 use App\Plugins\CatalogProducts\src\Models\Category;
-use App\Plugins\ComboPackages\src\Models\Package as LegacyPackage;
 use App\Plugins\CatalogProducts\src\Models\Product;
 use App\Plugins\CatalogProducts\src\Models\ProductVariant;
 use App\Plugins\ComboPackages\src\Models\Package;
+use App\Plugins\ComboPackages\src\Models\Package as LegacyPackage;
 use App\Plugins\ComboPackages\src\Models\PackageGroup;
 use App\Plugins\ComboPackages\src\Models\PackageItem;
 
@@ -74,16 +74,40 @@ it('attaches groups and items to a package with correct hierarchy', function () 
 });
 
 it('lists active packages via api and excludes inactive packages', function () {
-    Package::factory()->create([
+    $active = Package::factory()->create([
         'name' => 'Active Lunch Combo',
         'is_active' => true,
         'sort_order' => 1,
     ]);
 
-    Package::factory()->create([
+    $group = PackageGroup::create([
+        'package_id' => $active->id,
+        'name' => 'Main',
+        'selection_type' => 'all',
+    ]);
+
+    PackageItem::create([
+        'package_group_id' => $group->id,
+        'product_id' => $this->product->id,
+        'quantity' => 1,
+    ]);
+
+    $inactive = Package::factory()->create([
         'name' => 'Inactive Secret Combo',
         'is_active' => false,
         'sort_order' => 2,
+    ]);
+
+    $inactiveGroup = PackageGroup::create([
+        'package_id' => $inactive->id,
+        'name' => 'Main',
+        'selection_type' => 'all',
+    ]);
+
+    PackageItem::create([
+        'package_group_id' => $inactiveGroup->id,
+        'product_id' => $this->product->id,
+        'quantity' => 1,
     ]);
 
     $response = $this->getJson('/api/packages');
@@ -134,4 +158,10 @@ it('maintains backwards compatibility with App\\Models\\Package alias', function
 
     expect($package)->toBeInstanceOf(Package::class)
         ->and(LegacyPackage::find($package->id))->not->toBeNull();
+});
+
+it('rejects non-integer package id with 404 via typed route parameter', function () {
+    $this->getJson('/api/packages/not-a-number')
+        ->assertNotFound()
+        ->assertJsonPath('status', 'error');
 });

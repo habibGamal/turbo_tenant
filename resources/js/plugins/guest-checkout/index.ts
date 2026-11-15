@@ -1,6 +1,7 @@
+import { lazy } from 'react';
 import { registerPluginDefault, SlotName } from '@/core/slots/slot-registry';
-import DefaultGuestOrderTracking from './components/DefaultGuestOrderTracking';
-import DefaultGuestCheckout from './components/DefaultGuestCheckout';
+const DefaultGuestOrderTracking = lazy(() => import('./components/DefaultGuestOrderTracking'));
+const DefaultGuestCheckout = lazy(() => import('./components/DefaultGuestCheckout'));
 
 export function registerGuestCheckoutPlugin(slot: SlotName = 'order.tracking') {
   registerPluginDefault(slot, DefaultGuestOrderTracking);

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Payment;
 
-use App\Enums\OrderStatus;
-use App\Enums\PaymentStatus;
 use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
+use App\Plugins\OrderManagement\src\Enums\PaymentStatus;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\PaymentProcessing\src\Contracts\PaymentCallbackServiceInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;

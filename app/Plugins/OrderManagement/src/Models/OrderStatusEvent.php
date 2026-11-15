@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Models;
 
-use App\Enums\OrderStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\PushNotifications\src\Notifications;
 
-use App\Enums\OrderStatus;
+use App\Plugins\OrderManagement\src\Enums\OrderStatus;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\PushNotifications\src\Models\UserNotification;
 use Illuminate\Bus\Queueable;
@@ -12,7 +12,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\Expo\ExpoMessage;
 
-class OrderStatusNotification extends Notification implements ShouldQueue
+final class OrderStatusNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

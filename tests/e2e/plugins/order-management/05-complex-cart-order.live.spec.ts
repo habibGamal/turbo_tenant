@@ -1,4 +1,5 @@
 import { test, expect } from '../../helpers/live-fixture';
+import { openCheckout } from '../../helpers/checkout';
 
 test.describe('OrderManagement Suite 05: Complex Cart Order (Variants, Weights & Extras)', () => {
   test('persists configured product options into placed order and displays in order view', async ({ page, theme }) => {
@@ -20,13 +21,11 @@ test.describe('OrderManagement Suite 05: Complex Cart Order (Variants, Weights &
 
     // 4. Toggle Extra Addon & increment quantity
     const extraCheckboxes = theme.catalog.getExtraCheckboxes();
-    if (await extraCheckboxes.count() > 0) {
-      await extraCheckboxes.first().click();
-      const incBtn = theme.catalog.getExtraIncrementButtons();
-      if (await incBtn.count() > 0 && await incBtn.first().isVisible()) {
-        await incBtn.first().click();
-      }
-    }
+    await expect(extraCheckboxes.first()).toBeVisible();
+    await extraCheckboxes.first().check();
+    const incBtn = theme.catalog.getExtraIncrementButtons().first();
+    await expect(incBtn).toBeVisible();
+    await incBtn.click();
 
     // 5. Add to cart
     const detailAddBtn = theme.catalog.getDetailAddToCartButton();
@@ -36,14 +35,14 @@ test.describe('OrderManagement Suite 05: Complex Cart Order (Variants, Weights &
     ]);
 
     // 6. Go to checkout
-    const [bootstrapResponse] = await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/checkout-data') && r.status() === 200),
-      page.goto('/checkout', { waitUntil: 'domcontentloaded' }),
-    ]);
+    const { cart } = await openCheckout(page);
 
-    const bootstrapJson = await bootstrapResponse.json();
-    const cartItem = bootstrapJson.data.cart.items[0];
-    expect(cartItem).toBeDefined();
+    const cartItem = cart.items[0];
+    expect(cartItem.variant.name).toBe('سادة');
+    expect(Number(cartItem.weight_option_value.value)).toBe(0.25);
+    expect(cartItem.extras).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'Gensing 1 g', quantity: 2 }),
+    ]));
 
     // 7. Verify order summary in checkout displays item breakdown
     const orderSummary = theme.orders.getOrderSummary();
@@ -67,16 +66,35 @@ test.describe('OrderManagement Suite 05: Complex Cart Order (Variants, Weights &
 
     // 9. Place order
     const placeOrderBtn = theme.orders.getPlaceOrderButton();
+    const trackingResponsePromise = page.waitForResponse(r =>
+      new URL(r.url()).pathname === '/api/guest-checkout/track' && r.request().method() === 'POST'
+    );
     const [placeOrderResponse] = await Promise.all([
       page.waitForResponse(r => r.url().includes('/api/orders/place') && r.status() === 200),
       placeOrderBtn.click(),
     ]);
 
     const result = await placeOrderResponse.json();
-    expect(result.success).toBe(true);
-    expect(result.order_id).toBeDefined();
+    expect(result.status).toBe('success');
+    expect(result.data.order_id).toBeDefined();
+    expect(result.data.tracking_token).toBeTruthy();
 
     // 10. Verify redirection to tracking
     await expect(page).toHaveURL(/orders\/track/);
+    expect(new URL(page.url()).searchParams.get('token')).toBe(result.data.tracking_token);
+    const trackingResponse = await trackingResponsePromise;
+    expect(trackingResponse.status()).toBe(200);
+    const tracked = await trackingResponse.json();
+    expect(tracked.status).toBe('success');
+    expect(tracked.data.order_number).toBe(result.data.order_number);
+    expect(tracked.data.items[0]).toEqual(expect.objectContaining({
+      product_id: cartItem.product_id,
+      variant_id: cartItem.variant.id,
+      weight_option_value_id: cartItem.weight_option_value.id,
+      extras: expect.arrayContaining([expect.objectContaining({ extra_name: 'Gensing 1 g', quantity: 2 })]),
+    }));
+    await expect(page.getByText('E2E Simple Coffee', { exact: true })).toBeVisible();
+    await expect(page.getByText('سادة', { exact: true })).toBeVisible();
+    await expect(page.getByText('+ Gensing 1 g', { exact: true })).toBeVisible();
   });
 });

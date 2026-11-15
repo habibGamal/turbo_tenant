@@ -4,26 +4,43 @@ declare(strict_types=1);
 
 namespace App\Plugins\CouponsPromotions;
 
-use App\Plugins\CouponsPromotions\src\DTOs\CouponsPromotionsConfig;
+use App\Plugins\CouponsPromotions\src\Http\Rules\CouponOrderRulesContributor;
 use App\Plugins\CouponsPromotions\src\Models\Coupon;
+use App\Plugins\CouponsPromotions\src\Rules\ActiveCouponRule;
+use App\Plugins\CouponsPromotions\src\Rules\ApplicableItemsCouponRule;
+use App\Plugins\CouponsPromotions\src\Rules\ExpiryCouponRule;
+use App\Plugins\CouponsPromotions\src\Rules\MaxOrderTotalCouponRule;
+use App\Plugins\CouponsPromotions\src\Rules\MaxUsageCouponRule;
+use App\Plugins\CouponsPromotions\src\Rules\MinOrderTotalCouponRule;
+use App\Plugins\CouponsPromotions\src\Rules\ShippingLocationCouponRule;
+use App\Plugins\CouponsPromotions\src\Rules\TimeRestrictionsCouponRule;
+use App\Plugins\CouponsPromotions\src\Rules\UserRestrictionsCouponRule;
 use App\Plugins\CouponsPromotions\src\Services\CouponService;
 use App\Plugins\OrderManagement\src\Models\Order;
-use App\Plugins\StoreSettings\src\Services\SettingService;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
 final class CouponsPromotionsServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(CouponsPromotionsConfig::class, function ($app) {
-            $settings = $app->make(SettingService::class);
+        $this->app->singleton(CouponService::class, function (Application $app): CouponService {
+            $rules = [
+                $app->make(ActiveCouponRule::class),
+                $app->make(ExpiryCouponRule::class),
+                $app->make(MaxUsageCouponRule::class),
+                $app->make(MinOrderTotalCouponRule::class),
+                $app->make(MaxOrderTotalCouponRule::class),
+                $app->make(ApplicableItemsCouponRule::class),
+                $app->make(ShippingLocationCouponRule::class),
+                $app->make(UserRestrictionsCouponRule::class),
+                $app->make(TimeRestrictionsCouponRule::class),
+            ];
 
-            return new CouponsPromotionsConfig(
-                enabled: (bool) $settings->get('coupons-promotions.enabled', true)
-            );
+            return new CouponService($rules);
         });
 
-        $this->app->singleton(CouponService::class);
+        $this->app->tag([CouponOrderRulesContributor::class], 'order.placement.rules');
     }
 
     public function boot(): void

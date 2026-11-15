@@ -16,7 +16,11 @@ interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElemen
 
 export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFallbackProps>(
     ({ src, alt, fallback, className, forceWidth, w, h, fit, fm, sizes, ...props }, ref) => {
+
         const tenant = useTenantSafe();
+        if(tenant?.isDevMode){
+            return <div>DEV MODE</div>
+        }
         const settings = tenant?.settings;
         const defaultFallback = settings?.image_placeholder || '/images/placeholder-food.svg';
         const finalFallback = fallback || defaultFallback;
@@ -45,7 +49,7 @@ export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFal
 
         // Determine variant URLs if using Ahead-of-Time 1920w WebP structure
         const isExternalOrStatic = !imgSrc || imgSrc.startsWith('http') || imgSrc.startsWith('data:') || imgSrc === finalFallback;
-        
+
         let normalizedSrc = imgSrc;
         if (!isExternalOrStatic) {
             let path = imgSrc.startsWith('/') ? imgSrc.slice(1) : imgSrc;

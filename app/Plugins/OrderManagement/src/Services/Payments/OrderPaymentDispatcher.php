@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Plugins\OrderManagement\src\Services\Payments;
 
-use App\Plugins\LocationsDelivery\src\Models\Address;
-use App\Plugins\OrderManagement\src\Contracts\PaymentGatewayInterface;
+use App\Plugins\LocationsDelivery\src\Contracts\AddressBook;
+use App\Plugins\OrderManagement\src\Contracts\PaymentInitiator;
 use App\Plugins\OrderManagement\src\DTOs\OrderPlacementResult;
 use App\Plugins\OrderManagement\src\DTOs\PlaceOrderData;
 use App\Plugins\OrderManagement\src\Models\Order;
@@ -13,11 +13,12 @@ use App\Plugins\OrderManagement\src\Services\Contracts\OrderPaymentDispatcherInt
 use App\Plugins\OrderManagement\src\Services\Contracts\OrderRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 
-class OrderPaymentDispatcher implements OrderPaymentDispatcherInterface
+final class OrderPaymentDispatcher implements OrderPaymentDispatcherInterface
 {
     public function __construct(
-        private PaymentGatewayInterface $paymentGateway,
-        private OrderRepositoryInterface $orderRepository
+        private PaymentInitiator $paymentGateway,
+        private OrderRepositoryInterface $orderRepository,
+        private AddressBook $addressBook
     ) {}
 
     public function dispatchPayment(Order $order, PlaceOrderData $data): OrderPlacementResult
@@ -41,18 +42,21 @@ class OrderPaymentDispatcher implements OrderPaymentDispatcherInterface
             $notificationUrl
         );
 
-        if (! ($paymentResult['success'] ?? false)) {
+        if (! $paymentResult->successful) {
             $this->orderRepository->markOrderAsPaymentFailed($order);
 
             return OrderPlacementResult::failure(
-                errorMessage: $paymentResult['error'] ?? 'Failed to create payment',
+                errorMessage: $paymentResult->error ?? 'Failed to create payment',
                 order: $order
             );
         }
 
         Log::info('Payment intention created', [
             'order_id' => $order->id,
-            'paymentResult' => $paymentResult,
+            'paymentResult' => [
+                'checkout_url' => $paymentResult->checkoutUrl,
+                'data' => $paymentResult->data,
+            ],
         ]);
 
         $freshOrder = $order->fresh(['items.extras', 'user', 'branch', 'address']);
@@ -60,8 +64,8 @@ class OrderPaymentDispatcher implements OrderPaymentDispatcherInterface
         return OrderPlacementResult::success(
             order: $freshOrder,
             requiresPayment: true,
-            checkoutUrl: $paymentResult['checkout_url'] ?? null,
-            paymentData: $paymentResult['data'] ?? []
+            checkoutUrl: $paymentResult->checkoutUrl,
+            paymentData: $paymentResult->data
         );
     }
 
@@ -70,39 +74,41 @@ class OrderPaymentDispatcher implements OrderPaymentDispatcherInterface
      */
     private function prepareBillingData(PlaceOrderData $data): array
     {
-        $user = $data->user;
+        $customer = $data->user;
         $customBilling = $data->billingData;
 
         if ($data->isGuest()) {
+            $address = $customer->customerAddress();
+
             return [
-                'first_name' => $customBilling['first_name'] ?? $user->name ?? 'Guest',
+                'first_name' => $customBilling['first_name'] ?? $customer->customerName() ?? 'Guest',
                 'last_name' => $customBilling['last_name'] ?? 'Guest',
-                'email' => $customBilling['email'] ?? $user->email ?? 'guest@example.com',
-                'phone_number' => $customBilling['phone_number'] ?? $user->full_phone ?? $user->phone ?? null,
-                'apartment' => $customBilling['apartment'] ?? $user->apartment ?? 'NA',
-                'floor' => $customBilling['floor'] ?? $user->floor ?? 'NA',
-                'street' => $customBilling['street'] ?? $user->street ?? 'NA',
-                'building' => $customBilling['building'] ?? $user->building ?? 'NA',
-                'city' => $customBilling['city'] ?? $user->city ?? 'Cairo',
+                'email' => $customBilling['email'] ?? $customer->customerEmail() ?? 'guest@example.com',
+                'phone_number' => $customBilling['phone_number'] ?? $address['phone_number'] ?? $customer->customerPhone(),
+                'apartment' => $customBilling['apartment'] ?? $address['apartment'] ?? 'NA',
+                'floor' => $customBilling['floor'] ?? $address['floor'] ?? 'NA',
+                'street' => $customBilling['street'] ?? $address['street'] ?? 'NA',
+                'building' => $customBilling['building'] ?? $address['building'] ?? 'NA',
+                'city' => $customBilling['city'] ?? $address['city'] ?? 'Cairo',
                 'country' => $customBilling['country'] ?? 'EG',
                 'postal_code' => $customBilling['postal_code'] ?? 'NA',
             ];
         }
 
-        $address = $data->addressId ? Address::find($data->addressId) : null;
+        $address = $data->addressId ? $this->addressBook->snapshotAddress((int) $data->addressId) : null;
 
         return [
-            'first_name' => $customBilling['first_name'] ?? $user->name ?? 'NA',
+            'first_name' => $customBilling['first_name'] ?? $customer->customerName() ?? 'NA',
             'last_name' => $customBilling['last_name'] ?? 'NA',
-            'email' => $customBilling['email'] ?? $user->email ?? 'customer@example.com',
-            'phone_number' => $customBilling['phone_number'] ?? $user->phone ?? '+201000000000',
-            'apartment' => $customBilling['apartment'] ?? $address?->apartment ?? 'NA',
-            'floor' => $customBilling['floor'] ?? $address?->floor ?? 'NA',
-            'street' => $customBilling['street'] ?? $address?->street ?? 'NA',
-            'building' => $customBilling['building'] ?? $address?->building ?? 'NA',
-            'city' => $customBilling['city'] ?? $address?->city ?? 'Cairo',
+            'email' => $customBilling['email'] ?? $customer->customerEmail() ?? 'customer@example.com',
+            'phone_number' => $customBilling['phone_number'] ?? $customer->customerPhone() ?? '+201000000000',
+            'apartment' => $customBilling['apartment'] ?? $address['apartment'] ?? 'NA',
+            'floor' => $customBilling['floor'] ?? $address['floor'] ?? 'NA',
+            'street' => $customBilling['street'] ?? $address['street'] ?? 'NA',
+            'building' => $customBilling['building'] ?? $address['building'] ?? 'NA',
+            'city' => $customBilling['city'] ?? $address['city'] ?? 'Cairo',
             'country' => $customBilling['country'] ?? 'EG',
-            'postal_code' => $customBilling['postal_code'] ?? $address?->postal_code ?? 'NA',
+            'postal_code' => $customBilling['postal_code'] ?? $address['postal_code'] ?? 'NA',
         ];
     }
 }
