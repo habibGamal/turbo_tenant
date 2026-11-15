@@ -20,6 +20,7 @@ return [
         'localhost',
         'moda-1.turbospace.click',
         'central.turbosoftspace.com',
+        'central-control.turbosoftspace.com',
         'turbospace.click',
     ],
 
