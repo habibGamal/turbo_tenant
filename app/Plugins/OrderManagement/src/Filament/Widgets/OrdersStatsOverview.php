@@ -19,6 +19,23 @@ final class OrdersStatsOverview extends BaseWidget
 
     protected ?string $pollingInterval = '60s';
 
+    public static function canView(): bool
+    {
+        if (! class_exists(Order::class)) {
+            return false;
+        }
+
+        if (function_exists('tenancy') && tenancy()->initialized && ! app(\App\Core\Plugins\Services\PluginManager::class)->isPluginActive('order-management')) {
+            return false;
+        }
+
+        if (! \Illuminate\Support\Facades\Schema::hasTable('orders')) {
+            return false;
+        }
+
+        return true;
+    }
+
     protected function getStats(): array
     {
         $days = collect(range(6, 0))->map(fn (int $daysAgo): string => now()->subDays($daysAgo)->format('Y-m-d'));

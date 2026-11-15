@@ -157,6 +157,18 @@ it('controls PendingReviewsStat visibility based on pending review count', funct
         ->assertSee('1');
 });
 
+it('hides PendingReviewsStat gracefully when reviews table does not exist', function () {
+    Illuminate\Support\Facades\Schema::dropIfExists('reviews');
+
+    expect(PendingReviewsStat::canView())->toBeFalse();
+
+    Illuminate\Support\Facades\Artisan::call('migrate', [
+        '--path' => 'app/Plugins/ProductReviews/database/migrations/tenant',
+        '--realpath' => true,
+        '--force' => true,
+    ]);
+});
+
 it('renders StoreSetupChecklist', function () {
     expect(StoreSetupChecklist::canView())->toBeBool();
 
