@@ -44,13 +44,19 @@ final readonly class OrderPurchaseContents
             $contentId = MetaContentId::for((int) $item->getAttribute('product_id'), $variantId !== null ? (int) $variantId : null);
             $quantity = (float) $item->getAttribute('quantity');
 
+            // Items sold by weight carry a fractional quantity (kg). Meta expects whole
+            // units, so a weighted line counts as one unit. item_price stays the unit
+            // price, which is the catalog feed price for this content id (per kg,
+            // add-ons excluded); the event value carries the real order total.
+            $soldByWeight = $item->getAttribute('weight_option_value_id') !== null || floor($quantity) !== $quantity;
+
             $contentIds[] = $contentId;
             $contents[] = [
                 'id' => $contentId,
-                'quantity' => floor($quantity) === $quantity ? (int) $quantity : $quantity,
+                'quantity' => $soldByWeight ? 1 : (int) $quantity,
                 'item_price' => (float) $item->getAttribute('unit_price'),
             ];
-            $numItems += (int) round($quantity);
+            $numItems += $soldByWeight ? 1 : (int) $quantity;
         }
 
         return new self($contentIds, $contents, $numItems);
