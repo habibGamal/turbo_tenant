@@ -6,6 +6,7 @@ The project has no release tags; history is grouped by month from the git log on
 ## [Unreleased]
 
 ### Added
+- Documentation website (VitePress, `docs/`): the technical handbook in English plus a new Arabic store admin guide (`docs/ar/`, right-to-left) covering setup, catalog, sizes, add-ons, weight options, packages, branches and delivery areas, orders, POS connection, payments, coupons, content, notifications, Meta and FAQ. New technical pages: [Connecting a POS to the website](docs/pos-website-link.md) and [Queue, workers and scheduler](docs/queue-and-workers.md) ([docs](docs/docs-site.md)).
 - Developer handbook in `docs/` with a page per feature, deployment and operations guides, and this reconstructed changelog ([docs](docs/README.md)). The documentation skill can now handle any stack and includes `docs_check.py`.
 - Meta marketing plugin: Conversions API purchase and relayed browser events, Meta catalog feed (CSV/XML, Arabic override) and a diagnostics page ([docs](docs/features/meta-marketing.md)).
 - POS delivery tracking: per-order delivery state, attempt history, uncertain-delivery verification by admins, overdue filter and failed-orders widget ([docs](docs/features/pos-integration.md)).
@@ -22,6 +23,7 @@ The project has no release tags; history is grouped by month from the git log on
 - Uniform JSON error envelope for `api/*` requests.
 
 ### Changed
+- POS API key fields in the admin now say where to copy the key on the POS (الإعدادات › إدارة الفروع › مفتاح الربط (API)).
 - POS calls send `X-Api-Key`, which the POS now requires on its website endpoints. Each branch has a POS API key (`branches.pos_api_key`, encrypted, new PosIntegration tenant migration), and the master POS key is the `products_repo_api_key` setting ([docs](docs/features/pos-integration.md#configuration)). The branch form gained the `admin.form.locations-delivery.branch` contribution point.
 - Coupons can target line types (e.g. packages).
 

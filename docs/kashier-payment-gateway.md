@@ -94,7 +94,7 @@ graph TB
 
 Add the following to your `.env` file:
 
-```env
+```dotenv
 KASHIER_MERCHANT_ID=your_merchant_id
 KASHIER_API_KEY=your_api_key
 KASHIER_SECRET_KEY=your_secret_key

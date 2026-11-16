@@ -28,3 +28,8 @@ tests/Browser/Screenshots
 database/testing/
 database/tenanttest_*
 /test-results-auth*/
+
+# Docs site (VitePress)
+/docs/node_modules
+/docs/.vitepress/cache
+/docs/.vitepress/dist

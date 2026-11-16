@@ -29,7 +29,7 @@ final class PosBranchApiKeyFormContributor implements FormComponentContributor
                 ->password()
                 ->revealable()
                 ->maxLength(255)
-                ->helperText('قيمة WEB_API_KEY في نقطة البيع الخاصة بهذا الفرع، وتُرسل في ترويسة X-Api-Key'),
+                ->helperText('انسخه من نقطة البيع: الإعدادات › إدارة الفروع › مفتاح الربط (API) › «مفتاح API للموقع والفروع». يُرسل في ترويسة X-Api-Key'),
         ];
     }
 }
