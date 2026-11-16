@@ -349,7 +349,8 @@ final class POSProductResolver implements POSProductResolverInterface
      * POS lines for the mapped add-ons of a product line, one per add-on, so
      * the POS shows each add-on like the website does: its own line, its own
      * count (add-on quantity x item count, or x weight multiplier for items
-     * sold by weight, matching CartPriceCalculator) and no copied notes.
+     * sold by weight, matching CartPriceCalculator) and only a note naming the
+     * item it belongs to («إضافة على: …»), never the item's own notes.
      *
      * @return list<array{quantity: float|int, notes: string, posRefObj: array<int, array{productRef: string, quantity: int}>}>
      */
@@ -363,6 +364,9 @@ final class POSProductResolver implements POSProductResolverInterface
         $soldByWeight = $item->weight_option_value_id && $item->weight_multiplier;
         $itemCount = $soldByWeight ? (float) $item->weight_multiplier : (float) $item->quantity;
 
+        $productName = $this->productName($item);
+        $note = $productName !== null ? PosNoteLabel::ADDON_FOR->value.': '.$productName : '';
+
         $lines = [];
         foreach ($item->extras as $extra) {
             $ref = $this->mappedExtraRef($extra, $mappings, $branchId);
@@ -373,7 +377,7 @@ final class POSProductResolver implements POSProductResolverInterface
             $quantity = (float) $extra->quantity * $itemCount;
             $lines[] = [
                 'quantity' => fmod($quantity, 1.0) === 0.0 ? (int) $quantity : $quantity,
-                'notes' => '',
+                'notes' => $note,
                 'posRefObj' => [
                     [
                         'productRef' => $ref,
@@ -419,6 +423,17 @@ final class POSProductResolver implements POSProductResolverInterface
         }
 
         return PosNoteLabel::EXTRA_DEFAULT->value;
+    }
+
+    private function productName(OrderItem $item): ?string
+    {
+        foreach ([$item->product_name_ar, $item->product?->name_ar, $item->product_name, $item->product?->name] as $name) {
+            if (filled($name)) {
+                return (string) $name;
+            }
+        }
+
+        return null;
     }
 
     private function variantName(OrderItem $item): ?string

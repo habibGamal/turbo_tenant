@@ -149,6 +149,7 @@ describe('POSProductResolver', function () {
         $item = OrderItem::factory()->create([
             'order_id' => $order->id,
             'product_id' => $product->id,
+            'product_name_ar' => 'برجر',
             'quantity' => 1,
         ]);
 
@@ -167,7 +168,7 @@ describe('POSProductResolver', function () {
             ->and($result['notes'])->toBe('')
             ->and($this->resolver->resolveExtraLines($item, $branch->id))->toBe([[
                 'quantity' => 3,
-                'notes' => '',
+                'notes' => 'إضافة على: برجر',
                 'posRefObj' => [['productRef' => 'EXTRA-CHEESE', 'quantity' => 1]],
             ]]);
     });

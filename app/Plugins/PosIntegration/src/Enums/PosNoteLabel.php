@@ -12,4 +12,5 @@ enum PosNoteLabel: string
     case EXTRA_DEFAULT = 'إضافة';
     case TYPE = 'النوع';
     case COMPONENTS = 'مكونات';
+    case ADDON_FOR = 'إضافة على';
 }
