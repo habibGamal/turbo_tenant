@@ -215,11 +215,13 @@ export default function ProductCard({
                 </div>
 
                 <CardHeader className="p-4 pb-2">
-                    {/* Category */}
+                    {/* Category Chip */}
                     {getCategoryName() && (
-                        <p className="text-xs text-muted-foreground mb-1">
-                            {getCategoryName()}
-                        </p>
+                        <div className="mb-1.5">
+                            <Badge variant="outline" className="text-xs font-normal">
+                                {getCategoryName()}
+                            </Badge>
+                        </div>
                     )}
 
                     {/* Product Name wrapped in Link */}

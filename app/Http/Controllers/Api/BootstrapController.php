@@ -36,14 +36,18 @@ final class BootstrapController extends Controller
 
         foreach ($this->pluginContributions->active('tenant.bootstrap.contributors') as $contributor) {
             if ($contributor instanceof BootstrapContributor) {
-                $payload = $contributor->contribute($user);
-                $contributions['query_data'] = array_merge($contributions['query_data'], $payload['query_data'] ?? []);
-                unset($payload['query_data']);
-                if (isset($payload['settings']) && is_array($payload['settings'])) {
-                    $contributions['settings'] = array_merge($contributions['settings'], $payload['settings']);
-                    unset($payload['settings']);
+                try {
+                    $payload = $contributor->contribute($user);
+                    $contributions['query_data'] = array_merge($contributions['query_data'], $payload['query_data'] ?? []);
+                    unset($payload['query_data']);
+                    if (isset($payload['settings']) && is_array($payload['settings'])) {
+                        $contributions['settings'] = array_merge($contributions['settings'], $payload['settings']);
+                        unset($payload['settings']);
+                    }
+                    $contributions = array_merge($contributions, $payload);
+                } catch (\Throwable $e) {
+                    report($e);
                 }
-                $contributions = array_merge($contributions, $payload);
             }
         }
 

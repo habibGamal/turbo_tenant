@@ -21,13 +21,17 @@ final class ProductSummaryResource extends JsonResource
     {
         $hasVariants = ($this->variants_count ?? 0) > 0;
         $hasExtras = ! empty($this->extra_option_id);
+        $image = $this->image;
+        if (is_string($image) && $image !== '' && ! str_starts_with($image, 'http') && ! str_starts_with($image, '/') && ! str_starts_with($image, 'data:')) {
+            $image = '/'.$image;
+        }
 
         return [
             'id' => $this->id,
             'name' => $this->name,
             'name_ar' => $this->name_ar,
             'description' => $this->description,
-            'image' => $this->image,
+            'image' => $image,
             'base_price' => $this->base_price,
             'price_after_discount' => $this->price_after_discount,
             'price' => $this->price,

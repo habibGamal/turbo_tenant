@@ -107,6 +107,34 @@ export default function MenuItemRow({
                     : 'opacity-60 grayscale cursor-not-allowed'
             )}
         >
+            {/* Small Image & Plus Button - placed at start (Right in RTL, Left in LTR) */}
+            <div className="relative shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-muted border border-border/40">
+                <ImageWithFallback
+                    src={product.image}
+                    alt={productName}
+                    className={cn(
+                        'w-full h-full object-cover transition-transform duration-300',
+                        isProductActive ? 'group-hover:scale-105' : ''
+                    )}
+                />
+
+                <Button
+                    type="button"
+                    size="icon"
+                    aria-label={hasOptions ? t('customizeProduct', 'Customize') : t('addToCart', 'Add to Cart')}
+                    data-testid={`menu-item-add-${product.id}`}
+                    disabled={!isProductActive || isPending}
+                    onClick={handlePlusClick}
+                    className="absolute bottom-1.5 end-1.5 h-7 w-7 sm:h-8 sm:w-8 rounded-full shadow-md bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-transform active:scale-90 z-10"
+                >
+                    {isPending ? (
+                        <LoaderIcon className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                        <Plus className="h-4 w-4" />
+                    )}
+                </Button>
+            </div>
+
             {/* Text & Price Info */}
             <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                 <div className="space-y-1">
@@ -151,34 +179,6 @@ export default function MenuItemRow({
                         </span>
                     )}
                 </div>
-            </div>
-
-            {/* Small Image & Plus Button */}
-            <div className="relative shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-muted border border-border/40">
-                <ImageWithFallback
-                    src={product.image}
-                    alt={productName}
-                    className={cn(
-                        'w-full h-full object-cover transition-transform duration-300',
-                        isProductActive ? 'group-hover:scale-105' : ''
-                    )}
-                />
-
-                <Button
-                    type="button"
-                    size="icon"
-                    aria-label={hasOptions ? t('customizeProduct', 'Customize') : t('addToCart', 'Add to Cart')}
-                    data-testid={`menu-item-add-${product.id}`}
-                    disabled={!isProductActive || isPending}
-                    onClick={handlePlusClick}
-                    className="absolute bottom-1.5 end-1.5 h-7 w-7 sm:h-8 sm:w-8 rounded-full shadow-md bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-transform active:scale-90 z-10"
-                >
-                    {isPending ? (
-                        <LoaderIcon className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                        <Plus className="h-4 w-4" />
-                    )}
-                </Button>
             </div>
         </div>
     );

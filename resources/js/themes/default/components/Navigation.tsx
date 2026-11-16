@@ -13,6 +13,7 @@ import { MobileBottomNav } from "./navigation/MobileBottomNav";
 import { PluginSlot } from "@/core/slots/PluginSlot";
 import { useTenantSafe } from "@/core/context/TenantContext";
 import { useAuth } from "@/core/context/AuthContext";
+import { useCart } from "@/plugins/cart-engine/api";
 import { cn } from "@/lib/utils";
 
 interface NavigationProps {
@@ -39,7 +40,8 @@ export default function Navigation({
     const { user } = useAuth();
     const tenantContext = useTenantSafe();
     const settings = tenantContext?.settings || {};
-    const activeCartCount = cartItemsCount || tenantContext?.cartCount || 0;
+    const { data: cart } = useCart();
+    const activeCartCount = cart?.items ? cart.items.length : (cartItemsCount || tenantContext?.cartCount || 0);
     const { t, i18n } = useTranslation();
     const location = useLocation();
     const pathname = location.pathname;

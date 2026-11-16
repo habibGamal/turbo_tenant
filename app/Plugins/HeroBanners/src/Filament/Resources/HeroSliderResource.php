@@ -73,18 +73,15 @@ final class HeroSliderResource extends Resource
                             ->schema([
                                 TextInput::make('title')
                                     ->label('العنوان الرئيسي (English)')
-                                    ->required()
                                     ->maxLength(255),
                                 TextInput::make('subtitle')
                                     ->label('العنوان الفرعي (English)')
-                                    ->required()
                                     ->maxLength(255),
                                 TextInput::make('badge')
                                     ->label('الشارة الترويجية (English)')
                                     ->maxLength(255),
                                 TextInput::make('cta_text')
                                     ->label('نص زر الإجراء (CTA English)')
-                                    ->required()
                                     ->maxLength(255),
                                 TextInput::make('secondary_cta_text')
                                     ->label('نص الزر الثانوي (English)')
@@ -96,7 +93,6 @@ final class HeroSliderResource extends Resource
                     ->schema([
                         TextInput::make('cta_link')
                             ->label('رابط زر الإجراء (CTA)')
-                            ->required()
                             ->maxLength(255),
                         TextInput::make('secondary_cta_link')
                             ->label('رابط الزر الثانوي')
@@ -104,7 +100,8 @@ final class HeroSliderResource extends Resource
                         FileUpload::make('image')
                             ->label('صورة السلايدر')
                             ->image()
-                            ->optimizeForWeb('hero-sliders'),
+                            ->optimizeForWeb('hero-sliders')
+                            ->required(),
                         Select::make('gradient')
                             ->label('التدرج اللوني للخلفية')
                             ->options([
@@ -114,8 +111,7 @@ final class HeroSliderResource extends Resource
                                 'from-amber-500/20 via-yellow-500/10 to-orange-500/20' => 'ذهبي ومميز (Gold)',
                                 'from-zinc-500/20 via-neutral-500/10 to-stone-500/20' => 'رمادي كلاسيكي (Neutral)',
                             ])
-                            ->default('from-orange-500/20 via-red-500/10 to-pink-500/20')
-                            ->required(),
+                            ->default('from-orange-500/20 via-red-500/10 to-pink-500/20'),
                         Select::make('icon')
                             ->label('الأيقونة')
                             ->options([
@@ -125,8 +121,7 @@ final class HeroSliderResource extends Resource
                                 'fire' => 'لهب (Fire)',
                                 'gift' => 'هدية (Gift)',
                             ])
-                            ->default('sparkles')
-                            ->required(),
+                            ->default('sparkles'),
                     ])->columns(2),
 
                 Section::make('إعدادات العرض والحالة')

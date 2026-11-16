@@ -9,7 +9,14 @@
     $siteName = $settingService ? $settingService->get(SettingKey::SITE_NAME, config('app.name', 'Laravel')) : config('app.name', 'Laravel');
     $siteDescription = $settingService ? $settingService->get(SettingKey::SITE_DESCRIPTION) : null;
     $favicon = $settingService ? $settingService->get(SettingKey::SITE_FAVICON) : null;
-    $bootstrap = $isTenant ? app(\App\Http\Controllers\Api\BootstrapController::class)(request())->getData(true) : null;
+    $bootstrap = null;
+    if ($isTenant) {
+        try {
+            $bootstrap = app(\App\Http\Controllers\Api\BootstrapController::class)(request())->getData(true);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
     $themeCss = ($isTenant && $settingService && app()->bound(ThemeCssBuilder::class))
         ? app(ThemeCssBuilder::class)->build($settingService->get(SettingKey::THEME, []))
         : '';

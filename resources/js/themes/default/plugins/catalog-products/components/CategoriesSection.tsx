@@ -8,7 +8,7 @@ interface Category {
     id: number;
     name: string;
     name_ar?: string;
-    slug: string;
+    slug?: string;
     description?: string;
     descriptionAr?: string;
     image?: string;

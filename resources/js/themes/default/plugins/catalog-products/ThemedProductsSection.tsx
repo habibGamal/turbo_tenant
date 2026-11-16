@@ -8,6 +8,7 @@ import { Star, TrendingUp, Flame } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import ProductCard from './components/ProductCard';
+import CategoriesSection from './components/CategoriesSection';
 import { ImageWithFallback } from '@/components/ui/image';
 import { CatalogSectionsSkeleton } from '@/components/ui/page-skeletons';
 import { useAddToCart } from '@/plugins/cart-engine/api';
@@ -95,40 +96,9 @@ export default function ThemedProductsSection({ sections: propSections }: Themed
 
   return (
     <>
-      {/* Category Navigation Tabs */}
+      {/* Categories Section (Master Branch Grid) */}
       {categories.length > 0 && (
-        <section className="py-8 bg-background border-b">
-          <div className="container mx-auto px-4">
-            <div className="flex items-start gap-4 sm:gap-6 overflow-x-auto pb-2 scrollbar-none" role="tablist">
-              {categories.map((cat, index) => {
-                const isSelected = selectedCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    data-testid="category-tab"
-                    role="tab"
-                    aria-selected={isSelected}
-                    onClick={() => setSelectedCategory(isSelected ? null : cat.id)}
-                    className={`group flex w-24 sm:w-32 shrink-0 flex-col items-center gap-2 rounded-xl border border-transparent p-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isSelected ? "border-primary" : ""}`}
-                  >
-                    <span className={`block w-full aspect-square overflow-hidden rounded-2xl border-2 transition-colors ${isSelected ? 'border-primary' : 'border-transparent group-hover:border-primary/50'}`}>
-                      <ImageWithFallback
-                        src={cat.image}
-                        alt={i18n.language === 'ar' && cat.name_ar ? cat.name_ar : cat.name}
-                        className="h-full w-full object-cover"
-                        priority={index === 0}
-                        loading={index < 2 ? "eager" : "lazy"}
-                      />
-                    </span>
-                    <span className={`text-sm font-semibold ${isSelected ? 'text-primary' : 'text-foreground'}`}>
-                      {i18n.language === 'ar' && cat.name_ar ? cat.name_ar : cat.name}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </section>
+        <CategoriesSection categories={categories} />
       )}
 
       {displayedSections.map((section, sectionIndex) => (

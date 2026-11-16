@@ -127,87 +127,101 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
                             badgeText || titleText || subtitleText || hasPrimaryCta || hasSecondaryCta
                         );
 
-                        return (
-                            <CarouselItem data-testid="hero-slide" key={slide.id}>
-                                <div className="relative aspect-[4/5] sm:aspect-[16/9] lg:aspect-[21/9] flex items-center overflow-hidden">
-                                    {/* Background: Image or Gradient */}
-                                    {slide.image ? (
-                                        <>
-                                            <div className="absolute inset-0 z-0">
-                                                <ImageWithFallback
-                                                    src={slide.image}
-                                                    alt={slide.title}
-                                                    className="w-full h-full object-cover"
-                                                    priority={index === 0}
-                                                    loading={index === 0 ? "eager" : "lazy"}
-                                                    fetchPriority={index === 0 ? "high" : "low"}
-                                                />
-                                                <div className="absolute inset-0 bg-black/40" />
-                                            </div>
+                        const isClickableSlide = Boolean(slide.cta_link && !hasPrimaryCta && !hasSecondaryCta);
+
+                        const slideContent = (
+                            <div className="relative aspect-[16/9] w-full flex items-center overflow-hidden">
+                                {/* Background: Image or Gradient */}
+                                {slide.image ? (
+                                    <>
+                                        <div className="absolute inset-0 z-0">
+                                            <ImageWithFallback
+                                                src={slide.image}
+                                                alt={titleText || t("heroSlide", "Hero Slide")}
+                                                className="w-full h-full object-cover"
+                                                priority={index === 0}
+                                                loading={index === 0 ? "eager" : "lazy"}
+                                                fetchPriority={index === 0 ? "high" : "low"}
+                                            />
+                                            {hasContent && <div className="absolute inset-0 bg-black/40" />}
+                                        </div>
+                                        {hasContent && (
                                             <div
                                                 className={`absolute inset-0 bg-gradient-to-br ${slide.gradient} opacity-60 mix-blend-overlay`}
                                             />
-                                        </>
-                                    ) : (
-                                        <div
-                                            className={`absolute inset-0 bg-gradient-to-br ${slide.gradient}`}
-                                        />
-                                    )}
+                                        )}
+                                    </>
+                                ) : (
+                                    <div
+                                        className={`absolute inset-0 bg-gradient-to-br ${slide.gradient}`}
+                                    />
+                                )}
 
-                                    {/* Decorative Background Elements - Only if no image */}
-                                    {!slide.image && (
-                                        <>
-                                            <div className="absolute top-0 start-0 w-72 h-72 bg-primary/10 rounded-full blur-3xl ltr:-translate-x-1/2 rtl:translate-x-1/2 -translate-y-1/2" />
-                                            <div className="absolute bottom-0 end-0 w-96 h-96 bg-secondary/10 rounded-full blur-3xl ltr:translate-x-1/2 rtl:-translate-x-1/2 translate-y-1/2" />
-                                        </>
-                                    )}
+                                {/* Decorative Background Elements - Only if no image */}
+                                {!slide.image && (
+                                    <>
+                                        <div className="absolute top-0 start-0 w-72 h-72 bg-primary/10 rounded-full blur-3xl ltr:-translate-x-1/2 rtl:translate-x-1/2 -translate-y-1/2" />
+                                        <div className="absolute bottom-0 end-0 w-96 h-96 bg-secondary/10 rounded-full blur-3xl ltr:translate-x-1/2 rtl:-translate-x-1/2 translate-y-1/2" />
+                                    </>
+                                )}
 
-                                    {/* Content Block anchored to bottom-start over a readable scrim */}
-                                    {hasContent && (
-                                        <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end items-start p-6 sm:p-10 lg:p-12 pb-14 sm:pb-16 text-start">
-                                            <div className="max-w-xl text-white space-y-3 sm:space-y-4">
-                                                {badgeText && (
-                                                    <div>
-                                                        <Badge variant="secondary">
-                                                            {badgeText}
-                                                        </Badge>
-                                                    </div>
-                                                )}
-                                                {titleText && (
-                                                    <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
-                                                        {titleText}
-                                                    </h2>
-                                                )}
-                                                {subtitleText && (
-                                                    <p className="text-sm sm:text-base lg:text-lg text-white/90">
-                                                        {subtitleText}
-                                                    </p>
-                                                )}
-                                                {(hasPrimaryCta || hasSecondaryCta) && (
-                                                    <div className="flex flex-wrap items-center gap-3 pt-2">
-                                                        {hasPrimaryCta && (
-                                                            <Button asChild size="lg" data-testid="hero-slide-cta">
-                                                                <Link to={slide.cta_link}>{ctaText}</Link>
-                                                            </Button>
-                                                        )}
-                                                        {hasSecondaryCta && (
-                                                            <Button
-                                                                asChild
-                                                                variant="outline"
-                                                                size="lg"
-                                                                className="border-white/30 text-white hover:bg-white/10 hover:text-white bg-transparent"
-                                                            >
-                                                                <Link to={slide.secondary_cta_link!}>
-                                                                    {secondaryCtaText}
-                                                                </Link>
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
+                                {/* Content Block anchored to bottom-start over a readable scrim */}
+                                {hasContent && (
+                                    <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end items-start p-6 sm:p-10 lg:p-12 pb-14 sm:pb-16 text-start">
+                                        <div className="max-w-xl text-white space-y-3 sm:space-y-4">
+                                            {badgeText && (
+                                                <div>
+                                                    <Badge variant="secondary">
+                                                        {badgeText}
+                                                    </Badge>
+                                                </div>
+                                            )}
+                                            {titleText && (
+                                                <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
+                                                    {titleText}
+                                                </h2>
+                                            )}
+                                            {subtitleText && (
+                                                <p className="text-sm sm:text-base lg:text-lg text-white/90">
+                                                    {subtitleText}
+                                                </p>
+                                            )}
+                                            {(hasPrimaryCta || hasSecondaryCta) && (
+                                                <div className="flex flex-wrap items-center gap-3 pt-2">
+                                                    {hasPrimaryCta && (
+                                                        <Button asChild size="lg" data-testid="hero-slide-cta">
+                                                            <Link to={slide.cta_link}>{ctaText}</Link>
+                                                        </Button>
+                                                    )}
+                                                    {hasSecondaryCta && (
+                                                        <Button
+                                                            asChild
+                                                            variant="outline"
+                                                            size="lg"
+                                                            className="border-white/30 text-white hover:bg-white/10 hover:text-white bg-transparent"
+                                                        >
+                                                            <Link to={slide.secondary_cta_link!}>
+                                                                {secondaryCtaText}
+                                                            </Link>
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+
+                        return (
+                            <CarouselItem data-testid="hero-slide" key={slide.id}>
+                                {isClickableSlide ? (
+                                    <Link to={slide.cta_link} className="block w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                                        {slideContent}
+                                    </Link>
+                                ) : (
+                                    slideContent
+                                )}
                             </CarouselItem>
                         );
                     })}

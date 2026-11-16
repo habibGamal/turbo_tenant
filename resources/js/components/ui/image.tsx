@@ -17,6 +17,21 @@ interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElemen
     fm?: 'jpg' | 'pjpg' | 'png' | 'gif' | 'webp' | 'avif' | 'tiff';
 }
 
+function ensureAbsoluteUrl(url?: string): string {
+    if (!url) return '';
+    const trimmed = url.trim();
+    if (
+        trimmed.startsWith('http://') ||
+        trimmed.startsWith('https://') ||
+        trimmed.startsWith('data:') ||
+        trimmed.startsWith('/') ||
+        trimmed.startsWith('blob:')
+    ) {
+        return trimmed;
+    }
+    return `/${trimmed}`;
+}
+
 export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFallbackProps>(
     ({
         src,
@@ -44,14 +59,16 @@ export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFal
         }
         const settings = tenant?.settings;
         const defaultFallback = settings?.image_placeholder || '/images/placeholder-food.svg';
-        const finalFallback = fallback || defaultFallback;
+        const finalFallback = ensureAbsoluteUrl(fallback || defaultFallback);
+        const resolvedSrc = ensureAbsoluteUrl(src) || finalFallback;
 
-        const [imgSrc, setImgSrc] = useState<string>(src || finalFallback);
+        const [imgSrc, setImgSrc] = useState<string>(resolvedSrc);
         const [isLoading, setIsLoading] = useState(true);
         const [hasError, setHasError] = useState(false);
 
         useEffect(() => {
-            setImgSrc(src || finalFallback);
+            const nextSrc = ensureAbsoluteUrl(src) || finalFallback;
+            setImgSrc(nextSrc);
             setIsLoading(true);
             setHasError(false);
         }, [src, finalFallback]);

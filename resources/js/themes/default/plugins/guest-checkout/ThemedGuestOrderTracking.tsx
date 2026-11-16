@@ -158,9 +158,23 @@ export default function ThemedGuestOrderTracking({
     };
 
     return (
-        <div className={`max-w-2xl mx-auto space-y-6 ${className}`}>
-            {/* Search Form Card */}
-            <Card>
+        <main className={`min-h-[calc(100vh-16rem)] py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background via-muted/20 to-background ${className}`}>
+            <div className="max-w-4xl mx-auto space-y-8">
+                {/* Header */}
+                <div className="text-center space-y-3">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-2">
+                        <Package className="w-8 h-8" />
+                    </div>
+                    <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
+                        {t("trackOrderTitle", "Track Your Order")}
+                    </h1>
+                    <p className="text-muted-foreground max-w-md mx-auto text-sm sm:text-base">
+                        {t("trackOrderSubtitle", "Enter your order number and phone number to track your order status in real time.")}
+                    </p>
+                </div>
+
+                {/* Search Form Card */}
+                <Card className="shadow-lg border-2">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Search className="w-5 h-5" />
@@ -551,6 +565,7 @@ export default function ThemedGuestOrderTracking({
                     </Card>
                 </div>
             )}
-        </div>
+            </div>
+        </main>
     );
 }

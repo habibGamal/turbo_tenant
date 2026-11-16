@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Home, ScrollText, ShoppingCart, Search, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useCart } from "@/plugins/cart-engine/api";
 import { cn } from "@/lib/utils";
 
 interface MobileBottomNavProps {
@@ -14,13 +15,15 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
     const { t } = useTranslation();
     const location = useLocation();
     const pathname = location.pathname;
+    const { data: cart } = useCart();
+
+    const liveCartCount = cart?.items ? cart.items.length : cartItemsCount;
 
     const isHomeActive = pathname === "/";
     const isMenuActive = pathname === "/menu" || pathname.startsWith("/menu/") || pathname.startsWith("/products/");
     const isCartActive = pathname === "/cart";
     const isTrackActive = pathname === "/track-order" || pathname === "/orders/track" || pathname.startsWith("/orders");
     const isProfileActive = pathname === "/profile" || pathname.startsWith("/profile");
-    const isLoginActive = pathname === "/login" || pathname === "/register";
 
     const navItemClass = (isActive: boolean) =>
         cn(
@@ -33,11 +36,9 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
     return (
         <nav
             aria-label={t("bottomNavigation", "Mobile Navigation")}
-            className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 safe-bottom"
+            className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 safe-bottom"
         >
-            <div
-                className={`grid gap-1 p-2 ${!user ? "grid-cols-5" : "grid-cols-4"}`}
-            >
+            <div className="grid grid-cols-4 gap-1 p-2">
                 <Link
                     to="/"
                     aria-current={isHomeActive ? "page" : undefined}
@@ -63,25 +64,17 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
                 >
                     <div className="relative flex items-center justify-center">
                         <ShoppingCart className="h-5 w-5" />
-                        {cartItemsCount > 0 && (
-                            <Badge className="absolute -top-1.5 -end-3 h-4 min-w-4 px-1 flex items-center justify-center p-0 text-[10px]">
-                                {cartItemsCount > 9 ? "9+" : cartItemsCount}
+                        {liveCartCount > 0 && (
+                            <Badge
+                                data-testid="mobile-cart-badge-count"
+                                className="absolute -top-1.5 -end-3 h-4 min-w-4 px-1 flex items-center justify-center p-0 text-[10px] animate-in zoom-in duration-200"
+                            >
+                                {liveCartCount > 9 ? "9+" : liveCartCount}
                             </Badge>
                         )}
                     </div>
                     <span className="text-xs">{t("cart")}</span>
                 </Link>
-
-                {!user && (
-                    <Link
-                        to="/track-order"
-                        aria-current={isTrackActive ? "page" : undefined}
-                        className={navItemClass(isTrackActive)}
-                    >
-                        <Search className="h-5 w-5" />
-                        <span className="text-xs">{t("track")}</span>
-                    </Link>
-                )}
 
                 {user ? (
                     <Link
@@ -94,12 +87,12 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
                     </Link>
                 ) : (
                     <Link
-                        to="/login"
-                        aria-current={isLoginActive ? "page" : undefined}
-                        className={navItemClass(isLoginActive)}
+                        to="/track-order"
+                        aria-current={isTrackActive ? "page" : undefined}
+                        className={navItemClass(isTrackActive)}
                     >
-                        <User className="h-5 w-5" />
-                        <span className="text-xs">{t("login")}</span>
+                        <Search className="h-5 w-5" />
+                        <span className="text-xs">{t("track")}</span>
                     </Link>
                 )}
             </div>

@@ -28,7 +28,11 @@ final class CategoryResource extends JsonResource
         }
 
         if (array_key_exists('image', $this->resource->getAttributes())) {
-            $data['image'] = $this->image;
+            $image = $this->image;
+            if (is_string($image) && $image !== '' && ! str_starts_with($image, 'http') && ! str_starts_with($image, '/') && ! str_starts_with($image, 'data:')) {
+                $image = '/'.$image;
+            }
+            $data['image'] = $image;
         }
 
         if (array_key_exists('sort_order', $this->resource->getAttributes())) {

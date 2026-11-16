@@ -127,7 +127,7 @@ export default function ProductOptions({
                                                 {getText(variant.name, variant.name_ar)}
                                             </div>
                                             <div className="text-sm text-muted-foreground">
-                                                +{formatMoney((variant.price !== null && variant.price !== undefined && variant.price > 0)
+                                                {formatMoney((variant.price !== null && variant.price !== undefined && variant.price > 0)
                                                     ? variant.price
                                                     : defaultProductPrice)}
                                             </div>
@@ -272,15 +272,15 @@ export default function ProductOptions({
                                     setQuantity(parseFloat(String(weightValue.value)));
                                 }
                             }}
-                            className="flex flex-wrap gap-2" aria-label={t("weight", "Weight")}
-
+                            className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full"
+                            aria-label={t("weight", "Weight")}
                         >
                             {product.weight_option.values.map((value) => (
                                 <label
                                     key={value.id}
                                     htmlFor={`weight-${value.id}`}
                                     data-testid="product-weight-option"
-                                    className={`flex items-center justify-center min-w-20 px-4 py-3 rounded-xl border-2 cursor-pointer transition-colors ${selectedWeightValue === value.id
+                                    className={`flex items-center justify-center w-full px-3 py-3 rounded-xl border-2 text-center cursor-pointer transition-colors ${selectedWeightValue === value.id
                                         ? "border-primary bg-primary/10 font-semibold text-primary"
                                         : "border-border hover:border-primary/50"
                                         }`}
@@ -290,7 +290,7 @@ export default function ProductOptions({
                                         id={`weight-${value.id}`}
                                         className="sr-only"
                                     />
-                                    <span>
+                                    <span className="truncate">
                                         {value.label || `${value.value} ${product.weight_option!.unit}`}
                                     </span>
                                 </label>

@@ -24,15 +24,24 @@ final class CartEngineBootstrapContributor implements BootstrapContributor
     public function contribute(?Authenticatable $user): array
     {
         $cartCount = 0;
+        $lines = [];
         try {
             $targetUser = $user instanceof User ? $user : null;
             $cartCount = $this->cartService->getCartCount($targetUser);
+            $lines = $this->cartService->getLines($targetUser);
         } catch (Throwable) {
             $cartCount = 0;
+            $lines = [];
         }
 
         return [
             'cart_count' => $cartCount,
+            'query_data' => [
+                [
+                    'key' => ['cart'],
+                    'data' => (new \App\Plugins\CartEngine\src\Http\Resources\CartResource($lines))->resolve(),
+                ],
+            ],
         ];
     }
 }

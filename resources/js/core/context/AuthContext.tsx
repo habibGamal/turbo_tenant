@@ -38,6 +38,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw err;
       }
     },
+    initialData: () => {
+      const cached = queryClient.getQueryData<{ user: User | null }>(['auth', 'user']);
+      if (cached) return cached;
+      const bootstrap = typeof window !== 'undefined' ? (window as any).__TENANT_BOOTSTRAP__ : undefined;
+      return bootstrap?.user !== undefined ? { user: bootstrap.user } : undefined;
+    },
     staleTime: 1000 * 60 * 5,
   });
 

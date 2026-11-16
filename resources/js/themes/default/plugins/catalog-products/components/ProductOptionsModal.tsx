@@ -62,19 +62,19 @@ export default function ProductOptionsModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent data-testid="product-options-modal" className="sm:max-w-lg md:max-w-2xl lg:max-w-5xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
+            <DialogContent data-testid="product-options-modal" className="w-[95vw] sm:w-full sm:max-w-lg md:max-w-2xl lg:max-w-5xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 z-[100]">
+                <DialogHeader className="mb-2">
                     <DialogTitle>{t('customizeProduct')}</DialogTitle>
                 </DialogHeader>
 
-                <div className="grid lg:grid-cols-2 gap-6">
+                <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
                     {/* Product Summary */}
                     <div className="space-y-4">
-                        <div className="aspect-square rounded-lg overflow-hidden border">
+                        <div className="aspect-square max-h-52 sm:max-h-72 lg:max-h-none w-full mx-auto rounded-lg overflow-hidden border bg-muted/10 flex items-center justify-center">
                             <ImageWithFallback
                                 src={product.image}
                                 alt={getText(product.name, product.name_ar)}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain sm:object-cover"
                             />
                         </div>
                     </div>
