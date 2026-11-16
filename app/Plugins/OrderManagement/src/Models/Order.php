@@ -176,6 +176,17 @@ final class Order extends Model
 
     protected static function booted(): void
     {
+        // A cash-on-delivery order is paid when it is delivered, whichever path
+        // completes it (POS status callback, admin, POS delivery catch-up).
+        self::saving(function (self $order): void {
+            if ($order->isDirty('status')
+                && $order->status === OrderStatus::DELIVERED
+                && $order->payment_method === PaymentMethod::COD
+                && $order->payment_status !== PaymentStatus::COMPLETED) {
+                $order->payment_status = PaymentStatus::COMPLETED;
+            }
+        });
+
         self::updated(function (self $order) {
             if ($order->wasChanged('status')) {
                 $previous = $order->getOriginal('status');
