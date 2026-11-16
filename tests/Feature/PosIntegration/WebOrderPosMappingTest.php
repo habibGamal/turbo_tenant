@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /*
  * The POS order must read like the website order (order 160): add-ons are
- * their own lines with the website count and no copied notes, weighted items
+ * their own lines with the website count and only an «إضافة على» note, weighted items
  * keep their weight, and names and the address are in Arabic.
  */
 
@@ -58,6 +58,7 @@ it('sends a weighted item with its add-on as x1, not x the weight in kg', functi
         'weight_label' => '500 جرام',
         'variant_name' => 'Medium',
         'variant_name_ar' => 'وسط',
+        'product_name_ar' => 'كوف محوج',
         'quantity' => 0.5,
         'notes' => null,
     ]);
@@ -73,7 +74,7 @@ it('sends a weighted item with its add-on as x1, not x the weight in kg', functi
         ],
         [
             'quantity' => 1,
-            'notes' => '',
+            'notes' => 'إضافة على: كوف محوج',
             'posRefObj' => [['productRef' => 'GINSENG', 'quantity' => 1]],
         ],
     ]);
@@ -85,6 +86,8 @@ it('counts a piece item add-on per piece', function () {
         'product_id' => mappedProduct('COLOMBIAN', $this->branch)->id,
         'variant_name' => null,
         'variant_name_ar' => null,
+        'product_name' => 'Colombian Coffee Pack',
+        'product_name_ar' => null,
         'quantity' => 3,
         'notes' => null,
     ]);
@@ -95,7 +98,7 @@ it('counts a piece item add-on per piece', function () {
     expect($items[0]['notes'])->toBe('')
         ->and($items[1])->toBe([
             'quantity' => 3,
-            'notes' => '',
+            'notes' => 'إضافة على: Colombian Coffee Pack',
             'posRefObj' => [['productRef' => 'GINSENG', 'quantity' => 1]],
         ]);
 });

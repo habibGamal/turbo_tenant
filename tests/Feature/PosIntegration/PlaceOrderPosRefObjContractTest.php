@@ -123,6 +123,7 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
             'quantity' => 1,
             'weight_option_value_id' => $weightOptionValue->id,
             'weight_multiplier' => 2,
+            'product_name_ar' => 'ستيك',
             'notes' => 'اللحم مستوي',
         ]);
 
@@ -137,7 +138,7 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
         $this->service->placeOrder($order);
 
         // The mapped add-on is its own line: 2 per piece x weight multiplier 2,
-        // never multiplied by the weight in kg, and with no copied notes.
+        // never multiplied by the weight in kg, noting only which item it belongs to.
         $expectedNotes = 'json::'.json_encode([
             'ملاحظات' => 'اللحم مستوي',
             'الوزن' => '(2 x) 500g',
@@ -157,7 +158,7 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
             ],
             [
                 'quantity' => 4,
-                'notes' => '',
+                'notes' => 'إضافة على: ستيك',
                 'posRefObj' => [
                     [
                         'productRef' => 'EXTRA-SAUCE',
