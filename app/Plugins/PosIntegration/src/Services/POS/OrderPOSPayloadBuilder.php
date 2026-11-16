@@ -48,6 +48,10 @@ final class OrderPOSPayloadBuilder implements OrderPOSPayloadBuilderInterface
 
             if ($resolvedItem !== null) {
                 $orderItems[] = $resolvedItem;
+
+                if (method_exists($resolver, 'resolveExtraLines')) {
+                    array_push($orderItems, ...$resolver->resolveExtraLines($item, $order->branch_id));
+                }
             }
         }
 

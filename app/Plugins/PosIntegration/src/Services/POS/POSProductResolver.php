@@ -272,19 +272,16 @@ final class POSProductResolver implements POSProductResolverInterface
             $notesData[PosNoteLabel::WEIGHT->value] = '('.$item->weight_multiplier.' x) '.$weightLabel;
         }
 
-        if ($item->extras->isNotEmpty()) {
-            $extraNames = $item->extras->map(function ($extra) {
-                $name = (! empty($extra->extra_name))
-                    ? $extra->extra_name
-                    : ($extra->extraOptionItem?->name ?? PosNoteLabel::EXTRA_DEFAULT->value);
-
-                return $name.' (x'.$extra->quantity.')';
-            })->join(', ');
-
-            $notesData[PosNoteLabel::EXTRAS->value] = $extraNames;
-        }
-
         $mappings = $this->mappings ?? $this->loadMappingsForItems([$item], $branchId);
+
+        // Mapped add-ons go to the POS as their own lines (see resolveExtraLines);
+        // only the rest are described in the item notes.
+        $noteExtras = $item->extras->reject(fn ($extra) => $this->mappedExtraRef($extra, $mappings, $branchId) !== null);
+        if ($noteExtras->isNotEmpty()) {
+            $notesData[PosNoteLabel::EXTRAS->value] = $noteExtras
+                ->map(fn ($extra) => $this->extraName($extra).' (x'.$this->formatQuantity((float) $extra->quantity).')')
+                ->join(', ');
+        }
 
         $mainProductRef = null;
 
@@ -303,13 +300,13 @@ final class POSProductResolver implements POSProductResolverInterface
             if ($variantMapping) {
                 $mainProductRef = $variantMapping->pos_item_id;
             } else {
-                $variantName = (! empty($item->variant_name)) ? $item->variant_name : $item->variant?->name;
+                $variantName = $this->variantName($item);
                 if ($variantName) {
                     $notesData[PosNoteLabel::TYPE->value] = $variantName;
                 }
             }
-        } elseif (! empty($item->variant_name)) {
-            $notesData[PosNoteLabel::TYPE->value] = $item->variant_name;
+        } elseif (($variantName = $this->variantName($item)) !== null) {
+            $notesData[PosNoteLabel::TYPE->value] = $variantName;
         }
 
         // 2. If no variant mapping found, look for base product mapping
@@ -336,49 +333,108 @@ final class POSProductResolver implements POSProductResolverInterface
             return null;
         }
 
-        $posRefObj = [
-            [
-                'productRef' => $mainProductRef,
-                'quantity' => 1,
-            ],
-        ];
-
-        // Resolve extras as posRefObj components
-        foreach ($item->extras as $extra) {
-            if (! $extra->extra_option_item_id) {
-                continue;
-            }
-
-            // Respect extra_option_items.pos_mapping_type:
-            // Extras with type 'notes' must NOT be added to posRefObj (they stay in the notes);
-            // type 'pos_item' behaves as today.
-            $mappingType = $extra->relationLoaded('extraOptionItem') && $extra->extraOptionItem !== null
-                ? $extra->extraOptionItem->pos_mapping_type
-                : $this->getExtraMappingType((int) $extra->extra_option_item_id);
-
-            if ($mappingType === 'notes') {
-                continue;
-            }
-
-            $extraMapping = $this->resolveExtraMapping((int) $extra->extra_option_item_id, $mappings, $branchId);
-
-            if ($extraMapping) {
-                $multiplier = ($item->weight_option_value_id && $item->weight_multiplier)
-                    ? (float) ($extra->quantity * $item->weight_multiplier)
-                    : (float) $extra->quantity;
-
-                $posRefObj[] = [
-                    'productRef' => $extraMapping->pos_item_id,
-                    'quantity' => $multiplier,
-                ];
-            }
-        }
-
         return [
             'quantity' => (float) $item->quantity,
             'notes' => $this->formatNotes($notesData, $item->notes),
-            'posRefObj' => $posRefObj,
+            'posRefObj' => [
+                [
+                    'productRef' => $mainProductRef,
+                    'quantity' => 1,
+                ],
+            ],
         ];
+    }
+
+    /**
+     * POS lines for the mapped add-ons of a product line, one per add-on, so
+     * the POS shows each add-on like the website does: its own line, its own
+     * count (add-on quantity x item count, or x weight multiplier for items
+     * sold by weight, matching CartPriceCalculator) and no copied notes.
+     *
+     * @return list<array{quantity: float|int, notes: string, posRefObj: array<int, array{productRef: string, quantity: int}>}>
+     */
+    public function resolveExtraLines(OrderItem $item, ?int $branchId): array
+    {
+        if (! $item->isProductLine() || $item->extras->isEmpty()) {
+            return [];
+        }
+
+        $mappings = $this->mappings ?? $this->loadMappingsForItems([$item], $branchId);
+        $soldByWeight = $item->weight_option_value_id && $item->weight_multiplier;
+        $itemCount = $soldByWeight ? (float) $item->weight_multiplier : (float) $item->quantity;
+
+        $lines = [];
+        foreach ($item->extras as $extra) {
+            $ref = $this->mappedExtraRef($extra, $mappings, $branchId);
+            if ($ref === null) {
+                continue;
+            }
+
+            $quantity = (float) $extra->quantity * $itemCount;
+            $lines[] = [
+                'quantity' => fmod($quantity, 1.0) === 0.0 ? (int) $quantity : $quantity,
+                'notes' => '',
+                'posRefObj' => [
+                    [
+                        'productRef' => $ref,
+                        'quantity' => 1,
+                    ],
+                ],
+            ];
+        }
+
+        return $lines;
+    }
+
+    /**
+     * The POS ref an add-on is sent as, or null when it stays in the notes
+     * (pos_mapping_type 'notes', no extra option item, or no mapping).
+     */
+    private function mappedExtraRef(mixed $extra, Collection $mappings, ?int $branchId): ?string
+    {
+        if (! $extra->extra_option_item_id) {
+            return null;
+        }
+
+        $mappingType = $extra->relationLoaded('extraOptionItem') && $extra->extraOptionItem !== null
+            ? $extra->extraOptionItem->pos_mapping_type
+            : $this->getExtraMappingType((int) $extra->extra_option_item_id);
+
+        if ($mappingType === 'notes') {
+            return null;
+        }
+
+        return $this->resolveExtraMapping((int) $extra->extra_option_item_id, $mappings, $branchId)?->pos_item_id;
+    }
+
+    /**
+     * Arabic name first (the POS UI is Arabic), then the snapshot name, then the catalog.
+     */
+    private function extraName(mixed $extra): string
+    {
+        foreach ([$extra->extra_name_ar ?? null, $extra->extraOptionItem?->name_ar, $extra->extra_name ?? null, $extra->extraOptionItem?->name] as $name) {
+            if (filled($name)) {
+                return (string) $name;
+            }
+        }
+
+        return PosNoteLabel::EXTRA_DEFAULT->value;
+    }
+
+    private function variantName(OrderItem $item): ?string
+    {
+        foreach ([$item->variant_name_ar, $item->variant?->name_ar, $item->variant_name, $item->variant?->name] as $name) {
+            if (filled($name)) {
+                return (string) $name;
+            }
+        }
+
+        return null;
+    }
+
+    private function formatQuantity(float $quantity): string
+    {
+        return fmod($quantity, 1.0) === 0.0 ? (string) (int) $quantity : (string) $quantity;
     }
 
     /**

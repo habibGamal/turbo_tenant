@@ -26,6 +26,7 @@ The project has no release tags; history is grouped by month from the git log on
 - Coupons can target line types (e.g. packages).
 
 ### Fixed
+- POS orders now read like the website order: each mapped add-on is its own POS line counted per piece (or per weight multiplier for items sold by weight, never x the weight in kg) with no copied notes; add-on and variant names in notes and the delivery address (labels, area, governorate) are in Arabic ([docs](docs/features/pos-integration.md#flow)).
 - Retried POS deliveries no longer fail on a duplicate order: the site sends a stable `idempotencyKey`, a POS that already saved the same order answers `already_received` and the site marks it sent and catches up its status; a different order under the same number fails with the mismatched fields instead of retrying ([docs](docs/features/pos-integration.md#flow)).
 - Prevent central database foreign key integrity violation (`1452`) on `tenant_plugins` during tenant creation by self-healing missing central catalog records in `PluginLifecycleService::activate`.
 - Prevent tenant dashboard 500 query exceptions (`42S02`) on new tenant accounts by gating `PendingReviewsStat` and `OrderManagement` widgets with tenant plugin activation and schema table existence checks.
