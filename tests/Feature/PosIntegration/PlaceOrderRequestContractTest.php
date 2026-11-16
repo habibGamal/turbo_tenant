@@ -47,7 +47,7 @@ describe('POST /api/web-orders/place-order request contract', function () {
             ->and($request->url())->toBe('https://pos.example.com/api/web-orders/place-order')
             ->and($request->header('Content-Type'))->toBe(['application/json'])
             ->and($request->header('Accept'))->toBe(['application/json'])
-            ->and($request->data())->toBe(PosOrderFixture::docExamplePayload());
+            ->and($request->data())->toBe(PosOrderFixture::docExamplePayload($order));
     });
 
     it('sends exact key sets for user and order without optional fields (doc: Schema Definition)', function () {
@@ -88,6 +88,7 @@ describe('POST /api/web-orders/place-order request contract', function () {
                 'type',
                 'shiftId',
                 'orderNumber',
+                'idempotencyKey',
                 'subTotal',
                 'tax',
                 'service',

@@ -250,7 +250,7 @@ describe('SendOrderToPosJob Lifecycle', function () {
             ->and($req2->url())->toBe('https://pos.example.com/api/web-orders/place-order')
             ->and($req2->header('Accept'))->toBe(['application/json'])
             ->and($req2->header('Content-Type'))->toBe(['application/json'])
-            ->and($req2->data())->toBe(PosOrderFixture::docExamplePayload());
+            ->and($req2->data())->toBe(PosOrderFixture::docExamplePayload($order));
     });
 
     it('releases job for 3 seconds when can-accept-order returns false and does not send place-order (doc: Endpoint 1)', function () {
