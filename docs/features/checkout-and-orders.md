@@ -110,6 +110,8 @@ sequenceDiagram
 5. **Side effects:** `OrderCreated` (listeners: admin notification, coupon usage, guest session, Meta tracking context, POS, push). COD orders also fire `OrderFinalized` (POS delivery, Meta purchase). Online orders go to [`OrderPaymentDispatcher`](../../app/Plugins/OrderManagement/src/Services/Payments/OrderPaymentDispatcher.php); on gateway failure the order's payment is marked failed (`OrderPaymentFailed` releases coupon usage) and the cart is kept.
 6. **Response:** [`OrderPlacementResponder`](../../app/Plugins/OrderManagement/src/Http/Responders/OrderPlacementResponder.php) returns the order plus contributions tagged `order.placement.response` (guest tracking token, Meta purchase event data) and `checkout_url` for online payments.
 
+7. **Cash on delivery paid on completion:** when a COD order's status becomes `completed` (POS callback, admin, or the POS delivery catch-up), a `saving` hook on [`Order`](../../app/Plugins/OrderManagement/src/Models/Order.php) sets `payment_status` to `completed` («مكتمل (مدفوع)»). Online-paid orders are untouched.
+
 ### Asynchronous and failure paths
 
 - Any `OrderValidationException` returns a failure with its message; other exceptions are logged ("Failed to place order") and return a generic failure. Nothing is persisted when validation fails because validation runs before the transaction.
