@@ -26,6 +26,7 @@ The project has no release tags; history is grouped by month from the git log on
 - Coupons can target line types (e.g. packages).
 
 ### Fixed
+- Meta Purchase (Pixel and Conversions API): weighted lines are sent as quantity 1 (not a fractional kg quantity) at the catalog unit price, and `num_items` counts each weighted line as one unit ([docs](docs/features/meta-marketing.md)).
 - POS add-on lines carry a short note naming the item they belong to («إضافة على: كوف محوج») and nothing else ([docs](docs/features/pos-integration.md#flow)).
 - POS orders now read like the website order: each mapped add-on is its own POS line counted per piece (or per weight multiplier for items sold by weight, never x the weight in kg) with no copied notes; add-on and variant names in notes and the delivery address (labels, area, governorate) are in Arabic ([docs](docs/features/pos-integration.md#flow)).
 - Retried POS deliveries no longer fail on a duplicate order: the site sends a stable `idempotencyKey`, a POS that already saved the same order answers `already_received` and the site marks it sent and catches up its status; a different order under the same number fails with the mismatched fields instead of retrying ([docs](docs/features/pos-integration.md#flow)).
