@@ -17,6 +17,8 @@ No error tracker, metrics or alerting is configured in the repository.
 
 ## Background work
 
+Setup, supervision and the `DB_QUEUE_CONNECTION` pitfall: [Queue, workers and scheduler](queue-and-workers.md).
+
 | Job / schedule | Trigger | Retries | Safe to re-run? | Failure visible where |
 | --- | --- | --- | --- | --- |
 | [`SendOrderToPosJob`](../app/Plugins/PosIntegration/src/Jobs/SendOrderToPosJob.php) (`pos-database`) | Order finalized (COD), payment completed, order created/updated with `pos_status=ready`, admin retry | 5 tries, 3 s backoff, 60 s timeout | Only through the admin retry/verification actions | Order view delivery panel and attempts table |

@@ -37,7 +37,7 @@ Every store domain must point at the same application. TLS certificates are need
 | Queue worker | `php artisan queue:work database --queue=default --tries=1 --timeout=90` | ≥ 1, Supervisor or systemd, restart always | Jobs define their own `$tries` (POS 5, Meta 5/3, images 3). The `pos-database` connection uses the same `jobs` table and queue, so one worker on `database` covers it when both point at the central DB |
 | Scheduler | `* * * * * php /path/artisan schedule:run` | 1 cron entry | Runs `notifications:send-scheduled` |
 
-Without a worker: images stay unoptimized, POS orders stay `queued`, push notifications and Meta events are never sent.
+Without a worker: images stay unoptimized, POS orders stay `queued`, push notifications and Meta events are never sent. Supervisor/systemd files, the `DB_QUEUE_CONNECTION` pitfall and health checks: [Queue, workers and scheduler](queue-and-workers.md).
 
 ### Server requirements
 

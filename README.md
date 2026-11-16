@@ -1,6 +1,12 @@
 # Larament
 
-For the current Turbo Tenant application, see the [developer handbook](docs/README.md). The starter-kit information below may not describe the current tenant and plugin architecture.
+For the current Turbo Tenant application, see the documentation in `docs/`:
+
+- [Developer handbook](docs/README.md) (English, technical): architecture, plugins, POS integration, queue workers, payments, Meta, deployment.
+- [دليل المستخدم](docs/ar/index.md) (Arabic): how store admins set up and run their store.
+- Browse both as a website: `cd docs && npm install && npm run dev` ([docs site](docs/docs-site.md)).
+
+The starter-kit information below may not describe the current tenant and plugin architecture.
 
 [![Pint](https://github.com/codewithdennis/larament/actions/workflows/pint.yml/badge.svg)](https://packagist.org/packages/codewithdennis/larament)
 [![PEST](https://github.com/codewithdennis/larament/actions/workflows/pest.yml/badge.svg)](https://packagist.org/packages/codewithdennis/larament)

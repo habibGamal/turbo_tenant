@@ -10,18 +10,23 @@ Turbo Tenant is a multi-tenant online ordering platform for restaurants. One Lar
 | Run it on my machine | [Getting started](getting-started.md) |
 | Understand how it is built | [Architecture](architecture.md), [Data model](data-model.md) |
 | Find or change a feature | [Feature catalog](features/README.md) |
+| Connect a store to its restaurant POS | [Connecting a POS to the website](pos-website-link.md) |
 | Call or integrate with it | [Interfaces](interfaces.md), [Configuration](configuration.md) |
 | Add code, run tests, follow conventions | [Development guide](development.md) |
-| Release it | [Deployment](deployment.md) |
+| Release it | [Deployment](deployment.md), [Queue, workers and scheduler](queue-and-workers.md) |
 | Keep it running / fix incidents | [Operations and troubleshooting](operations.md) |
 | See what changed | [Changelog](../CHANGELOG.md) |
 | Know what is not yet documented or verified | [Coverage](coverage.md) |
+| Teach a store admin to run their store (Arabic) | [دليل المستخدم](ar/index.md) |
+| Build or edit this documentation site | [Docs site](docs-site.md) |
 
 ## Reading paths
 
 - **New developer (day 1):** [Overview](overview.md) → [Getting started](getting-started.md) → [Architecture](architecture.md) → [Checkout and orders](features/checkout-and-orders.md) end to end → [Development guide](development.md).
-- **Operator / on-call:** [Deployment](deployment.md) → [Operations](operations.md) → [Configuration](configuration.md) → [POS integration](features/pos-integration.md) and [Payments](features/payments.md) troubleshooting.
+- **Operator / on-call:** [Deployment](deployment.md) → [Queue and workers](queue-and-workers.md) → [Operations](operations.md) → [Configuration](configuration.md) → [POS integration](features/pos-integration.md) and [Payments](features/payments.md) troubleshooting.
 - **Product / support:** [Overview](overview.md) → [Feature catalog](features/README.md) → the "How to use" section of each feature.
+- **Store admin (Arabic):** [دليل المستخدم](ar/index.md): أول خطوات التشغيل، المنيو، الفروع والتوصيل، الطلبات، الربط مع نقطة البيع، الدفع، الكوبونات والتسويق.
+- **POS installer:** [Connecting a POS to the website](pos-website-link.md) → [POS integration](features/pos-integration.md).
 
 ## System at a glance
 
@@ -44,6 +49,7 @@ A request's host selects the store; the store's database, cache tag and files be
 
 ## More references
 
+- Browse all of this as a website ([site home](index.md)): [Docs site](docs-site.md) (`cd docs && npm install && npm run dev`).
 - [Generated architecture explorer](engineering-atlas/index.html): offline inventory of classes, routes, schema declarations and SPA routes with diagrams.
 - Design notes and plans (may describe earlier or planned states): [SaaS lifecycle engine](architecture/saas-lifecycle-engine.md), [plugin configuration pattern](architecture/plugin-configuration-pattern.md), [guest ordering plan](GUEST_ORDERING_PLAN.md), [Kashier gateway](kashier-payment-gateway.md), [Meta Pixel and CAPI plan](META_PIXEL_AND_CAPI_PLAN.md), [custom pages guide](CUSTOM_PAGES_GUIDE.md), [storefront performance](storefront-performance.md), [theme test ids](THEME_TEST_IDS_SPEC.md), [POS delivery monitor design](order-pos-delivery-monitor.md).
 - POS API contract: [CREATE_ORDER_API_DOC.md](../CREATE_ORDER_API_DOC.md).

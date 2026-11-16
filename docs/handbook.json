@@ -24,7 +24,9 @@
     "CHANGELOG.md"
   ],
   "exclude": [
-    "docs/engineering-atlas"
+    "docs/engineering-atlas",
+    "docs/node_modules",
+    "docs/.vitepress"
   ],
   "changelog": "CHANGELOG.md|docs/changelog.md"
 }

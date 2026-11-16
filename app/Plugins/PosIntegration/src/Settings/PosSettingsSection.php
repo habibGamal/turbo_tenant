@@ -38,7 +38,7 @@ final class PosSettingsSection implements SettingsSection
                         ->password()
                         ->revealable()
                         ->maxLength(255)
-                        ->helperText('قيمة WEB_API_KEY في نقطة البيع الرئيسية، وتُرسل في ترويسة X-Api-Key'),
+                        ->helperText('انسخه من نقطة البيع الرئيسية: الإعدادات › إدارة الفروع › مفتاح الربط (API) › «مفتاح API للموقع والفروع». يُرسل في ترويسة X-Api-Key'),
                 ]),
             ]);
     }
