@@ -128,7 +128,7 @@ describe('POSProductResolver', function () {
             ->and($result['notes'])->toBe('json::'.json_encode(['النوع' => 'Large Size'], JSON_UNESCAPED_UNICODE));
     });
 
-    it('includes mapped extras inside posRefObj with accurate multiplier quantities', function () {
+    it('sends mapped extras as their own lines, not inside the product posRefObj', function () {
         $branch = Branch::factory()->create();
         $product = Product::factory()->create();
         $extraItem = ExtraOptionItem::factory()->create(['name' => 'Extra Cheese']);
@@ -160,15 +160,16 @@ describe('POSProductResolver', function () {
 
         $result = $this->resolver->resolveOrderItem($item, $branch->id);
 
-        expect($result['posRefObj'])->toHaveCount(2)
-            ->and($result['posRefObj'][0])->toBe([
-                'productRef' => 'MAIN-BURGER',
-                'quantity' => 1,
-            ])
-            ->and($result['posRefObj'][1])->toBe([
-                'productRef' => 'EXTRA-CHEESE',
-                'quantity' => 3.0,
-            ]);
+        expect($result['posRefObj'])->toBe([[
+            'productRef' => 'MAIN-BURGER',
+            'quantity' => 1,
+        ]])
+            ->and($result['notes'])->toBe('')
+            ->and($this->resolver->resolveExtraLines($item, $branch->id))->toBe([[
+                'quantity' => 3,
+                'notes' => '',
+                'posRefObj' => [['productRef' => 'EXTRA-CHEESE', 'quantity' => 1]],
+            ]]);
     });
 
     it('handles weighted item multiplier correctly for extra quantities and notes', function () {
@@ -210,8 +211,10 @@ describe('POSProductResolver', function () {
 
         $result = $this->resolver->resolveOrderItem($item, $branch->id);
 
-        expect($result['posRefObj'][1]['quantity'])->toBe(4.0) // 2 * 2 multiplier
-            ->and($result['notes'])->toBe('json::'.json_encode(['الوزن' => '(2 x) 500g', 'اضافات' => 'Sauce (x2)'], JSON_UNESCAPED_UNICODE));
+        // Add-on count = add-on qty x weight multiplier (2 x 2), never x the weight in kg.
+        expect($result['posRefObj'])->toHaveCount(1)
+            ->and($this->resolver->resolveExtraLines($item, $branch->id)[0]['quantity'])->toBe(4)
+            ->and($result['notes'])->toBe('json::'.json_encode(['الوزن' => '(2 x) 500g'], JSON_UNESCAPED_UNICODE));
     });
 
     it('resolves variant mapping even when base product has no mapping', function () {
@@ -296,6 +299,7 @@ describe('POSProductResolver', function () {
             'order_item_id' => $item->id,
             'extra_option_item_id' => null,
             'extra_name' => 'Custom Spice',
+            'extra_name_ar' => 'بهارات خاصة',
             'quantity' => 1,
         ]);
 
@@ -303,7 +307,7 @@ describe('POSProductResolver', function () {
 
         expect($result['posRefObj'])->toHaveCount(1)
             ->and($result['posRefObj'][0]['productRef'])->toBe('MAIN-BURGER')
-            ->and($result['notes'])->toBe('json::'.json_encode(['اضافات' => 'Custom Spice (x1)'], JSON_UNESCAPED_UNICODE));
+            ->and($result['notes'])->toBe('json::'.json_encode(['اضافات' => 'بهارات خاصة (x1)'], JSON_UNESCAPED_UNICODE));
     });
 
     it('returns a clone carrying preloaded mappings without mutating original instance', function () {

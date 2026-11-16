@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Plugins\PosIntegration\src\Services\POS;
 
+use App\Plugins\LocationsDelivery\src\Models\Area;
+use App\Plugins\LocationsDelivery\src\Models\Governorate;
 use App\Plugins\OrderManagement\src\Models\Order;
 
 final class POSCustomerDataFormatter
@@ -24,6 +26,8 @@ final class POSCustomerDataFormatter
         $phone = (! empty($order->customer_phone))
             ? (string) $order->customer_phone
             : (! empty($deliveryAddress['phone_number']) ? (string) $deliveryAddress['phone_number'] : null);
+
+        $deliveryAddress = $deliveryAddress !== null ? $this->withArabicPlaceNames($deliveryAddress) : null;
 
         $area = (! empty($deliveryAddress['area_name']))
             ? (string) $deliveryAddress['area_name']
@@ -59,15 +63,15 @@ final class POSCustomerDataFormatter
         }
 
         if (! empty($address['building'])) {
-            $parts[] = 'Building '.$address['building'];
+            $parts[] = 'عمارة '.$address['building'];
         }
 
         if (! empty($address['floor'])) {
-            $parts[] = 'Floor '.$address['floor'];
+            $parts[] = 'الدور '.$address['floor'];
         }
 
         if (! empty($address['apartment'])) {
-            $parts[] = 'Apartment '.$address['apartment'];
+            $parts[] = 'شقة '.$address['apartment'];
         }
 
         if (! empty($address['city'])) {
@@ -82,8 +86,39 @@ final class POSCustomerDataFormatter
             $parts[] = (string) $address['governorate_name'];
         }
 
-        $formatted = implode(', ', $parts);
+        $formatted = implode('، ', $parts);
 
         return $formatted !== '' ? $formatted : 'N/A';
+    }
+
+    /**
+     * The POS UI is Arabic: use the area and governorate Arabic names when the
+     * catalog has them (the snapshot stores the default names only).
+     *
+     * @param  array<string, mixed>  $address
+     * @return array<string, mixed>
+     */
+    private function withArabicPlaceNames(array $address): array
+    {
+        $areaId = (int) ($address['area_id'] ?? 0);
+        if ($areaId <= 0) {
+            return $address;
+        }
+
+        $area = Area::with('governorate')->find($areaId);
+        if (! $area instanceof Area) {
+            return $address;
+        }
+
+        if (filled($area->name_ar)) {
+            $address['area_name'] = (string) $area->name_ar;
+        }
+
+        $governorate = $area->governorate;
+        if ($governorate instanceof Governorate && filled($governorate->name_ar)) {
+            $address['governorate_name'] = (string) $governorate->name_ar;
+        }
+
+        return $address;
     }
 }

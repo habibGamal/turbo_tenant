@@ -249,7 +249,7 @@ final class OrderPlacementBugsTest extends TestCase
             'phone' => '01012345678',
             'email' => 'guest@example.com',
             'street' => '26 July Street',
-            'building' => 'Building 14B',
+            'building' => 'عمارة 14B',
             'floor' => '3',
             'apartment' => '12',
             'city' => 'Cairo',
@@ -269,7 +269,7 @@ final class OrderPlacementBugsTest extends TestCase
 
         $this->assertNotNull($order->delivery_address);
         $this->assertSame('26 July Street', $order->delivery_address['street']);
-        $this->assertSame('Building 14B', $order->delivery_address['building']);
+        $this->assertSame('عمارة 14B', $order->delivery_address['building']);
         $this->assertSame('3', $order->delivery_address['floor']);
         $this->assertSame('12', $order->delivery_address['apartment']);
         $this->assertSame('Cairo', $order->delivery_address['city']);
@@ -287,7 +287,7 @@ final class OrderPlacementBugsTest extends TestCase
 
         $order->refresh();
         $this->assertSame('26 July Street', $order->delivery_address['street']);
-        $this->assertSame('Building 14B', $order->delivery_address['building']);
+        $this->assertSame('عمارة 14B', $order->delivery_address['building']);
         $this->assertSame('Cairo', $order->delivery_address['city']);
     }
 

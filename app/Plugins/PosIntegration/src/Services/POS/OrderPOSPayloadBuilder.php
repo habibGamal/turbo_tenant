@@ -48,6 +48,10 @@ final class OrderPOSPayloadBuilder implements OrderPOSPayloadBuilderInterface
 
             if ($resolvedItem !== null) {
                 $orderItems[] = $resolvedItem;
+
+                if (method_exists($resolver, 'resolveExtraLines')) {
+                    array_push($orderItems, ...$resolver->resolveExtraLines($item, $order->branch_id));
+                }
             }
         }
 
@@ -55,6 +59,7 @@ final class OrderPOSPayloadBuilder implements OrderPOSPayloadBuilderInterface
             'type' => $this->mapOrderType($order->type),
             'shiftId' => (int) $order->shift_id,
             'orderNumber' => (string) $order->order_number,
+            'idempotencyKey' => $this->idempotencyKey($order),
             'subTotal' => (float) $order->sub_total,
             'tax' => (float) $order->tax,
             'service' => (float) ($order->delivery_fee + $order->service),
@@ -77,6 +82,18 @@ final class OrderPOSPayloadBuilder implements OrderPOSPayloadBuilderInterface
             'user' => $userData,
             'order' => $orderData,
         ];
+    }
+
+    /**
+     * A key that stays the same for every send of this order (retries and
+     * manual resends), so the POS can tell a repeat of an order it already
+     * saved from a different order reusing the number.
+     */
+    public function idempotencyKey(Order $order): string
+    {
+        $tenantKey = tenant() ? (string) tenant()->getTenantKey() : 'central';
+
+        return hash('sha256', implode('|', ['web-order', $tenantKey, (string) $order->id, (string) $order->order_number]));
     }
 
     /**

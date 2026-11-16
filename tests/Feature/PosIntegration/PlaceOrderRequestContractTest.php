@@ -47,7 +47,7 @@ describe('POST /api/web-orders/place-order request contract', function () {
             ->and($request->url())->toBe('https://pos.example.com/api/web-orders/place-order')
             ->and($request->header('Content-Type'))->toBe(['application/json'])
             ->and($request->header('Accept'))->toBe(['application/json'])
-            ->and($request->data())->toBe(PosOrderFixture::docExamplePayload());
+            ->and($request->data())->toBe(PosOrderFixture::docExamplePayload($order));
     });
 
     it('sends exact key sets for user and order without optional fields (doc: Schema Definition)', function () {
@@ -88,6 +88,7 @@ describe('POST /api/web-orders/place-order request contract', function () {
                 'type',
                 'shiftId',
                 'orderNumber',
+                'idempotencyKey',
                 'subTotal',
                 'tax',
                 'service',
@@ -402,7 +403,7 @@ describe('POST /api/web-orders/place-order request contract', function () {
         $this->service->placeOrder($order);
 
         $body = Http::recorded()[0][0]->data();
-        expect($body['user']['address'])->toBe('Street 9, Building 15, Floor 3, Apartment 7, Maadi, Cairo');
+        expect($body['user']['address'])->toBe('Street 9، عمارة 15، الدور 3، شقة 7، Maadi، Cairo');
     });
 
     it('formats guest user customer data with full_phone and composed address (doc: Schema Definition)', function () {
@@ -450,7 +451,7 @@ describe('POST /api/web-orders/place-order request contract', function () {
         expect($body['user']['name'])->toBe('Guest Ahmed')
             ->and($body['user']['phone'])->toBe('+2001099887766')
             ->and($body['user']['area'])->toBe('Dokki')
-            ->and($body['user']['address'])->toBe('Tahrir, Building 1, Floor 2, Apartment 3, Dokki City, Dokki, Giza');
+            ->and($body['user']['address'])->toBe('Tahrir، عمارة 1، الدور 2، شقة 3، Dokki City، Dokki، Giza');
     });
 
     it('formats customer data as N/A when user and guest are absent [current behavior (not in doc)]', function () {

@@ -114,9 +114,9 @@ final class PosOrderFixture
         ]);
     }
 
-    public static function docExamplePayload(): array
+    public static function docExamplePayload(?Order $order = null): array
     {
-        return [
+        $payload = [
             'user' => [
                 'name' => 'أحمد مصطفى',
                 'phone' => '01012345678',
@@ -160,5 +160,13 @@ final class PosOrderFixture
                 ],
             ],
         ];
+
+        if ($order !== null) {
+            // Stable per order; computed by the builder (see OrderPOSPayloadBuilder::idempotencyKey).
+            $order = ['idempotencyKey' => app(\App\Plugins\PosIntegration\src\Services\POS\OrderPOSPayloadBuilder::class)->idempotencyKey($order)];
+            $payload['order'] = array_slice($payload['order'], 0, 3, true) + $order + array_slice($payload['order'], 3, null, true);
+        }
+
+        return $payload;
     }
 }

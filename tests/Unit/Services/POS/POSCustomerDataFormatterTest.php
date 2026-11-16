@@ -35,7 +35,7 @@ describe('POSCustomerDataFormatter', function () {
             'name' => 'John Doe',
             'phone' => '+201012345678',
             'area' => 'Nasr City',
-            'address' => 'Street 10, Building 5, Floor 2, Apartment 4, Cairo, Nasr City, Cairo',
+            'address' => 'Street 10، عمارة 5، الدور 2، شقة 4، Cairo، Nasr City، Cairo',
         ]);
     });
 

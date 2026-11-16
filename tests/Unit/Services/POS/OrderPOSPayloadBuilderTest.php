@@ -103,7 +103,7 @@ describe('OrderPOSPayloadBuilder', function () {
             ->and($payload['user']['name'])->toBe('Ahmed Mostafa')
             ->and($payload['user']['phone'])->toBe('01012345678')
             ->and($payload['user']['area'])->toBe('Maadi')
-            ->and($payload['user']['address'])->toBe('Street 9, Building 15, Apartment 7, Maadi, Cairo')
+            ->and($payload['user']['address'])->toBe('Street 9، عمارة 15، شقة 7، Maadi، Cairo')
             ->and($payload['order']['type'])->toBe('web_delivery')
             ->and($payload['order']['shiftId'])->toBe(42)
             ->and($payload['order']['orderNumber'])->toBe('WEB-10542')
@@ -168,7 +168,7 @@ describe('OrderPOSPayloadBuilder', function () {
         expect($payload['user']['name'])->toBe('Sara Guest')
             ->and($payload['user']['phone'])->toBe('+201122334455')
             ->and($payload['user']['area'])->toBe('Dokki')
-            ->and($payload['user']['address'])->toBe('Tahrir St, Building 12, Floor 4, Apartment 402, Giza, Dokki, Giza')
+            ->and($payload['user']['address'])->toBe('Tahrir St، عمارة 12، الدور 4، شقة 402، Giza، Dokki، Giza')
             ->and($payload['order']['type'])->toBe('web_delivery');
     });
 

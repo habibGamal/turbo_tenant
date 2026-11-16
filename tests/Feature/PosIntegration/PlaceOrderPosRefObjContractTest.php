@@ -130,15 +130,17 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
             'order_item_id' => $item->id,
             'extra_option_item_id' => $extraOptionItem->id,
             'extra_name' => 'صلصة خاصة',
+            'extra_name_ar' => null,
             'quantity' => 2,
         ]);
 
         $this->service->placeOrder($order);
 
+        // The mapped add-on is its own line: 2 per piece x weight multiplier 2,
+        // never multiplied by the weight in kg, and with no copied notes.
         $expectedNotes = 'json::'.json_encode([
             'ملاحظات' => 'اللحم مستوي',
             'الوزن' => '(2 x) 500g',
-            'اضافات' => 'صلصة خاصة (x2)',
         ], JSON_UNESCAPED_UNICODE);
 
         $body = Http::recorded()[0][0]->data();
@@ -151,9 +153,15 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
                         'productRef' => 'STEAK-MEAT',
                         'quantity' => 1,
                     ],
+                ],
+            ],
+            [
+                'quantity' => 4,
+                'notes' => '',
+                'posRefObj' => [
                     [
                         'productRef' => 'EXTRA-SAUCE',
-                        'quantity' => 4.0,
+                        'quantity' => 1,
                     ],
                 ],
             ],
@@ -215,6 +223,7 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
             'order_item_id' => $item->id,
             'extra_option_item_id' => $notesExtra->id,
             'extra_name' => 'مخلل',
+            'extra_name_ar' => null,
             'quantity' => 1,
         ]);
 
@@ -223,6 +232,7 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
             'order_item_id' => $item->id,
             'extra_option_item_id' => $unmappedExtra->id,
             'extra_name' => 'جبنة إضافية',
+            'extra_name_ar' => null,
             'quantity' => 1,
         ]);
 
@@ -231,6 +241,7 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
             'order_item_id' => $item->id,
             'extra_option_item_id' => null,
             'extra_name' => 'بهارات خاصة',
+            'extra_name_ar' => null,
             'quantity' => 1,
         ]);
 
@@ -597,7 +608,7 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
         })->toThrow(Illuminate\Database\QueryException::class);
     });
 
-    it('uses snapshot extra_name and variant_name in item notes, falling back only when empty (doc: Request Payload Requirements order.items.*.notes)', function () {
+    it('uses Arabic snapshot extra and variant names in item notes, falling back to the catalog Arabic names (doc: Request Payload Requirements order.items.*.notes)', function () {
         Http::fake([
             'https://pos.example.com/api/web-orders/place-order' => Http::response(['message' => 'تم إنشاء الطلب بنجاح'], 200),
         ]);
@@ -608,9 +619,12 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
         $variant = ProductVariant::factory()->create([
             'product_id' => $product->id,
             'name' => 'Live Variant Name',
+            'name_ar' => 'نوع الكتالوج',
         ]);
         $extraItem = ExtraOptionItem::factory()->create([
             'name' => 'Live Extra Name',
+            'name_ar' => 'إضافة الكتالوج',
+            'pos_mapping_type' => 'notes',
         ]);
 
         ProductPosMapping::factory()->create([
@@ -632,6 +646,7 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
             'product_id' => $product->id,
             'variant_id' => $variant->id,
             'variant_name' => 'Snapshot Variant Name',
+            'variant_name_ar' => 'نوع اللقطة',
             'quantity' => 1,
             'notes' => null,
         ]);
@@ -640,6 +655,7 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
             'order_item_id' => $item1->id,
             'extra_option_item_id' => $extraItem->id,
             'extra_name' => 'Snapshot Extra Name',
+            'extra_name_ar' => 'إضافة اللقطة',
             'quantity' => 1,
         ]);
 
@@ -649,6 +665,7 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
             'product_id' => $product->id,
             'variant_id' => $variant->id,
             'variant_name' => null,
+            'variant_name_ar' => null,
             'quantity' => 1,
             'notes' => null,
         ]);
@@ -657,6 +674,7 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
             'order_item_id' => $item2->id,
             'extra_option_item_id' => $extraItem->id,
             'extra_name' => '',
+            'extra_name_ar' => null,
             'quantity' => 1,
         ]);
 
@@ -666,12 +684,12 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
         $items = $body['order']['items'];
 
         expect($items[0]['notes'])->toBe('json::'.json_encode([
-            'اضافات' => 'Snapshot Extra Name (x1)',
-            'النوع' => 'Snapshot Variant Name',
+            'اضافات' => 'إضافة اللقطة (x1)',
+            'النوع' => 'نوع اللقطة',
         ], JSON_UNESCAPED_UNICODE))
             ->and($items[1]['notes'])->toBe('json::'.json_encode([
-                'اضافات' => 'Live Extra Name (x1)',
-                'النوع' => 'Live Variant Name',
+                'اضافات' => 'إضافة الكتالوج (x1)',
+                'النوع' => 'نوع الكتالوج',
             ], JSON_UNESCAPED_UNICODE));
     });
 

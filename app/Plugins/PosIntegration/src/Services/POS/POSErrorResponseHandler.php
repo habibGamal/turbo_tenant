@@ -48,13 +48,30 @@ final class POSErrorResponseHandler implements POSErrorResponseHandlerInterface
             throw new Exception($error);
         }
 
-        // 3. status 422 AND message is a non-empty string
+        // 3. status 409: the order number is already used on the POS by a
+        //    different order. Retrying cannot fix it, so fail with the reason.
+        if ($statusCode === 409 && ($responseData['conflict'] ?? false) === true) {
+            $mismatches = array_values(array_filter((array) ($responseData['mismatches'] ?? []), 'is_string'));
+            Log::warning('POS holds a different order under this order number', [
+                'branch_id' => $branch->id,
+                'existing_order' => $responseData['existing_order'] ?? null,
+                'mismatches' => $mismatches,
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'رقم الطلب مستخدم في الفرع لطلب مختلف'.($mismatches !== [] ? ' (اختلاف في: '.implode('، ', $mismatches).')' : '').'. راجع الطلب في نقطة البيع.',
+                'notFoundProducts' => [],
+            ];
+        }
+
+        // 4. status 422 AND message is a non-empty string
         $message = $responseData['message'] ?? null;
         if ($statusCode === 422 && is_string($message) && $message !== '') {
             throw new Exception($message);
         }
 
-        // 4. anything else -> log a warning (keep the existing log call) and throw generic exception
+        // 5. anything else -> log a warning (keep the existing log call) and throw generic exception
         Log::warning('POS error received without recognized missing products', [
             'status' => $statusCode,
             'branch_id' => $branch->id,
