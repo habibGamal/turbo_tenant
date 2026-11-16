@@ -24,6 +24,7 @@ final class PosIntegrationServiceProvider extends ServiceProvider
 
             return new PosIntegrationConfig(
                 masterRepoUrl: (string) $settings->get(src\Settings\PosSettingKey::PRODUCTS_REPO_LINK, ''),
+                masterApiKey: (string) $settings->get(src\Settings\PosSettingKey::PRODUCTS_REPO_API_KEY, ''),
                 autoAcceptOrders: (bool) $settings->get('pos-integration.auto_accept_orders', false),
                 timeoutSeconds: (int) $settings->get('pos-integration.timeout_seconds', 30),
                 enabled: (bool) $settings->get('pos-integration.enabled', true)
@@ -80,6 +81,9 @@ final class PosIntegrationServiceProvider extends ServiceProvider
 
         $this->app->singleton(src\Filament\Contributors\PosPackageMappingFormContributor::class);
         $this->app->tag([src\Filament\Contributors\PosPackageMappingFormContributor::class], 'admin.form.combo-packages.package');
+
+        $this->app->singleton(src\Filament\Contributors\PosBranchApiKeyFormContributor::class);
+        $this->app->tag([src\Filament\Contributors\PosBranchApiKeyFormContributor::class], 'admin.form.locations-delivery.branch');
 
         $this->app->singleton(src\Filament\Contributors\PosPackageHealthColumnContributor::class);
         $this->app->tag([src\Filament\Contributors\PosPackageHealthColumnContributor::class], 'admin.table.combo-packages.packages');

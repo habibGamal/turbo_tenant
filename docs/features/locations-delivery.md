@@ -12,7 +12,7 @@ Defines where the store delivers (governorates → areas, each with a delivery f
 
 Under **التوصيل والمناطق** (Delivery & areas):
 
-1. **الفروع** (Branches): name, **link** (POS base URL, used by [POS integration](pos-integration.md)), active flag.
+1. **الفروع** (Branches): name, **link** (POS base URL, used by [POS integration](pos-integration.md)), active flag. With POS integration active the form also shows the POS API key (`pos_api_key`, contributed through `admin.form.locations-delivery.branch`).
 2. **المحافظات** (Governorates): English/Arabic name, order, active flag.
 3. **المناطق** (Areas): English/Arabic name, governorate, serving branch, **shipping cost** (delivery fee), order, active flag.
 4. **العناوين** (Addresses, in the Locations group): view customer addresses.

@@ -353,3 +353,49 @@ describe('POSApiClient - sendOrder', function () {
         });
     });
 });
+
+describe('POSApiClient - API key', function () {
+    it('sends the branch POS key as X-Api-Key on every endpoint', function () {
+        $branch = Branch::factory()->make([
+            'link' => 'https://pos.example.com',
+            'pos_api_key' => 'branch-secret',
+        ]);
+
+        Http::fake([
+            'https://pos.example.com/api/get-shift-id' => Http::response(['shift_id' => 1], 200),
+            'https://pos.example.com/api/can-accept-order' => Http::response(['can_accept' => true], 200),
+            'https://pos.example.com/api/web-orders/place-order' => Http::response(['status' => 'success'], 200),
+        ]);
+
+        $this->client->getShiftId($branch);
+        $this->client->canAcceptOrder($branch);
+        $this->client->sendOrder($branch, ['order' => ['orderNumber' => 'W-1']]);
+
+        Http::assertSentCount(3);
+        Http::assertNotSent(fn (Request $request) => ! $request->hasHeader('X-Api-Key', 'branch-secret'));
+    });
+
+    it('sends no X-Api-Key header when the branch has no key', function () {
+        $branch = Branch::factory()->make(['link' => 'https://pos.example.com']);
+
+        Http::fake([
+            'https://pos.example.com/api/get-shift-id' => Http::response(['shift_id' => 1], 200),
+        ]);
+
+        $this->client->getShiftId($branch);
+
+        Http::assertSent(fn (Request $request) => ! $request->hasHeader('X-Api-Key'));
+    });
+});
+
+describe('Branch - POS API key storage', function () {
+    it('stores the key encrypted and keeps it out of serialization', function () {
+        $branch = Branch::factory()->create(['pos_api_key' => 'branch-secret']);
+
+        $raw = Illuminate\Support\Facades\DB::table('branches')->where('id', $branch->id)->value('pos_api_key');
+
+        expect($raw)->not->toBe('branch-secret')
+            ->and($branch->fresh()->pos_api_key)->toBe('branch-secret')
+            ->and($branch->toArray())->not->toHaveKey('pos_api_key');
+    });
+});

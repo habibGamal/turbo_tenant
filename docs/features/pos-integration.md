@@ -10,13 +10,13 @@ Sends online orders to the branch's point-of-sale system, tracks every delivery 
 
 ### Store admin: connect branches
 
-1. In **التوصيل والمناطق › الفروع** (Delivery & areas › Branches), set each branch's **link** to its POS base URL (public HTTPS address).
+1. In **التوصيل والمناطق › الفروع** (Delivery & areas › Branches), set each branch's **link** to its POS base URL (public HTTPS address) and **مفتاح API لنقطة البيع** (POS API key) to that POS's `WEB_API_KEY`. The POS rejects website calls without it (401).
 2. On the orders list, open **رمز التكامل** (Integration token), generate a token and give it to the POS vendor. The POS sends it as `Authorization: Bearer <token>` to `POST https://<store domain>/api/order-status`.
 3. Map products: in a product's form, the POS section lets you pick the POS item per **الفرع** (branch), optionally per **التنويع** (variant) and **عنصر الإضافة** (add-on item). Extra options and combo packages have equivalent POS mapping fields.
 
 ### Store admin: import and price sync
 
-1. Store settings › **نظام نقاط البيع (POS)** → **رابط مستودع المنتجات الرئيسي** (master product repository URL).
+1. Store settings › **نظام نقاط البيع (POS)** → **رابط مستودع المنتجات الرئيسي** (master product repository URL) and **مفتاح API لمستودع المنتجات الرئيسي** (the master POS `WEB_API_KEY`).
 2. **الكتالوج والمنتجات › استيراد منتجات POS** (Import POS products): **تحديث القائمة** (refresh) lists POS products with category, name, reference number and type; select and **استيراد المحدد** (import selected).
 3. **مزامنة الأسعار** (Sync prices): compare and update local prices from the POS.
 
@@ -60,7 +60,7 @@ sequenceDiagram
 1. **Triggers:** [`SendOrderToPosListener`](../../app/Plugins/PosIntegration/src/Listeners/SendOrderToPosListener.php) on `OrderFinalized` (cash orders), `OrderPaymentCompleted` (paid online orders), and `OrderCreated`/`OrderStatusUpdated` when `pos_status` is `ready`.
 2. **Dispatch:** [`OrderDeliveryDispatcher`](../../app/Plugins/PosIntegration/src/Services/OrderDeliveryDispatcher.php) locks the order, checks eligibility, rotates a delivery *generation* and dispatches after the tenant transaction commits. All automatic and manual paths go through it; orders already queued/sending/retry-wait/sent/uncertain are not queued again.
 3. **Job:** [`SendOrderToPosJob`](../../app/Plugins/PosIntegration/src/Jobs/SendOrderToPosJob.php): 5 tries, 3 s backoff, 60 s timeout, on the `pos-database` connection pinned to the central DB ([config/queue.php](../../config/queue.php)). It checks tenant identity, claims the generation under lock, records the attempt ([`OrderDeliveryTracker`](../../app/Plugins/PosIntegration/src/Services/OrderDeliveryTracker.php)), re-checks eligibility, then calls [`OrderPOSService`](../../app/Plugins/PosIntegration/src/Services/OrderPOSService.php).
-4. **POS calls:** [`POSApiClient`](../../app/Plugins/PosIntegration/src/Services/POS/POSApiClient.php) builds URLs from `branch.link` + `/api/can-accept-order`, `/api/get-shift-id`, `/api/web-orders/place-order`, after [`PublicEndpointGuard`](../../app/Support/Network) rejects private addresses (unless `NETWORK_ALLOW_PRIVATE_HOSTS`). HTTP timeout 30 s per request. Payload: [`OrderPOSPayloadBuilder`](../../app/Plugins/PosIntegration/src/Services/POS/OrderPOSPayloadBuilder.php) with item ids from [`POSProductResolver`](../../app/Plugins/PosIntegration/src/Services/POS/POSProductResolver.php) (`product_pos_mappings`, `pos_line_mappings`) and customer data from [`POSCustomerDataFormatter`](../../app/Plugins/PosIntegration/src/Services/POS/POSCustomerDataFormatter.php); responses interpreted by [`POSErrorResponseHandler`](../../app/Plugins/PosIntegration/src/Services/POS/POSErrorResponseHandler.php).
+4. **POS calls:** [`POSApiClient`](../../app/Plugins/PosIntegration/src/Services/POS/POSApiClient.php) builds URLs from `branch.link` + `/api/can-accept-order`, `/api/get-shift-id`, `/api/web-orders/place-order` and sends `branch.pos_api_key` as `X-Api-Key` (the master client sends `products_repo_api_key` the same way), after [`PublicEndpointGuard`](../../app/Support/Network) rejects private addresses (unless `NETWORK_ALLOW_PRIVATE_HOSTS`). HTTP timeout 30 s per request. Payload: [`OrderPOSPayloadBuilder`](../../app/Plugins/PosIntegration/src/Services/POS/OrderPOSPayloadBuilder.php) with item ids from [`POSProductResolver`](../../app/Plugins/PosIntegration/src/Services/POS/POSProductResolver.php) (`product_pos_mappings`, `pos_line_mappings`) and customer data from [`POSCustomerDataFormatter`](../../app/Plugins/PosIntegration/src/Services/POS/POSCustomerDataFormatter.php); responses interpreted by [`POSErrorResponseHandler`](../../app/Plugins/PosIntegration/src/Services/POS/POSErrorResponseHandler.php).
 5. **Outcomes:** branch cannot accept → deferral (counted as an attempt, not a failure); missing product mapping → recorded failure without exception; exception with retries left → `retry_wait`; terminal → `failed`; uncertain submission (transport loss during POST, POS 5xx, worker died after POST) → `needs_verification`, never replayed automatically because the POS contract does not guarantee deduplication by `orderNumber`.
 6. **Review:** [`OrderDeliveryReview`](../../app/Plugins/PosIntegration/src/Services/OrderDeliveryReview.php) records admin verification; "received" marks sent, "not received" starts a new generation.
 7. **Status callback:** the POS calls `POST /api/order-status` ([`OrderStatusController`](../../app/Plugins/OrderManagement/src/Http/Controllers/Api/OrderStatusController.php)), authenticated by [`VerifyIntegrationToken`](../../app/Plugins/OrderManagement/src/Http/Middleware/VerifyIntegrationToken.php) (`hash_equals` against the stored token), 60 requests/min, transition-checked, recorded in `order_status_events` with `source=integration`.
@@ -100,8 +100,10 @@ stateDiagram-v2
 | Setting | Where | Effect |
 | --- | --- | --- |
 | Branch `link` | Branches resource | POS base URL per branch |
+| Branch `pos_api_key` | Branches resource (added by this plugin) | Sent as `X-Api-Key` to that branch's POS; stored encrypted |
 | Integration token | Orders list › رمز التكامل | Auth for POS callbacks |
 | `products_repo_link` | Store settings › POS | Master product repository |
+| `products_repo_api_key` | Store settings › POS | Sent as `X-Api-Key` to the master POS |
 | `POS_QUEUE_DB_CONNECTION`, `DB_QUEUE_RETRY_AFTER` | `.env` | Queue storage (central) and visibility timeout (> 60 s) |
 | `NETWORK_ALLOW_PRIVATE_HOSTS` | `.env` | Allow LAN POS URLs (development) |
 

@@ -22,6 +22,7 @@ The project has no release tags; history is grouped by month from the git log on
 - Uniform JSON error envelope for `api/*` requests.
 
 ### Changed
+- POS calls send `X-Api-Key`, which the POS now requires on its website endpoints. Each branch has a POS API key (`branches.pos_api_key`, encrypted, new PosIntegration tenant migration), and the master POS key is the `products_repo_api_key` setting ([docs](docs/features/pos-integration.md#configuration)). The branch form gained the `admin.form.locations-delivery.branch` contribution point.
 - Coupons can target line types (e.g. packages).
 
 ### Fixed

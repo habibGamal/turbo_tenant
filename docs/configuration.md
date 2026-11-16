@@ -79,6 +79,7 @@ Edited at **إعدادات المتجر** (Store settings). Tabs come from plugi
 | Orders | `tax_rate` (%), `min_order_amount`, `allow_manual_order_status_update` | Pricing and admin status control | [Checkout](features/checkout-and-orders.md#configuration) |
 | Payments | `cod_fee`, `online_payments_enabled`, `active_payment_gateway` (`paymob`/`kashier`), `paymob_*`, `kashier_*` | Payment methods and gateway credentials | [Payments](features/payments.md#configuration) |
 | نظام نقاط البيع (POS) | `products_repo_link` | Master product repository for import/price sync | [POS](features/pos-integration.md#configuration) |
+| نظام نقاط البيع (POS) | `products_repo_api_key` | Master POS `WEB_API_KEY`, sent as `X-Api-Key` | [POS](features/pos-integration.md#configuration) |
 | Meta | `facebook_app_id` (pixel id), `meta_capi_enabled`, `meta_capi_access_token`, `meta_capi_test_event_code`, `meta_debug_mode`, `meta_catalog_enabled`, `meta_catalog_feed_token`, `meta_catalog_brand` | Pixel, Conversions API, catalog feed | [Meta](features/meta-marketing.md#configuration) |
 | (no UI) | `product-reviews.auto_approve` | Publish reviews without moderation | [Reviews](features/product-reviews.md#configuration) |
 | (orders list action) | integration token | POS callback auth | [POS](features/pos-integration.md#configuration) |

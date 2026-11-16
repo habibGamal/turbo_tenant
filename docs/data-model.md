@@ -110,6 +110,7 @@ erDiagram
   }
   BRANCHES {
     string link "POS base URL"
+    text pos_api_key "encrypted, added by pos-integration"
     bool is_active
   }
 ```

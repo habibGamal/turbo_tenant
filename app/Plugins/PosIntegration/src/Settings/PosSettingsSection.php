@@ -33,6 +33,12 @@ final class PosSettingsSection implements SettingsSection
                         ->url()
                         ->maxLength(255)
                         ->helperText('الرابط الأساسي لمستودع المنتجات المركزي (POS Products Repository URL)'),
+                    TextInput::make(PosSettingKey::PRODUCTS_REPO_API_KEY->value)
+                        ->label('مفتاح API لمستودع المنتجات الرئيسي')
+                        ->password()
+                        ->revealable()
+                        ->maxLength(255)
+                        ->helperText('قيمة WEB_API_KEY في نقطة البيع الرئيسية، وتُرسل في ترويسة X-Api-Key'),
                 ]),
             ]);
     }
@@ -44,6 +50,7 @@ final class PosSettingsSection implements SettingsSection
     {
         return [
             PosSettingKey::PRODUCTS_REPO_LINK,
+            PosSettingKey::PRODUCTS_REPO_API_KEY,
         ];
     }
 }
