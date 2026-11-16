@@ -15,7 +15,15 @@ final class Branch extends Model
     protected $fillable = [
         'name',
         'link',
+        'pos_api_key',
         'is_active',
+    ];
+
+    /**
+     * pos_api_key is added by the POS integration plugin's migration.
+     */
+    protected $hidden = [
+        'pos_api_key',
     ];
 
     public function areas(): HasMany
@@ -27,6 +35,7 @@ final class Branch extends Model
     {
         return [
             'is_active' => 'boolean',
+            'pos_api_key' => 'encrypted',
         ];
     }
 }

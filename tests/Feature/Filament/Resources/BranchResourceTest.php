@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Models\User;
 use App\Plugins\LocationsDelivery\src\Filament\Resources\Branches\Pages\CreateBranch;
 use App\Plugins\LocationsDelivery\src\Filament\Resources\Branches\Pages\EditBranch;
 use App\Plugins\LocationsDelivery\src\Filament\Resources\Branches\Pages\ListBranches;
 use App\Plugins\LocationsDelivery\src\Models\Branch;
-use App\Models\User;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\Testing\TestAction;
@@ -96,6 +96,23 @@ it('can create a branch', function () {
         'link' => $branch->link,
         'is_active' => $branch->is_active,
     ]);
+});
+
+it('saves the POS API key from the branch form', function () {
+    $branch = Branch::factory()->make();
+
+    livewire(CreateBranch::class)
+        ->assertFormFieldExists('pos_api_key')
+        ->fillForm([
+            'name' => $branch->name,
+            'link' => $branch->link,
+            'pos_api_key' => 'branch-secret',
+            'is_active' => true,
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(Branch::query()->where('name', $branch->name)->sole()->pos_api_key)->toBe('branch-secret');
 });
 
 it('can update a branch', function () {

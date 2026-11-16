@@ -8,6 +8,7 @@ final readonly class PosIntegrationConfig
 {
     public function __construct(
         public string $masterRepoUrl = '',
+        public string $masterApiKey = '',
         public bool $autoAcceptOrders = false,
         public int $timeoutSeconds = 30,
         public bool $enabled = true

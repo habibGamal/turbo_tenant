@@ -158,7 +158,7 @@ The API client ([client.ts](../resources/js/core/api/client.ts)) uses same-origi
 | `order.placement.response` | Add fields to the place-order response | guest-checkout, meta-marketing |
 | `cart-engine.line-types` | New kinds of cart lines | combo-packages |
 | `catalog.line-references`, `catalog-products.product-deletion-guards` | Reference/protect products from other plugins | combo-packages |
-| `catalog.product.form`, `catalog.extra-option.form`, `admin.form.combo-packages.package` | Add fields to admin forms | pos-integration |
+| `catalog.product.form`, `catalog.extra-option.form`, `admin.form.combo-packages.package`, `admin.form.locations-delivery.branch` | Add fields to admin forms | pos-integration |
 | `catalog.product.details` | Add data to product detail responses | product-reviews |
 | `admin.setup-checklist`, `admin.users.table.columns` | Dashboard checklist items, user table columns | store-settings, catalog-products, order-management |
 

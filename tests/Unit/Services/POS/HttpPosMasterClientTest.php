@@ -135,3 +135,32 @@ describe('HttpPosMasterClient', function () {
         }
     });
 });
+
+describe('HttpPosMasterClient - API key', function () {
+    it('sends the master POS key as X-Api-Key', function () {
+        $client = new HttpPosMasterClient(new PosIntegrationConfig(
+            masterRepoUrl: 'https://master.example.com',
+            masterApiKey: 'master-secret',
+        ));
+
+        Http::fake([
+            'https://master.example.com/*' => Http::response([], 200),
+        ]);
+
+        $client->getAllProductReferences();
+        $client->getProductsByIds([1]);
+
+        Http::assertSentCount(2);
+        Http::assertNotSent(fn ($request) => ! $request->hasHeader('X-Api-Key', 'master-secret'));
+    });
+
+    it('sends no X-Api-Key header when no master key is set', function () {
+        Http::fake([
+            'https://master.example.com/*' => Http::response([], 200),
+        ]);
+
+        $this->client->getAllProductReferences();
+
+        Http::assertSent(fn ($request) => ! $request->hasHeader('X-Api-Key'));
+    });
+});

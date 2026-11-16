@@ -121,6 +121,7 @@ final class POSApiClient implements POSApiClientInterface
                 'connect_timeout' => self::CONNECT_TIMEOUT_SECONDS,
             ])->withHeaders([
                 'Accept' => 'application/json',
+                ...$this->apiKeyHeader($branch),
             ])->timeout(self::TIMEOUT_SECONDS);
 
             $response = mb_strtolower($method) === 'post'
@@ -159,6 +160,18 @@ final class POSApiClient implements POSApiClientInterface
 
             throw new Exception($failureMessage, 0, $e);
         }
+    }
+
+    /**
+     * The branch POS key as X-Api-Key; the POS answers 401 without it.
+     *
+     * @return array<string, string>
+     */
+    private function apiKeyHeader(Branch $branch): array
+    {
+        $apiKey = (string) $branch->getAttribute('pos_api_key');
+
+        return $apiKey !== '' ? ['X-Api-Key' => $apiKey] : [];
     }
 
     /**

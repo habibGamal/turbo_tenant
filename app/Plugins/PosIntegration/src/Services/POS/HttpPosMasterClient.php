@@ -99,7 +99,10 @@ final class HttpPosMasterClient implements PosMasterClient
         $url = $baseUrl.$path.(! empty($queryString) ? '?'.implode('&', $queryString) : '');
 
         try {
-            $response = Http::timeout($timeout)->connectTimeout(3)->get($url);
+            // The master POS answers 401 without its key.
+            $headers = $this->config->masterApiKey !== '' ? ['X-Api-Key' => $this->config->masterApiKey] : [];
+
+            $response = Http::withHeaders($headers)->timeout($timeout)->connectTimeout(3)->get($url);
         } catch (Throwable $e) {
             Log::error('POS master request failed', ['path' => $path, 'query' => $query, 'error' => $e->getMessage()]);
 
