@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductPosMapping;
 use Exception;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -40,7 +41,7 @@ final class ProductPOSImporterService
         $url = $baseUrl.'/api/get-products-master?ids='.$idsString;
 
         try {
-            $response = Http::timeout(10)->connectTimeout(3)->get($url);
+            $response = $this->masterRequest()->timeout(10)->connectTimeout(3)->get($url);
 
             if (! $response->successful()) {
                 throw new Exception('لا يمكن الاتصال بالنقطة الرئيسية');
@@ -75,7 +76,7 @@ final class ProductPOSImporterService
         $url = $baseUrl.'/api/all-products-refs-master';
 
         try {
-            $response = Http::timeout(5)->connectTimeout(3)->get($url);
+            $response = $this->masterRequest()->timeout(5)->connectTimeout(3)->get($url);
 
             if (! $response->successful()) {
                 throw new Exception('لا يمكن الاتصال بالنقطة الرئيسية');
@@ -109,7 +110,7 @@ final class ProductPOSImporterService
         $url = $baseUrl.'/api/all-products-prices-master';
 
         try {
-            $response = Http::timeout(5)->connectTimeout(3)->get($url);
+            $response = $this->masterRequest()->timeout(5)->connectTimeout(3)->get($url);
 
             if (! $response->successful()) {
                 throw new Exception('لا يمكن الاتصال بالنقطة الرئيسية');
@@ -145,7 +146,7 @@ final class ProductPOSImporterService
         $url = $baseUrl.'/api/get-products-prices-master?ids='.$idsString;
 
         try {
-            $response = Http::timeout(10)->connectTimeout(3)->get($url);
+            $response = $this->masterRequest()->timeout(10)->connectTimeout(3)->get($url);
 
             if (! $response->successful()) {
                 throw new Exception('لا يمكن الاتصال بالنقطة الرئيسية');
@@ -182,7 +183,7 @@ final class ProductPOSImporterService
         $url = $baseUrl.'/api/get-products-master-by-refs?refs='.$refsString;
 
         try {
-            $response = Http::timeout(10)->connectTimeout(3)->get($url);
+            $response = $this->masterRequest()->timeout(10)->connectTimeout(3)->get($url);
 
             if (! $response->successful()) {
                 throw new Exception('لا يمكن الاتصال بالنقطة الرئيسية');
@@ -425,6 +426,17 @@ final class ProductPOSImporterService
             'failed' => $failed,
             'errors' => $errors,
         ];
+    }
+
+    /**
+     * Base request for the master POS, sending its API key as X-Api-Key
+     * (the POS rejects calls without it).
+     */
+    private function masterRequest(): PendingRequest
+    {
+        $apiKey = $this->settingService->get(SettingKey::PRODUCTS_REPO_API_KEY);
+
+        return Http::withHeaders(filled($apiKey) ? ['X-Api-Key' => $apiKey] : []);
     }
 
     /**

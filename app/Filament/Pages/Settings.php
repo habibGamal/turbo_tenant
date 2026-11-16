@@ -186,6 +186,12 @@ final class Settings extends Page
                                 ->url()
                                 ->maxLength(255)
                                 ->helperText('The base URL for the master products repository'),
+                            TextInput::make(SettingKey::PRODUCTS_REPO_API_KEY->value)
+                                ->label(SettingKey::PRODUCTS_REPO_API_KEY->label())
+                                ->password()
+                                ->revealable()
+                                ->maxLength(255)
+                                ->helperText('The master POS WEB_API_KEY, sent as the X-Api-Key header'),
                             Toggle::make(SettingKey::MAINTENANCE_MODE->value)
                                 ->label(SettingKey::MAINTENANCE_MODE->label())
                                 ->helperText('Enable maintenance mode to prevent customers from accessing the website')

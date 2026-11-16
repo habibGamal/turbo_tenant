@@ -15,7 +15,12 @@ final class Branch extends Model
     protected $fillable = [
         'name',
         'link',
+        'api_key',
         'is_active',
+    ];
+
+    protected $hidden = [
+        'api_key',
     ];
 
     public function posMappings(): HasMany
@@ -32,6 +37,7 @@ final class Branch extends Model
     {
         return [
             'is_active' => 'boolean',
+            'api_key' => 'encrypted',
         ];
     }
 }

@@ -25,6 +25,7 @@ enum SettingKey: string
     case MIN_ORDER_AMOUNT = 'min_order_amount';
     case MAINTENANCE_MODE = 'maintenance_mode';
     case PRODUCTS_REPO_LINK = 'products_repo_link';
+    case PRODUCTS_REPO_API_KEY = 'products_repo_api_key';
     case GOOGLE_CLIENT_ID = 'google_client_id';
     case GOOGLE_CLIENT_SECRET = 'google_client_secret';
     case GOOGLE_REDIRECT_URL = 'google_redirect_url';
@@ -86,6 +87,7 @@ enum SettingKey: string
             self::MIN_ORDER_AMOUNT => 'Minimum Order Amount',
             self::MAINTENANCE_MODE => 'Maintenance Mode',
             self::PRODUCTS_REPO_LINK => 'Products Repository URL',
+            self::PRODUCTS_REPO_API_KEY => 'Products Repository API Key',
             self::GOOGLE_CLIENT_ID => 'Google Client ID',
             self::GOOGLE_CLIENT_SECRET => 'Google Client Secret',
             self::GOOGLE_REDIRECT_URL => 'Google Redirect URL',
@@ -171,7 +173,7 @@ enum SettingKey: string
             self::CURRENCY => 'text',
             self::TAX_RATE, self::COD_FEE, self::MIN_ORDER_AMOUNT => 'numeric',
             self::MAINTENANCE_MODE => 'boolean',
-            self::PRODUCTS_REPO_LINK, self::GOOGLE_CLIENT_ID,
+            self::PRODUCTS_REPO_LINK, self::PRODUCTS_REPO_API_KEY, self::GOOGLE_CLIENT_ID,
             self::GOOGLE_CLIENT_SECRET, self::GOOGLE_REDIRECT_URL,
             self::PAYMOB_BASE_URL, self::PAYMOB_SECRET_KEY, self::PAYMOB_PUBLIC_KEY,
             self::PAYMOB_INTEGRATION_IDS, self::PAYMOB_HMAC_SECRET,

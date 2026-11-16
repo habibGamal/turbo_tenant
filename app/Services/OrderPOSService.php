@@ -9,6 +9,7 @@ use App\Models\GuestUser;
 use App\Models\Order;
 use App\Models\ProductPosMapping;
 use Exception;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -28,9 +29,7 @@ final class OrderPOSService
         $url = $this->getBranchUrl($branch, '/api/get-shift-id');
 
         try {
-            $response = Http::withOptions([
-                'verify' => false, // Handle self-signed certificates
-            ])->timeout(30)->get($url);
+            $response = $this->posRequest($branch)->timeout(30)->get($url);
 
             if (! $response->successful()) {
                 throw new Exception('حدث خطاء اثناء الاستعلام عن رقم الوردية');
@@ -60,9 +59,7 @@ final class OrderPOSService
         $url = $this->getBranchUrl($branch, '/api/can-accept-order');
 
         try {
-            $response = Http::withOptions([
-                'verify' => false, // Handle self-signed certificates
-            ])->timeout(30)->get($url);
+            $response = $this->posRequest($branch)->timeout(30)->get($url);
 
             if (! $response->successful()) {
                 throw new Exception('حدث خطاء اثناء الاستعلام عن قبول الطلبات');
@@ -118,9 +115,7 @@ final class OrderPOSService
 
         try {
             logger()->info('Url', ['url' => $url, 'payload' => $payload]);
-            $response = Http::withOptions([
-                'verify' => false, // Handle self-signed certificates
-            ])->withHeaders([
+            $response = $this->posRequest($branch)->withHeaders([
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ])->timeout(30)->post($url, $payload);
@@ -186,7 +181,7 @@ final class OrderPOSService
                 'name' => $guestUser->name,
                 'phone' => $guestUser->full_phone ?? 'N/A',
                 'area' => $guestUser->area?->name ?? 'N/A',
-                'address' => $this->formatGuestAddress($guestUser)?? 'N/A',
+                'address' => $this->formatGuestAddress($guestUser) ?? 'N/A',
             ];
         }
 
@@ -334,7 +329,7 @@ final class OrderPOSService
      */
     private function formatAddress($address): string
     {
-        $parts = ["-"];
+        $parts = ['-'];
 
         if ($address->street) {
             $parts[] = $address->street;
@@ -429,6 +424,23 @@ final class OrderPOSService
         }
 
         return 'json::'.json_encode($notes, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Base request for a branch POS: self-signed certificates allowed, and
+     * the branch's API key sent as X-Api-Key (the POS rejects calls without it).
+     */
+    private function posRequest(Branch $branch): PendingRequest
+    {
+        $request = Http::withOptions([
+            'verify' => false, // Handle self-signed certificates
+        ]);
+
+        if (filled($branch->api_key)) {
+            $request = $request->withHeaders(['X-Api-Key' => $branch->api_key]);
+        }
+
+        return $request;
     }
 
     /**

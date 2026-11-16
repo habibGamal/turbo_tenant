@@ -437,3 +437,33 @@ describe('updateProductPrices', function () {
             ->and($result['errors'])->toHaveCount(1);
     });
 });
+
+describe('master POS API key', function () {
+    it('sends the products repository API key as X-Api-Key', function () {
+        Setting::query()->updateOrCreate(
+            ['key' => SettingKey::PRODUCTS_REPO_API_KEY->value],
+            ['value' => 'master-secret']
+        );
+
+        Http::fake([
+            'https://master.example.com/api/all-products-refs-master' => Http::response([], 200),
+            'https://master.example.com/api/get-products-master*' => Http::response([], 200),
+        ]);
+
+        $this->service->getAllProductReferences();
+        $this->service->getProductsByIds([1, 2]);
+
+        Http::assertSentCount(2);
+        Http::assertNotSent(fn ($request) => ! $request->hasHeader('X-Api-Key', 'master-secret'));
+    });
+
+    it('omits the header when no API key is set', function () {
+        Http::fake([
+            'https://master.example.com/api/all-products-refs-master' => Http::response([], 200),
+        ]);
+
+        $this->service->getAllProductReferences();
+
+        Http::assertSent(fn ($request) => ! $request->hasHeader('X-Api-Key'));
+    });
+});

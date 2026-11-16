@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Http;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->productImporter = mock(ProductPOSImporterService::class);
+    $this->productImporter = app(ProductPOSImporterService::class);
     $this->service = new OrderPOSService($this->productImporter);
 });
 
@@ -472,5 +472,48 @@ describe('placeOrder', function () {
                 && $posRefs[1]['productRef'] === 'EXTRA-001'
                 && $posRefs[1]['quantity'] === 2;
         });
+    });
+});
+
+describe('POS API key', function () {
+    it('sends the branch API key as X-Api-Key on every POS call', function () {
+        $branch = Branch::factory()->create([
+            'link' => 'https://pos.example.com',
+            'api_key' => 'branch-secret',
+        ]);
+
+        Http::fake([
+            'https://pos.example.com/api/get-shift-id' => Http::response(['shift_id' => 1], 200),
+            'https://pos.example.com/api/can-accept-order' => Http::response(true, 200),
+        ]);
+
+        $this->service->getShiftId($branch);
+        $this->service->canAcceptOrder($branch);
+
+        Http::assertSentCount(2);
+        Http::assertSent(fn ($request) => $request->hasHeader('X-Api-Key', 'branch-secret'));
+        Http::assertNotSent(fn ($request) => ! $request->hasHeader('X-Api-Key', 'branch-secret'));
+    });
+
+    it('omits the header when the branch has no API key', function () {
+        $branch = Branch::factory()->create(['link' => 'https://pos.example.com']);
+
+        Http::fake([
+            'https://pos.example.com/api/get-shift-id' => Http::response(['shift_id' => 1], 200),
+        ]);
+
+        $this->service->getShiftId($branch);
+
+        Http::assertSent(fn ($request) => ! $request->hasHeader('X-Api-Key'));
+    });
+
+    it('stores the API key encrypted and hides it from serialization', function () {
+        $branch = Branch::factory()->create(['api_key' => 'branch-secret']);
+
+        $raw = Illuminate\Support\Facades\DB::table('branches')->where('id', $branch->id)->value('api_key');
+
+        expect($raw)->not->toBe('branch-secret')
+            ->and($branch->fresh()->api_key)->toBe('branch-secret')
+            ->and($branch->toArray())->not->toHaveKey('api_key');
     });
 });

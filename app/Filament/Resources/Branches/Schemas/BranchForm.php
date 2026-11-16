@@ -28,6 +28,12 @@ final class BranchForm
                             ->rows(3)
                             ->maxLength(65535)
                             ->helperText('أدخل رابط الفرع أو عنوان URL'),
+                        TextInput::make('api_key')
+                            ->label('مفتاح API لنقطة البيع')
+                            ->password()
+                            ->revealable()
+                            ->maxLength(255)
+                            ->helperText('نفس قيمة WEB_API_KEY في نقطة البيع لهذا الفرع، ويُرسل في ترويسة X-Api-Key'),
                         Toggle::make('is_active')
                             ->label('نشط')
                             ->default(true)
