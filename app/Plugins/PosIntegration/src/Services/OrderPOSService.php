@@ -157,11 +157,11 @@ class OrderPOSService
             $order->refresh();
 
             while ($order->status !== $target) {
-                $next = $transitions->canTransition($order->status, $target)
+                $next = $transitions->canTransition($order->status, $target, $order->type)
                     ? $target
                     : $this->nextForwardStatus($order->status, $target);
 
-                if ($next === null || ! $transitions->canTransition($order->status, $next)) {
+                if ($next === null || ! $transitions->canTransition($order->status, $next, $order->type)) {
                     return;
                 }
 

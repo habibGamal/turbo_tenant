@@ -112,3 +112,14 @@ it('gives every send of the same order the same idempotency key', function () {
         ->and($builder->idempotencyKey($this->order))->not->toBe($builder->idempotencyKey($other))
         ->and(mb_strlen($builder->idempotencyKey($this->order)))->toBeLessThanOrEqual(100);
 });
+
+it('catches a takeaway order up to completed without the delivery step', function () {
+    $this->order->update(['type' => OrderType::WEB_TAKEAWAY]);
+    fakePosAlreadyReceived('completed');
+
+    $this->service->placeOrder($this->order);
+
+    expect($this->order->fresh()->status)->toBe(OrderStatus::DELIVERED)
+        ->and(OrderStatusEvent::where('order_id', $this->order->id)->pluck('to_status')->map(fn ($s) => $s instanceof OrderStatus ? $s->value : $s)->all())
+        ->toBe(['processing', 'completed']);
+});
