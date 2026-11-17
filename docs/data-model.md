@@ -171,6 +171,7 @@ stateDiagram-v2
   pending --> cancelled
   processing --> out_for_delivery
   processing --> cancelled
+  processing --> completed : takeaway only
   out_for_delivery --> completed
   completed --> [*]
   cancelled --> [*]

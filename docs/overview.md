@@ -30,7 +30,7 @@ Each capability is a plugin that a store can activate. See the [feature catalog]
 - **Isolation:** every store has its own database (`tenant{id}`), its own storage folder, cache tag and queue context ([config/tenancy.php](../config/tenancy.php)). Customer accounts are per store.
 - **Feature availability:** a plugin's API routes return `404 {"message":"Feature not available"}` unless the plugin is active for the store ([`EnsurePluginActive`](../app/Core/Plugins/Http/Middleware/EnsurePluginActive.php)). Only `store-settings` and `media-optimizer` are activated automatically for a new store.
 - **Prices are computed on the server** from the cart at order time: line subtotals, then coupon discount, tax, cash-on-delivery fee and delivery fee ([checkout](features/checkout-and-orders.md#how-it-works)).
-- **Order status** moves `pending → processing → out_for_delivery → completed`, or to `cancelled` from the first two states ([`OrderStatusTransitions`](../app/Plugins/OrderManagement/src/Services/OrderStatusTransitions.php)).
+- **Order status** moves `pending → processing → out_for_delivery → completed` (takeaway orders may go `processing → completed`), or to `cancelled` from the first two states ([`OrderStatusTransitions`](../app/Plugins/OrderManagement/src/Services/OrderStatusTransitions.php)).
 - **Online payments are confirmed only by the gateway webhook.** The browser redirect only reads the stored status ([payments](features/payments.md)).
 - **Bilingual:** catalog, locations, banners, pages and settings carry English and Arabic fields; the admin panel is in Arabic and the storefront switches between English/LTR and Arabic/RTL.
 

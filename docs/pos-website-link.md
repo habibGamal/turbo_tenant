@@ -78,10 +78,11 @@ stateDiagram-v2
   pending --> cancelled
   processing --> out_for_delivery
   processing --> cancelled
+  processing --> completed : takeaway only
   out_for_delivery --> completed
 ```
 
-Any other jump answers `409` with `from_status` / `to_status`. When the POS's status call fails, the POS rolls its own status change back, so the two sides stay in step. Note that `processing → completed` is not allowed: the order has to pass through `out_for_delivery`, including takeaway orders.
+Any other jump answers `409` with `from_status` / `to_status`. When the POS's status call fails, the POS rolls its own status change back, so the two sides stay in step. `processing → completed` is allowed only for takeaway orders (`web_takeaway`), because the POS completes them without an out-for-delivery step; delivery orders must pass through `out_for_delivery`.
 
 | Response | Meaning |
 | --- | --- |
@@ -102,6 +103,6 @@ Any other jump answers `409` with `from_status` / `to_status`. When the POS's st
 | Orders stay «في قائمة الإرسال» (`queued`) | No worker, or jobs written to a tenant DB | [Queue, workers & scheduler](queue-and-workers.md) |
 | POS accepted the order but the website still shows «قيد الانتظار» | POS has no token, wrong token, or wrong «رابط الموقع» | Generate a new token on the website and paste it in the POS |
 | «رقم الطلب مستخدم في الفرع لطلب مختلف» | 409 conflict | Check the order on the POS; resend only if it is really missing |
-| Status update 409 | POS skipped a step | Move the order through the statuses in order |
+| Status update 409 | POS skipped a step (e.g. a delivery order completed from processing) | Move the order through the statuses in order |
 
 More: [POS integration › Troubleshooting](features/pos-integration.md#troubleshooting).

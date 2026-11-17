@@ -38,7 +38,7 @@ final class OrderStatusController extends Controller
         $fromStatus = $order->status;
         $targetStatus = OrderStatus::from((string) $request->validated('status'));
 
-        if (! $this->transitions->canTransition($fromStatus, $targetStatus)) {
+        if (! $this->transitions->canTransition($fromStatus, $targetStatus, $order->type)) {
             return response()->json([
                 'message' => "Disallowed status transition from {$fromStatus->value} to {$targetStatus->value}.",
                 'from_status' => $fromStatus->value,
