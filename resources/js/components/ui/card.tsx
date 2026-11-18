@@ -6,9 +6,12 @@ import { cn } from "@/lib/utils"
 const cardVariants = cva("rounded-xl text-card-foreground", {
   variants: {
     variant: {
-      default: "bg-card shadow",
+      default:
+        "border border-border bg-muted/70 shadow-none dark:border-border dark:bg-black/25",
       recessed:
         "border border-border bg-muted/70 shadow-none dark:border-border dark:bg-black/25",
+      elevated:
+        "border border-border bg-popover text-popover-foreground shadow-lg",
     },
   },
   defaultVariants: {
@@ -22,7 +25,7 @@ const Card = React.forwardRef<
 >(({ className, variant = "default", ...props }, ref) => (
   <div
     ref={ref}
-    data-card-variant={variant ?? "default"}
+    data-card-variant={variant === "elevated" ? "elevated" : "recessed"}
     className={cn(cardVariants({ variant }), className)}
     {...props}
   />

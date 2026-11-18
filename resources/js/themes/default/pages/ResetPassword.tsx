@@ -86,7 +86,7 @@ export default function ResetPassword({
                 <div className="w-full max-w-md">
                     {/* Logo/Brand */}
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-lg">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-none">
                             <ShieldCheck className="w-8 h-8 text-primary-foreground" />
                         </div>
                         <h1 className="text-3xl font-bold text-foreground">
@@ -97,7 +97,7 @@ export default function ResetPassword({
                         </p>
                     </div>
 
-                    <Card className="shadow-xl border-border bg-card">
+                    <Card>
                         <CardHeader className="space-y-1">
                             <CardTitle className="text-2xl font-bold text-center">
                                 {t("createNewPassword")}
@@ -123,7 +123,7 @@ export default function ResetPassword({
                                             value={email}
                                             autoComplete="username"
                                             onChange={(e) => setEmail(e.target.value)}
-                                            className={`ps-10 ${isEmailLocked ? "bg-muted cursor-not-allowed" : ""}`}
+                                            className={`ps-10 ${isEmailLocked ? "opacity-70 cursor-not-allowed" : ""}`}
                                             placeholder={t("emailPlaceholder")}
                                             readOnly={isEmailLocked}
                                         />
@@ -224,7 +224,7 @@ export default function ResetPassword({
                                 </div>
 
                                 {/* Password Strength Info */}
-                                <div className="p-4 bg-muted border border-border rounded-lg">
+                                <div className="p-4 bg-background dark:bg-card border border-border/90 rounded-lg">
                                     <p className="text-sm text-foreground font-medium mb-2">
                                         {t("passwordStrengthTitle")}
                                     </p>
@@ -240,7 +240,7 @@ export default function ResetPassword({
                                 <Button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-6 rounded-lg shadow-none transition-colors duration-200"
                                 >
                                     {processing ? (
                                         <span className="flex items-center gap-2">

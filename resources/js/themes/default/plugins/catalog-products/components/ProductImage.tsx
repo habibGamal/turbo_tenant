@@ -55,7 +55,7 @@ export default function ProductImage({ product }: ProductImageProps) {
 
     return (
         <div className="space-y-4">
-            <div className="aspect-[4/3] sm:aspect-square max-h-[260px] sm:max-h-[480px] lg:max-h-none w-full mx-auto rounded-2xl overflow-hidden bg-gradient-to-br from-primary/5 to-secondary/5 relative group">
+            <div className="aspect-[4/3] sm:aspect-square max-h-[260px] sm:max-h-[480px] lg:max-h-none w-full mx-auto rounded-2xl overflow-hidden border border-border bg-muted/70 dark:bg-black/25 relative group">
                 <ImageWithFallback
                     src={product.image}
                     alt={getText(product.name, product.name_ar)}
@@ -65,7 +65,7 @@ export default function ProductImage({ product }: ProductImageProps) {
 
                 {/* Discount Badge */}
                 {hasDiscount && (
-                    <Badge className="absolute z-10 top-3 start-3 sm:top-4 sm:start-4 text-sm sm:text-lg px-3 py-1 sm:px-4 sm:py-2 shadow-lg animate-in fade-in zoom-in duration-300">
+                    <Badge className="absolute z-10 top-3 start-3 sm:top-4 sm:start-4 text-sm sm:text-lg px-3 py-1 sm:px-4 sm:py-2 shadow-none animate-in fade-in zoom-in duration-300">
                         <span dir="ltr">{discountPercentage}%</span>&nbsp;{t("off")}
                     </Badge>
                 )}
@@ -75,7 +75,7 @@ export default function ProductImage({ product }: ProductImageProps) {
                     size="icon"
                     variant="secondary"
                     aria-label={t("share", "Share")}
-                    className="absolute top-3 end-3 sm:top-4 sm:end-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100 transition-opacity duration-300 shadow-md"
+                    className="absolute top-3 end-3 sm:top-4 sm:end-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100 transition-opacity duration-300 border border-border/80 bg-background/90 hover:bg-background dark:bg-card/90 shadow-none"
                     onClick={handleShare}
                 >
                     <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />

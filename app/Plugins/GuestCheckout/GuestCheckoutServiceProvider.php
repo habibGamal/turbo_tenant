@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\GuestCheckout;
 
+use App\Plugins\GuestCheckout\src\Http\Response\GuestPaymentStatusResponseContributor;
 use App\Plugins\GuestCheckout\src\Http\Response\GuestTrackingResponseContributor;
 use App\Plugins\GuestCheckout\src\Http\Rules\GuestDataRulesContributor;
 use App\Plugins\GuestCheckout\src\Models\GuestUser;
@@ -23,10 +24,12 @@ final class GuestCheckoutServiceProvider extends ServiceProvider
         $this->app->singleton(GuestDataRulesContributor::class);
         $this->app->singleton(GuestDataCustomerResolver::class);
         $this->app->singleton(GuestTrackingResponseContributor::class);
+        $this->app->singleton(GuestPaymentStatusResponseContributor::class);
 
         $this->app->tag([GuestDataRulesContributor::class], 'order.placement.rules');
         $this->app->tag([GuestDataCustomerResolver::class], 'order.customer.resolvers');
         $this->app->tag([GuestTrackingResponseContributor::class], 'order.placement.response');
+        $this->app->tag([GuestPaymentStatusResponseContributor::class], 'order.payment-status.response');
     }
 
     public function boot(): void

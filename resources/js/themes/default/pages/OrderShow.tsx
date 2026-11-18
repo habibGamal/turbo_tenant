@@ -68,7 +68,7 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
 
     if ((isAuthLoading && !order) || (isLoading && !order)) {
         return (
-            <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5">
+            <MainLayout>
                 <OrderShowSkeleton />
             </MainLayout>
         );
@@ -76,7 +76,7 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
 
     if (!isAuthLoading && !isAuthenticated && !initialOrder) {
         return (
-            <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5">
+            <MainLayout>
                 <div className="container mx-auto px-4 py-24 text-center max-w-md space-y-4">
                     <h2 className="text-xl font-semibold">{t("ordersSignInTitle", "Sign in to view your orders")}</h2>
                     <p className="text-sm text-muted-foreground">{t("ordersSignInDescription")}</p>
@@ -91,7 +91,7 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
 
     if ((error || !order) && !isLoading) {
         return (
-            <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5">
+            <MainLayout>
                 <div className="container mx-auto px-4 py-24 text-center">
                     <XCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
                     <h2 className="text-xl font-semibold mb-2">{t("orderNotFound", "Order not found")}</h2>
@@ -121,12 +121,12 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
     };
 
     return (
-        <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5 dark:from-background dark:via-background dark:to-primary/10">
+        <MainLayout>
             <Head title={`${t("order")} #${order.order_number}`} />
 
             <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12" data-testid="order-details-container">
                 <div className="mb-8 flex items-start gap-3 sm:items-center sm:gap-4">
-                    <Button variant="outline" size="icon" asChild className="shrink-0 rounded-full" aria-label={t("backToOrders", "Back to My Orders")}>
+                    <Button variant="outline" size="icon" asChild className="shrink-0 rounded-full shadow-none" aria-label={t("backToOrders", "Back to My Orders")}>
                         <Link to="/orders"><BackArrowIcon className="h-5 w-5" /></Link>
                     </Button>
                     <div>
@@ -421,7 +421,7 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                     <div className="font-medium flex items-center justify-between gap-2 mt-1">
                                         <span dir="auto">{order.branch?.name || t("unknown")}</span>
                                         {((order.branch as any)?.phone || (order.branch as any)?.phone_number || (order.branch as any)?.contact_phone) && (
-                                            <Button variant="outline" size="sm" asChild className="gap-2 shrink-0">
+                                            <Button variant="outline" size="sm" asChild className="gap-2 shrink-0 border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card">
                                                 <a href={`tel:${(order.branch as any)?.phone || (order.branch as any)?.phone_number || (order.branch as any)?.contact_phone}`}>
                                                     <Phone className="w-4 h-4" />
                                                     {t("callBranch", "اتصل بالفرع")}

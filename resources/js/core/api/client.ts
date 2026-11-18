@@ -15,56 +15,91 @@ export const apiClient: AxiosInstance = axios.create({
 });
 
 let csrfPromise: Promise<void> | null = null;
+let refreshPromise: Promise<string | null> | null = null;
+let csrfVerifiedForDocument = false;
 
 /**
- * Reads the CSRF token embedded in <meta name="csrf-token">.
+ * Reads the most specific/latest XSRF-TOKEN cookie from document.cookie.
  */
-export function getCsrfToken(): string | null {
-  if (typeof document === 'undefined') {
+export function getXsrfToken(): string | null {
+  if (typeof document === 'undefined' || !document.cookie) {
     return null;
   }
 
-  return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')?.trim() || null;
+  let latest: string | null = null;
+  for (const part of document.cookie.split(';')) {
+    const trimmed = part.trim();
+    if (!trimmed.startsWith('XSRF-TOKEN=')) {
+      continue;
+    }
+    const rawValue = trimmed.slice('XSRF-TOKEN='.length);
+    if (!rawValue) {
+      continue;
+    }
+    try {
+      latest = decodeURIComponent(rawValue);
+    } catch {
+      latest = rawValue;
+    }
+  }
+
+  return latest;
 }
 
-function setCsrfMetaToken(token: string | null): void {
+function clearXsrfCookie(): void {
   if (typeof document === 'undefined') {
     return;
   }
 
-  const meta = document.querySelector('meta[name="csrf-token"]');
-  if (meta) {
-    meta.setAttribute('content', token ?? '');
+  document.cookie = 'XSRF-TOKEN=; Max-Age=0; path=/;';
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  if (hostname) {
+    document.cookie = `XSRF-TOKEN=; Max-Age=0; path=/; domain=${hostname};`;
+    const dotIndex = hostname.indexOf('.');
+    if (dotIndex !== -1) {
+      document.cookie = `XSRF-TOKEN=; Max-Age=0; path=/; domain=${hostname.slice(dotIndex)};`;
+    }
   }
 }
 
 /**
- * Forces a fresh tenant/central CSRF token fetch and syncs <meta name="csrf-token">.
+ * Forces a fresh tenant-scoped CSRF cookie via /sanctum/csrf-cookie (deduplicated).
  */
 export async function forceRefreshCsrfToken(): Promise<string | null> {
-  if (typeof document !== 'undefined') {
-    document.cookie = 'XSRF-TOKEN=; Max-Age=0; path=/;';
+  if (refreshPromise) {
+    return refreshPromise;
   }
-  setCsrfMetaToken(null);
 
-  try {
-    const res = await axios.get('/sanctum/csrf-cookie', { withCredentials: true });
-    const headerToken = (res.headers?.['x-csrf-token'] as string | undefined)?.trim() || null;
-    if (headerToken) {
-      setCsrfMetaToken(headerToken);
+  refreshPromise = (async () => {
+    csrfVerifiedForDocument = false;
+    clearXsrfCookie();
+    try {
+      try {
+        await axios.get('/api/tenant/auth/user', { withCredentials: true });
+      } catch {
+        await axios.get('/sanctum/csrf-cookie', { withCredentials: true });
+      }
+      const token = getXsrfToken();
+      if (token) {
+        csrfVerifiedForDocument = true;
+      }
+      return token;
+    } catch (err) {
+      console.warn('Failed to initialize CSRF token:', err);
+      return null;
+    } finally {
+      refreshPromise = null;
     }
-    return headerToken;
-  } catch (err) {
-    console.warn('Failed to initialize CSRF token:', err);
-    return null;
-  }
+  })();
+
+  return refreshPromise;
 }
 
 /**
- * Ensures CSRF token/cookie is initialized before making non-GET requests.
+ * Ensures CSRF cookie is verified for the active document before making non-GET requests.
  */
 export async function ensureCsrfToken(): Promise<void> {
-  if (typeof document !== 'undefined' && (getCsrfToken() || document.cookie.includes('XSRF-TOKEN='))) {
+  if (csrfVerifiedForDocument && getXsrfToken()) {
     return;
   }
 
@@ -81,14 +116,14 @@ export async function ensureCsrfToken(): Promise<void> {
   return csrfPromise;
 }
 
-// Request interceptor: ensure CSRF token/cookie before mutating requests
+// Request interceptor: ensure CSRF cookie before mutating requests
 apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   const method = config.method?.toUpperCase();
   if (method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
     await ensureCsrfToken();
-    const csrfToken = getCsrfToken();
-    if (csrfToken) {
-      config.headers['X-CSRF-TOKEN'] = csrfToken;
+    const xsrfToken = getXsrfToken();
+    if (xsrfToken) {
+      config.headers['X-XSRF-TOKEN'] = xsrfToken;
     }
   }
   return config;
@@ -107,8 +142,7 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       const fresh = await forceRefreshCsrfToken();
       if (fresh) {
-        originalRequest.headers['X-CSRF-TOKEN'] = fresh;
-        delete originalRequest.headers['X-XSRF-TOKEN'];
+        originalRequest.headers['X-XSRF-TOKEN'] = fresh;
       }
       return apiClient(originalRequest);
     }

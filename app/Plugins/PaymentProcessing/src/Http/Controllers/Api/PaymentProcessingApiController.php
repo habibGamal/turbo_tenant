@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Plugins\PaymentProcessing\src\Http\Controllers\Api;
 
+use App\Core\Plugins\Services\PluginContributions;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
+use App\Plugins\OrderManagement\src\Contracts\OrderPaymentStatusResponseContributor;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\PaymentProcessing\src\Http\Requests\KashierConfigRequest;
 use App\Plugins\PaymentProcessing\src\Http\Requests\PaymentStatusRequest;
@@ -19,7 +21,8 @@ final class PaymentProcessingApiController extends Controller
 {
     // Legitimate concrete dependency: this controller serves the Kashier-only endpoint (kashier-config).
     public function __construct(
-        private readonly KashierService $kashierService
+        private readonly KashierService $kashierService,
+        private readonly PluginContributions $contributions,
     ) {}
 
     /**
@@ -30,7 +33,15 @@ final class PaymentProcessingApiController extends Controller
         /** @var Order $order */
         $order = $request->order();
 
-        return ApiResponse::success((new PaymentStatusResource($order))->resolve());
+        $payload = (new PaymentStatusResource($order))->resolve();
+
+        /** @var list<OrderPaymentStatusResponseContributor> $contributors */
+        $contributors = $this->contributions->active('order.payment-status.response');
+        foreach ($contributors as $contributor) {
+            $payload = $contributor->extend($order, $payload);
+        }
+
+        return ApiResponse::success($payload);
     }
 
     /**

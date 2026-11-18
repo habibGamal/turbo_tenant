@@ -37,6 +37,7 @@ final class PaymentStatusResource extends JsonResource
                 'payment_method' => $this->payment_method instanceof BackedEnum ? $this->payment_method->value : (string) $this->payment_method,
                 'total' => (float) $this->total,
                 'currency' => 'EGP',
+                'is_guest' => $this->user_id === null,
             ],
             'is_paid' => $isPaid,
         ];

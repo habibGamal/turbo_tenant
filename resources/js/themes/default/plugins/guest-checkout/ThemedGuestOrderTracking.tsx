@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,12 +50,15 @@ export default function ThemedGuestOrderTracking({
     className = "",
 }: ThemedGuestOrderTrackingProps) {
     const { t, i18n } = useTranslation();
+    const [searchParams] = useSearchParams();
 
-    // Read query params from URL if not provided via props
-    const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-    const defaultOrderNumber = initialOrderNumber ?? urlParams?.get('order_number') ?? '';
-    const defaultToken = urlParams?.get('token') ?? '';
-    const defaultPhone = initialPhone ?? urlParams?.get('phone') ?? '';
+    const paramOrderNumber = searchParams.get('order_number') ?? '';
+    const paramToken = searchParams.get('token') ?? '';
+    const paramPhone = searchParams.get('phone') ?? '';
+
+    const defaultOrderNumber = initialOrderNumber ?? paramOrderNumber;
+    const defaultToken = paramToken;
+    const defaultPhone = initialPhone ?? paramPhone;
 
     const [orderNumber, setOrderNumber] = useState(defaultOrderNumber);
     const [phone, setPhone] = useState(defaultPhone);
@@ -76,6 +80,36 @@ export default function ThemedGuestOrderTracking({
         }
         return null;
     });
+
+    useEffect(() => {
+        const nextOrderNumber = initialOrderNumber ?? paramOrderNumber;
+        const nextPhone = initialPhone ?? paramPhone;
+
+        if (nextOrderNumber) {
+            setOrderNumber(nextOrderNumber);
+        }
+        if (nextPhone) {
+            setPhone(nextPhone);
+        }
+
+        const trimmedOrder = nextOrderNumber.trim();
+        const trimmedToken = paramToken.trim();
+        const trimmedPhone = nextPhone.trim();
+
+        if (trimmedOrder && trimmedToken) {
+            setError(null);
+            setSearchPayload({
+                order_number: trimmedOrder,
+                token: trimmedToken,
+            });
+        } else if (trimmedOrder && trimmedPhone) {
+            setError(null);
+            setSearchPayload({
+                order_number: trimmedOrder,
+                phone: trimmedPhone,
+            });
+        }
+    }, [initialOrderNumber, initialPhone, paramOrderNumber, paramToken, paramPhone]);
 
     const {
         data: order,
@@ -157,7 +191,7 @@ export default function ThemedGuestOrderTracking({
     };
 
     return (
-        <main className={`min-h-[calc(100vh-16rem)] py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background via-muted/20 to-background ${className}`}>
+        <main className={`min-h-[calc(100vh-16rem)] py-12 px-4 sm:px-6 lg:px-8 bg-background ${className}`}>
             <div className="max-w-4xl mx-auto space-y-8">
                 {/* Header */}
                 <div className="text-center space-y-3">
@@ -173,7 +207,7 @@ export default function ThemedGuestOrderTracking({
                 </div>
 
                 {/* Search Form Card */}
-                <Card className="shadow-lg border-2">
+                <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Search className="w-5 h-5" />
@@ -227,7 +261,7 @@ export default function ThemedGuestOrderTracking({
                         <Button
                             data-testid="track-submit-button"
                             type="submit"
-                            className="w-full"
+                            className="w-full shadow-none"
                             size="lg"
                             disabled={isSearching}
                         >
@@ -257,7 +291,7 @@ export default function ThemedGuestOrderTracking({
                                 <CardTitle className="text-lg mb-3">
                                     {t("orderDetails")}
                                 </CardTitle>
-                                <div className="flex items-center gap-2 p-3 bg-primary/10 dark:bg-primary/20 rounded-lg border-2 border-primary/30">
+                                <div className="flex items-center gap-2 p-3 bg-background dark:bg-card rounded-lg border border-border/90">
                                     <div className="flex-1 min-w-0">
                                         <p className="text-xs text-muted-foreground mb-1">
                                             {t("orderNumber")}
@@ -270,7 +304,7 @@ export default function ThemedGuestOrderTracking({
                                         variant="outline"
                                         size="icon"
                                         onClick={copyOrderNumber}
-                                        className="shrink-0"
+                                        className="shrink-0 border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card"
                                     >
                                         {isCopied ? (
                                             <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -330,7 +364,7 @@ export default function ThemedGuestOrderTracking({
                                             </div>
                                         </div>
                                         {((order.branch as any)?.phone || (order.branch as any)?.phone_number || (order.branch as any)?.contact_phone) && (
-                                            <Button variant="outline" size="sm" asChild className="gap-2 shrink-0">
+                                            <Button variant="outline" size="sm" asChild className="gap-2 shrink-0 border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card">
                                                 <a href={`tel:${(order.branch as any)?.phone || (order.branch as any)?.phone_number || (order.branch as any)?.contact_phone}`}>
                                                     <Phone className="w-4 h-4" />
                                                     {t("callBranch", "اتصل بالفرع")}
@@ -400,7 +434,7 @@ export default function ThemedGuestOrderTracking({
                                         <div className="text-sm text-muted-foreground mb-1">
                                             {t("orderNotes")}
                                         </div>
-                                        <div className="text-sm bg-muted/50 rounded-lg p-3">
+                                        <div className="text-sm bg-background dark:bg-card border border-border/90 rounded-lg p-3">
                                             {order.note}
                                         </div>
                                     </div>
@@ -434,7 +468,7 @@ export default function ThemedGuestOrderTracking({
                                         key={item.id}
                                         className="flex gap-4 pb-4 border-b border-border/50 last:border-0 last:pb-0"
                                     >
-                                        <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/5 to-secondary/5 relative overflow-hidden shrink-0">
+                                        <div className="w-16 h-16 rounded-lg border border-border/80 bg-background dark:bg-card relative overflow-hidden shrink-0">
                                             <ImageWithFallback
                                                 src={item.product?.image}
                                                 alt={item.product_name}

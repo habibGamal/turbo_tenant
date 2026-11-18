@@ -51,8 +51,8 @@ export function ProductComboUpsell({ packages }: ProductComboUpsellProps) {
               data-testid="product-combo-upsell-item"
               className="group block"
             >
-              <Card className="overflow-hidden transition-all duration-300 hover:shadow-md border-border/80 group-hover:border-primary/50 h-full flex flex-col justify-between">
-                <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+              <Card className="overflow-hidden transition-colors duration-200 group-hover:border-primary/40 h-full flex flex-col justify-between">
+                <div className="relative aspect-[16/9] w-full overflow-hidden bg-background dark:bg-card border-b border-border/60">
                   {pkg.image ? (
                     <img
                       src={pkg.image}

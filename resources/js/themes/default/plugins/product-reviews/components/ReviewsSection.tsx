@@ -33,7 +33,7 @@ export default function ReviewsSection({ productId, reviews, averageRating }: Re
                 </h3>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button className="gap-2">
+                        <Button className="gap-2 shadow-none">
                             <PenLine className="h-4 w-4" />
                             {t("writeReview", "Write a Review")}
                         </Button>

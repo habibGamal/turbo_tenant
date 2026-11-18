@@ -62,3 +62,65 @@ export function usePaymentStatus(orderId?: string | number) {
 
   return query;
 }
+
+interface CachedGuestTracking {
+  order_number?: string;
+  tracking_token?: string;
+}
+
+function readCachedGuestTracking(orderId?: string | number): CachedGuestTracking | null {
+  if (!orderId || typeof sessionStorage === 'undefined') {
+    return null;
+  }
+
+  try {
+    const raw = sessionStorage.getItem(`guest:tracking:${orderId}`);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? (parsed as CachedGuestTracking) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function resolvePaymentCallbackOrderLink(params: {
+  orderId?: string | number;
+  statusData?: OrderPaymentStatus;
+  isAuthenticated: boolean;
+  isAuthLoading?: boolean;
+}): { orderHref: string; isGuestOrder: boolean } {
+  const cached = readCachedGuestTracking(params.orderId);
+  const orderNumber = params.statusData?.order?.order_number || cached?.order_number;
+  const trackingToken = params.statusData?.tracking_token || cached?.tracking_token;
+
+  const isGuestOrder =
+    params.statusData?.order?.is_guest !== undefined
+      ? Boolean(params.statusData.order.is_guest)
+      : Boolean(trackingToken) || (!params.isAuthLoading && !params.isAuthenticated);
+
+  if (isGuestOrder) {
+    if (orderNumber && trackingToken) {
+      const query = new URLSearchParams({
+        order_number: orderNumber,
+        token: trackingToken,
+      }).toString();
+      return { orderHref: `/orders/track?${query}`, isGuestOrder: true };
+    }
+
+    if (orderNumber) {
+      const query = new URLSearchParams({
+        order_number: orderNumber,
+      }).toString();
+      return { orderHref: `/orders/track?${query}`, isGuestOrder: true };
+    }
+
+    return { orderHref: '/orders/track', isGuestOrder: true };
+  }
+
+  return {
+    orderHref: params.orderId ? `/orders/${params.orderId}` : '/orders',
+    isGuestOrder: false,
+  };
+}

@@ -59,8 +59,8 @@ export default function ThemedCustomerFavorites({
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center h-80 text-center border rounded-2xl bg-card/50 p-8">
-          <div className="p-4 rounded-full bg-muted mb-4">
+        <div className="flex flex-col items-center justify-center h-80 text-center border border-border rounded-2xl bg-muted/70 dark:bg-black/25 shadow-none p-8">
+          <div className="p-4 rounded-full border border-border/80 bg-background dark:bg-card mb-4">
             <HeartOff className="h-12 w-12 text-muted-foreground" />
           </div>
           <h2 className="text-xl font-semibold mb-2">
@@ -77,7 +77,7 @@ export default function ThemedCustomerFavorites({
                 onExploreMenu();
               }
             }}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors shadow-none"
           >
             {t('browseMenu', 'Browse Menu')}
             <ArrowRight className="h-4 w-4 rtl:rotate-180" />

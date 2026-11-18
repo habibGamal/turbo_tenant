@@ -127,13 +127,13 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
                 <Label className="text-base font-medium">{t("addPhotos")}</Label>
                 <div className="flex flex-wrap gap-4">
                     {previewImages.map((src, index) => (
-                        <div key={index} className="relative w-24 h-24 border rounded-xl overflow-hidden group shadow-sm">
+                        <div key={index} className="relative w-24 h-24 border border-border rounded-xl overflow-hidden group shadow-none">
                             <img src={src} alt={t("preview")} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[1px]">
                                 <button
                                     type="button"
                                     onClick={() => removeImage(index)}
-                                    className="bg-destructive text-destructive-foreground p-1.5 rounded-full hover:bg-destructive/90 transition-colors shadow-sm"
+                                    className="bg-destructive text-destructive-foreground p-1.5 rounded-full hover:bg-destructive/90 transition-colors shadow-none"
                                 >
                                     <X className="h-4 w-4" />
                                 </button>
@@ -159,7 +159,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
                     data-testid="review-submit-button"
                     type="submit"
                     disabled={isPending}
-                    className="w-full h-12 text-base font-medium shadow-md hover:shadow-lg transition-all active:scale-[0.99]"
+                    className="w-full h-12 md:h-12 text-base font-medium shadow-none transition-colors active:scale-[0.99]"
                     size="lg"
                 >
                     {isPending ? (

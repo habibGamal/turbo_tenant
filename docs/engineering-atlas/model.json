@@ -1,7 +1,7 @@
 {
   "contract_version": "1.0",
   "project": "turbo_tenant",
-  "revision": "56d8bcf7b3da0ab4b3e80641361c50554be3990e",
+  "revision": "fc60a60de28d242064393e216a65a13f8d2d7ce9",
   "scope": "current working tree; configured CLI route registration; source declarations",
   "modules": [
     {
@@ -27128,7 +27128,7 @@
     {
       "name": "App\\Plugins\\GuestCheckout\\GuestCheckoutServiceProvider",
       "file": "app/Plugins/GuestCheckout/GuestCheckoutServiceProvider.php",
-      "line": 16,
+      "line": 17,
       "kind": "Stmt_Class",
       "references": [
         "App\\Plugins\\GuestCheckout\\src\\Services\\GuestUserService",
@@ -27136,26 +27136,23 @@
         "App\\Plugins\\GuestCheckout\\src\\Http\\Rules\\GuestDataRulesContributor",
         "App\\Plugins\\GuestCheckout\\src\\Resolvers\\GuestDataCustomerResolver",
         "App\\Plugins\\GuestCheckout\\src\\Http\\Response\\GuestTrackingResponseContributor",
+        "App\\Plugins\\GuestCheckout\\src\\Http\\Response\\GuestPaymentStatusResponseContributor",
         "App\\Plugins\\OrderManagement\\src\\Models\\Order",
         "App\\Plugins\\GuestCheckout\\src\\Models\\GuestUser"
       ],
       "methods": [
         {
           "name": "register",
-          "line": 18,
-          "end": 30,
+          "line": 19,
+          "end": 33,
           "calls": [
-            {
-              "name": "singleton",
-              "line": 20
-            },
             {
               "name": "singleton",
               "line": 21
             },
             {
               "name": "singleton",
-              "line": 23
+              "line": 22
             },
             {
               "name": "singleton",
@@ -27166,46 +27163,58 @@
               "line": 25
             },
             {
-              "name": "tag",
+              "name": "singleton",
+              "line": 26
+            },
+            {
+              "name": "singleton",
               "line": 27
             },
             {
               "name": "tag",
-              "line": 28
+              "line": 29
             },
             {
               "name": "tag",
-              "line": 29
+              "line": 30
+            },
+            {
+              "name": "tag",
+              "line": 31
+            },
+            {
+              "name": "tag",
+              "line": 32
             }
           ]
         },
         {
           "name": "boot",
-          "line": 32,
-          "end": 40,
+          "line": 35,
+          "end": 43,
           "calls": [
             {
               "name": "registerRelations",
-              "line": 34
+              "line": 37
             },
             {
               "name": "loadRoutesFrom",
-              "line": 38
+              "line": 41
             }
           ]
         },
         {
           "name": "registerRelations",
-          "line": 42,
-          "end": 47,
+          "line": 45,
+          "end": 50,
           "calls": [
             {
               "name": "resolveRelationUsing",
-              "line": 44
+              "line": 47
             },
             {
               "name": "belongsTo",
-              "line": 45
+              "line": 48
             }
           ]
         }
@@ -27214,7 +27223,7 @@
       "owner": "GuestCheckout",
       "source": {
         "file": "app/Plugins/GuestCheckout/GuestCheckoutServiceProvider.php",
-        "line": 16
+        "line": 17
       },
       "evidence": "declared"
     },
@@ -28271,6 +28280,49 @@
       "source": {
         "file": "app/Plugins/GuestCheckout/src/Http/Requests/TrackOrderRequest.php",
         "line": 9
+      },
+      "evidence": "declared"
+    },
+    {
+      "name": "App\\Plugins\\GuestCheckout\\src\\Http\\Response\\GuestPaymentStatusResponseContributor",
+      "file": "app/Plugins/GuestCheckout/src/Http/Response/GuestPaymentStatusResponseContributor.php",
+      "line": 11,
+      "kind": "Stmt_Class",
+      "references": [
+        "App\\Plugins\\OrderManagement\\src\\Contracts\\OrderPaymentStatusResponseContributor",
+        "App\\Plugins\\GuestCheckout\\src\\Services\\GuestTrackingTokenService",
+        "App\\Plugins\\OrderManagement\\src\\Models\\Order"
+      ],
+      "methods": [
+        {
+          "name": "__construct",
+          "line": 13,
+          "end": 15,
+          "calls": []
+        },
+        {
+          "name": "pluginId",
+          "line": 17,
+          "end": 20,
+          "calls": []
+        },
+        {
+          "name": "extend",
+          "line": 26,
+          "end": 35,
+          "calls": [
+            {
+              "name": "generate",
+              "line": 32
+            }
+          ]
+        }
+      ],
+      "id": "class-9be0148a2901fb",
+      "owner": "GuestCheckout",
+      "source": {
+        "file": "app/Plugins/GuestCheckout/src/Http/Response/GuestPaymentStatusResponseContributor.php",
+        "line": 11
       },
       "evidence": "declared"
     },
@@ -34460,7 +34512,7 @@
         {
           "name": "fromOrder",
           "line": 34,
-          "end": 57,
+          "end": 63,
           "calls": [
             {
               "name": "loadMissing",
@@ -34485,6 +34537,10 @@
             {
               "name": "getAttribute",
               "line": 51
+            },
+            {
+              "name": "getAttribute",
+              "line": 57
             }
           ]
         }
@@ -38774,6 +38830,31 @@
       "source": {
         "file": "app/Plugins/OrderManagement/src/Contracts/OrderPaymentRecorder.php",
         "line": 9
+      },
+      "evidence": "declared"
+    },
+    {
+      "name": "App\\Plugins\\OrderManagement\\src\\Contracts\\OrderPaymentStatusResponseContributor",
+      "file": "app/Plugins/OrderManagement/src/Contracts/OrderPaymentStatusResponseContributor.php",
+      "line": 14,
+      "kind": "Stmt_Interface",
+      "references": [
+        "App\\Core\\Plugins\\Contracts\\PluginContribution",
+        "App\\Plugins\\OrderManagement\\src\\Models\\Order"
+      ],
+      "methods": [
+        {
+          "name": "extend",
+          "line": 20,
+          "end": 20,
+          "calls": []
+        }
+      ],
+      "id": "class-e04f1e73d62f5f",
+      "owner": "OrderManagement",
+      "source": {
+        "file": "app/Plugins/OrderManagement/src/Contracts/OrderPaymentStatusResponseContributor.php",
+        "line": 14
       },
       "evidence": "declared"
     },
@@ -43546,10 +43627,10 @@
         "App\\Plugins\\LocationsDelivery\\src\\Models\\Address",
         "App\\Plugins\\OrderManagement\\src\\Models\\OrderItem",
         "App\\Plugins\\OrderManagement\\src\\Enums\\OrderStatus",
+        "App\\Plugins\\OrderManagement\\src\\Enums\\PaymentMethod",
+        "App\\Plugins\\OrderManagement\\src\\Enums\\PaymentStatus",
         "App\\Plugins\\OrderManagement\\src\\Events\\OrderStatusUpdated",
         "App\\Plugins\\OrderManagement\\src\\Enums\\OrderType",
-        "App\\Plugins\\OrderManagement\\src\\Enums\\PaymentStatus",
-        "App\\Plugins\\OrderManagement\\src\\Enums\\PaymentMethod",
         "App\\Plugins\\OrderManagement\\src\\Enums\\OrderPosStatus"
       ],
       "methods": [
@@ -43641,34 +43722,42 @@
         {
           "name": "booted",
           "line": 177,
-          "end": 186,
+          "end": 197,
           "calls": [
             {
-              "name": "updated",
-              "line": 179
-            },
-            {
-              "name": "wasChanged",
-              "line": 180
-            },
-            {
-              "name": "getOriginal",
+              "name": "saving",
               "line": 181
             },
             {
-              "name": "tryFrom",
+              "name": "isDirty",
               "line": 182
             },
             {
+              "name": "updated",
+              "line": 190
+            },
+            {
+              "name": "wasChanged",
+              "line": 191
+            },
+            {
+              "name": "getOriginal",
+              "line": 192
+            },
+            {
+              "name": "tryFrom",
+              "line": 193
+            },
+            {
               "name": "dispatch",
-              "line": 183
+              "line": 194
             }
           ]
         },
         {
           "name": "casts",
-          "line": 188,
-          "end": 205,
+          "line": 199,
+          "end": 216,
           "calls": []
         }
       ],
@@ -45179,26 +45268,27 @@
     {
       "name": "App\\Plugins\\OrderManagement\\src\\Services\\OrderStatusTransitions",
       "file": "app/Plugins/OrderManagement/src/Services/OrderStatusTransitions.php",
-      "line": 9,
+      "line": 10,
       "kind": "Stmt_Class",
       "references": [
-        "App\\Plugins\\OrderManagement\\src\\Enums\\OrderStatus"
+        "App\\Plugins\\OrderManagement\\src\\Enums\\OrderStatus",
+        "App\\Plugins\\OrderManagement\\src\\Enums\\OrderType"
       ],
       "methods": [
         {
           "name": "allowedTransitions",
-          "line": 16,
-          "end": 32,
+          "line": 20,
+          "end": 44,
           "calls": []
         },
         {
           "name": "canTransition",
-          "line": 37,
-          "end": 40,
+          "line": 49,
+          "end": 52,
           "calls": [
             {
               "name": "allowedTransitions",
-              "line": 39
+              "line": 51
             }
           ]
         }
@@ -45207,7 +45297,7 @@
       "owner": "OrderManagement",
       "source": {
         "file": "app/Plugins/OrderManagement/src/Services/OrderStatusTransitions.php",
-        "line": 9
+        "line": 10
       },
       "evidence": "declared"
     },
@@ -46488,75 +46578,84 @@
     {
       "name": "App\\Plugins\\PaymentProcessing\\src\\Http\\Controllers\\Api\\PaymentProcessingApiController",
       "file": "app/Plugins/PaymentProcessing/src/Http/Controllers/Api/PaymentProcessingApiController.php",
-      "line": 18,
+      "line": 20,
       "kind": "Stmt_Class",
       "references": [
         "App\\Http\\Controllers\\Controller",
         "App\\Plugins\\PaymentProcessing\\src\\Services\\KashierService",
+        "App\\Core\\Plugins\\Services\\PluginContributions",
         "App\\Plugins\\PaymentProcessing\\src\\Http\\Requests\\PaymentStatusRequest",
-        "App\\Http\\Responses\\ApiResponse",
         "App\\Plugins\\PaymentProcessing\\src\\Http\\Resources\\PaymentStatusResource",
+        "App\\Http\\Responses\\ApiResponse",
         "App\\Plugins\\PaymentProcessing\\src\\Http\\Requests\\KashierConfigRequest",
         "App\\Plugins\\OrderManagement\\src\\Models\\Order"
       ],
       "methods": [
         {
           "name": "__construct",
-          "line": 21,
-          "end": 23,
+          "line": 23,
+          "end": 26,
           "calls": []
         },
         {
           "name": "paymentStatus",
-          "line": 28,
-          "end": 34,
+          "line": 31,
+          "end": 45,
           "calls": [
             {
               "name": "order",
-              "line": 31
-            },
-            {
-              "name": "success",
-              "line": 33
+              "line": 34
             },
             {
               "name": "resolve",
-              "line": 33
+              "line": 36
+            },
+            {
+              "name": "active",
+              "line": 39
+            },
+            {
+              "name": "extend",
+              "line": 41
+            },
+            {
+              "name": "success",
+              "line": 44
             }
           ]
         },
         {
           "name": "kashierConfig",
-          "line": 39,
-          "end": 83,
+          "line": 50,
+          "end": 94,
           "calls": [
             {
               "name": "createPaymentIntention",
-              "line": 48
+              "line": 59
             },
             {
               "name": "error",
-              "line": 56
+              "line": 67
             },
             {
               "name": "error",
-              "line": 61
+              "line": 72
             },
             {
               "name": "error",
-              "line": 66
+              "line": 77
             },
             {
               "name": "getMessage",
-              "line": 68
+              "line": 79
             },
             {
               "name": "error",
-              "line": 71
+              "line": 82
             },
             {
               "name": "success",
-              "line": 75
+              "line": 86
             }
           ]
         }
@@ -46565,7 +46664,7 @@
       "owner": "PaymentProcessing",
       "source": {
         "file": "app/Plugins/PaymentProcessing/src/Http/Controllers/Api/PaymentProcessingApiController.php",
-        "line": 18
+        "line": 20
       },
       "evidence": "declared"
     },
@@ -47013,7 +47112,7 @@
         {
           "name": "toArray",
           "line": 21,
-          "end": 43,
+          "end": 44,
           "calls": []
         }
       ],
@@ -61373,7 +61472,7 @@
         {
           "name": "boot",
           "line": 29,
-          "end": 52,
+          "end": 60,
           "calls": [
             {
               "name": "guessFactoryNamesUsing",
@@ -61414,17 +61513,41 @@
             {
               "name": "forceScheme",
               "line": 50
+            },
+            {
+              "name": "booted",
+              "line": 55
+            },
+            {
+              "name": "name",
+              "line": 56
+            },
+            {
+              "name": "middleware",
+              "line": 56
+            },
+            {
+              "name": "get",
+              "line": 56
+            },
+            {
+              "name": "header",
+              "line": 57
+            },
+            {
+              "name": "noContent",
+              "line": 57
             }
           ]
         },
         {
           "name": "isCentralDomain",
-          "line": 57,
-          "end": 63,
+          "line": 65,
+          "end": 71,
           "calls": [
             {
               "name": "getHost",
-              "line": 60
+              "line": 68
             }
           ]
         }
@@ -94523,7 +94646,7 @@
       "domain_bound": false,
       "source": {
         "file": "app/Plugins/PaymentProcessing/src/Http/Controllers/Api/PaymentProcessingApiController.php",
-        "line": 28
+        "line": 31
       },
       "id": "route-5d2983f1f71e69",
       "evidence": "observed-registration",
@@ -94640,7 +94763,7 @@
       "domain_bound": false,
       "source": {
         "file": "app/Plugins/PaymentProcessing/src/Http/Controllers/Api/PaymentProcessingApiController.php",
-        "line": 39
+        "line": 50
       },
       "id": "route-ef6bd8982a3b95",
       "evidence": "observed-registration",
@@ -96670,11 +96793,14 @@
       ],
       "uri": "sanctum/csrf-cookie",
       "name": "sanctum.csrf-cookie",
-      "action": "Laravel\\Sanctum\\Http\\Controllers\\CsrfCookieController@show",
+      "action": "Closure",
       "middleware": [
-        "web"
+        "web",
+        "universal",
+        "Stancl\\Tenancy\\Middleware\\InitializeTenancyByDomain"
       ],
       "expanded_middleware": [
+        "Stancl\\Tenancy\\Middleware\\InitializeTenancyByDomain",
         "Illuminate\\Cookie\\Middleware\\EncryptCookies",
         "Illuminate\\Cookie\\Middleware\\AddQueuedCookiesToResponse",
         "Illuminate\\Session\\Middleware\\StartSession",
@@ -96688,10 +96814,10 @@
       "excluded_middleware": [],
       "domain_bound": false,
       "source": {
-        "file": "vendor/laravel/sanctum/src/Http/Controllers/CsrfCookieController.php",
-        "line": 17
+        "file": "app/Providers/AppServiceProvider.php",
+        "line": 56
       },
-      "id": "route-5c3525824d455f",
+      "id": "route-3eb96ce108d8a7",
       "evidence": "observed-registration",
       "owner": "Host",
       "plugin_gate": null
@@ -97168,19 +97294,36 @@
   "requests": [
     {
       "method": "GET",
-      "url": "/sanctum/csrf-cookie",
+      "url": "/api/tenant/auth/user",
       "client": "axios",
       "file": "resources/js/core/api/client.ts",
-      "line": 29,
+      "line": 78,
       "dynamic": false,
-      "id": "request-f5c551e8d041ea",
+      "id": "request-18b3ab57c652a2",
       "source": {
         "file": "resources/js/core/api/client.ts",
-        "line": 29
+        "line": 78
       },
       "evidence": "declared",
       "route_candidates": [
-        "route-5c3525824d455f"
+        "route-13fed99dba6e1b"
+      ]
+    },
+    {
+      "method": "GET",
+      "url": "/sanctum/csrf-cookie",
+      "client": "axios",
+      "file": "resources/js/core/api/client.ts",
+      "line": 80,
+      "dynamic": false,
+      "id": "request-517736260cda85",
+      "source": {
+        "file": "resources/js/core/api/client.ts",
+        "line": 80
+      },
+      "evidence": "declared",
+      "route_candidates": [
+        "route-3eb96ce108d8a7"
       ]
     },
     {
@@ -100264,11 +100407,16 @@
     {
       "file": "resources/js/plugins/guest-checkout/components/DefaultGuestOrderTracking.tsx",
       "line": 2,
-      "target": "../api/useGuestOrderTracking"
+      "target": "react-router-dom"
     },
     {
       "file": "resources/js/plugins/guest-checkout/components/DefaultGuestOrderTracking.tsx",
       "line": 3,
+      "target": "../api/useGuestOrderTracking"
+    },
+    {
+      "file": "resources/js/plugins/guest-checkout/components/DefaultGuestOrderTracking.tsx",
+      "line": 4,
       "target": "../types"
     },
     {
@@ -100674,6 +100822,11 @@
     {
       "file": "resources/js/plugins/payment-processing/components/DefaultPaymentCallback.tsx",
       "line": 3,
+      "target": "@/core/context/AuthContext"
+    },
+    {
+      "file": "resources/js/plugins/payment-processing/components/DefaultPaymentCallback.tsx",
+      "line": 4,
       "target": "../api/usePaymentStatus"
     },
     {
@@ -103879,37 +104032,37 @@
     {
       "file": "resources/js/themes/default/plugins/guest-checkout/ThemedGuestOrderTracking.tsx",
       "line": 2,
-      "target": "sonner"
+      "target": "react-router-dom"
     },
     {
       "file": "resources/js/themes/default/plugins/guest-checkout/ThemedGuestOrderTracking.tsx",
       "line": 3,
-      "target": "@/components/ui/button"
+      "target": "sonner"
     },
     {
       "file": "resources/js/themes/default/plugins/guest-checkout/ThemedGuestOrderTracking.tsx",
       "line": 4,
+      "target": "@/components/ui/button"
+    },
+    {
+      "file": "resources/js/themes/default/plugins/guest-checkout/ThemedGuestOrderTracking.tsx",
+      "line": 5,
       "target": "@/components/ui/card"
     },
     {
       "file": "resources/js/themes/default/plugins/guest-checkout/ThemedGuestOrderTracking.tsx",
-      "line": 11,
+      "line": 12,
       "target": "@/components/ui/label"
     },
     {
       "file": "resources/js/themes/default/plugins/guest-checkout/ThemedGuestOrderTracking.tsx",
-      "line": 12,
+      "line": 13,
       "target": "@/components/ui/input"
     },
     {
       "file": "resources/js/themes/default/plugins/guest-checkout/ThemedGuestOrderTracking.tsx",
-      "line": 13,
-      "target": "@/components/ui/phone-input"
-    },
-    {
-      "file": "resources/js/themes/default/plugins/guest-checkout/ThemedGuestOrderTracking.tsx",
       "line": 14,
-      "target": "@/components/ui/badge"
+      "target": "@/components/ui/phone-input"
     },
     {
       "file": "resources/js/themes/default/plugins/guest-checkout/ThemedGuestOrderTracking.tsx",
@@ -104289,61 +104442,66 @@
     {
       "file": "resources/js/themes/default/plugins/order-management/components/OrderSummary.tsx",
       "line": 1,
-      "target": "@/components/ui/button"
+      "target": "react-dom"
     },
     {
       "file": "resources/js/themes/default/plugins/order-management/components/OrderSummary.tsx",
       "line": 2,
-      "target": "@/components/ui/card"
+      "target": "@/components/ui/button"
     },
     {
       "file": "resources/js/themes/default/plugins/order-management/components/OrderSummary.tsx",
       "line": 3,
-      "target": "@/components/ui/separator"
+      "target": "@/components/ui/card"
     },
     {
       "file": "resources/js/themes/default/plugins/order-management/components/OrderSummary.tsx",
       "line": 4,
-      "target": "@/components/ui/badge"
+      "target": "@/components/ui/separator"
     },
     {
       "file": "resources/js/themes/default/plugins/order-management/components/OrderSummary.tsx",
       "line": 5,
-      "target": "@/components/ui/image"
+      "target": "@/components/ui/badge"
     },
     {
       "file": "resources/js/themes/default/plugins/order-management/components/OrderSummary.tsx",
       "line": 6,
-      "target": "lucide-react"
+      "target": "@/components/ui/image"
     },
     {
       "file": "resources/js/themes/default/plugins/order-management/components/OrderSummary.tsx",
       "line": 7,
-      "target": "react-i18next"
+      "target": "lucide-react"
     },
     {
       "file": "resources/js/themes/default/plugins/order-management/components/OrderSummary.tsx",
       "line": 8,
-      "target": "@/types"
+      "target": "react-i18next"
     },
     {
       "file": "resources/js/themes/default/plugins/order-management/components/OrderSummary.tsx",
       "line": 9,
-      "target": "@/lib/money"
+      "target": "@/types"
     },
     {
       "file": "resources/js/themes/default/plugins/order-management/components/OrderSummary.tsx",
       "line": 10,
-      "target": "@/lib/weight"
+      "target": "@/lib/money"
     },
     {
       "file": "resources/js/themes/default/plugins/order-management/components/OrderSummary.tsx",
       "line": 11,
-      "target": "@/core/context/TenantContext"
+      "target": "@/lib/weight"
     },
     {
       "file": "resources/js/themes/default/plugins/order-management/components/OrderSummary.tsx",
       "line": 12,
+      "target": "@/core/context/TenantContext"
+    },
+    {
+      "file": "resources/js/themes/default/plugins/order-management/components/OrderSummary.tsx",
+      "line": 13,
       "target": "@/themes/default/components/FreeShippingProgress"
     },
     {
@@ -104654,6 +104812,11 @@
     {
       "file": "resources/js/themes/default/plugins/payment-processing/ThemedPaymentCallback.tsx",
       "line": 8,
+      "target": "@/core/context/AuthContext"
+    },
+    {
+      "file": "resources/js/themes/default/plugins/payment-processing/ThemedPaymentCallback.tsx",
+      "line": 9,
       "target": "@/plugins/payment-processing/api/usePaymentStatus"
     },
     {
@@ -105215,7 +105378,7 @@
     }
   ],
   "coverage": {
-    "php_files": 619,
+    "php_files": 621,
     "request_extraction": "axios-style named client calls only; fetch and custom wrappers require adapters",
     "schema": "up() Schema::create/table declarations, including historical and conditional declarations; no migrations executed or live database queried",
     "routes": "configured CLI route registration; no tenant request executed",

@@ -1,11 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { usePaymentStatus } from '../api/usePaymentStatus';
+import { useAuth } from '@/core/context/AuthContext';
+import { resolvePaymentCallbackOrderLink, usePaymentStatus } from '../api/usePaymentStatus';
 
 export default function DefaultPaymentCallback() {
   const { id } = useParams<{ id: string }>();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const { data, isLoading } = usePaymentStatus(id);
+  const { orderHref } = resolvePaymentCallbackOrderLink({
+    orderId: id,
+    statusData: data,
+    isAuthenticated,
+    isAuthLoading,
+  });
   const [isTimedOut, setIsTimedOut] = useState(false);
 
   useEffect(() => {
@@ -66,7 +74,7 @@ export default function DefaultPaymentCallback() {
 
       <div className="flex justify-center gap-4">
         {id && (
-          <Link to={`/orders/${id}`} className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium">
+          <Link to={orderHref} className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium">
             View Order
           </Link>
         )}

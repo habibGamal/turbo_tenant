@@ -20,7 +20,7 @@ export default function ThemedProductDetails({ productId }: ThemedProductDetails
 
   return (
     <div className="themed-catalog-product my-8">
-      <Card className="border border-border/60 bg-muted/20">
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <Info className="h-4 w-4 text-primary" />

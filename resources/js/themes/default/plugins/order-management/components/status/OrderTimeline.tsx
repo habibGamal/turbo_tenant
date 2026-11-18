@@ -89,7 +89,7 @@ export function OrderTimeline({
                                     "w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-colors",
                                     isCompleted
                                         ? "bg-primary text-primary-foreground"
-                                        : "bg-muted text-muted-foreground",
+                                        : "border border-border/90 bg-background text-muted-foreground dark:bg-card",
                                     isCurrent ? "ring-4 ring-primary/20" : ""
                                 )}
                             >
@@ -108,7 +108,7 @@ export function OrderTimeline({
             </div>
 
             {/* Connecting Progress Track */}
-            <div className="absolute top-7 inset-x-0 h-0.5 bg-muted -z-10">
+            <div className="absolute top-7 inset-x-0 h-0.5 bg-border -z-10">
                 <div
                     className="h-full bg-primary transition-all ms-0 me-auto"
                     style={{ width: `${progressPercent}%` }}

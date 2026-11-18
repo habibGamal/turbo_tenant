@@ -27,7 +27,7 @@ export default function ReviewList({ reviews }: ReviewListProps) {
                 const displayName = review.user?.name || review.guest_name || t("anonymous", "Customer");
                 return (
                     <Card key={review.id} data-testid="review-card" className="overflow-hidden">
-                        <CardHeader className="bg-muted/30 pb-4">
+                        <CardHeader className="border-b border-border/60 pb-4">
                             <div className="flex items-start justify-between gap-2">
                                 <div className="flex items-center gap-3">
                                     <Avatar className="h-10 w-10 border">

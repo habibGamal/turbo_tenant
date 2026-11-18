@@ -125,7 +125,11 @@ function OrdersListContent({ initialPage = 1 }: ThemedOrdersListProps) {
     };
 
     const filters = (
-        <section aria-label={t("ordersFilters")} className="mb-6 rounded-2xl border bg-card p-4 sm:p-5">
+        <section
+            aria-label={t("ordersFilters")}
+            data-card-variant="recessed"
+            className="mb-6 rounded-2xl border border-border bg-muted/70 p-4 shadow-none sm:p-5 dark:bg-black/25"
+        >
             <div className="grid items-end gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
                 <div className="space-y-2">
                     <Label htmlFor="orders-search">{t("searchOrderNumber")}</Label>
@@ -150,7 +154,7 @@ function OrdersListContent({ initialPage = 1 }: ThemedOrdersListProps) {
                         </SelectContent>
                     </Select>
                 </div>
-                <Button type="button" variant="outline" onClick={resetFilters} disabled={!hasFilters}>{t("clearAllFilters")}</Button>
+                <Button type="button" variant="outline" className="border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card" onClick={resetFilters} disabled={!hasFilters}>{t("clearAllFilters")}</Button>
             </div>
         </section>
     );
@@ -165,7 +169,7 @@ function OrdersListContent({ initialPage = 1 }: ThemedOrdersListProps) {
                 <CardContent className="flex flex-col items-center justify-center gap-4 text-center">
                     <XCircle className="w-10 h-10 text-destructive" />
                     <p className="text-destructive font-medium">{t("errorLoadingOrders", "Failed to load orders")}</p>
-                    <Button variant="outline" onClick={() => refetch()}>
+                    <Button variant="outline" className="border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card" onClick={() => refetch()}>
                         {t("tryAgain", "Try Again")}
                     </Button>
                 </CardContent>
@@ -178,7 +182,7 @@ function OrdersListContent({ initialPage = 1 }: ThemedOrdersListProps) {
     if (orders.length === 0) {
         if (hasFilters) {
             return <>{filters}<Card className="py-16 text-center" data-testid="no-matching-orders">
-                <CardContent className="space-y-4"><p>{t("noMatchingOrders")}</p><Button type="button" variant="outline" onClick={resetFilters}>{t("clearAllFilters")}</Button></CardContent>
+                <CardContent className="space-y-4"><p>{t("noMatchingOrders")}</p><Button type="button" variant="outline" className="border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card" onClick={resetFilters}>{t("clearAllFilters")}</Button></CardContent>
             </Card></>;
         }
         return (
@@ -196,7 +200,7 @@ function OrdersListContent({ initialPage = 1 }: ThemedOrdersListProps) {
                         </p>
                     </div>
                     <Link to="/">
-                        <Button size="lg" className="gap-2">
+                        <Button size="lg" className="gap-2 shadow-none">
                             {t("startShopping")}
                             <ArrowIcon className="h-4 w-4" />
                         </Button>
@@ -212,9 +216,9 @@ function OrdersListContent({ initialPage = 1 }: ThemedOrdersListProps) {
                 <Card
                     key={order.id}
                     data-testid="order-history-item"
-                    className="overflow-hidden rounded-2xl border-border/80 shadow-sm transition-shadow duration-200 hover:shadow-md"
+                    className="overflow-hidden rounded-2xl transition-colors duration-200 hover:border-primary/40"
                 >
-                    <CardHeader className="bg-muted/20">
+                    <CardHeader>
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                             <div className="space-y-2">
                                 <CardTitle className="flex flex-wrap items-center gap-1 text-lg sm:text-xl" data-testid="order-number-display">
@@ -381,7 +385,12 @@ function OrdersListContent({ initialPage = 1 }: ThemedOrdersListProps) {
                                     {formatMoney(order.total)}
                                 </div>
                             </div>
-                            <Button variant="outline" asChild data-testid="view-order-details-button">
+                            <Button
+                                variant="outline"
+                                asChild
+                                data-testid="view-order-details-button"
+                                className="border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card"
+                            >
                                 <Link to={`/orders/${order.id}`}>
                                     {t("viewDetails")}
                                     <ArrowIcon className="ms-2 h-4 w-4" />
@@ -403,6 +412,7 @@ function OrdersListContent({ initialPage = 1 }: ThemedOrdersListProps) {
                             key={p}
                             variant={p === paginatedOrders.meta.current_page ? "default" : "outline"}
                             size="sm"
+                            className="shadow-none"
                             onClick={() => setPage(p)}
                         >
                             {p}

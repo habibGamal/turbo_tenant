@@ -156,6 +156,7 @@ The API client ([client.ts](../resources/js/core/api/client.ts)) uses same-origi
 | `order.placement.rules` | Extra validation rules for `POST /api/orders/place` | coupons-promotions, guest-checkout, payment-processing |
 | `order.customer.resolvers` | Resolve a non-user customer at checkout | guest-checkout |
 | `order.placement.response` | Add fields to the place-order response | guest-checkout, meta-marketing |
+| `order.payment-status.response` | Add fields to the payment-status response | guest-checkout |
 | `cart-engine.line-types` | New kinds of cart lines | combo-packages |
 | `catalog.line-references`, `catalog-products.product-deletion-guards` | Reference/protect products from other plugins | combo-packages |
 | `catalog.product.form`, `catalog.extra-option.form`, `admin.form.combo-packages.package`, `admin.form.locations-delivery.branch` | Add fields to admin forms | pos-integration |

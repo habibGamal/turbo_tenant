@@ -301,7 +301,7 @@
       },
       {
         "file": "resources/js/plugins/meta-marketing/services/meta-pixel-tracker.ts",
-        "line": 168,
+        "line": 159,
         "contains": "fetch('/api/meta/events'"
       },
       {
@@ -385,7 +385,7 @@
       },
       {
         "file": "resources/js/plugins/order-management/api/usePlaceOrder.ts",
-        "line": 23,
+        "line": 37,
         "contains": "emitCommerceEvent('Purchase'"
       },
       {
@@ -4509,11 +4509,11 @@
     "sources": [
       {
         "file": "app/Plugins/PaymentProcessing/src/Http/Controllers/Api/PaymentProcessingApiController.php",
-        "line": 28
+        "line": 31
       },
       {
         "file": "app/Plugins/PaymentProcessing/src/Http/Controllers/Api/PaymentProcessingApiController.php",
-        "line": 39
+        "line": 50
       },
       {
         "file": "app/Plugins/PaymentProcessing/src/Http/Controllers/KashierWebhookController.php",

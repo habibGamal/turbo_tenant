@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
  */
 export function ProductCardSkeleton() {
     return (
-        <div className="rounded-2xl border border-border/60 p-4 space-y-4 bg-card">
+        <div className="rounded-2xl border border-border bg-muted/70 p-4 space-y-4 dark:bg-black/25">
             <Skeleton className="aspect-square w-full rounded-xl" />
             <div className="space-y-2">
                 <Skeleton className="h-5 w-3/4" />
@@ -406,7 +406,7 @@ export function CmsPageSkeleton() {
             aria-busy="true"
             aria-label="Loading page content"
         >
-            <div className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-background border-b">
+            <div className="relative overflow-hidden bg-background border-b border-border">
                 <div className="container relative mx-auto px-4 py-16 md:py-24 text-center space-y-4">
                     <Skeleton className="h-10 md:h-12 w-64 md:w-96 mx-auto rounded-xl" />
                     <Skeleton className="h-1.5 w-24 mx-auto rounded-full" />
@@ -438,7 +438,7 @@ export function CmsPageSkeleton() {
 export function PaymentGatewaySkeleton() {
     return (
         <div
-            className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-8 px-4"
+            className="min-h-screen bg-background py-8 px-4"
             role="status"
             aria-busy="true"
             aria-label="Loading secure payment gateway"
@@ -451,7 +451,7 @@ export function PaymentGatewaySkeleton() {
                 </div>
 
                 <Card className="p-6 space-y-6">
-                    <div className="flex items-center justify-between p-4 bg-muted/40 rounded-lg">
+                    <div className="flex items-center justify-between p-4 border border-border/90 bg-background dark:bg-card rounded-lg">
                         <div className="space-y-1">
                             <Skeleton className="h-4 w-28" />
                             <Skeleton className="h-7 w-36" />

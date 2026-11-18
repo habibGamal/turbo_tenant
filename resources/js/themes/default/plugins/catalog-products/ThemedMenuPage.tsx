@@ -622,7 +622,7 @@ export default function ThemedMenuPage() {
             <div className="flex gap-2 pt-4 border-t border-border/50">
                 <Button
                     onClick={handleApplyFilters}
-                    className="flex-1 shadow-sm font-medium"
+                    className="flex-1 shadow-none font-medium"
                     data-testid={`${panelId}-apply-filters`}
                 >
                     {t("applyFilters", "Apply")}
@@ -630,7 +630,7 @@ export default function ThemedMenuPage() {
                 <Button
                     onClick={handleResetFilters}
                     variant="outline"
-                    className="hover:text-destructive hover:border-destructive/40"
+                    className="border-border/90 bg-background shadow-none hover:bg-accent/60 hover:text-destructive hover:border-destructive/40 dark:bg-card"
                     data-testid={`${panelId}-reset-filters`}
                 >
                     <RotateCcw className="h-4 w-4 me-1.5" />
@@ -758,8 +758,8 @@ export default function ThemedMenuPage() {
                     {/* Desktop Filters Sidebar */}
                     <aside className="hidden lg:block w-72 shrink-0">
                         <div className="sticky top-24">
-                            <Card className="border border-border/60 shadow-md bg-card/90 backdrop-blur-sm rounded-2xl">
-                                <CardHeader className="pb-3 border-b border-border/40">
+                            <Card className="rounded-2xl">
+                                <CardHeader className="pb-3 border-b border-border/60">
                                     <div className="flex items-center justify-between">
                                         <h2 className="text-base font-bold flex items-center gap-2">
                                             <Filter className="w-4 h-4 text-primary" />
@@ -781,7 +781,7 @@ export default function ThemedMenuPage() {
                                 {/* Mobile loading skeleton */}
                                 <div className="block md:hidden space-y-3">
                                     {[...Array(6)].map((_, i) => (
-                                        <div key={i} className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-border/40 bg-card">
+                                        <div key={i} className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-border bg-muted/70 dark:bg-black/25">
                                             <div className="flex-1 space-y-2">
                                                 <Skeleton className="h-4 w-32 rounded" />
                                                 <Skeleton className="h-3 w-48 rounded" />
@@ -917,7 +917,7 @@ export default function ThemedMenuPage() {
                                                     variant="outline"
                                                     onClick={() => fetchNextPage()}
                                                     data-testid="load-more-button"
-                                                    className="shadow-sm"
+                                                    className="shadow-none"
                                                 >
                                                     {t("loadMore", "Load More")}
                                                 </Button>

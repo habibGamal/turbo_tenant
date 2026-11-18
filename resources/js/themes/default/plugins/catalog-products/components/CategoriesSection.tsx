@@ -53,7 +53,7 @@ export default function CategoriesSection({
     };
 
     return (
-        <section className="py-12 md:py-20 bg-muted/30">
+        <section className="py-12 md:py-20 bg-background border-b border-border/50">
             <div className="container mx-auto px-4">
                 {/* Section Header */}
                 <div className="text-center mb-10 md:mb-16 space-y-3">
@@ -69,10 +69,10 @@ export default function CategoriesSection({
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                     {categoriesToUse.map((category, idx) => (
                         <Link key={category.id} to={`/menu?category_ids[]=${category.id}`} className="group block h-full">
-                            <Card data-testid="category-card" className="h-full overflow-hidden border-0 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-card">
+                            <Card data-testid="category-card" className="h-full overflow-hidden transition-colors duration-200 hover:border-primary/40">
                                 <CardContent className="p-0 h-full flex flex-col">
                                     {/* Image Container */}
-                                    <div className="relative aspect-square overflow-hidden">
+                                    <div className="relative aspect-square overflow-hidden bg-background dark:bg-card border-b border-border/60">
                                         <ImageWithFallback
                                             src={category.image}
                                             alt={getText(category.name, category.name_ar)}
@@ -85,14 +85,14 @@ export default function CategoriesSection({
 
                                         {/* Products Count Badge */}
                                         {category.productsCount !== undefined && (
-                                            <div className="absolute top-2 end-2 bg-card/90 backdrop-blur-sm text-foreground text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                                            <div className="absolute top-2 end-2 border border-border/80 bg-background/95 dark:bg-card/95 backdrop-blur-sm text-foreground text-xs font-bold px-2 py-1 rounded-full">
                                                 {category.productsCount}
                                             </div>
                                         )}
                                     </div>
 
                                     {/* Category Info */}
-                                    <div className="p-4 text-center flex-grow flex flex-col justify-center bg-card z-10 relative">
+                                    <div className="p-4 text-center flex-grow flex flex-col justify-center z-10 relative">
                                         <h3 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-1">
                                             {getText(category.name, category.name_ar)}
                                         </h3>
@@ -111,7 +111,7 @@ export default function CategoriesSection({
                 {/* View All Link */}
                 <div className="text-center mt-12">
                     <Link to="/menu">
-                        <span className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+                        <span className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 text-sm font-medium text-primary-foreground shadow-none transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
                             {t('viewAll')}
                         </span>
                     </Link>

@@ -113,14 +113,14 @@ export default function MenuItemRow({
                 }
             }}
             className={cn(
-                'group relative flex items-center justify-between gap-3 p-3 rounded-2xl border border-border/50 bg-card transition-all text-start select-none',
+                'group relative flex items-center justify-between gap-3 p-3 rounded-2xl border border-border bg-muted/70 shadow-none dark:bg-black/25 transition-colors text-start select-none',
                 isProductActive
-                    ? 'hover:border-primary/40 hover:shadow-sm cursor-pointer'
+                    ? 'hover:border-primary/40 cursor-pointer'
                     : 'opacity-60 grayscale cursor-not-allowed'
             )}
         >
             {/* Small Image (Right in RTL, Left in LTR) */}
-            <div className="relative shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-muted border border-border/40">
+            <div className="relative shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-background dark:bg-card border border-border/80">
                 <ImageWithFallback
                     src={product.image}
                     alt={productName}
@@ -137,7 +137,7 @@ export default function MenuItemRow({
                     {(getCategoryName() || !isProductActive || (hasDiscount && isProductActive)) && (
                         <div className="flex items-center gap-1.5 flex-wrap">
                             {getCategoryName() && (
-                                <Badge variant="outline" className="text-xs font-normal">
+                                <Badge variant="outline" className="text-xs font-normal border-border/80 bg-background/80 dark:bg-card/60">
                                     {getCategoryName()}
                                 </Badge>
                             )}
@@ -191,7 +191,7 @@ export default function MenuItemRow({
                         data-testid={`menu-item-add-${product.id}`}
                         disabled={!isProductActive || isPending}
                         onClick={handlePlusClick}
-                        className="h-11 w-11 rounded-full shadow-md bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-transform active:scale-90 z-10 shrink-0 p-0"
+                        className="h-11 w-11 md:h-11 md:w-11 rounded-full shadow-none bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-transform active:scale-90 z-10 shrink-0 p-0"
                     >
                         {isPending ? (
                             <LoaderIcon className="h-3.5 w-3.5 animate-spin" />

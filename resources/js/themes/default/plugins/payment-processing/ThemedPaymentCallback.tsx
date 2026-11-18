@@ -5,13 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { usePaymentStatus } from "@/plugins/payment-processing/api/usePaymentStatus";
+import { useAuth } from "@/core/context/AuthContext";
+import { resolvePaymentCallbackOrderLink, usePaymentStatus } from "@/plugins/payment-processing/api/usePaymentStatus";
 
 export default function ThemedPaymentCallback() {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const { data: statusData, isLoading } = usePaymentStatus(id);
+  const { orderHref, isGuestOrder } = resolvePaymentCallbackOrderLink({
+    orderId: id,
+    statusData,
+    isAuthenticated,
+    isAuthLoading,
+  });
   const [isTimedOut, setIsTimedOut] = useState(false);
 
   useEffect(() => {
@@ -38,7 +46,7 @@ export default function ThemedPaymentCallback() {
   const order = statusData?.order;
 
   return (
-    <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5 dark:from-background dark:via-background dark:to-primary/10">
+    <MainLayout>
       <main className="container mx-auto px-4 py-8 md:py-16">
         <Card className="max-w-2xl mx-auto">
           <CardContent className="pt-16 pb-16">
@@ -55,7 +63,7 @@ export default function ThemedPaymentCallback() {
                     <p className="text-muted-foreground text-lg">{displayMessage}</p>
                   </div>
                   {order && (
-                    <div className="bg-muted/50 p-4 rounded-lg">
+                    <div className="border border-border/90 bg-background dark:bg-card p-4 rounded-lg">
                       <div className="text-sm text-muted-foreground mb-1">
                         {t("orderNumber", "Order Number")}
                       </div>
@@ -64,12 +72,12 @@ export default function ThemedPaymentCallback() {
                   )}
                   <div className="flex flex-col sm:flex-row gap-3 mt-4">
                     {id && (
-                      <Link to={`/orders/${id}`}>
-                        <Button size="lg">{t("viewOrder", "View Order")}</Button>
+                      <Link to={orderHref}>
+                        <Button size="lg" className="shadow-none">{t("viewOrder", "View Order")}</Button>
                       </Link>
                     )}
                     <Link to="/">
-                      <Button variant="outline" size="lg">
+                      <Button variant="outline" size="lg" className="border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card">
                         {t("backToHome", "Back to Home")}
                       </Button>
                     </Link>
@@ -87,7 +95,7 @@ export default function ThemedPaymentCallback() {
                     <p className="text-muted-foreground text-lg">{displayMessage}</p>
                   </div>
                   {order && (
-                    <div className="bg-muted/50 p-4 rounded-lg">
+                    <div className="border border-border/90 bg-background dark:bg-card p-4 rounded-lg">
                       <div className="text-sm text-muted-foreground mb-1">
                         {t("orderNumber", "Order Number")}
                       </div>
@@ -96,12 +104,12 @@ export default function ThemedPaymentCallback() {
                   )}
                   <div className="flex flex-col sm:flex-row gap-3 mt-4">
                     {id && (
-                      <Link to={`/orders/${id}`}>
-                        <Button size="lg">{t("viewOrder", "View Order")}</Button>
+                      <Link to={orderHref}>
+                        <Button size="lg" className="shadow-none">{t("viewOrder", "View Order")}</Button>
                       </Link>
                     )}
                     <Link to="/">
-                      <Button variant="outline" size="lg">
+                      <Button variant="outline" size="lg" className="border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card">
                         {t("backToHome", "Back to Home")}
                       </Button>
                     </Link>
@@ -119,7 +127,7 @@ export default function ThemedPaymentCallback() {
                     <p className="text-muted-foreground text-lg">{displayMessage}</p>
                   </div>
                   {order && (
-                    <div className="bg-muted/50 p-4 rounded-lg">
+                    <div className="border border-border/90 bg-background dark:bg-card p-4 rounded-lg">
                       <div className="text-sm text-muted-foreground mb-1">
                         {t("orderNumber", "Order Number")}
                       </div>
@@ -128,15 +136,23 @@ export default function ThemedPaymentCallback() {
                   )}
                   <div className="flex flex-col sm:flex-row gap-3 mt-4">
                     {id && (
-                      <Link to={`/orders/${id}`}>
-                        <Button size="lg">{t("viewOrder", "View Order")}</Button>
+                      <Link to={orderHref}>
+                        <Button size="lg" className="shadow-none">{t("viewOrder", "View Order")}</Button>
                       </Link>
                     )}
-                    <Link to="/orders">
-                      <Button variant="outline" size="lg">
-                        {t("viewMyOrders", "View My Orders")}
-                      </Button>
-                    </Link>
+                    {isGuestOrder ? (
+                      <Link to="/">
+                        <Button variant="outline" size="lg" className="border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card">
+                          {t("backToHome", "Back to Home")}
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link to="/orders">
+                        <Button variant="outline" size="lg" className="border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card">
+                          {t("viewMyOrders", "View My Orders")}
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 </>
               ) : (
@@ -151,7 +167,7 @@ export default function ThemedPaymentCallback() {
                     <p className="text-muted-foreground text-lg">{displayMessage}</p>
                   </div>
                   {order && (
-                    <div className="bg-muted/50 p-4 rounded-lg">
+                    <div className="border border-border/90 bg-background dark:bg-card p-4 rounded-lg">
                       <div className="text-sm text-muted-foreground mb-1">
                         {t("orderNumber", "Order Number")}
                       </div>
@@ -160,10 +176,10 @@ export default function ThemedPaymentCallback() {
                   )}
                   <div className="flex flex-col sm:flex-row gap-3 mt-4">
                     <Link to="/checkout">
-                      <Button size="lg">{t("tryAgain", "Try Again")}</Button>
+                      <Button size="lg" className="shadow-none">{t("tryAgain", "Try Again")}</Button>
                     </Link>
                     <Link to="/">
-                      <Button variant="outline" size="lg">
+                      <Button variant="outline" size="lg" className="border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card">
                         {t("backToHome", "Back to Home")}
                       </Button>
                     </Link>

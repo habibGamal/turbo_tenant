@@ -85,7 +85,7 @@ export default function ThemedPackageConfiguratorPage({
         <div className="grid md:grid-cols-12 gap-8">
           {/* Left Column: Image and details */}
           <div className="md:col-span-5 space-y-4">
-            <div className="relative aspect-video md:aspect-square w-full overflow-hidden rounded-xl bg-muted border">
+            <div className="relative aspect-video md:aspect-square w-full overflow-hidden rounded-xl bg-muted/70 dark:bg-black/25 border border-border">
               {packageData.image ? (
                 <img
                   src={packageData.image}
@@ -99,9 +99,9 @@ export default function ThemedPackageConfiguratorPage({
               )}
 
               <div className="absolute top-3 start-3 flex gap-2">
-                <Badge className="shadow-md">{badgeText}</Badge>
+                <Badge className="shadow-none">{badgeText}</Badge>
                 {packageData.is_featured && (
-                  <Badge variant="secondary" className="bg-amber-500 text-amber-950 font-semibold shadow-md flex items-center gap-1">
+                  <Badge variant="secondary" className="bg-amber-500 text-amber-950 font-semibold shadow-none flex items-center gap-1">
                     <Sparkles className="w-3 h-3" />
                     {t('featured', 'Featured')}
                   </Badge>
@@ -120,7 +120,7 @@ export default function ThemedPackageConfiguratorPage({
           </div>
 
           {/* Right Column: Configurator */}
-          <div className="md:col-span-7 border rounded-xl overflow-hidden shadow-sm bg-card">
+          <div className="md:col-span-7 border border-border rounded-xl overflow-hidden shadow-none bg-background">
             <ThemedPackageConfigurator packageData={packageData} />
           </div>
         </div>

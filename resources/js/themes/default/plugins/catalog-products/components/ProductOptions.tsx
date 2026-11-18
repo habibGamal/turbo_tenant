@@ -115,9 +115,9 @@ export default function ProductOptions({
                                 <label
                                     key={variant.id}
                                     data-testid="product-variant-option"
-                                    className={`flex items-center justify-between p-3 sm:p-4 border-2 rounded-xl cursor-pointer transition-all gap-2 ${selectedVariant === variant.id
-                                        ? "border-primary bg-primary/5 shadow-sm"
-                                        : "border-border hover:border-primary/50"
+                                    className={`flex items-center justify-between p-3 sm:p-4 border rounded-xl cursor-pointer transition-colors gap-2 shadow-none ${selectedVariant === variant.id
+                                        ? "border-primary bg-primary/5"
+                                        : "border-border bg-muted/70 dark:bg-black/25 hover:border-primary/50"
                                         }`}
                                 >
                                     <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
@@ -187,9 +187,9 @@ export default function ProductOptions({
                                 return (
                                     <div
                                         key={item.id}
-                                        className={`flex items-center justify-between p-3 sm:p-4 border-2 rounded-xl transition-all gap-2 ${isSelected
-                                            ? "border-primary bg-primary/5 shadow-sm"
-                                            : "border-border hover:border-primary/30"
+                                        className={`flex items-center justify-between p-3 sm:p-4 border rounded-xl transition-colors gap-2 shadow-none ${isSelected
+                                            ? "border-primary bg-primary/5"
+                                            : "border-border bg-muted/70 dark:bg-black/25 hover:border-primary/40"
                                             }`}
                                     >
                                         <label className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 cursor-pointer">
@@ -225,7 +225,7 @@ export default function ProductOptions({
                                                     variant="outline"
                                                     size="icon"
                                                     aria-label={t("decreaseQuantity", "Decrease quantity")}
-                                                    className="h-10 w-10 sm:h-8 sm:w-8 rounded-full"
+                                                    className="h-10 w-10 sm:h-8 sm:w-8 md:h-8 md:w-8 rounded-full bg-background dark:bg-card shadow-none"
                                                     onClick={() => handleExtraQuantityChange(item.id, -1)}
                                                     disabled={qty <= 1}
                                                 >
@@ -238,7 +238,7 @@ export default function ProductOptions({
                                                     variant="outline"
                                                     size="icon"
                                                     aria-label={t("increaseQuantity", "Increase quantity")}
-                                                    className="h-10 w-10 sm:h-8 sm:w-8 rounded-full"
+                                                    className="h-10 w-10 sm:h-8 sm:w-8 md:h-8 md:w-8 rounded-full bg-background dark:bg-card shadow-none"
                                                     onClick={() => handleExtraQuantityChange(item.id, 1)}
                                                 >
                                                     <Plus className="h-3.5 w-3.5" />
@@ -289,9 +289,9 @@ export default function ProductOptions({
                                     key={value.id}
                                     htmlFor={`weight-${value.id}`}
                                     data-testid="product-weight-option"
-                                    className={`flex min-h-11 items-center justify-center w-full px-3 py-2.5 rounded-xl border-2 text-center cursor-pointer transition-colors ${selectedWeightValue === value.id
+                                    className={`flex min-h-11 items-center justify-center w-full px-3 py-2.5 rounded-xl border text-center cursor-pointer transition-colors shadow-none ${selectedWeightValue === value.id
                                         ? "border-primary bg-primary/10 font-semibold text-primary"
-                                        : "border-border hover:border-primary/50"
+                                        : "border-border bg-muted/70 dark:bg-black/25 hover:border-primary/50"
                                         }`}
                                 >
                                     <RadioGroupItem
@@ -315,7 +315,7 @@ export default function ProductOptions({
                     {/* Quantity Selector (for non-weight products) */}
                     {!product.sell_by_weight && (
                         <div className="w-full sm:w-auto shrink-0">
-                            <div className="flex h-12 items-center justify-between sm:justify-start bg-muted/50 border border-border rounded-xl px-1 w-full sm:w-fit">
+                            <div className="flex h-12 items-center justify-between sm:justify-start bg-muted/70 dark:bg-black/25 border border-border rounded-xl px-1 w-full sm:w-fit">
                                 <Button
                                     type="button"
                                     data-testid="product-quantity-decrement"

@@ -238,9 +238,9 @@ export default function ThemedPackageConfigurator({
             <Card
               key={group.id}
               data-testid={`combo-group-${group.id}`}
-              className="border shadow-none overflow-hidden"
+              className="overflow-hidden"
             >
-              <div className="p-4 bg-muted/30 border-b flex items-start justify-between gap-3">
+              <div className="p-4 border-b border-border/60 flex items-start justify-between gap-3">
                 <div>
                   <h3 className="font-semibold text-sm">
                     {getLocalizedName({ name: group.name || '', name_ar: group.name_ar }, i18n.language)}
@@ -286,7 +286,7 @@ export default function ThemedPackageConfigurator({
                       return (
                         <div
                           key={item.id}
-                          className="p-3 rounded-lg bg-muted/40 text-xs border border-border/40"
+                          className="p-3 rounded-lg bg-background dark:bg-card text-xs border border-border/90"
                         >
                           <div
                             data-testid={`combo-option-${item.id}`}
@@ -340,10 +340,10 @@ export default function ThemedPackageConfigurator({
                       return (
                         <div
                           key={item.id}
-                          className={`p-3 rounded-lg border transition-all ${
+                          className={`p-3 rounded-lg border transition-colors shadow-none ${
                             isSelected
-                              ? 'border-primary bg-primary/5 shadow-xs'
-                              : 'border-border/60 hover:border-border hover:bg-muted/20'
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border/90 bg-background dark:bg-card hover:border-primary/40'
                           }`}
                         >
                           <div
@@ -404,10 +404,10 @@ export default function ThemedPackageConfigurator({
                                           setItemVariant(prev, item, variant.id)
                                         );
                                       }}
-                                      className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+                                      className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors shadow-none ${
                                         isVariantSelected
-                                          ? 'bg-primary text-primary-foreground border-primary shadow-xs'
-                                          : 'bg-background hover:bg-muted/50 border-input text-foreground'
+                                          ? 'bg-primary text-primary-foreground border-primary'
+                                          : 'bg-background dark:bg-card hover:bg-muted/50 border-border/90 text-foreground'
                                       }`}
                                     >
                                       {vName}
@@ -453,10 +453,10 @@ export default function ThemedPackageConfigurator({
                       return (
                         <div
                           key={item.id}
-                          className={`p-3 rounded-lg border transition-all ${
+                          className={`p-3 rounded-lg border transition-colors shadow-none ${
                             isSelected
-                              ? 'border-primary bg-primary/5 shadow-xs'
-                              : 'border-border/60 hover:border-border'
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border/90 bg-background dark:bg-card hover:border-primary/40'
                           }`}
                         >
                           <div
@@ -496,7 +496,7 @@ export default function ThemedPackageConfigurator({
                               )}
 
                               {group.allow_repeats && (
-                                <div className="flex items-center border rounded-md">
+                                <div className="flex items-center border border-border/90 bg-background dark:bg-card rounded-md">
                                   <button
                                     type="button"
                                     disabled={pickQty <= 0}
@@ -548,10 +548,10 @@ export default function ThemedPackageConfigurator({
                                           setItemVariant(prev, item, variant.id)
                                         );
                                       }}
-                                      className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+                                      className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors shadow-none ${
                                         isVariantSelected
-                                          ? 'bg-primary text-primary-foreground border-primary shadow-xs'
-                                          : 'bg-background hover:bg-muted/50 border-input text-foreground'
+                                          ? 'bg-primary text-primary-foreground border-primary'
+                                          : 'bg-background dark:bg-card hover:bg-muted/50 border-border/90 text-foreground'
                                       }`}
                                     >
                                       {vName}
@@ -607,7 +607,7 @@ export default function ThemedPackageConfigurator({
       </div>
 
       {/* Sticky Footer */}
-      <div className="p-5 border-t bg-card shrink-0 space-y-4 shadow-lg">
+      <div className="p-5 border-t border-border bg-background dark:bg-card shrink-0 space-y-4 shadow-none">
         <div className="flex items-center justify-between">
           <div>
             <span className="text-xs text-muted-foreground block">{t('total', 'Total')}</span>
@@ -658,7 +658,7 @@ export default function ThemedPackageConfigurator({
           data-testid="combo-submit"
           disabled={!isValid || isSubmitting || !isAvailable}
           onClick={handleSubmit}
-          className="w-full font-semibold shadow-sm"
+          className="w-full font-semibold shadow-none"
           size="lg"
         >
           {isSubmitting

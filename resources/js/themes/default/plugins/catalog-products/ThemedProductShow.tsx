@@ -301,23 +301,23 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-3">
-                    <div className="flex justify-between py-2 border-b">
+                    <div className="flex justify-between py-2 border-b border-border/60">
                       <span className="font-medium">{t("category")}</span>
                       <span className="text-muted-foreground">{categoryName || t("uncategorized")}</span>
                     </div>
-                    <div className="flex justify-between py-2 border-b">
+                    <div className="flex justify-between py-2 border-b border-border/60">
                       <span className="font-medium">{t("basePrice")}</span>
                       <span className="text-muted-foreground">
                         {formatMoney(product.base_price || 0)}
                       </span>
                     </div>
                     {product.sell_by_weight && (
-                      <div className="flex justify-between py-2 border-b">
+                      <div className="flex justify-between py-2 border-b border-border/60">
                         <span className="font-medium">{t("soldBy")}</span>
                         <span className="text-muted-foreground">{t("weight")}</span>
                       </div>
                     )}
-                    <div className="flex justify-between py-2 border-b">
+                    <div className="flex justify-between py-2 border-b border-border/60">
                       <span className="font-medium">{t("availability")}</span>
                       <Badge variant={product.is_active ? "default" : "secondary"}>
                         {product.is_active ? t("inStock") : t("unavailable")}
@@ -335,7 +335,7 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
               <div className="flex items-center justify-between mb-4 sm:mb-8">
                 <h2 className="text-xl sm:text-3xl font-bold">{t("similarProducts")}</h2>
                 <Link to="/menu">
-                  <Button variant="outline" size="sm" className="sm:h-10">{t("viewAll")}</Button>
+                  <Button variant="outline" size="sm" className="sm:h-10 shadow-none">{t("viewAll")}</Button>
                 </Link>
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
@@ -352,7 +352,7 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
               <div className="flex items-center justify-between mb-4 sm:mb-8">
                 <h2 className="text-xl sm:text-3xl font-bold">{t("specialOffers")}</h2>
                 <Link to="/menu">
-                  <Button variant="outline" size="sm" className="sm:h-10">{t("viewAll")}</Button>
+                  <Button variant="outline" size="sm" className="sm:h-10 shadow-none">{t("viewAll")}</Button>
                 </Link>
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
@@ -369,7 +369,7 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
       {isProductActive && !isInlineCtaVisible && (
         <div
           data-testid="product-sticky-add-to-cart-bar"
-          className="md:hidden fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom))] sm:bottom-[calc(4rem+env(safe-area-inset-bottom))] inset-x-0 z-30 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85 px-4 py-2.5 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]"
+          className="md:hidden fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom))] sm:bottom-[calc(4rem+env(safe-area-inset-bottom))] inset-x-0 z-30 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85 px-4 py-2.5"
         >
           <div className="flex items-center justify-between gap-2.5">
             <div className="flex flex-col shrink-0">
@@ -410,7 +410,7 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
               type="button"
               data-testid="product-sticky-add-to-cart"
               size="lg"
-              className="flex-1 h-11 rounded-xl gap-2 text-sm font-semibold"
+              className="flex-1 h-11 md:h-11 rounded-xl gap-2 text-sm font-semibold shadow-none"
               disabled={isAddingToCart}
               onClick={() => {
                 if (!canAddToCart) {

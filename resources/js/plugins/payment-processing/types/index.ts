@@ -7,8 +7,10 @@ export interface OrderPaymentStatus {
     payment_method: string;
     total: number;
     currency: string;
+    is_guest?: boolean;
   };
   is_paid: boolean;
+  tracking_token?: string;
 }
 
 export interface KashierParams {

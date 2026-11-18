@@ -144,7 +144,7 @@ export default function DefaultLocationsDelivery({
     <div dir={i18n.dir()} className="space-y-6 w-full text-start">
       <div className="flex flex-wrap gap-3 justify-between items-center">
         <h3 className="text-lg font-medium">{t('yourAddresses', 'Your Addresses')}</h3>
-        <Button onClick={openCreateModal} size="sm">
+        <Button onClick={openCreateModal} size="sm" className="shadow-none">
           <Plus className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
           {t('addNewAddress', 'Add New Address')}
         </Button>
@@ -155,7 +155,7 @@ export default function DefaultLocationsDelivery({
           <LoaderIcon className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : addresses.length === 0 ? (
-        <div className="text-center py-8 border rounded-lg p-6 bg-muted/20">
+        <div className="text-center py-8 border border-border/90 rounded-xl p-6 bg-background dark:bg-card">
           <MapPin className="h-10 w-10 mx-auto text-muted-foreground mb-2 opacity-60" />
           <p className="text-sm text-muted-foreground">{t('noAddressesFound', 'No addresses registered yet.')}</p>
         </div>
@@ -167,10 +167,10 @@ export default function DefaultLocationsDelivery({
               <div
                 key={address.id}
                 onClick={() => onSelectAddress?.(address)}
-                className={`border rounded-lg p-4 transition-colors ${
+                className={`border rounded-xl p-4 transition-colors ${
                   onSelectAddress ? 'cursor-pointer' : ''
                 } ${
-                  isSelected ? 'border-primary ring-1 ring-primary bg-primary/5' : 'hover:border-primary/50'
+                  isSelected ? 'border-primary ring-1 ring-primary bg-primary/5' : 'border-border/90 bg-background dark:bg-card hover:border-primary/50'
                 }`}
               >
                 {address.is_default && (
@@ -210,12 +210,12 @@ export default function DefaultLocationsDelivery({
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 mt-4 pt-2 border-t">
+                <div className="flex justify-end gap-2 mt-4 pt-2 border-t border-border/60">
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-8 w-8 md:h-8 md:w-8 border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card"
                     onClick={(e) => {
                       e.stopPropagation();
                       openEditModal(address);
@@ -227,7 +227,7 @@ export default function DefaultLocationsDelivery({
                     type="button"
                     variant="destructive"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-8 w-8 md:h-8 md:w-8 shadow-none"
                     disabled={deleteMutation.isPending}
                     onClick={(e) => {
                       e.stopPropagation();

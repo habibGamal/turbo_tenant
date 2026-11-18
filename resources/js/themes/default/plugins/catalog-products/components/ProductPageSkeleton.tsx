@@ -108,7 +108,7 @@ export function ProductPageSkeleton() {
                         {[...Array(4)].map((_, idx) => (
                             <div
                                 key={idx}
-                                className="rounded-2xl border border-border/60 p-4 space-y-4 bg-card"
+                                className="rounded-2xl border border-border p-4 space-y-4 bg-muted/70 dark:bg-black/25"
                             >
                                 <Skeleton className="aspect-square w-full rounded-xl" />
                                 <Skeleton className="h-5 w-3/4" />

@@ -19,7 +19,7 @@ export default function ThemedLocationsDelivery({
 
   return (
     <div className="themed-locations-delivery w-full">
-      <Card className="shadow-sm border-border/60">
+      <Card>
         <CardHeader>
           <CardTitle>{t('addresses', 'Addresses')}</CardTitle>
           <CardDescription>

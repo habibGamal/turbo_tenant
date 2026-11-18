@@ -84,7 +84,7 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                 <div className="w-full max-w-md">
                     {/* Logo/Brand */}
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-lg">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-none">
                             <LogIn className="w-8 h-8 text-primary-foreground" />
                         </div>
                         <h1 className="text-3xl font-bold text-foreground">
@@ -95,7 +95,7 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                         </p>
                     </div>
 
-                    <Card className="shadow-xl border-border bg-card">
+                    <Card>
                         <CardHeader className="space-y-1 pb-4">
                             <CardDescription className="text-center text-sm">
                                 {t("enterCredentials")}
@@ -183,7 +183,7 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                                             name="remember"
                                             checked={remember}
                                             onChange={(e) => setRemember(e.target.checked)}
-                                            className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-primary"
+                                            className="w-4 h-4 text-primary bg-background border-input rounded shadow-none focus:ring-primary"
                                         />
                                         <span className="text-sm text-muted-foreground">
                                             {t("rememberMe")}
@@ -205,7 +205,7 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                                 <Button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-6 rounded-lg shadow-none transition-colors duration-200"
                                 >
                                     {processing ? (
                                         <span className="flex items-center gap-2">
@@ -217,15 +217,12 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                                     )}
                                 </Button>
 
-                                <div className="relative">
-                                    <div className="absolute inset-0 flex items-center">
-                                        <span className="w-full border-t border-border" />
-                                    </div>
-                                    <div className="relative flex justify-center text-xs uppercase">
-                                        <span className="bg-card px-2 text-muted-foreground">
-                                            {t("orContinueWith")}
-                                        </span>
-                                    </div>
+                                <div className="flex w-full items-center gap-3">
+                                    <span className="h-px flex-1 bg-border" />
+                                    <span className="text-xs uppercase text-muted-foreground">
+                                        {t("orContinueWith")}
+                                    </span>
+                                    <span className="h-px flex-1 bg-border" />
                                 </div>
 
                                 <a
@@ -235,7 +232,7 @@ export default function Login({ canResetPassword = true, status: initialStatus }
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        className="w-full py-6 border-2 hover:bg-muted transition-all duration-200"
+                                        className="w-full py-6 border border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card transition-colors duration-200"
                                     >
                                         <svg
                                             className="w-5 h-5 me-2"

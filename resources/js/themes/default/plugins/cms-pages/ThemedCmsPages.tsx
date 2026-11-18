@@ -39,8 +39,8 @@ function ThemedSinglePage({ slug, isAr, className }: { slug: string; isAr: boole
 
   return (
     <div data-testid="cms-page-container" className={`themed-cms-page ${className}`}>
-      {/* Hero Section with Gradient */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-background border-b">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden bg-background border-b border-border">
         <div className="container relative mx-auto px-4 py-16 md:py-24 text-center">
           <h1 data-testid="cms-page-title" className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
             {title}
@@ -52,7 +52,7 @@ function ThemedSinglePage({ slug, isAr, className }: { slug: string; isAr: boole
       {/* Main Content */}
       <div className="container mx-auto px-4 py-12 md:py-16">
         <div className="max-w-3xl mx-auto">
-          <article className="bg-card rounded-2xl shadow-sm border p-6 md:p-10 lg:p-12">
+          <article className="rounded-2xl border border-border bg-muted/70 dark:bg-black/25 shadow-none p-6 md:p-10 lg:p-12">
             {content && (
               <div
                 dir={contentDir}

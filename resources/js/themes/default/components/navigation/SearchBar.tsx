@@ -138,6 +138,7 @@ export function SearchBar({ className, autoFocus, onClose }: SearchBarProps) {
             </form>
             {showSuggestions && searchQuery.trim().length >= 2 && (
                 <Card
+                    variant="elevated"
                     data-testid="search-suggestions-container"
                     className="absolute top-full inset-x-0 mt-2 z-50 bg-popover text-popover-foreground border border-border shadow-xl rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
                 >

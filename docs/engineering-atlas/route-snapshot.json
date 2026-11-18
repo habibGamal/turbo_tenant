@@ -4434,7 +4434,7 @@
       "domain_bound": false,
       "source": {
         "file": "app/Plugins/PaymentProcessing/src/Http/Controllers/Api/PaymentProcessingApiController.php",
-        "line": 28
+        "line": 31
       }
     },
     {
@@ -4539,7 +4539,7 @@
       "domain_bound": false,
       "source": {
         "file": "app/Plugins/PaymentProcessing/src/Http/Controllers/Api/PaymentProcessingApiController.php",
-        "line": 39
+        "line": 50
       }
     },
     {
@@ -6353,11 +6353,14 @@
       ],
       "uri": "sanctum/csrf-cookie",
       "name": "sanctum.csrf-cookie",
-      "action": "Laravel\\Sanctum\\Http\\Controllers\\CsrfCookieController@show",
+      "action": "Closure",
       "middleware": [
-        "web"
+        "web",
+        "universal",
+        "Stancl\\Tenancy\\Middleware\\InitializeTenancyByDomain"
       ],
       "expanded_middleware": [
+        "Stancl\\Tenancy\\Middleware\\InitializeTenancyByDomain",
         "Illuminate\\Cookie\\Middleware\\EncryptCookies",
         "Illuminate\\Cookie\\Middleware\\AddQueuedCookiesToResponse",
         "Illuminate\\Session\\Middleware\\StartSession",
@@ -6371,8 +6374,8 @@
       "excluded_middleware": [],
       "domain_bound": false,
       "source": {
-        "file": "vendor/laravel/sanctum/src/Http/Controllers/CsrfCookieController.php",
-        "line": 17
+        "file": "app/Providers/AppServiceProvider.php",
+        "line": 56
       }
     },
     {
@@ -6538,5 +6541,5 @@
       }
     }
   ],
-  "source_fingerprint": "234365e4d170fbf4fd432094bf5e9b63e04d177803ec85d99bfad27665b11ee8"
+  "source_fingerprint": "7365909731ca2fe70ca5c0cd2b5766665e35f2fabaede4ed0f1af2017a479eaf"
 }

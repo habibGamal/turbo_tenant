@@ -44,9 +44,9 @@ export default function ThemedPackageCard({ packageItem }: ThemedPackageCardProp
     return (
         <Card
             data-testid="combo-package-card"
-            className="overflow-hidden transition-all duration-300 flex flex-col justify-between group hover:shadow-lg"
+            className="overflow-hidden transition-colors duration-200 flex flex-col justify-between group hover:border-primary/40"
         >
-            <div className="relative aspect-video w-full overflow-hidden bg-muted">
+            <div className="relative aspect-video w-full overflow-hidden bg-background dark:bg-card border-b border-border/60">
                 {packageItem.image ? (
                     <img
                         src={packageItem.image}
@@ -63,7 +63,7 @@ export default function ThemedPackageCard({ packageItem }: ThemedPackageCardProp
                     <div className="absolute top-3 start-3">
                         <Badge
                             variant="secondary"
-                            className="shadow-md bg-amber-500 text-amber-950 font-semibold flex items-center gap-1"
+                            className="shadow-none bg-amber-500 text-amber-950 font-semibold flex items-center gap-1"
                         >
                             <Sparkles className="h-3 w-3" />
                             {t("featured", "Featured")}
@@ -72,11 +72,11 @@ export default function ThemedPackageCard({ packageItem }: ThemedPackageCardProp
                 )}
 
                 <div className="absolute top-3 end-3 flex flex-col gap-1.5 items-end">
-                    <Badge className="shadow-md">
+                    <Badge className="shadow-none">
                         {badgeText}
                     </Badge>
                     {isEndingSoon && (
-                        <Badge variant="destructive" className="shadow-md flex items-center gap-1">
+                        <Badge variant="destructive" className="shadow-none flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {t("endsSoon", "Ends soon")}
                         </Badge>
@@ -206,7 +206,7 @@ export default function ThemedPackageCard({ packageItem }: ThemedPackageCardProp
                             data-testid="combo-add-to-cart"
                             disabled={!isAvailable}
                             title={!isAvailable ? (badge.text || t("packageUnavailable", "This combo package is currently unavailable.")) : undefined}
-                            className="w-full shadow-sm font-medium"
+                            className="w-full shadow-none font-medium"
                         >
                             {t("selectPackage", "Select Package")}
                         </Button>

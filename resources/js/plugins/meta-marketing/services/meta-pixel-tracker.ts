@@ -1,6 +1,6 @@
 import ReactPixel from 'react-facebook-pixel';
 import { CommerceEvent } from '@/core/analytics';
-import { ensureCsrfToken, forceRefreshCsrfToken, getCsrfToken } from '@/core/api/client';
+import { ensureCsrfToken, forceRefreshCsrfToken, getXsrfToken } from '@/core/api/client';
 import { metaContentId } from '../utils/content-id';
 import { MetaCustomData, MetaPixelConfig, MetaRelayPayload } from '../types';
 
@@ -47,15 +47,6 @@ export function generateEventId(): string {
     return crypto.randomUUID();
   }
   return 'evt_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now().toString(36);
-}
-
-/**
- * Parse XSRF-TOKEN cookie value.
- */
-function getXsrfToken(): string | null {
-  if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(/(^|;)\s*XSRF-TOKEN=([^;]+)/);
-  return match ? decodeURIComponent(match[2]) : null;
 }
 
 /**
@@ -145,7 +136,6 @@ async function relayEvent(payload: MetaRelayPayload): Promise<void> {
 
   try {
     await ensureCsrfToken();
-    const csrfToken = getCsrfToken();
     const xsrfToken = getXsrfToken();
 
     const headers: Record<string, string> = {
@@ -154,9 +144,7 @@ async function relayEvent(payload: MetaRelayPayload): Promise<void> {
       'X-Requested-With': 'XMLHttpRequest',
     };
 
-    if (csrfToken) {
-      headers['X-CSRF-TOKEN'] = csrfToken;
-    } else if (xsrfToken) {
+    if (xsrfToken) {
       headers['X-XSRF-TOKEN'] = xsrfToken;
     }
 
@@ -177,17 +165,11 @@ async function relayEvent(payload: MetaRelayPayload): Promise<void> {
     });
 
     if (res.status === 419 && typeof document !== 'undefined') {
-      const freshCsrf = await forceRefreshCsrfToken();
-      delete headers['X-CSRF-TOKEN'];
-      delete headers['X-XSRF-TOKEN'];
-
-      if (freshCsrf) {
-        headers['X-CSRF-TOKEN'] = freshCsrf;
+      const refreshedXsrf = await forceRefreshCsrfToken();
+      if (refreshedXsrf) {
+        headers['X-XSRF-TOKEN'] = refreshedXsrf;
       } else {
-        const refreshedXsrf = getXsrfToken();
-        if (refreshedXsrf) {
-          headers['X-XSRF-TOKEN'] = refreshedXsrf;
-        }
+        delete headers['X-XSRF-TOKEN'];
       }
 
       res = await fetch('/api/meta/events', {

@@ -22,7 +22,7 @@ export default function ThemedPackagesSection() {
     }
 
     return (
-        <section data-testid="combos-section" className="py-12 bg-background/50">
+        <section data-testid="combos-section" className="py-12 bg-background border-b border-border/50">
             <div className="container mx-auto px-4">
                 <div className="flex items-center justify-between mb-8">
                     <div>

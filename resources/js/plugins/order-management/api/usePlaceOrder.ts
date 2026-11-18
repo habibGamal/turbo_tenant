@@ -18,6 +18,20 @@ export function usePlaceOrder() {
             queryClient.invalidateQueries({ queryKey: ['cart'] });
             queryClient.invalidateQueries({ queryKey: ['locations-delivery'] });
 
+            if (data.requires_payment && data.tracking_token) {
+                try {
+                    sessionStorage.setItem(
+                        `guest:tracking:${data.order_id}`,
+                        JSON.stringify({
+                            order_number: data.order_number,
+                            tracking_token: data.tracking_token,
+                        })
+                    );
+                } catch {
+                    // ignore sessionStorage quota or private browsing errors
+                }
+            }
+
             if (data.tracking) {
                 if (!data.requires_payment) {
                     emitCommerceEvent('Purchase', { tracking: data.tracking });

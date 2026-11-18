@@ -60,7 +60,7 @@ export default function ForgotPassword({ status: initialStatus }: ForgotPassword
                 <div className="w-full max-w-md">
                     {/* Logo/Brand */}
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-lg">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-none">
                             <KeyRound className="w-8 h-8 text-primary-foreground" />
                         </div>
                         <h1 className="text-3xl font-bold text-foreground">
@@ -71,7 +71,7 @@ export default function ForgotPassword({ status: initialStatus }: ForgotPassword
                         </p>
                     </div>
 
-                    <Card className="shadow-xl border-border bg-card">
+                    <Card>
                         <CardHeader className="space-y-1">
                             <CardTitle className="text-2xl font-bold text-center">
                                 {t("resetPassword")}
@@ -119,7 +119,7 @@ export default function ForgotPassword({ status: initialStatus }: ForgotPassword
                                 </div>
 
                                 {/* Info Box */}
-                                <div className="p-4 bg-muted border border-border rounded-lg">
+                                <div className="p-4 bg-background dark:bg-card border border-border/90 rounded-lg">
                                     <p className="text-sm text-muted-foreground">
                                         {t("passwordResetLinkInfo")}
                                     </p>
@@ -130,7 +130,7 @@ export default function ForgotPassword({ status: initialStatus }: ForgotPassword
                                 <Button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-6 rounded-lg shadow-none transition-colors duration-200"
                                 >
                                     {processing ? (
                                         <span className="flex items-center gap-2">

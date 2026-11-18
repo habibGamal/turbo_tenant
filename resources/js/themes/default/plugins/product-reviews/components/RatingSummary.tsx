@@ -23,7 +23,7 @@ export default function RatingSummary({ reviews, averageRating }: RatingSummaryP
     });
 
     return (
-        <div className="bg-card rounded-xl border p-6 space-y-6">
+        <div className="rounded-xl border border-border bg-muted/70 dark:bg-black/25 shadow-none p-6 space-y-6">
             <div className="flex items-center gap-4">
                 <div className="text-center">
                     <div className="text-5xl font-bold text-foreground">

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Core\Plugins\Enums\PluginStatus;
+use App\Core\Plugins\Services\PluginManager;
 use App\Models\TenantPlugin;
 use App\Models\User;
+use App\Plugins\GuestCheckout\src\Models\GuestUser;
 use App\Plugins\OrderManagement\src\Enums\OrderStatus;
 use App\Plugins\OrderManagement\src\Enums\PaymentStatus;
 use App\Plugins\OrderManagement\src\Models\Order;
@@ -33,6 +35,7 @@ final class PaymentProcessingApiTest extends TestCase
 
     public function test_payment_status_allowed_for_order_owner_with_envelope_shape(): void
     {
+        $this->setPluginActive('guest-checkout', true);
         $user = User::factory()->create();
         $this->actingAs($user);
 
@@ -55,10 +58,12 @@ final class PaymentProcessingApiTest extends TestCase
                     'payment_status' => 'completed',
                     'total' => 125.50,
                     'currency' => 'EGP',
+                    'is_guest' => false,
                 ],
                 'is_paid' => true,
             ],
         ]);
+        $response->assertJsonMissingPath('data.tracking_token');
     }
 
     public function test_payment_status_forbidden_for_other_user(): void
@@ -172,6 +177,60 @@ final class PaymentProcessingApiTest extends TestCase
         $response->assertJsonPath('data.order.id', $order->id);
     }
 
+    public function test_payment_status_includes_tracking_token_for_guest_when_guest_checkout_active(): void
+    {
+        Auth::logout();
+        $this->setPluginActive('guest-checkout', true);
+
+        $guestUser = GuestUser::factory()->create();
+        $order = Order::factory()->create([
+            'user_id' => null,
+            'guest_user_id' => $guestUser->id,
+            'order_number' => 'ORD-GUEST-STATUS-1',
+            'payment_status' => PaymentStatus::COMPLETED,
+            'total' => 110.00,
+        ]);
+
+        $response = $this->withSession([
+            'guest_order_ids' => [$order->id],
+        ])->getJson("/api/orders/{$order->id}/payment-status");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.order.is_guest', true);
+        $token = $response->json('data.tracking_token');
+        $this->assertIsString($token);
+        $this->assertNotEmpty($token);
+
+        $trackResponse = $this->postJson('/api/guest-checkout/track', [
+            'order_number' => $order->order_number,
+            'token' => $token,
+        ]);
+
+        $trackResponse->assertOk();
+        $trackResponse->assertJsonPath('data.id', $order->id);
+        $trackResponse->assertJsonPath('data.order_number', $order->order_number);
+    }
+
+    public function test_payment_status_omits_tracking_token_for_guest_when_guest_checkout_inactive(): void
+    {
+        Auth::logout();
+        $this->setPluginActive('guest-checkout', false);
+
+        $order = Order::factory()->create([
+            'user_id' => null,
+            'payment_status' => PaymentStatus::PENDING,
+            'total' => 95.00,
+        ]);
+
+        $response = $this->withSession([
+            'guest_order_ids' => [$order->id],
+        ])->getJson("/api/orders/{$order->id}/payment-status");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.order.is_guest', true);
+        $response->assertJsonMissingPath('data.tracking_token');
+    }
+
     public function test_kashier_config_forbidden_for_other_user(): void
     {
         $owner = User::factory()->create();
@@ -246,5 +305,23 @@ final class PaymentProcessingApiTest extends TestCase
             'message' => 'Failed to initialize payment gateway',
         ]);
         $this->assertStringNotContainsString('Sensitive DB connection', $response->getContent() ?: '');
+    }
+
+    private function setPluginActive(string $pluginId, bool $active): void
+    {
+        $tenant = self::$testTenant;
+        $manager = app(PluginManager::class);
+
+        TenantPlugin::updateOrCreate([
+            'tenant_id' => (string) $tenant->id,
+            'plugin_id' => $pluginId,
+        ], [
+            'status' => $active ? PluginStatus::ACTIVE : PluginStatus::DEACTIVATED,
+        ]);
+
+        $manager->resetTenant($tenant);
+        if ($active) {
+            $manager->bootTenant($tenant);
+        }
     }
 }

@@ -93,9 +93,9 @@ export default function ThemedKashierPayment() {
             </p>
           </div>
 
-          <Card className="p-6 shadow-sm border border-border bg-card">
+          <Card className="p-6">
             <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-border/90 bg-background dark:bg-card rounded-lg">
                 <div>
                   <p className="text-sm text-muted-foreground">
                     {t('amountToPay', 'Amount to Pay')}
@@ -114,7 +114,7 @@ export default function ThemedKashierPayment() {
             </div>
           </Card>
 
-          <div className="flex gap-3 p-4 rounded-lg border border-border bg-muted/40">
+          <div className="flex gap-3 p-4 rounded-xl border border-border bg-muted/70 dark:bg-black/25">
             <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
             <div>
               <p className="font-medium text-foreground">

@@ -131,10 +131,10 @@ export default function ComboComponentCustomizer({
                   return (
                     <div
                       key={extra.id}
-                      className={`flex items-center justify-between p-2 rounded-md border text-xs transition-colors ${
+                      className={`flex items-center justify-between p-2 rounded-md border text-xs transition-colors shadow-none ${
                         isExtraSelected
-                          ? 'border-primary/60 bg-primary/5 shadow-xs'
-                          : 'border-border/60 hover:bg-muted/30'
+                          ? 'border-primary/60 bg-primary/5'
+                          : 'border-border/80 bg-background/70 dark:bg-card/70 hover:bg-muted/30'
                       }`}
                     >
                       <label className="flex items-center gap-2 flex-1 cursor-pointer select-none">
@@ -156,7 +156,7 @@ export default function ComboComponentCustomizer({
                       </label>
 
                       {isExtraSelected && extra.allow_quantity && (
-                        <div className="flex items-center gap-1 border rounded px-1 py-0.5 bg-background shadow-xs">
+                        <div className="flex items-center gap-1 border border-border/90 rounded px-1 py-0.5 bg-background dark:bg-card shadow-none">
                           <button
                             type="button"
                             onClick={() => onChangeExtraQty(extra.id, -1)}

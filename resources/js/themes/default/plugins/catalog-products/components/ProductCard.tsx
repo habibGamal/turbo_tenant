@@ -133,16 +133,16 @@ export default function ProductCard({
         <>
             <Card
                 data-testid="product-card"
-                className={`group flex flex-col h-full border border-slate-100 dark:border-slate-800 shadow-[0_2px_8px_-2px_rgba(16,43,63,0.06),0_1px_2px_0_rgba(16,43,63,0.04)] transition-all duration-300 ${isProductActive ? 'hover:shadow-[0_12px_24px_-4px_rgba(16,43,63,0.12),0_4px_8px_-2px_rgba(16,43,63,0.04)] hover:-translate-y-1' : 'opacity-70 grayscale cursor-not-allowed'}`}
+                className={`group flex flex-col h-full overflow-hidden transition-colors duration-200 ${isProductActive ? 'hover:border-primary/40' : 'opacity-70 grayscale cursor-not-allowed'}`}
                 aria-disabled={!isProductActive}
             >
                 {/* Product Image wrapped in Link */}
-                <div className="relative aspect-square overflow-hidden rounded-t-lg">
+                <div className="relative aspect-square overflow-hidden bg-background dark:bg-card border-b border-border/60">
                     {isProductActive ? (
                         <Link
                             to={`/products/${product.id}`}
                             onClick={handleLinkClick}
-                            className="block w-full h-full rounded-t-lg"
+                            className="block w-full h-full"
                             tabIndex={-1}
                             aria-hidden="true"
                         >
@@ -167,17 +167,17 @@ export default function ProductCard({
                     {/* Badges */}
                     <div className="absolute z-10 top-2 start-2 flex flex-col gap-2 pointer-events-none">
                         {!isProductActive && (
-                            <Badge variant="secondary" className="bg-muted text-muted-foreground shadow-lg">
+                            <Badge variant="secondary" className="bg-muted text-muted-foreground shadow-none">
                                 {t('unavailable')}
                             </Badge>
                         )}
                         {product.badge && (
-                            <Badge className="backdrop-blur-sm bg-primary/90 shadow-lg">
+                            <Badge className="backdrop-blur-sm bg-primary/90 shadow-none">
                                 {getText(product.badge, product.badgeAr)}
                             </Badge>
                         )}
                         {hasDiscount && (
-                            <Badge variant="destructive" className="flex items-center gap-1 shadow-lg">
+                            <Badge variant="destructive" className="flex items-center gap-1 shadow-none">
                                 <Flame className="h-3 w-3" />
                                 <span dir="ltr">-{discountPercent}%</span>
                             </Badge>
@@ -190,7 +190,7 @@ export default function ProductCard({
                             data-testid="product-favorite-toggle"
                             variant="secondary"
                             size="icon"
-                            className="absolute top-2 end-2 h-11 w-11 rounded-full bg-card/90 backdrop-blur-sm hover:bg-card shadow-md transition-transform active:scale-95 z-20 flex items-center justify-center"
+                            className="absolute top-2 end-2 h-11 w-11 md:h-11 md:w-11 rounded-full border border-border/80 bg-background/90 backdrop-blur-sm hover:bg-background dark:bg-card/90 dark:hover:bg-card shadow-none transition-transform active:scale-95 z-20 flex items-center justify-center"
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -218,7 +218,7 @@ export default function ProductCard({
                     {/* Category Chip */}
                     {getCategoryName() && (
                         <div className="mb-1.5">
-                            <Badge variant="outline" className="text-xs font-normal">
+                            <Badge variant="outline" className="text-xs font-normal border-border/80 bg-background/80 dark:bg-card/60">
                                 {getCategoryName()}
                             </Badge>
                         </div>
@@ -286,7 +286,7 @@ export default function ProductCard({
                         <Button
                             data-testid="product-add-to-cart"
                             aria-label={t('addToCart')}
-                            className="h-11 w-11 rounded-full shrink-0 shadow-sm flex items-center justify-center p-0 transition-transform active:scale-95"
+                            className="h-11 w-11 md:h-11 md:w-11 rounded-full shrink-0 shadow-none flex items-center justify-center p-0 transition-transform active:scale-95"
                             onClick={handleButtonClick}
                             disabled={isLoading || addingToCart || isAddingDirect || !isProductActive}
                         >

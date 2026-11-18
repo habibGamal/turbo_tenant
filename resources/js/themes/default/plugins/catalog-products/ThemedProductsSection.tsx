@@ -105,8 +105,8 @@ export default function ThemedProductsSection({ sections: propSections }: Themed
         <section
           key={section.id}
           data-testid="catalog-section"
-          className={`py-12 md:py-20 ${
-            sectionIndex % 2 === 0 ? 'bg-background' : 'bg-muted/30'
+          className={`py-12 md:py-20 bg-background ${
+            sectionIndex > 0 ? 'border-t border-border/50' : ''
           }`}
         >
           <div className="container mx-auto px-4">
@@ -124,7 +124,7 @@ export default function ThemedProductsSection({ sections: propSections }: Themed
                   </h2>
                 </div>
               </div>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="shadow-none">
                 <Link to="/menu" data-testid="section-view-all" className="gap-1.5">
                   {t('viewAll')}
                   <ArrowRight className="h-4 w-4 rtl:rotate-180" />

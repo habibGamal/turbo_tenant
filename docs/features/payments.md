@@ -21,7 +21,7 @@ Lets customers pay by card or mobile wallet through **Paymob** or **Kashier**, a
 
 1. At checkout choose a card/wallet method and **Place Order**.
 2. You are redirected to the gateway's page (Paymob hosted checkout, or the store's `/payments/:id/kashier` page for Kashier) and pay there.
-3. You return to `/orders/:id/payment/callback`, which shows success, failure, or "pending" while the gateway confirmation has not arrived yet; the page polls the payment status.
+3. You return to `/orders/:id/payment/callback`, which shows success, failure, or "pending" while the gateway confirmation has not arrived yet; the page polls the payment status. **View Order** (`عرض الطلب`) opens `/orders/:id` for signed-in customers, or `/orders/track?order_number=...&token=...` for guests (`guest-checkout` active).
 4. After a failed payment you can retry from the order; the cart lines were already removed once the payment page was created.
 
 ### Rules customers notice
@@ -62,7 +62,7 @@ sequenceDiagram
    6. a `payment_events` row is recorded.
    Webhook routes are `tenantUngated` (work even if the plugin was deactivated mid-payment) and CSRF-exempt.
 4. **Return page:** [`PaymentController::paymentCallback`](../../app/Plugins/PaymentProcessing/src/Http/Controllers/PaymentController.php) only reads `payment_status` through [`PaymentCallbackService`](../../app/Plugins/PaymentProcessing/src/Services/PaymentCallbackService.php) and redirects to the SPA with `status=success|failed|pending`. It never changes state.
-5. **Status/config endpoints:** `payment-status` and `kashier-config` require the caller to own the order: the signed-in user for account orders, or the order id stored in the session's `guest_order_ids` for guest orders ([`AuthorizesOrderPayment`](../../app/Plugins/PaymentProcessing/src/Http/Requests/Concerns/AuthorizesOrderPayment.php)).
+5. **Status/config endpoints:** `payment-status` and `kashier-config` require the caller to own the order: the signed-in user for account orders, or the order id stored in the session's `guest_order_ids` for guest orders ([`AuthorizesOrderPayment`](../../app/Plugins/PaymentProcessing/src/Http/Requests/Concerns/AuthorizesOrderPayment.php)). For guest orders when `guest-checkout` is active, `payment-status` runs [`OrderPaymentStatusResponseContributor`](../../app/Plugins/OrderManagement/src/Contracts/OrderPaymentStatusResponseContributor.php) contributions (`order.payment-status.response`) so [`GuestPaymentStatusResponseContributor`](../../app/Plugins/GuestCheckout/src/Http/Response/GuestPaymentStatusResponseContributor.php) attaches `tracking_token`, and [`resolvePaymentCallbackOrderLink`](../../resources/js/plugins/payment-processing/api/usePaymentStatus.ts#L88) routes callback order actions to `/orders/track?order_number=...&token=...`.
 6. **COD fee:** [`ApplyCodFeePipe`](../../app/Plugins/PaymentProcessing/src/Pipelines/Pipes/ApplyCodFeePipe.php) adds `cod_fee` to cash orders. [`PaymentProcessingBootstrapContributor`](../../app/Plugins/PaymentProcessing/src/Bootstrap/PaymentProcessingBootstrapContributor.php) exposes `cod_fee` and `online_payments_enabled` to the storefront.
 
 ### Asynchronous and failure paths

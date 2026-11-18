@@ -106,7 +106,7 @@ export default function ProductInfo({ product, totalPrice }: ProductInfoProps) {
             {shippingNotice && (
                 <div
                     data-testid="product-shipping-notice"
-                    className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 text-xs sm:text-sm text-muted-foreground"
+                    className="inline-flex items-center gap-2 rounded-lg border border-border bg-muted/70 dark:bg-black/25 px-3 py-1.5 text-xs sm:text-sm text-muted-foreground"
                 >
                     <Truck className="h-4 w-4 shrink-0 text-primary" />
                     <span>{shippingNotice}</span>
@@ -125,7 +125,7 @@ export default function ProductInfo({ product, totalPrice }: ProductInfoProps) {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-4">
                         {settings.product_show_cards.map((card: any, index: number) => (
-                            <div key={index} className="flex items-center gap-3 p-3 sm:p-4 bg-muted/50 rounded-xl border border-border/50 hover:bg-muted transition-colors">
+                            <div key={index} className="flex items-center gap-3 p-3 sm:p-4 bg-muted/70 dark:bg-black/25 rounded-xl border border-border hover:border-primary/40 transition-colors">
                                 <div className="h-8 w-8 relative shrink-0">
                                     <ImageWithFallback
                                         src={card.icon}

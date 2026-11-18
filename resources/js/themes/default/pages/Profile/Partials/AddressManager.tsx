@@ -155,7 +155,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium">{t("yourAddresses")}</h3>
-                <Button onClick={openCreateModal} size="sm">
+                <Button onClick={openCreateModal} size="sm" className="shadow-none">
                     <Plus className="h-4 w-4 me-2" />
                     {t("addNewAddress")}
                 </Button>
@@ -170,7 +170,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                     {addresses.map((address) => (
                         <div
                             key={address.id}
-                            className="border rounded-lg p-4 hover:border-primary transition-colors"
+                            className="border border-border/90 bg-background dark:bg-card rounded-xl p-4 hover:border-primary/50 transition-colors"
                         >
                             {address.is_default && (
                                 <span className="mb-3 inline-flex w-fit bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
@@ -199,6 +199,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                                 <Button
                                     variant="outline"
                                     size="icon"
+                                    className="border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card"
                                     aria-label={t("editAddress", "تعديل العنوان")}
                                     onClick={() => openEditModal(address)}
                                 >
@@ -207,6 +208,7 @@ export default function AddressManager({ addresses: initialAddresses }: { addres
                                 <Button
                                     variant="destructive"
                                     size="icon"
+                                    className="shadow-none"
                                     aria-label={t("confirmDeleteAddressTitle", t("delete", "حذف العنوان"))}
                                     onClick={() => handleDelete(address.id)}
                                 >
