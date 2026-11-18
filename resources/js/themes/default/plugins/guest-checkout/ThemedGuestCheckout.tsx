@@ -9,6 +9,7 @@ export interface ThemedGuestCheckoutProps {
     governorates?: Governorate[];
     orderType?: string;
     errors?: Record<string, string>;
+    simplifiedAddress?: boolean;
 }
 
 export default function ThemedGuestCheckout(props: ThemedGuestCheckoutProps) {
@@ -18,6 +19,7 @@ export default function ThemedGuestCheckout(props: ThemedGuestCheckoutProps) {
         governorates = [],
         orderType = "web_delivery",
         errors = {},
+        simplifiedAddress,
     } = props;
 
     const handleNormalizedChange = (dataOrField: any, value?: any) => {
@@ -35,6 +37,7 @@ export default function ThemedGuestCheckout(props: ThemedGuestCheckoutProps) {
             governorates={governorates}
             orderType={orderType}
             errors={errors}
+            simplifiedAddress={simplifiedAddress}
         />
     );
 }

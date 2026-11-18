@@ -15,7 +15,13 @@ export const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 2, // 2 minutes cache validity
       gcTime: 1000 * 60 * 10,    // 10 minutes garbage collection
-      retry: 1,
+      retry: (failureCount, error: any) => {
+        const status = error?.response?.status;
+        if (status === 401 || status === 403 || status === 404) {
+          return false;
+        }
+        return failureCount < 1;
+      },
       refetchOnWindowFocus: false,
     },
     mutations: {

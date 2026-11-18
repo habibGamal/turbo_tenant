@@ -13,43 +13,47 @@ export default function OrderTypeSelection({ value, onChange }: OrderTypeSelecti
     const isRTL = i18n.language === "ar";
 
     return (
-        <Card>
-            <CardHeader>
+        <Card variant="recessed">
+            <CardHeader className="p-4 sm:p-6">
                 <CardTitle>{t("orderType")}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
                 <RadioGroup
                     value={value}
                     onValueChange={onChange}
                     className="space-y-3"
                     dir={isRTL ? "rtl" : "ltr"}
                 >
-                    <div className="flex items-center gap-2">
+                    <Label
+                        htmlFor="delivery"
+                        className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition-colors ${
+                            value === "web_delivery"
+                                ? "border-primary bg-background font-medium dark:bg-card"
+                                : "border-border/90 bg-background/85 hover:border-primary/40 hover:bg-background dark:bg-card/75 dark:hover:bg-card"
+                        }`}
+                    >
                         <RadioGroupItem
                             value="web_delivery"
                             id="delivery"
                             data-testid="order-type-delivery"
                         />
-                        <Label
-                            htmlFor="delivery"
-                            className="flex-1 cursor-pointer"
-                        >
-                            {t("delivery")}
-                        </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
+                        <span>{t("delivery")}</span>
+                    </Label>
+                    <Label
+                        htmlFor="takeaway"
+                        className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition-colors ${
+                            value === "web_takeaway"
+                                ? "border-primary bg-background font-medium dark:bg-card"
+                                : "border-border/90 bg-background/85 hover:border-primary/40 hover:bg-background dark:bg-card/75 dark:hover:bg-card"
+                        }`}
+                    >
                         <RadioGroupItem
                             value="web_takeaway"
                             id="takeaway"
                             data-testid="order-type-takeaway"
                         />
-                        <Label
-                            htmlFor="takeaway"
-                            className="flex-1 cursor-pointer"
-                        >
-                            {t("takeaway")}
-                        </Label>
-                    </div>
+                        <span>{t("takeaway")}</span>
+                    </Label>
                 </RadioGroup>
             </CardContent>
         </Card>

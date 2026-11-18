@@ -8,6 +8,7 @@ import { Product } from "@/types";
 import { NormalizedProduct } from "@/plugins/catalog-products/types";
 import { getEffectivePrice } from "@/lib/pricing";
 import { useFormatMoney } from "@/lib/money";
+import { formatWeightLabel } from "@/lib/weight";
 
 interface ProductOptionsProps {
     product: NormalizedProduct | Product;
@@ -29,6 +30,7 @@ interface ProductOptionsProps {
     missingRequiredSelections: boolean;
     limitReachedFor?: number | boolean | null;
     totalPrice?: number;
+    hideActions?: boolean;
 }
 
 export default function ProductOptions({
@@ -51,6 +53,7 @@ export default function ProductOptions({
     missingRequiredSelections,
     limitReachedFor,
     totalPrice,
+    hideActions = false,
 }: ProductOptionsProps) {
     const { t, i18n } = useTranslation();
     const formatMoney = useFormatMoney();
@@ -99,7 +102,7 @@ export default function ProductOptions({
             {/* Variants Selection */}
             {product.variants && product.variants.length > 0 && (
                 <div className="space-y-3">
-                    <label className="text-lg font-semibold">
+                    <label className="text-base sm:text-lg font-semibold ">
                         {t("selectSize")}
                     </label>
                     <RadioGroup
@@ -107,26 +110,26 @@ export default function ProductOptions({
                         onValueChange={(value) => setSelectedVariant(parseInt(value))}
                         dir={i18n.dir()}
                     >
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className={`grid grid-cols-1 ${product.variants.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"} gap-2.5 sm:gap-3 mt-2`}>
                             {product.variants.map((variant) => (
                                 <label
                                     key={variant.id}
                                     data-testid="product-variant-option"
-                                    className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedVariant === variant.id
+                                    className={`flex items-center justify-between p-3 sm:p-4 border-2 rounded-xl cursor-pointer transition-all gap-2 ${selectedVariant === variant.id
                                         ? "border-primary bg-primary/5 shadow-sm"
                                         : "border-border hover:border-primary/50"
                                         }`}
                                 >
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                                         <RadioGroupItem
                                             value={variant.id.toString()}
-                                            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary shrink-0"
                                         />
-                                        <div>
-                                            <div className="font-medium">
+                                        <div className="min-w-0 flex-1">
+                                            <div className="font-medium text-sm sm:text-base truncate">
                                                 {getText(variant.name, variant.name_ar)}
                                             </div>
-                                            <div className="text-sm text-muted-foreground">
+                                            <div className="text-xs sm:text-sm text-muted-foreground">
                                                 {formatMoney((variant.price !== null && variant.price !== undefined && variant.price > 0)
                                                     ? variant.price
                                                     : defaultProductPrice)}
@@ -134,7 +137,7 @@ export default function ProductOptions({
                                         </div>
                                     </div>
                                     {selectedVariant === variant.id && (
-                                        <Check className="h-5 w-5 text-primary animate-in zoom-in duration-200" />
+                                        <Check className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0 animate-in zoom-in duration-200" />
                                     )}
                                 </label>
                             ))}
@@ -149,11 +152,11 @@ export default function ProductOptions({
                     <Separator />
                     <div className="space-y-3">
                         <div>
-                            <label className="text-lg font-semibold">
+                            <label className="text-base sm:text-lg font-semibold">
                                 {getText(product.extraOption.name, product.extraOption.name_ar)}
                             </label>
                             {product.extraOption.description && (
-                                <p className="text-sm text-muted-foreground mt-1">
+                                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                                     {product.extraOption.description}
                                 </p>
                             )}
@@ -184,27 +187,30 @@ export default function ProductOptions({
                                 return (
                                     <div
                                         key={item.id}
-                                        className={`flex items-center justify-between p-4 border-2 rounded-xl transition-all ${isSelected
+                                        className={`flex items-center justify-between p-3 sm:p-4 border-2 rounded-xl transition-all gap-2 ${isSelected
                                             ? "border-primary bg-primary/5 shadow-sm"
                                             : "border-border hover:border-primary/30"
                                             }`}
                                     >
-                                        <label className="flex items-center gap-3 flex-1 cursor-pointer">
+                                        <label className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 cursor-pointer">
                                             <input
                                                 type="checkbox"
                                                 data-testid="extra-option-checkbox"
                                                 checked={isSelected}
                                                 onChange={() => handleExtraToggle(item.id)}
-                                                className="w-5 h-5 rounded border-primary text-primary focus:ring-primary"
+                                                className="w-4 h-4 sm:w-5 sm:h-5 rounded border-primary text-primary focus:ring-primary shrink-0"
                                             />
-                                            <div className="flex-1">
-                                                <div className="font-medium">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-medium text-sm sm:text-base truncate">
                                                     {getText(item.name, item.name_ar)}
                                                 </div>
-                                                <div className="text-sm text-muted-foreground">
-                                                    +{formatMoney(item.price)}
+                                                <div className="text-xs sm:text-sm text-muted-foreground flex items-center flex-wrap gap-x-2">
+                                                    <span className="inline-flex items-center gap-0.5">
+                                                        <span dir="ltr">+</span>
+                                                        <span>{formatMoney(item.price)}</span>
+                                                    </span>
                                                     {item.allow_quantity && isSelected && (
-                                                        <span className="ms-2 font-semibold text-primary">
+                                                        <span className="font-semibold text-primary">
                                                             × {qty}
                                                         </span>
                                                     )}
@@ -212,33 +218,35 @@ export default function ProductOptions({
                                             </div>
                                         </label>
                                         {isSelected && item.allow_quantity && (
-                                            <div className="flex items-center gap-2 animate-in fade-in ltr:slide-in-from-right-5 rtl:slide-in-from-left-5 duration-200">
+                                            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 animate-in fade-in duration-200">
                                                 <Button
                                                     type="button"
                                                     data-testid="extra-qty-decrement"
                                                     variant="outline"
                                                     size="icon"
-                                                    className="h-8 w-8 rounded-full"
+                                                    aria-label={t("decreaseQuantity", "Decrease quantity")}
+                                                    className="h-10 w-10 sm:h-8 sm:w-8 rounded-full"
                                                     onClick={() => handleExtraQuantityChange(item.id, -1)}
                                                     disabled={qty <= 1}
                                                 >
-                                                    <Minus className="h-3 w-3" />
+                                                    <Minus className="h-3.5 w-3.5" />
                                                 </Button>
-                                                <span className="w-8 text-center font-medium">{qty}</span>
+                                                <span className="w-6 sm:w-8 text-center text-xs sm:text-sm font-medium">{qty}</span>
                                                 <Button
                                                     type="button"
                                                     data-testid="extra-qty-increment"
                                                     variant="outline"
                                                     size="icon"
-                                                    className="h-8 w-8 rounded-full"
+                                                    aria-label={t("increaseQuantity", "Increase quantity")}
+                                                    className="h-10 w-10 sm:h-8 sm:w-8 rounded-full"
                                                     onClick={() => handleExtraQuantityChange(item.id, 1)}
                                                 >
-                                                    <Plus className="h-3 w-3" />
+                                                    <Plus className="h-3.5 w-3.5" />
                                                 </Button>
                                             </div>
                                         )}
                                         {isSelected && !item.allow_quantity && (
-                                            <Check className="h-5 w-5 text-primary animate-in zoom-in duration-200" />
+                                            <Check className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0 animate-in zoom-in duration-200" />
                                         )}
                                     </div>
                                 );
@@ -250,16 +258,17 @@ export default function ProductOptions({
                             </p>
                         )}
                     </div>
-                    <Separator />
                 </>
             )}
 
-            {/* Quantity & Add to Cart */}
-            <div className={`flex gap-3 pt-4 ${product.sell_by_weight ? "flex-col" : "flex-col sm:flex-row sm:items-stretch"}`} >
-                {/* Quantity Selector */}
-                <div className={product.sell_by_weight ? "w-full" : "w-full sm:w-auto"}>
-                    {product.sell_by_weight && product.weight_option?.values ? (
-                        /* Weight Options Selector */
+            {/* Weight Options Selector */}
+            {product.sell_by_weight && product.weight_option?.values && (
+                <>
+                    <Separator />
+                    <div className="space-y-3">
+                        <label className="text-base sm:text-lg font-semibold">
+                            {t("weight", "Weight")}
+                        </label>
                         <RadioGroup
                             value={selectedWeightValue?.toString()}
                             onValueChange={(value) => {
@@ -280,7 +289,7 @@ export default function ProductOptions({
                                     key={value.id}
                                     htmlFor={`weight-${value.id}`}
                                     data-testid="product-weight-option"
-                                    className={`flex items-center justify-center w-full px-3 py-3 rounded-xl border-2 text-center cursor-pointer transition-colors ${selectedWeightValue === value.id
+                                    className={`flex min-h-11 items-center justify-center w-full px-3 py-2.5 rounded-xl border-2 text-center cursor-pointer transition-colors ${selectedWeightValue === value.id
                                         ? "border-primary bg-primary/10 font-semibold text-primary"
                                         : "border-border hover:border-primary/50"
                                         }`}
@@ -290,87 +299,101 @@ export default function ProductOptions({
                                         id={`weight-${value.id}`}
                                         className="sr-only"
                                     />
-                                    <span className="truncate">
-                                        {value.label || `${value.value} ${product.weight_option!.unit}`}
+                                    <span className="truncate text-xs sm:text-sm font-medium">
+                                        {formatWeightLabel(value, product.weight_option!.unit, i18n.language === 'ar')}
                                     </span>
                                 </label>
                             ))}
                         </RadioGroup>
-                    ) : (
-                        /* Regular Quantity Selector */
-                        <div className="flex items-center justify-between sm:justify-start bg-muted/50 border border-border rounded-xl p-1 w-full sm:w-fit">
-                            <Button
-                                data-testid="product-quantity-decrement"
-                                variant="ghost"
-                                size="icon"
-                                className="h-10 w-10 rounded-lg hover:bg-background shadow-none"
-                                onClick={() => handleQuantityChange(-1)}
-                                disabled={quantity <= 1}
-                            >
-                                <Minus className="h-4 w-4" />
-                            </Button>
-                            <div className="px-4 py-2 text-center min-w-[60px] flex-1 sm:flex-none">
-                                <div data-testid="product-quantity-value" className="text-lg font-bold">
-                                    {quantity}
+                    </div>
+                </>
+            )}
+
+            {/* Quantity & Add to Cart */}
+            {!hideActions && (
+                <div className={`flex gap-3 pt-4 ${product.sell_by_weight ? "flex-col" : "flex-col sm:flex-row sm:items-center"}`} >
+                    {/* Quantity Selector (for non-weight products) */}
+                    {!product.sell_by_weight && (
+                        <div className="w-full sm:w-auto shrink-0">
+                            <div className="flex h-12 items-center justify-between sm:justify-start bg-muted/50 border border-border rounded-xl px-1 w-full sm:w-fit">
+                                <Button
+                                    type="button"
+                                    data-testid="product-quantity-decrement"
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label={t("decreaseQuantity", "Decrease quantity")}
+                                    className="h-10 w-10 md:h-10 md:w-10 rounded-lg hover:bg-background shadow-none"
+                                    onClick={() => handleQuantityChange(-1)}
+                                    disabled={quantity <= 1}
+                                >
+                                    <Minus className="h-4 w-4" />
+                                </Button>
+                                <div className="px-4 text-center min-w-[52px] flex-1 sm:flex-none">
+                                    <div data-testid="product-quantity-value" className="text-lg font-bold leading-none">
+                                        {quantity}
+                                    </div>
                                 </div>
+                                <Button
+                                    type="button"
+                                    data-testid="product-quantity-increment"
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label={t("increaseQuantity", "Increase quantity")}
+                                    className="h-10 w-10 md:h-10 md:w-10 rounded-lg hover:bg-background shadow-none"
+                                    onClick={() => handleQuantityChange(1)}
+                                >
+                                    <Plus className="h-4 w-4" />
+                                </Button>
                             </div>
-                            <Button
-                                data-testid="product-quantity-increment"
-                                variant="ghost"
-                                size="icon"
-                                className="h-10 w-10 rounded-lg hover:bg-background shadow-none"
-                                onClick={() => handleQuantityChange(1)}
-                            >
-                                <Plus className="h-4 w-4" />
-                            </Button>
                         </div>
                     )}
+
+                    {/* Actions Wrapper */}
+                    <div className="flex w-full sm:flex-1 min-w-0 items-center gap-2.5 sm:gap-3">
+                        {/* Add to Cart Button */}
+                        <Button
+                            type="button"
+                            size="lg"
+                            data-testid="product-detail-add-to-cart"
+                            className="flex-1 min-w-0 h-12 md:h-12 px-4 sm:px-6 text-base sm:text-lg gap-2 rounded-xl shadow-none [&_svg]:size-5 transition-colors"
+                            onClick={handleAddToCart}
+                            disabled={isAddingToCart || !isCanAddToCart}
+                        >
+                            <ShoppingCart className="h-5 w-5" />
+                            {isAddingToCart ? (
+                                <>
+                                    {t("adding")}
+                                    <LoaderIcon className="h-4 w-4 animate-spin" />
+                                </>
+                            ) : (
+                                `${t("addToCart")} · ${formatMoney(runningTotal)}`
+                            )}
+                        </Button>
+
+                        {/* Favorite Button */}
+                        <Button
+                            type="button"
+                            size="icon"
+                            variant="outline"
+                            aria-label={
+                                isFavorite
+                                    ? t("removeFromFavorites", "Remove from favorites")
+                                    : t("addToFavorites", "Add to favorites")
+                            }
+                            aria-pressed={isFavorite}
+                            className="h-12 w-12 md:h-12 md:w-12 p-0 rounded-xl border shrink-0 shadow-none [&_svg]:size-5"
+                            onClick={handleToggleFavorite}
+                        >
+                            <Heart
+                                className={`h-6 w-6 transition-colors ${isFavorite
+                                    ? "fill-destructive text-destructive"
+                                    : "text-muted-foreground"
+                                    }`}
+                            />
+                        </Button>
+                    </div>
                 </div>
-
-                {/* Actions Wrapper */}
-                <div className="flex w-full items-stretch gap-3">
-                    {/* Add to Cart Button */}
-                    <Button
-                        size="lg"
-                        data-testid="product-detail-add-to-cart"
-                        className="flex-1 text-lg gap-2 h-12 rounded-xl shadow-none transition-colors"
-                        onClick={handleAddToCart}
-                        disabled={isAddingToCart || !isCanAddToCart}
-
-                    >
-                        <ShoppingCart className="h-5 w-5" />
-                        {isAddingToCart ? (
-                            <>
-                                {t("adding")}
-                                <LoaderIcon className="h-4 w-4 animate-spin" />
-                            </>
-                        ) : (
-                            `${t("addToCart")} · ${formatMoney(runningTotal)}`
-                        )}
-                    </Button>
-
-                    {/* Favorite Button */}
-                    <Button
-                        size="lg"
-                        variant="outline"
-                        aria-label={
-                            isFavorite
-                                ? t("removeFromFavorites", "Remove from favorites")
-                                : t("addToFavorites", "Add to favorites")
-                        }
-                        aria-pressed={isFavorite}
-                        className="h-12 w-12 rounded-xl border shrink-0 shadow-none"
-                        onClick={handleToggleFavorite}
-                    >
-                        <Heart
-                            className={`h-6 w-6 transition-colors ${isFavorite
-                                ? "fill-destructive text-destructive"
-                                : "text-muted-foreground"
-                                }`}
-                        />
-                    </Button>
-                </div>
-            </div>
+            )}
         </div>
     );
 }

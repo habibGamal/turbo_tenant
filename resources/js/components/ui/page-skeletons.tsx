@@ -47,7 +47,7 @@ export function CheckoutSkeleton() {
                     </div>
 
                     {/* Delivery / Branch Card */}
-                    <Card className="p-6 space-y-4">
+                    <Card variant="recessed" className="p-6 space-y-4">
                         <Skeleton className="h-6 w-40" />
                         <div className="grid sm:grid-cols-2 gap-4">
                             <Skeleton className="h-12 w-full rounded-lg" />
@@ -57,7 +57,7 @@ export function CheckoutSkeleton() {
                     </Card>
 
                     {/* Guest / User Info Card */}
-                    <Card className="p-6 space-y-4">
+                    <Card variant="recessed" className="p-6 space-y-4">
                         <Skeleton className="h-6 w-36" />
                         <div className="grid sm:grid-cols-2 gap-4">
                             <Skeleton className="h-11 w-full rounded-lg" />
@@ -66,7 +66,7 @@ export function CheckoutSkeleton() {
                     </Card>
 
                     {/* Payment Method Card */}
-                    <Card className="p-6 space-y-4">
+                    <Card variant="recessed" className="p-6 space-y-4">
                         <Skeleton className="h-6 w-36" />
                         <div className="grid sm:grid-cols-3 gap-3">
                             <Skeleton className="h-20 w-full rounded-xl" />
@@ -76,7 +76,7 @@ export function CheckoutSkeleton() {
                     </Card>
 
                     {/* Order Notes */}
-                    <Card className="p-6 space-y-3">
+                    <Card variant="recessed" className="p-6 space-y-3">
                         <Skeleton className="h-5 w-28" />
                         <Skeleton className="h-20 w-full rounded-lg" />
                     </Card>
@@ -84,7 +84,7 @@ export function CheckoutSkeleton() {
 
                 {/* Summary sidebar column */}
                 <div className="lg:col-span-1 space-y-6">
-                    <Card className="p-6 space-y-5 sticky top-24">
+                    <Card variant="recessed" className="p-6 space-y-5 sticky top-24">
                         <Skeleton className="h-6 w-36" />
 
                         <div className="space-y-3 border-y border-border/50 py-4">
@@ -234,7 +234,7 @@ export function CartSkeleton() {
                 {/* Cart items list */}
                 <div className="lg:col-span-2 space-y-4">
                     {[1, 2, 3].map((i) => (
-                        <Card key={i} className="p-4 sm:p-6">
+                        <Card key={i} variant="recessed" className="p-4 sm:p-6">
                             <div className="flex items-center gap-4">
                                 <Skeleton className="h-20 w-20 sm:h-24 sm:w-24 rounded-xl shrink-0" />
                                 <div className="flex-1 space-y-2">
@@ -253,7 +253,7 @@ export function CartSkeleton() {
 
                 {/* Cart summary */}
                 <div className="lg:col-span-1">
-                    <Card className="p-6 space-y-4 sticky top-24">
+                    <Card variant="recessed" className="p-6 space-y-4 sticky top-24">
                         <Skeleton className="h-6 w-36" />
                         <div className="space-y-3 pt-2 border-t">
                             <div className="flex justify-between">

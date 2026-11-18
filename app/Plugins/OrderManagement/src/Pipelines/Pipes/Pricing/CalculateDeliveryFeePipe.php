@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Plugins\OrderManagement\src\Pipelines\Pipes\Pricing;
 
 use App\Plugins\LocationsDelivery\src\Contracts\DeliveryQuote;
+use App\Plugins\OrderManagement\src\DTOs\OrderManagementConfig;
 use App\Plugins\OrderManagement\src\Pipelines\Context\PricingCalculationContext;
 use App\Plugins\OrderManagement\src\Pipelines\Contracts\PricingCalculationPipeInterface;
 use App\Plugins\OrderManagement\src\Pipelines\DTOs\PricingAdjustment;
@@ -12,13 +13,23 @@ use Closure;
 
 final readonly class CalculateDeliveryFeePipe implements PricingCalculationPipeInterface
 {
-    public function __construct(private DeliveryQuote $deliveryQuote) {}
+    public function __construct(
+        private DeliveryQuote $deliveryQuote,
+        private OrderManagementConfig $config,
+    ) {}
 
     public function handle(PricingCalculationContext $context, Closure $next): mixed
     {
         $type = (string) ($context->data->type ?? 'web_delivery');
 
         if (in_array($type, ['web_takeaway', 'pos'], true)) {
+            return $next($context);
+        }
+
+        $freeShippingThreshold = $this->config->getFreeShippingThreshold();
+        $effectiveSubtotal = max(0.0, $context->subTotal - abs($context->getAdjustmentTotal(PricingAdjustment::TYPE_DISCOUNT)));
+
+        if ($freeShippingThreshold > 0.0 && $effectiveSubtotal >= $freeShippingThreshold) {
             return $next($context);
         }
 

@@ -11,7 +11,7 @@ export default function EmptyCart() {
     const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
 
     return (
-        <Card data-testid="empty-cart-message" className="py-16">
+        <Card variant="recessed" data-testid="empty-cart-message" className="py-16">
             <CardContent className="flex flex-col items-center gap-6">
                 <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
                     <ShoppingBag className="w-12 h-12 text-primary" />
@@ -25,7 +25,7 @@ export default function EmptyCart() {
                     </p>
                 </div>
                 <Link to="/">
-                    <Button data-testid="start-shopping-button" size="lg" className="gap-2">
+                    <Button data-testid="start-shopping-button" size="lg" className="gap-2 shadow-none">
                         {t("startShopping")}
                         <ArrowIcon className="h-4 w-4" />
                     </Button>

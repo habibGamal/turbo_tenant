@@ -120,6 +120,15 @@ function OrderDetailsRoute() {
   return <OrderShow orderId={id} />;
 }
 
+function RouteLoadingFallback() {
+  const { layouts: { MainLayout } } = useActiveTheme();
+  return (
+    <MainLayout>
+      <div role="status" className="min-h-[60vh] p-8" aria-label="Loading page" />
+    </MainLayout>
+  );
+}
+
 export function AppRouter() {
   const { pages } = useActiveTheme();
   const { Checkout, Login, Register, ForgotPassword, ResetPassword, Profile, NotFound } = pages;
@@ -127,7 +136,7 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <PluginSlot name="router.tracking" />
-      <Suspense fallback={<div role="status" className="min-h-screen p-8" aria-label="Loading page" />} >
+      <Suspense fallback={<RouteLoadingFallback />} >
       <Routes>
         <Route path="/" element={<HomeRoute />} />
         <Route

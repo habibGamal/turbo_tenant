@@ -4,7 +4,7 @@ import { useCatalogSections } from '@/plugins/catalog-products/api/useCatalogSec
 import { useCatalogCategories } from '@/plugins/catalog-products/api/useCatalogCategories';
 import { Section, ProductSummary, Category } from '@/plugins/catalog-products/types';
 import { Button } from '@/components/ui/button';
-import { Star, TrendingUp, Flame } from 'lucide-react';
+import { Star, TrendingUp, Flame, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import ProductCard from './components/ProductCard';
@@ -125,8 +125,9 @@ export default function ThemedProductsSection({ sections: propSections }: Themed
                 </div>
               </div>
               <Button asChild variant="outline">
-                <Link to="/menu" data-testid="section-view-all">
+                <Link to="/menu" data-testid="section-view-all" className="gap-1.5">
                   {t('viewAll')}
+                  <ArrowRight className="h-4 w-4 rtl:rotate-180" />
                 </Link>
               </Button>
             </div>

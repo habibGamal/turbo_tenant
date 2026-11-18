@@ -11,7 +11,8 @@ interface ReviewListProps {
 }
 
 export default function ReviewList({ reviews }: ReviewListProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const dateLocale = i18n.language === "ar" ? "ar-EG" : "en-US";
     if (reviews.length === 0) {
         return (
             <div className="text-center py-12 text-muted-foreground">
@@ -25,9 +26,9 @@ export default function ReviewList({ reviews }: ReviewListProps) {
             {reviews.map((review) => {
                 const displayName = review.user?.name || review.guest_name || t("anonymous", "Customer");
                 return (
-                    <Card key={review.id} className="overflow-hidden">
+                    <Card key={review.id} data-testid="review-card" className="overflow-hidden">
                         <CardHeader className="bg-muted/30 pb-4">
-                            <div className="flex items-start justify-between">
+                            <div className="flex items-start justify-between gap-2">
                                 <div className="flex items-center gap-3">
                                     <Avatar className="h-10 w-10 border">
                                         <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${displayName}`} />
@@ -54,8 +55,8 @@ export default function ReviewList({ reviews }: ReviewListProps) {
                                         </div>
                                     </div>
                                 </div>
-                                <span className="text-sm text-muted-foreground">
-                                    {new Date(review.created_at).toLocaleDateString(undefined, {
+                                <span className="text-sm text-muted-foreground shrink-0">
+                                    {new Date(review.created_at).toLocaleDateString(dateLocale, {
                                         year: 'numeric',
                                         month: 'long',
                                         day: 'numeric'
@@ -64,7 +65,7 @@ export default function ReviewList({ reviews }: ReviewListProps) {
                             </div>
                         </CardHeader>
                         <CardContent className="pt-4">
-                            <p className="text-foreground/80 leading-relaxed">
+                            <p dir="auto" className="text-foreground/80 leading-relaxed">
                                 {review.comment}
                             </p>
                             {review.images && review.images.length > 0 && (

@@ -107,7 +107,7 @@ export default function Footer({ sections, showNewsletter = true }: FooterProps)
                             )}
                             <span className="text-xl font-bold">{i18n.language === 'ar' && settings?.site_name_ar ? settings.site_name_ar : (settings?.site_name || t('home'))}</span>
                         </Link>
-                        <p className="text-muted-foreground">
+                        <p className="text-muted-foreground" dir="auto">
                             {settings?.site_description || t('deliveringDeliciousFood')}
                         </p>
 
@@ -161,13 +161,13 @@ export default function Footer({ sections, showNewsletter = true }: FooterProps)
                             {settings?.contact_address && (
                                 <li className="flex items-start gap-2">
                                     <MapPin className="h-5 w-5 shrink-0 mt-0.5" />
-                                    <span>{settings.contact_address}</span>
+                                    <span dir="auto">{settings.contact_address}</span>
                                 </li>
                             )}
                             {settings?.contact_phone && (
                                 <li className="flex items-center gap-2">
                                     <Phone className="h-5 w-5 shrink-0" />
-                                    <a href={`tel:${settings.contact_phone}`} className="hover:text-foreground transition-colors">
+                                    <a href={`tel:${settings.contact_phone}`} dir="ltr" className="hover:text-foreground transition-colors">
                                         {settings.contact_phone}
                                     </a>
                                 </li>
@@ -175,7 +175,7 @@ export default function Footer({ sections, showNewsletter = true }: FooterProps)
                             {settings?.contact_email && (
                                 <li className="flex items-center gap-2">
                                     <Mail className="h-5 w-5 shrink-0" />
-                                    <a href={`mailto:${settings.contact_email}`} className="hover:text-foreground transition-colors">
+                                    <a href={`mailto:${settings.contact_email}`} dir="ltr" className="hover:text-foreground transition-colors">
                                         {settings.contact_email}
                                     </a>
                                 </li>
@@ -189,7 +189,7 @@ export default function Footer({ sections, showNewsletter = true }: FooterProps)
                 {/* Bottom Bar */}
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
                     <p>
-                        © {new Date().getFullYear()} {i18n.language === 'ar' && settings?.site_name_ar ? settings.site_name_ar : (settings?.site_name || t('home'))}. {t('allRightsReserved')}.
+                        © {new Date().getFullYear()} {(i18n.language === 'ar' && settings?.site_name_ar ? settings.site_name_ar : (settings?.site_name || t('home'))).trim()}. {t('allRightsReserved').replace(/\.+$/, '')}.
                     </p>
                 </div>
             </div>

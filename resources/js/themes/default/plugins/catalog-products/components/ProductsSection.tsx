@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "./ProductCard";
 import { Button } from "@/components/ui/button";
-import { Star, TrendingUp, Flame } from "lucide-react";
+import { Star, TrendingUp, Flame, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useAddToCart } from "@/plugins/cart-engine/api";
@@ -120,8 +120,9 @@ export default function ProductsSection({ sections }: ProductsSectionProps) {
                                 )}
                             </div>
                             <Button asChild variant="outline">
-                                <Link to="/menu">
+                                <Link to="/menu" data-testid="section-view-all" className="gap-1.5">
                                     {t("viewAll")}
+                                    <ArrowRight className="h-4 w-4 rtl:rotate-180" />
                                 </Link>
                             </Button>
                         </div>

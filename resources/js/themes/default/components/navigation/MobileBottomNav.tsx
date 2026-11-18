@@ -17,6 +17,10 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
     const pathname = location.pathname;
     const { data: cart } = useCart();
 
+    if (pathname === "/checkout" || pathname.startsWith("/checkout/")) {
+        return null;
+    }
+
     const liveCartCount = cart?.items ? cart.items.length : cartItemsCount;
 
     const isHomeActive = pathname === "/";
@@ -27,25 +31,29 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
 
     const navItemClass = (isActive: boolean) =>
         cn(
-            "flex flex-col items-center justify-center py-2 px-1 rounded-md text-xs transition-colors gap-1 relative",
+            "flex flex-col items-center justify-center h-full w-full py-1 px-1 transition-all gap-1 relative select-none rounded-lg",
             isActive
                 ? "text-primary font-semibold"
-                : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                : "text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
         );
 
     return (
         <nav
             aria-label={t("bottomNavigation", "Mobile Navigation")}
-            className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 safe-bottom"
+            className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 safe-bottom shadow-[0_-1px_3px_rgba(0,0,0,0.05)]"
         >
-            <div className="grid grid-cols-4 gap-1 p-2">
+            <div className="grid grid-cols-4 h-14 sm:h-16 w-full max-w-lg mx-auto items-stretch px-1">
                 <Link
                     to="/"
                     aria-current={isHomeActive ? "page" : undefined}
                     className={navItemClass(isHomeActive)}
                 >
-                    <Home className="h-5 w-5" />
-                    <span className="text-xs">{t("home")}</span>
+                    <div className="relative flex items-center justify-center h-5 w-5 shrink-0">
+                        <Home className="h-5 w-5" />
+                    </div>
+                    <span className="text-[10px] sm:text-[11px] leading-tight font-medium text-center whitespace-nowrap truncate max-w-full px-0.5">
+                        {t("home")}
+                    </span>
                 </Link>
 
                 <Link
@@ -53,8 +61,12 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
                     aria-current={isMenuActive ? "page" : undefined}
                     className={navItemClass(isMenuActive)}
                 >
-                    <ScrollText className="h-5 w-5" />
-                    <span className="text-xs">{t("menu")}</span>
+                    <div className="relative flex items-center justify-center h-5 w-5 shrink-0">
+                        <ScrollText className="h-5 w-5" />
+                    </div>
+                    <span className="text-[10px] sm:text-[11px] leading-tight font-medium text-center whitespace-nowrap truncate max-w-full px-0.5">
+                        {t("menu")}
+                    </span>
                 </Link>
 
                 <Link
@@ -62,18 +74,20 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
                     aria-current={isCartActive ? "page" : undefined}
                     className={navItemClass(isCartActive)}
                 >
-                    <div className="relative flex items-center justify-center">
+                    <div className="relative flex items-center justify-center h-5 w-5 shrink-0">
                         <ShoppingCart className="h-5 w-5" />
                         {liveCartCount > 0 && (
                             <Badge
                                 data-testid="mobile-cart-badge-count"
-                                className="absolute -top-1.5 -end-3 h-4 min-w-4 px-1 flex items-center justify-center p-0 text-[10px] animate-in zoom-in duration-200"
+                                className="absolute -top-1.5 -end-2.5 h-4 min-w-4 px-1 flex items-center justify-center p-0 text-[10px] font-bold animate-in zoom-in duration-200 shadow-sm"
                             >
                                 {liveCartCount > 9 ? "9+" : liveCartCount}
                             </Badge>
                         )}
                     </div>
-                    <span className="text-xs">{t("cart")}</span>
+                    <span className="text-[10px] sm:text-[11px] leading-tight font-medium text-center whitespace-nowrap truncate max-w-full px-0.5">
+                        {t("cart")}
+                    </span>
                 </Link>
 
                 {user ? (
@@ -82,8 +96,12 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
                         aria-current={isProfileActive ? "page" : undefined}
                         className={navItemClass(isProfileActive)}
                     >
-                        <User className="h-5 w-5" />
-                        <span className="text-xs">{t("profile")}</span>
+                        <div className="relative flex items-center justify-center h-5 w-5 shrink-0">
+                            <User className="h-5 w-5" />
+                        </div>
+                        <span className="text-[10px] sm:text-[11px] leading-tight font-medium text-center whitespace-nowrap truncate max-w-full px-0.5">
+                            {t("profile")}
+                        </span>
                     </Link>
                 ) : (
                     <Link
@@ -91,8 +109,12 @@ export function MobileBottomNav({ user, cartItemsCount = 0 }: MobileBottomNavPro
                         aria-current={isTrackActive ? "page" : undefined}
                         className={navItemClass(isTrackActive)}
                     >
-                        <Search className="h-5 w-5" />
-                        <span className="text-xs">{t("track")}</span>
+                        <div className="relative flex items-center justify-center h-5 w-5 shrink-0">
+                            <Search className="h-5 w-5" />
+                        </div>
+                        <span className="text-[10px] sm:text-[11px] leading-tight font-medium text-center whitespace-nowrap truncate max-w-full px-0.5">
+                            {t("track")}
+                        </span>
                     </Link>
                 )}
             </div>

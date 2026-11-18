@@ -32,6 +32,7 @@ import {
     useAddToCart,
 } from "@/plugins/cart-engine/api";
 import { useFormatMoney } from "@/lib/money";
+import { formatItemsCount } from "@/lib/arabicPlural";
 import CartItem from "./components/CartItem";
 import CartSummary from "./components/CartSummary";
 import EmptyCart from "./components/EmptyCart";
@@ -194,21 +195,23 @@ export default function ThemedCart() {
     }
 
     return (
-        <div data-testid="cart-page" className="container mx-auto px-4 py-8 md:py-12">
+        <div data-testid="cart-page" className="container mx-auto px-4 py-4 sm:py-8 md:py-12">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-                <div>
-                    <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            <div className="flex items-center justify-between gap-3 mb-5 sm:mb-8">
+                <div className="min-w-0">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-0.5 sm:mb-1">
                         {t("cart")}
                     </h1>
-                    <p className="text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                         {cart.items.length > 0
-                            ? t("itemsInCart", { count: cart.items.length })
+                            ? (isRTL
+                                ? `${formatItemsCount(cart.items.length, true)} في السلة`
+                                : t("itemsInCart", { count: cart.items.length }))
                             : t("emptyCart")}
                     </p>
                 </div>
-                <Link to="/">
-                    <Button variant="outline" className="gap-2">
+                <Link to="/" className="shrink-0">
+                    <Button variant="outline" className="h-9 sm:h-10 md:h-9 px-3 sm:px-4 text-xs sm:text-sm gap-1.5 sm:gap-2 shrink-0 border-border/90 bg-background shadow-none">
                         <BackArrowIcon className="h-4 w-4" />
                         {t("continueShopping")}
                     </Button>
@@ -218,12 +221,12 @@ export default function ThemedCart() {
             {cart.items.length === 0 ? (
                 <EmptyCart />
             ) : (
-                <div className="grid lg:grid-cols-3 gap-8">
+                <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                     {/* Cart Items */}
                     <div className="lg:col-span-2 space-y-4">
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <CardTitle>
+                        <Card variant="recessed">
+                            <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 p-4 sm:p-6">
+                                <CardTitle className="text-base sm:text-lg">
                                     {t("yourItems")} ({cart.items.length})
                                 </CardTitle>
                                 <Button
@@ -232,13 +235,13 @@ export default function ThemedCart() {
                                     data-testid="clear-cart-button"
                                     onClick={handleClearCart}
                                     disabled={clearCartMutation.isPending}
-                                    className="text-destructive hover:text-destructive"
+                                    className="h-8 md:h-8 px-2.5 text-xs sm:text-sm text-destructive hover:text-destructive shrink-0 -me-1"
                                 >
-                                    <Trash2 className="h-4 w-4 me-2" />
+                                    <Trash2 className="h-4 w-4 me-1.5 sm:me-2" />
                                     {t("clearCart")}
                                 </Button>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="divide-y divide-border/70 px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
                                 {cart.items.map((item) => (
                                     <CartItem
                                         key={item.id}

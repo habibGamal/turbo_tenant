@@ -1,6 +1,7 @@
 import React from 'react';
 import Navigation from '@/themes/default/components/Navigation';
 import Footer from '@/themes/default/components/Footer';
+import FloatingWhatsAppButton from '@/themes/default/components/FloatingWhatsAppButton';
 import { PageTransition } from '@/components/PageTransition';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +27,9 @@ export default function MainLayout({ children, categories = [], cartItemsCount =
 
             {/* Footer */}
             <Footer />
+
+            {/* Floating WhatsApp CTA */}
+            <FloatingWhatsAppButton />
         </div>
     );
 }

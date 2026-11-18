@@ -17,6 +17,7 @@ import { Minus, Plus, X, ChevronDown, ChevronUp, Edit2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CartItem as CartItemType } from "@/plugins/cart-engine/types";
 import { useFormatMoney } from "@/lib/money";
+import { formatWeightLabel } from "@/lib/weight";
 import { usePackage } from "@/plugins/combo-packages/api/usePackage";
 import ThemedPackageConfigurator from "@/themes/default/plugins/combo-packages/components/ThemedPackageConfigurator";
 
@@ -90,10 +91,10 @@ export default function CartItem({
         item.weight_option_value);
 
     return (
-        <div data-testid="cart-item" className="flex gap-4 py-4 first:pt-0 last:pb-0">
+        <div data-testid="cart-item" className="flex items-start gap-3 sm:gap-4 py-3.5 sm:py-4 first:pt-0 last:pb-0">
             {/* Product / Package Image */}
             {isPackage ? (
-                <div className="relative aspect-square h-24 w-24 min-w-[6rem] overflow-hidden rounded-lg bg-muted">
+                <div className="relative aspect-square h-20 w-20 min-w-[5rem] sm:h-24 sm:w-24 sm:min-w-[6rem] shrink-0 overflow-hidden rounded-xl border border-border/80 bg-background dark:bg-card">
                     <ImageWithFallback
                         src={item.product?.image}
                         alt={item.product?.name || ""}
@@ -103,7 +104,7 @@ export default function CartItem({
             ) : (
                 <Link
                     to={`/products/${item.product.id}`}
-                    className="relative aspect-square h-24 w-24 min-w-[6rem] overflow-hidden rounded-lg bg-muted"
+                    className="relative aspect-square h-20 w-20 min-w-[5rem] sm:h-24 sm:w-24 sm:min-w-[6rem] shrink-0 overflow-hidden rounded-xl border border-border/80 bg-background dark:bg-card"
                 >
                     <ImageWithFallback
                         src={item.product.image}
@@ -114,13 +115,13 @@ export default function CartItem({
             )}
 
             {/* Product / Package Details */}
-            <div className="flex flex-1 flex-col justify-between">
-                <div>
+            <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
+                <div className="min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                        <div>
+                        <div className="min-w-0 flex-1">
                             {isPackage ? (
-                                <div className="flex items-center gap-2">
-                                    <span data-testid="cart-item-title" className="font-semibold line-clamp-1">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <span data-testid="cart-item-title" className="font-semibold text-sm sm:text-base leading-snug line-clamp-2 sm:line-clamp-1">
                                         {getText(item.product?.name || "", item.product?.name_ar)}
                                     </span>
                                     <Badge variant="secondary" className="text-[10px] py-0 px-1.5 shrink-0">
@@ -131,22 +132,27 @@ export default function CartItem({
                                 <Link
                                     to={`/products/${item.product.id}`}
                                     data-testid="cart-item-title"
-                                    className="font-semibold hover:underline line-clamp-1"
+                                    className="font-semibold text-sm sm:text-base leading-snug hover:underline line-clamp-2 sm:line-clamp-1 block"
                                 >
                                     {getText(item.product.name, item.product.name_ar)}
                                 </Link>
                             )}
-                            <p data-testid="cart-item-price" className="text-sm font-medium text-primary">
+                            <p data-testid="cart-item-price" className="text-xs sm:text-sm font-medium text-primary mt-0.5">
                                 {format(item.price)}
+                                {!isPackage && item.product?.sell_by_weight && (
+                                    <span className="text-xs font-normal text-muted-foreground ms-1">
+                                        {t("perKg")}
+                                    </span>
+                                )}
                             </p>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-0.5 shrink-0 -me-1.5 -mt-1">
                             {isPackage && (
                                 <Button
                                     data-testid="cart-item-edit"
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                    className="h-8 w-8 md:h-8 md:w-8 rounded-lg text-muted-foreground hover:text-foreground"
                                     onClick={() => setIsEditOpen(true)}
                                     disabled={isUpdating}
                                     title={t("edit", "Edit")}
@@ -159,7 +165,7 @@ export default function CartItem({
                                 data-testid="cart-item-remove"
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                className="h-8 w-8 md:h-8 md:w-8 rounded-lg text-muted-foreground hover:text-destructive"
                                 onClick={onRemove}
                                 disabled={isUpdating}
                             >
@@ -248,7 +254,7 @@ export default function CartItem({
                             )}
 
                             {item.notes && (
-                                <div data-testid="cart-item-notes" className="text-[11px] text-muted-foreground italic bg-muted/40 px-2 py-1 rounded">
+                                <div data-testid="cart-item-notes" className="text-[11px] text-muted-foreground italic border border-border/60 bg-background/80 dark:bg-card/60 px-2 py-1 rounded">
                                     "{item.notes}"
                                 </div>
                             )}
@@ -270,10 +276,10 @@ export default function CartItem({
                             {/* Weight Options */}
                             {item.product?.sell_by_weight &&
                                 item.product?.weight_option && (
-                                    <div className="flex items-center gap-2 mt-2">
+                                    <div className="flex flex-wrap items-center gap-2 mt-2">
                                         <Label
                                             htmlFor={`weight-${item.id}`}
-                                            className="text-xs"
+                                            className="text-xs shrink-0"
                                         >
                                             {t("weight")}:
                                         </Label>
@@ -289,7 +295,7 @@ export default function CartItem({
                                             <SelectTrigger
                                                 id={`weight-${item.id}`}
                                                 data-testid="cart-item-weight-select"
-                                                className="h-7 text-xs w-[120px]"
+                                                className="w-auto min-w-[6.5rem] max-w-[11rem] h-8 md:h-8 px-2.5 text-xs rounded-lg"
                                             >
                                                 <SelectValue
                                                     placeholder={t(
@@ -305,14 +311,11 @@ export default function CartItem({
                                                             value={val.id.toString()}
                                                             className="text-xs"
                                                         >
-                                                            {val.label} (
-                                                            {val.value}{" "}
-                                                            {
-                                                                item.product
-                                                                    .weight_option
-                                                                    ?.unit
-                                                            }
-                                                            )
+                                                            {formatWeightLabel(
+                                                                val,
+                                                                item.product.weight_option.unit,
+                                                                i18n.language === "ar"
+                                                            )}
                                                         </SelectItem>
                                                     )
                                                 )}
@@ -344,13 +347,14 @@ export default function CartItem({
                 </div>
 
                 {/* Quantity Controls and Total */}
-                <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center gap-1 border border-border rounded-md p-1">
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                    <div className="inline-flex h-9 items-center gap-0.5 rounded-lg border border-border/90 bg-background px-1 shadow-none dark:bg-card shrink-0">
                         <Button
                             data-testid="cart-qty-decrement"
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6"
+                            aria-label={t("decreaseQuantity", "Decrease quantity")}
+                            className="h-7 w-7 md:h-7 md:w-7 rounded-md"
                             onClick={onDecrement}
                             disabled={
                                 isUpdating ||
@@ -359,9 +363,9 @@ export default function CartItem({
                                     : item.quantity <= 1)
                             }
                         >
-                            <Minus className="h-3 w-3" />
+                            <Minus className="h-3.5 w-3.5" />
                         </Button>
-                        <span data-testid="cart-item-qty" className="w-8 text-center text-sm font-medium">
+                        <span data-testid="cart-item-qty" className="min-w-[1.75rem] px-1 text-center text-sm font-semibold tabular-nums">
                             {!isPackage && item.product?.sell_by_weight
                                 ? item.weight_multiplier
                                 : item.quantity}
@@ -370,15 +374,16 @@ export default function CartItem({
                             data-testid="cart-qty-increment"
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6"
+                            aria-label={t("increaseQuantity", "Increase quantity")}
+                            className="h-7 w-7 md:h-7 md:w-7 rounded-md"
                             onClick={onIncrement}
                             disabled={isUpdating}
                         >
-                            <Plus className="h-3 w-3" />
+                            <Plus className="h-3.5 w-3.5" />
                         </Button>
                     </div>
-                    <div className="text-end">
-                        <span className="text-sm font-semibold">
+                    <div className="text-end shrink-0 ms-auto">
+                        <span className="text-sm sm:text-base font-bold whitespace-nowrap">
                             {format((item as any).total ?? item.subtotal)}
                         </span>
                     </div>

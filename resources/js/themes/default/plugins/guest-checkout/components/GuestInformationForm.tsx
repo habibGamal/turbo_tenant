@@ -11,6 +11,9 @@ import {
 import { PhoneInput } from "@/components/ui/phone-input";
 import { useTranslation } from "react-i18next";
 import { Governorate } from "@/types";
+import { useTenantSafe } from "@/core/context/TenantContext";
+import { useFormatMoney } from "@/lib/money";
+import { formatAreaOptionLabel } from "@/lib/locationFormatters";
 
 interface GuestData {
     name: string;
@@ -31,6 +34,7 @@ interface GuestInformationFormProps {
     governorates: Governorate[];
     orderType: string;
     errors: Record<string, string>;
+    simplifiedAddress?: boolean;
 }
 
 export default function GuestInformationForm({
@@ -39,19 +43,24 @@ export default function GuestInformationForm({
     governorates,
     orderType,
     errors,
+    simplifiedAddress,
 }: GuestInformationFormProps) {
     const { t, i18n } = useTranslation();
+    const tenant = useTenantSafe();
+    const formatMoney = useFormatMoney();
     const isRTL = i18n.language === "ar";
+    const isSimplified =
+        simplifiedAddress ?? Boolean(tenant?.settings?.simplified_address_enabled);
 
     return (
-        <Card>
-            <CardHeader>
+        <Card variant="recessed">
+            <CardHeader className="p-4 sm:p-6">
                 <CardTitle>{t("guestInformation")}</CardTitle>
                 <CardDescription>
                     {t("guestInformationDescription")}
                 </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
                 {/* Name */}
                 <div className="space-y-2">
                     <Label htmlFor="guest_name">{t("fullName")}</Label>
@@ -129,7 +138,13 @@ export default function GuestInformationForm({
                                                 key={area.id}
                                                 value={area.id.toString()}
                                             >
-                                                {governorate.name} - {area.name}
+                                                {formatAreaOptionLabel(
+                                                    governorate,
+                                                    area,
+                                                    i18n.language,
+                                                    formatMoney,
+                                                    t("free")
+                                                )}
                                             </SelectItem>
                                         ))
                                     )}
@@ -142,15 +157,22 @@ export default function GuestInformationForm({
                             )}
                         </div>
 
-                        {/* Street */}
+                        {/* Street / Detailed Address */}
                         <div className="space-y-2">
-                            <Label htmlFor="guest_street">{t("street")}</Label>
+                            <Label htmlFor="guest_street">
+                                {isSimplified ? t("detailedAddress") : t("street")}
+                            </Label>
                             <Input
                                 id="guest_street"
+                                data-testid="delivery-address-input"
                                 type="text"
                                 value={guestData.street}
                                 onChange={(e) => onChange({ street: e.target.value })}
-                                placeholder={t("streetPlaceholder")}
+                                placeholder={
+                                    isSimplified
+                                        ? t("detailedAddressPlaceholder")
+                                        : t("streetPlaceholder")
+                                }
                             />
                             {errors["guest_data.street"] && (
                                 <p className="text-sm text-destructive">
@@ -159,73 +181,77 @@ export default function GuestInformationForm({
                             )}
                         </div>
 
-                        {/* Building */}
-                        <div className="space-y-2">
-                            <Label htmlFor="guest_building">{t("building")}</Label>
-                            <Input
-                                id="guest_building"
-                                type="text"
-                                value={guestData.building}
-                                onChange={(e) => onChange({ building: e.target.value })}
-                                placeholder={t("buildingPlaceholder")}
-                            />
-                            {errors["guest_data.building"] && (
-                                <p className="text-sm text-destructive">
-                                    {errors["guest_data.building"]}
-                                </p>
-                            )}
-                        </div>
+                        {!isSimplified && (
+                            <>
+                                {/* Building */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="guest_building">{t("building")}</Label>
+                                    <Input
+                                        id="guest_building"
+                                        type="text"
+                                        value={guestData.building}
+                                        onChange={(e) => onChange({ building: e.target.value })}
+                                        placeholder={t("buildingPlaceholder")}
+                                    />
+                                    {errors["guest_data.building"] && (
+                                        <p className="text-sm text-destructive">
+                                            {errors["guest_data.building"]}
+                                        </p>
+                                    )}
+                                </div>
 
-                        {/* Floor & Apartment */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="guest_floor">{t("floor")}</Label>
-                                <Input
-                                    id="guest_floor"
-                                    type="text"
-                                    value={guestData.floor}
-                                    onChange={(e) => onChange({ floor: e.target.value })}
-                                    placeholder={t("floorPlaceholder")}
-                                />
-                                {errors["guest_data.floor"] && (
-                                    <p className="text-sm text-destructive">
-                                        {errors["guest_data.floor"]}
-                                    </p>
-                                )}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="guest_apartment">{t("apartment")}</Label>
-                                <Input
-                                    id="guest_apartment"
-                                    type="text"
-                                    value={guestData.apartment}
-                                    onChange={(e) => onChange({ apartment: e.target.value })}
-                                    placeholder={t("apartmentPlaceholder")}
-                                />
-                                {errors["guest_data.apartment"] && (
-                                    <p className="text-sm text-destructive">
-                                        {errors["guest_data.apartment"]}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
+                                {/* Floor & Apartment */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="guest_floor">{t("floor")}</Label>
+                                        <Input
+                                            id="guest_floor"
+                                            type="text"
+                                            value={guestData.floor}
+                                            onChange={(e) => onChange({ floor: e.target.value })}
+                                            placeholder={t("floorPlaceholder")}
+                                        />
+                                        {errors["guest_data.floor"] && (
+                                            <p className="text-sm text-destructive">
+                                                {errors["guest_data.floor"]}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="guest_apartment">{t("apartment")}</Label>
+                                        <Input
+                                            id="guest_apartment"
+                                            type="text"
+                                            value={guestData.apartment}
+                                            onChange={(e) => onChange({ apartment: e.target.value })}
+                                            placeholder={t("apartmentPlaceholder")}
+                                        />
+                                        {errors["guest_data.apartment"] && (
+                                            <p className="text-sm text-destructive">
+                                                {errors["guest_data.apartment"]}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
 
-                        {/* City */}
-                        <div className="space-y-2">
-                            <Label htmlFor="guest_city">{t("city")} ({t("optional")})</Label>
-                            <Input
-                                id="guest_city"
-                                type="text"
-                                value={guestData.city}
-                                onChange={(e) => onChange({ city: e.target.value })}
-                                placeholder={t("cityPlaceholder")}
-                            />
-                            {errors["guest_data.city"] && (
-                                <p className="text-sm text-destructive">
-                                    {errors["guest_data.city"]}
-                                </p>
-                            )}
-                        </div>
+                                {/* City */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="guest_city">{t("city")} ({t("optional")})</Label>
+                                    <Input
+                                        id="guest_city"
+                                        type="text"
+                                        value={guestData.city}
+                                        onChange={(e) => onChange({ city: e.target.value })}
+                                        placeholder={t("cityPlaceholder")}
+                                    />
+                                    {errors["guest_data.city"] && (
+                                        <p className="text-sm text-destructive">
+                                            {errors["guest_data.city"]}
+                                        </p>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </>
                 )}
             </CardContent>

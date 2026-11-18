@@ -4,14 +4,14 @@
 
 Store admins switch capabilities on and off for their store. Each capability is a plugin; activation checks dependencies, runs the plugin's database migrations and enables its routes, admin screens, settings tabs and storefront sections.
 
-**Status:** live (host feature) · **Code:** [ManagePlugins](../../app/Filament/Pages/ManagePlugins.php), [PluginLifecycleService](../../app/Core/Plugins/Services/PluginLifecycleService.php) · **Related:** [Architecture](../architecture.md), [Store provisioning](tenant-provisioning.md)
+**Status:** live (host feature) · **Code:** [ManagePlugins](../../app/Filament/Pages/ManagePlugins.php), [PluginStatsOverview](../../app/Filament/Widgets/PluginStatsOverview.php), [PluginLifecycleService](../../app/Core/Plugins/Services/PluginLifecycleService.php) · **Related:** [Architecture](../architecture.md), [Store provisioning](tenant-provisioning.md)
 
 ## How to use
 
 ### Store admin
 
 1. Open **الإعدادات والنظام › سوق الإضافات** (Settings & system › Plugin marketplace, `/admin/plugins`).
-2. Filter by category or status. Each card shows the plugin, its status and dependencies.
+2. Review the top statistics overview cards, switch status tabs (`الكل`, `المفعلة`, `متاحة للتثبيت`, `الأساسية (Core)`), or filter/search the plugins table by category, name, description, or ID. Each row shows the plugin, category, version, dependencies, status, and available actions.
 3. **Install/activate:** if dependencies are missing, a dialog lists them and installs them first, then the plugin.
 4. **Deactivate:** refused for core plugins and for plugins another active plugin depends on. Data and files are kept.
 5. **Uninstall:** after confirmation, removes the store's plugin record and runs the plugin's uninstall hook.
@@ -40,7 +40,7 @@ php artisan tenant:plugin:deactivate acme coupons-promotions
 
 ## Testing
 
-- Automated: [PluginLifecycleTest](../../tests/Feature/PluginLifecycleTest.php), [PluginEngineTest](../../tests/Feature/PluginEngineTest.php), [EnsurePluginActiveTest](../../tests/Feature/EnsurePluginActiveTest.php), [DynamicPluginRelationsTest](../../tests/Feature/DynamicPluginRelationsTest.php), [TenantsPluginMigrateCommandTest](../../tests/Feature/TenantsPluginMigrateCommandTest.php), [tests/Unit/Core](../../tests/Unit/Core), [PluginBoundariesTest](../../tests/Feature/Security/PluginBoundariesTest.php).
+- Automated: [ManagePluginsTest](../../tests/Feature/Filament/ManagePluginsTest.php), [PluginLifecycleTest](../../tests/Feature/PluginLifecycleTest.php), [PluginEngineTest](../../tests/Feature/PluginEngineTest.php), [EnsurePluginActiveTest](../../tests/Feature/EnsurePluginActiveTest.php), [DynamicPluginRelationsTest](../../tests/Feature/DynamicPluginRelationsTest.php), [TenantsPluginMigrateCommandTest](../../tests/Feature/TenantsPluginMigrateCommandTest.php), [tests/Unit/Core](../../tests/Unit/Core), [PluginBoundariesTest](../../tests/Feature/Security/PluginBoundariesTest.php).
 
 ## Troubleshooting
 

@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Progress } from "@/components/ui/progress";
 import { ReviewItem } from "@/plugins/product-reviews/types";
+import { formatReviewsCount } from "@/lib/arabicPlural";
 
 interface RatingSummaryProps {
     reviews: ReviewItem[];
@@ -10,7 +11,7 @@ interface RatingSummaryProps {
 }
 
 export default function RatingSummary({ reviews, averageRating }: RatingSummaryProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     const totalReviews = reviews.length;
     const ratingCounts = [0, 0, 0, 0, 0]; // 1 to 5 stars
@@ -40,7 +41,7 @@ export default function RatingSummary({ reviews, averageRating }: RatingSummaryP
                         ))}
                     </div>
                     <div className="text-sm text-muted-foreground mt-1">
-                        {totalReviews} {t("reviews")}
+                        {formatReviewsCount(totalReviews, i18n.language === "ar")}
                     </div>
                 </div>
                 <div className="flex-1 space-y-2">

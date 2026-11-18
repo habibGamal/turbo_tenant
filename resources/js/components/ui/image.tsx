@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTenantSafe } from '@/core/context/TenantContext';
 
@@ -54,9 +55,6 @@ export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFal
     }, ref) => {
 
         const tenant = useTenantSafe();
-        if(tenant?.isDevMode){
-            return <div>DEV MODE</div>
-        }
         const settings = tenant?.settings;
         const defaultFallback = settings?.image_placeholder || '/images/placeholder-food.svg';
         const finalFallback = ensureAbsoluteUrl(fallback || defaultFallback);
@@ -72,6 +70,22 @@ export const ImageWithFallback = React.forwardRef<HTMLImageElement, ImageWithFal
             setIsLoading(true);
             setHasError(false);
         }, [src, finalFallback]);
+
+        if (tenant?.isDevMode) {
+            return (
+                <div
+                    role={alt ? 'img' : undefined}
+                    aria-label={alt || undefined}
+                    aria-hidden={alt ? undefined : true}
+                    className={cn(
+                        'relative overflow-hidden bg-muted/30 flex items-center justify-center w-full h-full',
+                        className
+                    )}
+                >
+                    <ImageIcon className="h-7 w-7 text-muted-foreground/30" aria-hidden="true" />
+                </div>
+            );
+        }
 
         const handleError = () => {
             if (imgSrc !== finalFallback) {

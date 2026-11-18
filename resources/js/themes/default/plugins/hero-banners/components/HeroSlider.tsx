@@ -6,6 +6,8 @@ import {
     Carousel,
     CarouselContent,
     CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
     type CarouselApi,
 } from "@/components/ui/carousel";
 import { Sparkles, Timer, TrendingUp } from "lucide-react";
@@ -34,6 +36,25 @@ interface HeroSlide {
 
 interface HeroSliderProps {
     slides?: HeroSlide[];
+}
+
+function resolveStorefrontHref(link?: string): { href: string; isExternal: boolean } {
+    const raw = (link || "").trim();
+    if (!raw) return { href: "/", isExternal: false };
+    if (raw.startsWith("/")) return { href: raw, isExternal: false };
+    try {
+        const url = new URL(raw);
+        const sameTenantHost =
+            url.hostname.endsWith(".turbosoftspace.com") ||
+            url.hostname.endsWith(".localhost") ||
+            (typeof window !== "undefined" && url.hostname === window.location.hostname);
+        if (sameTenantHost) {
+            return { href: `${url.pathname}${url.search}${url.hash}` || "/", isExternal: false };
+        }
+        return { href: raw, isExternal: true };
+    } catch {
+        return { href: raw, isExternal: false };
+    }
 }
 
 export default function HeroSlider({ slides = [] }: HeroSliderProps) {
@@ -129,8 +150,11 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
 
                         const isClickableSlide = Boolean(slide.cta_link && !hasPrimaryCta && !hasSecondaryCta);
 
+                        const primaryCta = resolveStorefrontHref(slide.cta_link);
+                        const secondaryCta = resolveStorefrontHref(slide.secondary_cta_link);
+
                         const slideContent = (
-                            <div className="relative aspect-[16/9] w-full flex items-center overflow-hidden">
+                            <div className="relative min-h-[300px] sm:min-h-[360px] md:aspect-[16/9] md:max-h-[580px] w-full flex items-center overflow-hidden">
                                 {/* Background: Image or Gradient */}
                                 {slide.image ? (
                                     <>
@@ -143,7 +167,7 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
                                                 loading={index === 0 ? "eager" : "lazy"}
                                                 fetchPriority={index === 0 ? "high" : "low"}
                                             />
-                                            {hasContent && <div className="absolute inset-0 bg-black/40" />}
+                                            {hasContent && <div className="absolute inset-0 bg-black/45" />}
                                         </div>
                                         {hasContent && (
                                             <div
@@ -167,8 +191,8 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
 
                                 {/* Content Block anchored to bottom-start over a readable scrim */}
                                 {hasContent && (
-                                    <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end items-start p-6 sm:p-10 lg:p-12 pb-14 sm:pb-16 text-start">
-                                        <div className="max-w-xl text-white space-y-3 sm:space-y-4">
+                                    <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/75 via-black/35 to-transparent flex flex-col justify-end items-start px-5 pt-8 pb-14 sm:p-10 lg:p-14 sm:pb-16 text-start">
+                                        <div className="max-w-xl text-white space-y-2.5 sm:space-y-4">
                                             {badgeText && (
                                                 <div>
                                                     <Badge variant="secondary">
@@ -187,10 +211,19 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
                                                 </p>
                                             )}
                                             {(hasPrimaryCta || hasSecondaryCta) && (
-                                                <div className="flex flex-wrap items-center gap-3 pt-2">
+                                                <div className="flex flex-wrap items-center gap-3 pt-1 sm:pt-2">
                                                     {hasPrimaryCta && (
-                                                        <Button asChild size="lg" data-testid="hero-slide-cta">
-                                                            <Link to={slide.cta_link}>{ctaText}</Link>
+                                                        <Button
+                                                            asChild
+                                                            size="lg"
+                                                            data-testid="hero-slide-cta"
+                                                            className="bg-white text-primary hover:bg-white/95 shadow-lg font-semibold border border-white/30"
+                                                        >
+                                                            {primaryCta.isExternal ? (
+                                                                <a href={primaryCta.href}>{ctaText}</a>
+                                                            ) : (
+                                                                <Link to={primaryCta.href}>{ctaText}</Link>
+                                                            )}
                                                         </Button>
                                                     )}
                                                     {hasSecondaryCta && (
@@ -198,11 +231,15 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
                                                             asChild
                                                             variant="outline"
                                                             size="lg"
-                                                            className="border-white/30 text-white hover:bg-white/10 hover:text-white bg-transparent"
+                                                            className="border-white/40 text-white hover:bg-white/15 hover:text-white bg-black/25 backdrop-blur-sm"
                                                         >
-                                                            <Link to={slide.secondary_cta_link!}>
-                                                                {secondaryCtaText}
-                                                            </Link>
+                                                            {secondaryCta.isExternal ? (
+                                                                <a href={secondaryCta.href}>{secondaryCtaText}</a>
+                                                            ) : (
+                                                                <Link to={secondaryCta.href}>
+                                                                    {secondaryCtaText}
+                                                                </Link>
+                                                            )}
                                                         </Button>
                                                     )}
                                                 </div>
@@ -216,9 +253,15 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
                         return (
                             <CarouselItem data-testid="hero-slide" key={slide.id}>
                                 {isClickableSlide ? (
-                                    <Link to={slide.cta_link} className="block w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                                        {slideContent}
-                                    </Link>
+                                    primaryCta.isExternal ? (
+                                        <a href={primaryCta.href} className="block w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                                            {slideContent}
+                                        </a>
+                                    ) : (
+                                        <Link to={primaryCta.href} className="block w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                                            {slideContent}
+                                        </Link>
+                                    )
                                 ) : (
                                     slideContent
                                 )}
@@ -226,26 +269,41 @@ export default function HeroSlider({ slides = [] }: HeroSliderProps) {
                         );
                     })}
                 </CarouselContent>
+
+                {slidesToUse.length > 1 && (
+                    <>
+                        <CarouselPrevious
+                            data-testid="hero-prev-button"
+                            aria-label={t("heroPrevSlide", "Previous slide")}
+                            className="hidden md:flex start-4 h-11 w-11 bg-black/40 hover:bg-black/65 text-white border-white/25 backdrop-blur-sm z-20 shadow-lg disabled:opacity-35"
+                        />
+                        <CarouselNext
+                            data-testid="hero-next-button"
+                            aria-label={t("heroNextSlide", "Next slide")}
+                            className="hidden md:flex end-4 h-11 w-11 bg-black/40 hover:bg-black/65 text-white border-white/25 backdrop-blur-sm z-20 shadow-lg disabled:opacity-35"
+                        />
+                    </>
+                )}
             </Carousel>
 
             {/* Dots Indicator */}
-            <div className="absolute bottom-1 inset-x-0 flex justify-center items-center gap-1 z-20">
+            <div className="absolute bottom-1 inset-x-0 flex justify-center items-center gap-2 z-20">
                 {slidesToUse.map((_, index) => (
                     <button
                         key={index}
                         type="button"
                         onClick={() => api?.scrollTo(index)}
-                        className="group p-3 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full"
+                        className="group p-3 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded-full"
                         aria-label={t("heroGoToSlide", "Go to slide {{index}}", {
                             index: index + 1,
                         })}
                         aria-current={index === current ? "true" : undefined}
                     >
                         <span
-                            className={`h-2 rounded-full transition-all ${
+                            className={`h-2 rounded-full transition-all shadow-sm ${
                                 index === current
-                                    ? "w-8 bg-primary"
-                                    : "w-2 bg-primary/30 group-hover:bg-primary/50"
+                                    ? "w-8 bg-white"
+                                    : "w-2.5 bg-white/50 group-hover:bg-white/80"
                             }`}
                         />
                     </button>

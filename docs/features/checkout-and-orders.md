@@ -12,8 +12,8 @@ Turns the customer's cart into an order, prices it on the server, sends it to pa
 
 1. From the cart, choose **Proceed to Checkout** (`/checkout`). If you are not signed in and guest checkout is off, you are sent to `/login?redirect=/checkout` with the message "Please sign in or create an account to proceed".
 2. Choose **Delivery** or **Takeaway**.
-3. Choose a **Branch** (the first active branch is preselected). For delivery, pick a saved **Delivery Address** or add one (guests fill name, phone and address fields instead).
-4. Optionally enter a coupon code and an order note.
+3. If the store has more than one active branch, choose a **Branch** (with one active branch, checkout hides the selector and preselects it automatically; selecting a delivery area also syncs its serving branch). For delivery, pick a saved **Delivery Address** or add one (guests fill name, phone and address fields instead; stores with simplified address mode enabled show a single **Detailed Address** field instead of building/floor/apartment).
+4. Optionally enter a coupon code and an order note. On mobile, the bottom navigation bar is hidden on `/checkout` so the sticky total and **Place Order** bar anchor cleanly at the bottom.
 5. Choose a payment method: **Cash on Delivery**, or card/wallet when online payments are enabled for the store.
 6. Choose **Place Order**.
    - Cash on delivery: you see the order confirmation with its number (`ORD-XXXXXXXX`). The cart is emptied.
@@ -104,7 +104,7 @@ sequenceDiagram
    | 300 | [`CalculateTaxPipe`](../../app/Plugins/OrderManagement/src/Pipelines/Pipes/Pricing/CalculateTaxPipe.php) | `tax_rate`% of (subtotal − discount), rounded to 2 dp |
    | 400 | [`CalculateServiceFeePipe`](../../app/Plugins/OrderManagement/src/Pipelines/Pipes/Pricing/CalculateServiceFeePipe.php) | `config('app.service_rate')` × (subtotal − discount). The key is not defined, so this is 0 |
    | 450 | [`ApplyCodFeePipe`](../../app/Plugins/PaymentProcessing/src/Pipelines/Pipes/ApplyCodFeePipe.php) | Store `cod_fee` for cash on delivery |
-   | 500 | [`CalculateDeliveryFeePipe`](../../app/Plugins/OrderManagement/src/Pipelines/Pipes/Pricing/CalculateDeliveryFeePipe.php) | Area `shipping_cost` for delivery orders (guest area or saved address) |
+   | 500 | [`CalculateDeliveryFeePipe`](../../app/Plugins/OrderManagement/src/Pipelines/Pipes/Pricing/CalculateDeliveryFeePipe.php) | Area `shipping_cost` for delivery orders (guest area or saved address); waived (`0`) when `free_shipping_threshold > 0` and discounted subtotal meets or exceeds the threshold |
 
 4. **Persistence:** [`OrderRepository::createOrderWithItems`](../../app/Plugins/OrderManagement/src/Services/Repositories/OrderRepository.php) runs in one transaction: generates `ORD-` + 8 random uppercase characters, snapshots the address (or guest address with area/governorate names), customer name/phone/email and coupon code, creates items with extras and package components, and clears the cart for offline payments.
 5. **Side effects:** `OrderCreated` (listeners: admin notification, coupon usage, guest session, Meta tracking context, POS, push). COD orders also fire `OrderFinalized` (POS delivery, Meta purchase). Online orders go to [`OrderPaymentDispatcher`](../../app/Plugins/OrderManagement/src/Services/Payments/OrderPaymentDispatcher.php); on gateway failure the order's payment is marked failed (`OrderPaymentFailed` releases coupon usage) and the cart is kept.
@@ -146,6 +146,8 @@ See [Data model › Order status](../data-model.md#order-status) and [Payment st
 | --- | --- | --- | --- |
 | `tax_rate` | Store settings › orders: نسبة الضريبة المضافة (%) | Tax percent on discounted subtotal | 0 |
 | `min_order_amount` | Store settings › orders: الحد الأدنى لقيمة الطلب | Minimum items subtotal | 0 |
+| `free_shipping_threshold` | Store settings › orders: الحد الأدنى للشحن المجاني | Waives delivery fee when `(subtotal - discount) >= threshold` (`0` disables) | 0 |
+| `simplified_address_enabled` | Store settings › orders: تفعيل نموذج العنوان المبسّط | Hides building/floor/apartment/city fields and uses one detailed address field | off |
 | `allow_manual_order_status_update` | Store settings › orders | Shows the manual status action | off |
 | `work_times`, `accept_orders_after_work_times` | Store settings › النظام وساعات العمل | Store open check; overnight ranges supported | open always / accept |
 | `cod_fee` | Store settings › payments | Added to COD orders | 0 |
@@ -155,7 +157,7 @@ See [Data model › Order status](../data-model.md#order-status) and [Payment st
 
 ## Testing
 
-- Automated: [OrderPlacementHttpTest](../../tests/Feature/OrderPlacementHttpTest.php), [OrderCheckoutRegressionTest](../../tests/Feature/OrderCheckoutRegressionTest.php), [OrderPlacementBugsTest](../../tests/Feature/OrderPlacementBugsTest.php), [MoneyPrecisionAndOrderSnapshotsTest](../../tests/Feature/MoneyPrecisionAndOrderSnapshotsTest.php), [PlaceOrderServiceTest](../../tests/Unit/Services/PlaceOrderServiceTest.php), [OrderPipelineRegistryTest](../../tests/Unit/Services/Order/OrderPipelineRegistryTest.php), [StoreHoursTest](../../tests/Unit/Services/Order/StoreHoursTest.php), [OrderResourceTest](../../tests/Feature/Filament/Resources/OrderResourceTest.php), [OrderStatusIntegrationSecurityTest](../../tests/Feature/Security/OrderStatusIntegrationSecurityTest.php). Run `php artisan test --filter=Order`.
+- Automated: [OrderPlacementHttpTest](../../tests/Feature/OrderPlacementHttpTest.php), [OrderCheckoutRegressionTest](../../tests/Feature/OrderCheckoutRegressionTest.php), [OrderPlacementBugsTest](../../tests/Feature/OrderPlacementBugsTest.php), [StorefrontCheckoutAndShippingSettingsTest](../../tests/Feature/StorefrontCheckoutAndShippingSettingsTest.php), [MoneyPrecisionAndOrderSnapshotsTest](../../tests/Feature/MoneyPrecisionAndOrderSnapshotsTest.php), [PlaceOrderServiceTest](../../tests/Unit/Services/PlaceOrderServiceTest.php), [OrderPipelineRegistryTest](../../tests/Unit/Services/Order/OrderPipelineRegistryTest.php), [StoreHoursTest](../../tests/Unit/Services/Order/StoreHoursTest.php), [OrderResourceTest](../../tests/Feature/Filament/Resources/OrderResourceTest.php), [OrderStatusIntegrationSecurityTest](../../tests/Feature/Security/OrderStatusIntegrationSecurityTest.php). Run `php artisan test --filter=Order`.
 - Browser: [tests/e2e/plugins/order-management](../../tests/e2e/plugins/order-management) (23 live specs covering guest/auth checkout, calculations, guards, history, status lifecycle, payment callback).
 - Manual smoke test: add a product, check out with COD and takeaway → order appears in admin with status pending and the cart is empty.
 - Not covered: real POS and real gateway behavior (faked in tests).

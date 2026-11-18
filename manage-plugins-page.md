@@ -1,22 +1,22 @@
 # Plan: Filament Plugins Management Page
 
 ## Goal
-Implement a responsive Marketplace / App Store-style Filament page in the Tenant Admin Panel (`/admin`) allowing store administrators to discover, install, activate, deactivate, and uninstall modular plugins with dependency resolution and visual status badges.
+Implement a native Filament v4 Marketplace page in the Tenant Admin Panel (`/admin/plugins`) allowing store administrators to discover, filter, search, sort, install, activate, deactivate, and uninstall modular plugins with dependency resolution and live overview stats.
 
 ## Tasks
-- [x] Task 1: Create `App\Filament\Pages\ManagePlugins` page class with Livewire actions (`installPlugin`, `deactivatePlugin`, `uninstallPlugin`), category filtering, search, and dependency validation logic → Verify: File exists and passes PHP syntax check.
-- [x] Task 2: Create Blade view `resources/views/filament/pages/manage-plugins.blade.php` with responsive cards, category badges, dependency status pills, search & filter bars, and action buttons → Verify: Blade template renders cleanly without syntax errors.
+- [x] Task 1: Create `App\Filament\Widgets\PluginStatsOverview` header `StatsOverviewWidget` (`$isDiscovered = false`) showing total, active, available, and core plugin counts and listening to `plugins-updated` → Verify: Widget renders 4 stats cards without appearing on the main Dashboard.
+- [x] Task 2: Refactor `App\Filament\Pages\ManagePlugins` to use native Filament v4 `HasTable` / `InteractsWithTable` (`$table->records(...)` with `LengthAwarePaginator`), `HasTabs` status tabs above `EmbeddedTable`, category `SelectFilter`, search, sorting, and per-row lifecycle `Action` buttons with conditional confirmation modals (removing custom Blade view `manage-plugins.blade.php`) → Verify: Page renders cleanly using `filament-panels::pages.page`.
 - [x] Task 3: Register `ManagePlugins::class` in `App\Providers\Filament\AdminPanelProvider` → Verify: Provider registers page in the tenant admin panel navigation.
-- [ ] Task 4: Write comprehensive Pest/PHPUnit feature tests (scheduled for later as requested by user).
-- [x] Task 5: Run linting and validation scripts → Verify: Pint and view cache pass with 0 errors.
+- [x] Task 4: Write comprehensive feature tests in `tests/Feature/Filament/ManagePluginsTest.php` covering stats widget, tabs, search, category filter, dependency-ordered install modal, and core/dependent protection on deactivate/uninstall → Verify: Feature tests pass.
+- [x] Task 5: Run Pint, PHPStan, view cache clear, and `docs_check.py` → Verify: Zero lint, static analysis, test, or handbook errors.
 
 ## Done When
 - [x] Tenant admins can access `/admin/plugins` (navigation item "سوق الإضافات").
-- [x] Available plugins from `PluginRegistry` are rendered in a clean grid with category badges and dependency badges.
-- [x] Admins can install/activate plugins with prerequisite dependency handling.
+- [x] Available plugins from `PluginRegistry` are rendered in a native Filament Table with category, version, dependency, and status badges.
+- [x] Admins can install/activate plugins with automatic topological prerequisite dependency handling.
 - [x] Admins can deactivate and safely uninstall non-core plugins with confirmation.
-- [x] Core plugins are protected from deactivation/uninstallation.
-- [ ] Feature tests pass (to be run later).
+- [x] Core plugins and plugins with active dependents are protected from deactivation/uninstallation.
+- [x] `ManagePluginsTest` and `SettingsUxTest` pass.
 
 ## Notes
 - Tenant context is managed by Stancl Tenancy (`tenant()`).

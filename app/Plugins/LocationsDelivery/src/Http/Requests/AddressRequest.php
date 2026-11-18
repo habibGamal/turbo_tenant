@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Plugins\LocationsDelivery\src\Http\Requests;
 
+use App\Core\Contracts\SettingsRepository;
 use App\Plugins\LocationsDelivery\src\Models\Address;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -27,6 +28,9 @@ final class AddressRequest extends FormRequest
      */
     public function rules(): array
     {
+        $simplified = app()->bound(SettingsRepository::class)
+            && filter_var(app(SettingsRepository::class)->get('simplified_address_enabled', false), FILTER_VALIDATE_BOOLEAN);
+
         return [
             'area_id' => 'required|integer|exists:areas,id',
             'phone_number' => [
@@ -35,9 +39,9 @@ final class AddressRequest extends FormRequest
                 'regex:'.self::EGYPTIAN_PHONE_REGEX,
             ],
             'street' => 'required|string|max:255',
-            'building' => 'required|string|max:255',
-            'floor' => 'required|string|max:50',
-            'apartment' => 'required|string|max:50',
+            'building' => $simplified ? 'nullable|string|max:255' : 'required|string|max:255',
+            'floor' => $simplified ? 'nullable|string|max:50' : 'required|string|max:50',
+            'apartment' => $simplified ? 'nullable|string|max:50' : 'required|string|max:50',
             'notes' => 'nullable|string|max:1000',
             'is_default' => 'nullable|boolean',
         ];

@@ -19,18 +19,18 @@ Under **التوصيل والمناطق** (Delivery & areas):
 
 ### Customer
 
-1. At checkout for delivery, select a saved address or add one: area, phone, street, building, floor, apartment, notes. The delivery fee for that area is added to the total.
+1. At checkout for delivery, select a saved address or add one: area (shown localized with shipping cost and deduplicated when governorate and area names match), phone, and either street/building/floor/apartment or a single **Detailed Address** field when `simplified_address_enabled` is enabled. The delivery fee for that area is added to the total (unless waived by a free-shipping threshold or coupon).
 2. Manage addresses from the profile page (slot `profile.addresses`).
 3. Guests type the address and pick an area at checkout ([Guest checkout](guest-checkout.md)).
 
 ### Rules customers notice
 
 - Only active areas in active governorates are offered.
-- Delivery fee = the area's shipping cost; takeaway orders have none; a free-shipping coupon can remove it.
+- Delivery fee = the area's shipping cost; takeaway orders have none; orders meeting `free_shipping_threshold` or using a free-shipping coupon have none.
 
 ## How it works
 
-1. **Entry:** [`LocationsDeliveryApiController`](../../app/Plugins/LocationsDelivery/src/Http/Controllers/Api/LocationsDeliveryApiController.php): public `index`, `governorates`, `branches`; `auth` address CRUD validated by [`AddressRequest`](../../app/Plugins/LocationsDelivery/src/Http/Requests/AddressRequest.php) and authorized by [`AddressPolicy`](../../app/Plugins/LocationsDelivery/src/Policies/AddressPolicy.php) (owner only).
+1. **Entry:** [`LocationsDeliveryApiController`](../../app/Plugins/LocationsDelivery/src/Http/Controllers/Api/LocationsDeliveryApiController.php): public `index`, `governorates`, `branches`; `auth` address CRUD validated by [`AddressRequest`](../../app/Plugins/LocationsDelivery/src/Http/Requests/AddressRequest.php) (making `building`, `floor` and `apartment` nullable when `simplified_address_enabled` is active) and authorized by [`AddressPolicy`](../../app/Plugins/LocationsDelivery/src/Policies/AddressPolicy.php) (owner only). Storefront labels are formatted by [`locationFormatters.ts`](../../resources/js/lib/locationFormatters.ts).
 2. **Contracts for other plugins:** [`DeliveryQuote`](../../app/Plugins/LocationsDelivery/src/Contracts/DeliveryQuote.php) (`feeForArea`, `feeForAddress`, implemented by [`EloquentDeliveryQuote`](../../app/Plugins/LocationsDelivery/src/Services/EloquentDeliveryQuote.php)) and [`AddressBook`](../../app/Plugins/LocationsDelivery/src/Contracts/AddressBook.php) (address snapshots and area labels for orders, [`EloquentAddressBook`](../../app/Plugins/LocationsDelivery/src/Services/EloquentAddressBook.php)).
 3. **Checkout:** `PlaceOrderRequest` requires the address to belong to the user and lie in an active area; [`CalculateDeliveryFeePipe`](../../app/Plugins/OrderManagement/src/Pipelines/Pipes/Pricing/CalculateDeliveryFeePipe.php) adds the fee; the order stores an address snapshot with area and governorate names.
 

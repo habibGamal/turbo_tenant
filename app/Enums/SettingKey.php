@@ -17,6 +17,7 @@ enum SettingKey: string implements SettingDefinition
     case SITE_FAVICON = 'site_favicon';
     case CONTACT_EMAIL = 'contact_email';
     case CONTACT_PHONE = 'contact_phone';
+    case WHATSAPP_NUMBER = 'whatsapp_number';
     case CONTACT_ADDRESS = 'contact_address';
     case SOCIAL_FACEBOOK = 'social_facebook';
     case SOCIAL_INSTAGRAM = 'social_instagram';

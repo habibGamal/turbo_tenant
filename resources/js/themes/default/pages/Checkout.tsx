@@ -15,6 +15,18 @@ import { apiClient } from "@/core/api/client";
 import { useCart, cartItemToCommerceItem } from "@/plugins/cart-engine";
 import { useLocationsDelivery } from "@/plugins/locations-delivery";
 import { useCurrency } from "@/lib/money";
+import { localizeErrorMessage } from "@/lib/validationErrors";
+
+const CHECKOUT_ERROR_KEYS = new Set([
+    "pleaseSelectBranch",
+    "pleaseSelectAddress",
+    "pleaseProvideAddress",
+    "pleaseEnterName",
+    "pleaseEnterPhone",
+    "pleaseSelectArea",
+    "pleaseEnterAddress",
+    "required",
+]);
 
 // Checkout Components (Colocated within respective theme plugin directories)
 import EmptyCart from "@/themes/default/plugins/cart-engine/components/EmptyCart";
@@ -157,7 +169,13 @@ export default function Checkout({
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    // Auto-select initial branch and address once bootstrap data loads
+    const simplifiedAddress = Boolean(checkoutSettings?.simplified_address_enabled);
+    const freeShippingThreshold = Number(checkoutSettings?.free_shipping_threshold || 0);
+    const discount = appliedCoupon ? appliedCoupon.discount : 0;
+    const cartSubtotal = Number((cart as any)?.subtotal ?? cart?.total ?? 0);
+    const effectiveSubtotal = Math.max(0, cartSubtotal - discount);
+
+    // Auto-select initial branch and address once bootstrap data loads, and keep branch synced with selected delivery area
     useEffect(() => {
         if (branches.length > 0 && !data.branch_id) {
             setData("branch_id", branches[0].id);
@@ -167,6 +185,43 @@ export default function Checkout({
             setData("address_id", defaultAddr);
         }
     }, [branches, addresses]);
+
+    useEffect(() => {
+        if (data.type !== "web_delivery" || branches.length === 0) return;
+
+        let selectedAreaId: number | null = null;
+        if (is_guest) {
+            selectedAreaId = data.guest_data?.area_id ?? null;
+        } else if (data.address_id) {
+            const selectedAddress = addresses.find((a) => a.id === data.address_id);
+            selectedAreaId = selectedAddress?.area?.id ?? selectedAddress?.area_id ?? null;
+        } else if (addresses.length === 0 && addressDraft.area_id) {
+            selectedAreaId = Number(addressDraft.area_id) || null;
+        }
+
+        if (!selectedAreaId) return;
+
+        const selectedArea = governorates
+            .flatMap((g) => g.areas || [])
+            .find((a) => a.id === Number(selectedAreaId));
+
+        if (
+            selectedArea?.branch_id &&
+            branches.some((b) => b.id === selectedArea.branch_id) &&
+            data.branch_id !== selectedArea.branch_id
+        ) {
+            setData("branch_id", selectedArea.branch_id);
+        }
+    }, [
+        data.type,
+        data.guest_data?.area_id,
+        data.address_id,
+        addressDraft.area_id,
+        is_guest,
+        branches,
+        addresses,
+        governorates,
+    ]);
 
     // Save guest data to localStorage
     const saveGuestDataToLocalStorage = () => {
@@ -182,8 +237,8 @@ export default function Checkout({
     const calculateDeliveryFee = () => {
         if (data.type === "web_takeaway") return 0;
 
-        // If free shipping coupon is applied
-        if (appliedCoupon?.free_shipping) {
+        // If free shipping coupon or store-wide threshold is reached
+        if (appliedCoupon?.free_shipping || (freeShippingThreshold > 0 && effectiveSubtotal >= freeShippingThreshold)) {
             return 0;
         }
 
@@ -219,8 +274,18 @@ export default function Checkout({
     const deliveryFee = calculateDeliveryFee();
     const tax = calculateTax(cart?.total || 0);
     const service = calculateService(cart?.total || 0);
-    const discount = appliedCoupon ? appliedCoupon.discount : 0;
     const totalAmount = (cart?.total || 0) + deliveryFee + tax + service - discount;
+
+    const resolveErrorMap = (rawMap: Record<string, string>) =>
+        Object.fromEntries(
+            Object.entries(rawMap).map(([k, v]) => [
+                k,
+                CHECKOUT_ERROR_KEYS.has(v) ? t(v) : localizeErrorMessage(v),
+            ])
+        );
+
+    const resolvedErrors = resolveErrorMap(errors);
+    const resolvedAddressDraftErrors = resolveErrorMap(addressDraftErrors);
 
     const handleCouponApplied = (coupon: AppliedCoupon) => {
         setAppliedCoupon(coupon);
@@ -332,31 +397,37 @@ export default function Checkout({
         const validationErrors: Record<string, string> = {};
 
         if (!data.branch_id) {
-            validationErrors.branch_id = t("pleaseSelectBranch");
+            validationErrors.branch_id = "pleaseSelectBranch";
         }
 
         if (data.type === "web_delivery" && !is_guest && !data.address_id) {
             if (addresses.length > 0) {
-                validationErrors.address_id = t("pleaseSelectAddress");
+                validationErrors.address_id = "pleaseSelectAddress";
             } else {
                 const missing: Record<string, string> = {};
-                for (const field of ['area_id', 'phone_number', 'street', 'building', 'floor', 'apartment'] as const) {
-                    if (!String(addressDraft[field]).trim()) missing[field] = t('required', 'Required');
+                const requiredFields = simplifiedAddress
+                    ? (['area_id', 'phone_number', 'street'] as const)
+                    : (['area_id', 'phone_number', 'street', 'building', 'floor', 'apartment'] as const);
+                for (const field of requiredFields) {
+                    if (!String(addressDraft[field]).trim()) missing[field] = "required";
                 }
                 setAddressDraftErrors(missing);
-                if (Object.keys(missing).length) validationErrors.address_id = t('pleaseProvideAddress', 'Please complete your delivery address.');
+                if (Object.keys(missing).length) validationErrors.address_id = "pleaseProvideAddress";
             }
         }
 
         if (data.type === "web_delivery" && is_guest) {
             if (!data.guest_data?.name) {
-                validationErrors["guest_data.name"] = t("pleaseProvideGuestInfo");
+                validationErrors["guest_data.name"] = "pleaseEnterName";
             }
             if (!data.guest_data?.phone) {
-                validationErrors["guest_data.phone"] = t("pleaseProvideGuestInfo");
+                validationErrors["guest_data.phone"] = "pleaseEnterPhone";
             }
             if (!data.guest_data?.area_id) {
-                validationErrors["guest_data.area_id"] = t("pleaseSelectArea");
+                validationErrors["guest_data.area_id"] = "pleaseSelectArea";
+            }
+            if (simplifiedAddress && !data.guest_data?.street?.trim()) {
+                validationErrors["guest_data.street"] = "pleaseEnterAddress";
             }
         }
 
@@ -449,7 +520,7 @@ export default function Checkout({
 
     if (isLoading) {
         return (
-            <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5">
+            <MainLayout>
                 <Head title={t("checkout")} />
                 <CheckoutSkeleton />
             </MainLayout>
@@ -458,7 +529,7 @@ export default function Checkout({
 
     if (!cart || cart.items.length === 0) {
         return (
-            <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5">
+            <MainLayout>
                 <Head title={t("checkout")} />
                 <main className="container mx-auto px-4 py-8">
                     <EmptyCart />
@@ -468,42 +539,44 @@ export default function Checkout({
     }
 
     return (
-        <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5 dark:from-background dark:via-background dark:to-primary/10">
+        <MainLayout>
             <Head title={t("checkout")} />
 
-            <main className="container mx-auto px-4 py-8 md:py-12 pb-28 lg:pb-12" data-testid="checkout-form">
-                <div className="mb-8">
-                    <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            <main className="container mx-auto px-4 py-4 sm:py-8 md:py-12 pb-24 md:pb-12" data-testid="checkout-form">
+                <div className="mb-5 sm:mb-8">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1">
                         {t("checkout")}
                     </h1>
-                    <p className="text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                         {t("completeYourOrder")}
                     </p>
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
+                <div className="grid gap-4 sm:gap-6 lg:grid-cols-3 lg:gap-8">
                     {/* Checkout Form */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="lg:col-span-2 space-y-4 sm:space-y-6 min-w-0">
                         <OrderTypeSelection
                             value={data.type}
                             onChange={(value) => setData("type", value)}
                         />
 
-                        <div id="checkout-branch-section">
-                            <BranchSelection
-                                branches={branches}
-                                value={data.branch_id}
-                                onChange={(value) => {
-                                    setData("branch_id", value);
-                                    setErrors((prev) => {
-                                        const next = { ...prev };
-                                        delete next.branch_id;
-                                        return next;
-                                    });
-                                }}
-                                error={errors.branch_id}
-                            />
-                        </div>
+                        {(branches.length > 1 || Boolean(resolvedErrors.branch_id)) && (
+                            <div id="checkout-branch-section">
+                                <BranchSelection
+                                    branches={branches}
+                                    value={data.branch_id}
+                                    onChange={(value) => {
+                                        setData("branch_id", value);
+                                        setErrors((prev) => {
+                                            const next = { ...prev };
+                                            delete next.branch_id;
+                                            return next;
+                                        });
+                                    }}
+                                    error={resolvedErrors.branch_id}
+                                />
+                            </div>
+                        )}
 
                         {is_guest && (
                             <PluginSlot
@@ -526,7 +599,8 @@ export default function Checkout({
                                     },
                                     governorates,
                                     orderType: data.type,
-                                    errors,
+                                    errors: resolvedErrors,
+                                    simplifiedAddress,
                                 }}
                                 fallback={
                                     <GuestInformationForm
@@ -546,7 +620,8 @@ export default function Checkout({
                                         }}
                                         governorates={governorates}
                                         orderType={data.type}
-                                        errors={errors as Record<string, string>}
+                                        errors={resolvedErrors}
+                                        simplifiedAddress={simplifiedAddress}
                                     />
                                 }
                             />
@@ -559,7 +634,7 @@ export default function Checkout({
                                     governorates={governorates}
                                     draft={addressDraft}
                                     onDraftChange={(draft) => { setAddressDraft(draft); setAddressDraftErrors({}); }}
-                                    draftErrors={addressDraftErrors}
+                                    draftErrors={resolvedAddressDraftErrors}
                                     selectedAddressId={data.address_id}
                                     onAddressChange={(addressId) => {
                                         setData("address_id", addressId);
@@ -569,7 +644,8 @@ export default function Checkout({
                                             return next;
                                         });
                                     }}
-                                    error={errors.address_id}
+                                    error={resolvedErrors.address_id}
+                                    simplifiedAddress={simplifiedAddress}
                                 />
                             </div>
                         )}
@@ -590,6 +666,7 @@ export default function Checkout({
                             cartItems={cart.items}
                             cartTotal={cart.total}
                             addressId={data.address_id}
+                            guestPhone={data.guest_data?.phone}
                             appliedCoupon={appliedCoupon}
                             onCouponApplied={handleCouponApplied}
                             onCouponRemoved={handleCouponRemoved}
@@ -610,6 +687,8 @@ export default function Checkout({
                             onPlaceOrder={handlePlaceOrder}
                             orderType={data.type}
                             hasAddressSelected={is_guest ? Boolean(data.guest_data?.area_id) : Boolean(data.address_id || (addresses.length === 0 && addressDraft.area_id))}
+                            freeShippingThreshold={freeShippingThreshold}
+                            effectiveSubtotal={effectiveSubtotal}
                         />
                     </div>
                 </div>

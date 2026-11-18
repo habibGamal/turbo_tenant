@@ -1,6 +1,6 @@
 import ReactPixel from 'react-facebook-pixel';
 import { CommerceEvent } from '@/core/analytics';
-import { ensureCsrfToken } from '@/core/api/client';
+import { ensureCsrfToken, forceRefreshCsrfToken, getCsrfToken } from '@/core/api/client';
 import { metaContentId } from '../utils/content-id';
 import { MetaCustomData, MetaPixelConfig, MetaRelayPayload } from '../types';
 
@@ -145,7 +145,8 @@ async function relayEvent(payload: MetaRelayPayload): Promise<void> {
 
   try {
     await ensureCsrfToken();
-    const token = getXsrfToken();
+    const csrfToken = getCsrfToken();
+    const xsrfToken = getXsrfToken();
 
     const headers: Record<string, string> = {
       'Accept': 'application/json',
@@ -153,8 +154,10 @@ async function relayEvent(payload: MetaRelayPayload): Promise<void> {
       'X-Requested-With': 'XMLHttpRequest',
     };
 
-    if (token) {
-      headers['X-XSRF-TOKEN'] = token;
+    if (csrfToken) {
+      headers['X-CSRF-TOKEN'] = csrfToken;
+    } else if (xsrfToken) {
+      headers['X-XSRF-TOKEN'] = xsrfToken;
     }
 
     if (isDebugMode(currentConfig.debugMode)) {
@@ -165,15 +168,36 @@ async function relayEvent(payload: MetaRelayPayload): Promise<void> {
       });
     }
 
-    fetch('/api/meta/events', {
+    let res = await fetch('/api/meta/events', {
       method: 'POST',
       headers,
       credentials: 'same-origin',
       keepalive: true,
       body: JSON.stringify(payload),
-    }).catch(() => {
-      // Fire-and-forget, swallow errors
     });
+
+    if (res.status === 419 && typeof document !== 'undefined') {
+      const freshCsrf = await forceRefreshCsrfToken();
+      delete headers['X-CSRF-TOKEN'];
+      delete headers['X-XSRF-TOKEN'];
+
+      if (freshCsrf) {
+        headers['X-CSRF-TOKEN'] = freshCsrf;
+      } else {
+        const refreshedXsrf = getXsrfToken();
+        if (refreshedXsrf) {
+          headers['X-XSRF-TOKEN'] = refreshedXsrf;
+        }
+      }
+
+      res = await fetch('/api/meta/events', {
+        method: 'POST',
+        headers,
+        credentials: 'same-origin',
+        keepalive: true,
+        body: JSON.stringify(payload),
+      });
+    }
   } catch {
     // Swallow errors
   }

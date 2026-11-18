@@ -48,6 +48,12 @@ final class StoreIdentitySettingsSection implements SettingsSection
                         ->label('رقم هاتف التواصل')
                         ->tel()
                         ->maxLength(20),
+                    TextInput::make(SettingKey::WHATSAPP_NUMBER->value)
+                        ->label('رقم واتساب للتواصل السريع (زر عائم)')
+                        ->tel()
+                        ->placeholder('+201012345678')
+                        ->helperText('يظهر كزر واتساب عائم في المتجر. اتركه فارغاً لاستخدام رابط واتساب من روابط التواصل أدناه أو لإخفاء الزر.')
+                        ->maxLength(30),
                     TextInput::make(SettingKey::CURRENCY->value)
                         ->label('رمز العملة الافتراضية')
                         ->required()
@@ -128,6 +134,7 @@ final class StoreIdentitySettingsSection implements SettingsSection
             SettingKey::SITE_NAME_AR,
             SettingKey::CONTACT_EMAIL,
             SettingKey::CONTACT_PHONE,
+            SettingKey::WHATSAPP_NUMBER,
             SettingKey::CONTACT_ADDRESS,
             SettingKey::SITE_DESCRIPTION,
             SettingKey::CURRENCY,

@@ -133,7 +133,7 @@ export default function ProductCard({
         <>
             <Card
                 data-testid="product-card"
-                className={`group flex flex-col h-full transition-all duration-300 ${isProductActive ? 'hover:shadow-lg hover:-translate-y-1' : 'opacity-70 grayscale cursor-not-allowed'}`}
+                className={`group flex flex-col h-full border border-slate-100 dark:border-slate-800 shadow-[0_2px_8px_-2px_rgba(16,43,63,0.06),0_1px_2px_0_rgba(16,43,63,0.04)] transition-all duration-300 ${isProductActive ? 'hover:shadow-[0_12px_24px_-4px_rgba(16,43,63,0.12),0_4px_8px_-2px_rgba(16,43,63,0.04)] hover:-translate-y-1' : 'opacity-70 grayscale cursor-not-allowed'}`}
                 aria-disabled={!isProductActive}
             >
                 {/* Product Image wrapped in Link */}
@@ -179,7 +179,7 @@ export default function ProductCard({
                         {hasDiscount && (
                             <Badge variant="destructive" className="flex items-center gap-1 shadow-lg">
                                 <Flame className="h-3 w-3" />
-                                -{discountPercent}%
+                                <span dir="ltr">-{discountPercent}%</span>
                             </Badge>
                         )}
                     </div>
@@ -190,7 +190,7 @@ export default function ProductCard({
                             data-testid="product-favorite-toggle"
                             variant="secondary"
                             size="icon"
-                            className="absolute top-2 end-2 h-9 w-9 rounded-full bg-card/90 backdrop-blur-sm hover:bg-card shadow-md transition-transform active:scale-95 z-20"
+                            className="absolute top-2 end-2 h-11 w-11 rounded-full bg-card/90 backdrop-blur-sm hover:bg-card shadow-md transition-transform active:scale-95 z-20 flex items-center justify-center"
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -225,7 +225,7 @@ export default function ProductCard({
                     )}
 
                     {/* Product Name wrapped in Link */}
-                    <h3 data-testid="product-card-title" className="font-semibold text-lg line-clamp-1">
+                    <h3 data-testid="product-card-title" className="font-semibold text-base sm:text-lg line-clamp-2 min-h-[2.5rem] leading-snug">
                         {isProductActive ? (
                             <Link
                                 to={`/products/${product.id}`}
@@ -258,7 +258,7 @@ export default function ProductCard({
                 <CardContent className="p-4 pt-0 flex-1 flex flex-col justify-between">
                     {/* Description */}
                     <div className="flex-1 mb-4">
-                        <p className="text-sm text-muted-foreground line-clamp-2">
+                        <p dir="auto" className="text-sm text-muted-foreground line-clamp-2">
                             {getText(product.description || '', product.descriptionAr)}
                         </p>
                     </div>
@@ -285,9 +285,8 @@ export default function ProductCard({
 
                         <Button
                             data-testid="product-add-to-cart"
-                            size="icon"
                             aria-label={t('addToCart')}
-                            className="rounded-full shrink-0 shadow-none"
+                            className="h-11 w-11 rounded-full shrink-0 shadow-sm flex items-center justify-center p-0 transition-transform active:scale-95"
                             onClick={handleButtonClick}
                             disabled={isLoading || addingToCart || isAddingDirect || !isProductActive}
                         >

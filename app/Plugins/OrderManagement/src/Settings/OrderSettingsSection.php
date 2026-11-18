@@ -44,7 +44,21 @@ final class OrderSettingsSection implements SettingsSection
                             ->minValue(0)
                             ->default(0)
                             ->prefix('EGP'),
+                        TextInput::make(OrderSettingKey::FREE_SHIPPING_THRESHOLD->value)
+                            ->label('الحد الأدنى للشحن المجاني')
+                            ->helperText('اتركه 0 لإلغاء الشحن المجاني التلقائي. عند تحديد مبلغ (مثلاً 700)، يصبح التوصيل مجانياً تلقائياً عند وصول قيمة المنتجات بعد الخصم لهذا الحد.')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(0)
+                            ->prefix('EGP'),
                     ]),
+                ]),
+
+                Section::make('تجربة الدفع والعنوان')->schema([
+                    Toggle::make(OrderSettingKey::SIMPLIFIED_ADDRESS_ENABLED->value)
+                        ->label('تفعيل نموذج العنوان المبسّط (العنوان بالتفصيل في حقل واحد)')
+                        ->helperText('مناسب للمتاجر التي تشحن لجميع المحافظات: يخفي حقول المبنى والدور والشقة والمدينة ويكتفي باختيار المحافظة/المنطقة وحقل واحد "العنوان بالتفصيل".')
+                        ->default(false),
                 ]),
 
                 Section::make('التحكم في أوامر الطلبات و POS')->schema([
@@ -64,6 +78,8 @@ final class OrderSettingsSection implements SettingsSection
         return [
             OrderSettingKey::TAX_RATE,
             OrderSettingKey::MIN_ORDER_AMOUNT,
+            OrderSettingKey::FREE_SHIPPING_THRESHOLD,
+            OrderSettingKey::SIMPLIFIED_ADDRESS_ENABLED,
             OrderSettingKey::ALLOW_MANUAL_ORDER_STATUS_UPDATE,
         ];
     }

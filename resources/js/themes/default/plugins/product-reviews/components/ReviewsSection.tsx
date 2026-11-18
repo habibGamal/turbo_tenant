@@ -25,10 +25,11 @@ export default function ReviewsSection({ productId, reviews, averageRating }: Re
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     return (
-        <div className="space-y-8">
-            <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold">
-                    {t("customerReviews", "Customer Reviews")} ({reviews.length})
+        <div data-testid="reviews-section" className="space-y-8">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="text-xl sm:text-2xl font-bold">
+                    {t("customerReviews", "Customer Reviews")}{" "}
+                    <span className="whitespace-nowrap">({reviews.length})</span>
                 </h3>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>

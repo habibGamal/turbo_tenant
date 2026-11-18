@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { UserPlus, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { getSafeRedirect } from "@/lib/safeRedirect";
+import { localizeErrors, localizeErrorMessage } from "@/lib/validationErrors";
 
 export default function Register() {
     const { t } = useTranslation();
@@ -60,13 +61,9 @@ export default function Register() {
             navigate(redirectUrl, { replace: true });
         } catch (err: any) {
             if (err.response?.status === 422 && err.response?.data?.errors) {
-                const apiErrors: Record<string, string> = {};
-                for (const [key, msgs] of Object.entries<any>(err.response.data.errors)) {
-                    apiErrors[key] = Array.isArray(msgs) ? msgs[0] : String(msgs);
-                }
-                setErrors(apiErrors);
+                setErrors(localizeErrors(err.response.data.errors));
             } else if (err.response?.data?.message) {
-                setErrors({ email: err.response.data.message });
+                setErrors({ email: localizeErrorMessage(err.response.data.message) });
             } else {
                 setErrors({ email: t("somethingWentWrong", "An error occurred. Please try again.") });
             }
@@ -94,11 +91,8 @@ export default function Register() {
                     </div>
 
                     <Card className="shadow-xl border-border bg-card">
-                        <CardHeader className="space-y-1">
-                            <CardTitle className="text-2xl font-bold text-center">
-                                {t("signUp")}
-                            </CardTitle>
-                            <CardDescription className="text-center">
+                        <CardHeader className="space-y-1 pb-4">
+                            <CardDescription className="text-center text-sm">
                                 {t("enterDetailsToCreateAccount")}
                             </CardDescription>
                         </CardHeader>
@@ -125,7 +119,7 @@ export default function Register() {
                                         />
                                     </div>
                                     {errors.name && (
-                                        <p className="text-sm text-destructive">
+                                        <p className="text-sm text-destructive text-start">
                                             {errors.name}
                                         </p>
                                     )}
@@ -150,7 +144,7 @@ export default function Register() {
                                         />
                                     </div>
                                     {errors.email && (
-                                        <p className="text-sm text-destructive">
+                                        <p className="text-sm text-destructive text-start">
                                             {errors.email}
                                         </p>
                                     )}
@@ -175,8 +169,9 @@ export default function Register() {
                                         />
                                         <button
                                             type="button"
+                                            aria-label={showPassword ? t("hidePassword", "Hide password") : t("showPassword", "Show password")}
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute top-1/2 -translate-y-1/2 end-3 text-muted-foreground hover:text-foreground transition-colors"
+                                            className="absolute top-1/2 -translate-y-1/2 end-1 inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground hover:text-foreground transition-colors"
                                         >
                                             {showPassword ? (
                                                 <EyeOff className="w-5 h-5" />
@@ -186,7 +181,7 @@ export default function Register() {
                                         </button>
                                     </div>
                                     {errors.password && (
-                                        <p className="text-sm text-destructive">
+                                        <p className="text-sm text-destructive text-start">
                                             {errors.password}
                                         </p>
                                     )}
@@ -220,12 +215,13 @@ export default function Register() {
                                         />
                                         <button
                                             type="button"
+                                            aria-label={showPasswordConfirmation ? t("hidePassword", "Hide password") : t("showPassword", "Show password")}
                                             onClick={() =>
                                                 setShowPasswordConfirmation(
                                                     !showPasswordConfirmation
                                                 )
                                             }
-                                            className="absolute top-1/2 -translate-y-1/2 end-3 text-muted-foreground hover:text-foreground transition-colors"
+                                            className="absolute top-1/2 -translate-y-1/2 end-1 inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground hover:text-foreground transition-colors"
                                         >
                                             {showPasswordConfirmation ? (
                                                 <EyeOff className="w-5 h-5" />
@@ -235,7 +231,7 @@ export default function Register() {
                                         </button>
                                     </div>
                                     {errors.password_confirmation && (
-                                        <p className="text-sm text-destructive">
+                                        <p className="text-sm text-destructive text-start">
                                             {errors.password_confirmation}
                                         </p>
                                     )}

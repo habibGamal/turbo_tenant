@@ -21,7 +21,12 @@ export function LanguageSwitcher() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    data-testid="language-switcher"
+                    aria-label={t('switchLanguage', 'Switch language')}
+                >
                     <Globe className="h-5 w-5" />
                     <span className="sr-only">{t('switchLanguage', 'Switch language')}</span>
                 </Button>

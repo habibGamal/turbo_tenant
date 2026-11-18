@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -10,7 +11,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ImageWithFallback } from "@/components/ui/image";
 import {
@@ -32,13 +32,10 @@ import { useTranslation } from "react-i18next";
 import { Order } from "@/types";
 import { getPaymentMethodLabel } from "@/lib/payment";
 import { useFormatMoney } from "@/lib/money";
+import { formatWeightLabel } from "@/lib/weight";
 import { useGuestOrderDetails } from "@/plugins/guest-checkout/api/useGuestOrderTracking";
 import type { TrackOrderPayload } from "@/plugins/guest-checkout/types";
-import {
-    OrderStatusBadge,
-    OrderTimeline,
-    getPaymentStatusColor,
-} from "@/themes/default/plugins/order-management/components/status";
+import { OrderTimeline } from "@/themes/default/plugins/order-management/components/status";
 
 export interface ThemedGuestOrderTrackingProps {
     initialOrderNumber?: string;
@@ -139,7 +136,9 @@ export default function ThemedGuestOrderTracking({
         const trimmedPhone = phone.trim();
 
         if (!trimmedOrder || !trimmedPhone) {
-            setError(t("pleaseProvideOrderNumberAndPhone"));
+            const msg = t("pleaseProvideOrderNumberAndPhone");
+            setError(msg);
+            toast.error(msg);
             return;
         }
 
@@ -254,47 +253,31 @@ export default function ThemedGuestOrderTracking({
                     {/* Order Header Card */}
                     <Card>
                         <CardHeader>
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                <div className="flex-1">
-                                    <CardTitle className="text-lg mb-3">
-                                        {t("orderDetails")}
-                                    </CardTitle>
-                                    <div className="flex items-center gap-2 p-3 bg-primary/10 dark:bg-primary/20 rounded-lg border-2 border-primary/30">
-                                        <div className="flex-1">
-                                            <p className="text-xs text-muted-foreground mb-1">
-                                                {t("orderNumber")}
-                                            </p>
-                                            <p className="text-xl font-mono font-bold text-primary">
-                                                {order.order_number}
-                                            </p>
-                                        </div>
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={copyOrderNumber}
-                                            className="shrink-0"
-                                        >
-                                            {isCopied ? (
-                                                <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                                            ) : (
-                                                <Copy className="h-4 w-4" />
-                                            )}
-                                        </Button>
+                            <div>
+                                <CardTitle className="text-lg mb-3">
+                                    {t("orderDetails")}
+                                </CardTitle>
+                                <div className="flex items-center gap-2 p-3 bg-primary/10 dark:bg-primary/20 rounded-lg border-2 border-primary/30">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-muted-foreground mb-1">
+                                            {t("orderNumber")}
+                                        </p>
+                                        <p className="text-xl font-mono font-bold text-primary truncate" dir="ltr">
+                                            {order.order_number}
+                                        </p>
                                     </div>
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <OrderStatusBadge
-                                        status={order.status}
-                                        className="justify-center px-3 py-1"
-                                    />
-                                    <Badge
-                                        className={`${getPaymentStatusColor(
-                                            order.payment_status
-                                        )} flex items-center gap-1 justify-center text-xs`}
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={copyOrderNumber}
+                                        className="shrink-0"
                                     >
-                                        <CreditCard className="w-3 h-3" />
-                                        {t(order.payment_status)}
-                                    </Badge>
+                                        {isCopied ? (
+                                            <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                        ) : (
+                                            <Copy className="h-4 w-4" />
+                                        )}
+                                    </Button>
                                 </div>
                             </div>
                         </CardHeader>
@@ -325,7 +308,7 @@ export default function ThemedGuestOrderTracking({
                                             {t("paymentMethod")}
                                         </div>
                                         <div className="font-medium">
-                                            {getPaymentMethodLabel(order.payment_method)}
+                                            {t(getPaymentMethodLabel(order.payment_method))}
                                         </div>
                                     </div>
                                 </div>
@@ -341,7 +324,7 @@ export default function ThemedGuestOrderTracking({
                                                 <div className="text-sm text-muted-foreground">
                                                     {t("branch")}
                                                 </div>
-                                                <div className="font-medium">
+                                                <div className="font-medium" dir="auto">
                                                     {order.branch.name}
                                                 </div>
                                             </div>
@@ -370,7 +353,7 @@ export default function ThemedGuestOrderTracking({
                                             <div className="font-medium">
                                                 {order.guest_user.name}
                                             </div>
-                                            <div className="text-sm text-muted-foreground">
+                                            <div className="text-sm text-muted-foreground w-fit" dir="ltr">
                                                 {order.guest_user.full_phone}
                                             </div>
                                         </div>
@@ -429,10 +412,7 @@ export default function ThemedGuestOrderTracking({
                     {/* Order Status & Timeline */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center justify-between">
-                                <span>{t("orderStatus")}</span>
-                                <OrderStatusBadge status={order.status} />
-                            </CardTitle>
+                            <CardTitle>{t("orderStatus")}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <OrderTimeline
@@ -475,8 +455,11 @@ export default function ThemedGuestOrderTracking({
                                                     )}
                                                     {item.product?.sell_by_weight && item.weight_option_value && (
                                                         <div className="text-sm text-muted-foreground">
-                                                            {parseFloat(item.quantity).toFixed(2)}{" "}
-                                                            {item.product.weight_option?.unit}
+                                                            {formatWeightLabel(
+                                                                item.weight_option_value,
+                                                                item.product.weight_option?.unit || "kg",
+                                                                i18n.language === "ar"
+                                                            )}
                                                             {item.weight_multiplier > 1 && ` × ${item.weight_multiplier}`}
                                                         </div>
                                                     )}

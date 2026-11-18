@@ -17,6 +17,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Lock, Mail, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { localizeErrors, localizeErrorMessage } from "@/lib/validationErrors";
 
 interface ResetPasswordProps {
     token?: string;
@@ -36,6 +37,7 @@ export default function ResetPassword({
     const navigate = useNavigate();
 
     const token = propToken || params.token || "";
+    const isEmailLocked = Boolean(propEmail || searchParams.get("email"));
     const [email, setEmail] = useState(propEmail || searchParams.get("email") || "");
     const [password, setPassword] = useState("");
     const [passwordConfirmation, setPasswordConfirmation] = useState("");
@@ -64,13 +66,9 @@ export default function ResetPassword({
             });
         } catch (err: any) {
             if (err.response?.status === 422 && err.response?.data?.errors) {
-                const apiErrors: Record<string, string> = {};
-                for (const [key, msgs] of Object.entries<any>(err.response.data.errors)) {
-                    apiErrors[key] = Array.isArray(msgs) ? msgs[0] : String(msgs);
-                }
-                setErrors(apiErrors);
+                setErrors(localizeErrors(err.response.data.errors));
             } else if (err.response?.data?.message) {
-                setErrors({ email: err.response.data.message });
+                setErrors({ email: localizeErrorMessage(err.response.data.message) });
             } else {
                 setErrors({
                     email: t("somethingWentWrong", "An error occurred. Please try again."),
@@ -111,7 +109,7 @@ export default function ResetPassword({
 
                         <form onSubmit={submit}>
                             <CardContent className="space-y-4">
-                                {/* Email Field (Read-only) */}
+                                {/* Email Field */}
                                 <div className="space-y-2">
                                     <Label htmlFor="email" className="text-sm font-medium">
                                         {t("email")}
@@ -125,12 +123,13 @@ export default function ResetPassword({
                                             value={email}
                                             autoComplete="username"
                                             onChange={(e) => setEmail(e.target.value)}
-                                            className="ps-10 bg-muted"
-                                            readOnly={Boolean(propEmail || searchParams.get("email"))}
+                                            className={`ps-10 ${isEmailLocked ? "bg-muted cursor-not-allowed" : ""}`}
+                                            placeholder={t("emailPlaceholder")}
+                                            readOnly={isEmailLocked}
                                         />
                                     </div>
                                     {errors.email && (
-                                        <p className="text-sm text-destructive">
+                                        <p className="text-sm text-destructive text-start">
                                             {errors.email}
                                         </p>
                                     )}
@@ -156,8 +155,9 @@ export default function ResetPassword({
                                         />
                                         <button
                                             type="button"
+                                            aria-label={showPassword ? t("hidePassword", "Hide password") : t("showPassword", "Show password")}
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute top-1/2 -translate-y-1/2 end-3 text-muted-foreground hover:text-foreground transition-colors"
+                                            className="absolute top-1/2 -translate-y-1/2 end-1 inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground hover:text-foreground transition-colors"
                                         >
                                             {showPassword ? (
                                                 <EyeOff className="w-5 h-5" />
@@ -167,7 +167,7 @@ export default function ResetPassword({
                                         </button>
                                     </div>
                                     {errors.password && (
-                                        <p className="text-sm text-destructive">
+                                        <p className="text-sm text-destructive text-start">
                                             {errors.password}
                                         </p>
                                     )}
@@ -201,12 +201,13 @@ export default function ResetPassword({
                                         />
                                         <button
                                             type="button"
+                                            aria-label={showPasswordConfirmation ? t("hidePassword", "Hide password") : t("showPassword", "Show password")}
                                             onClick={() =>
                                                 setShowPasswordConfirmation(
                                                     !showPasswordConfirmation
                                                 )
                                             }
-                                            className="absolute top-1/2 -translate-y-1/2 end-3 text-muted-foreground hover:text-foreground transition-colors"
+                                            className="absolute top-1/2 -translate-y-1/2 end-1 inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground hover:text-foreground transition-colors"
                                         >
                                             {showPasswordConfirmation ? (
                                                 <EyeOff className="w-5 h-5" />

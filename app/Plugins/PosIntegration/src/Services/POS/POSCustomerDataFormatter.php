@@ -83,7 +83,11 @@ final class POSCustomerDataFormatter
         }
 
         if (! empty($address['governorate_name'])) {
-            $parts[] = (string) $address['governorate_name'];
+            $govName = mb_trim((string) $address['governorate_name']);
+            $areaName = mb_trim((string) ($address['area_name'] ?? ''));
+            if ($areaName === '' || mb_strtolower($govName) !== mb_strtolower($areaName)) {
+                $parts[] = $govName;
+            }
         }
 
         $formatted = implode('، ', $parts);

@@ -1,6 +1,7 @@
 export const getPaymentMethodLabel = (method: string): string => {
     switch (method) {
         case 'card':
+        case 'credit_card':
             return 'creditCard';
         case 'wallet':
             return 'mobileWallet';

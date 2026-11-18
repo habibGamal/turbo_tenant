@@ -7,7 +7,7 @@ import { ValidateCouponData, ValidateCouponPayload } from '../types';
 export function useValidateCoupon() {
   return useMutation<ValidateCouponData, AxiosError<ApiError>, ValidateCouponPayload>({
     mutationFn: async (payload: ValidateCouponPayload) => {
-      const response = await apiClient.post<ApiSuccess<ValidateCouponData>>('/coupons/validate', {
+      const response = await apiClient.post<ApiSuccess<ValidateCouponData>>('/api/coupons/validate', {
         code: payload.code,
         address_id: payload.address_id,
         guest_phone: payload.guest_phone,

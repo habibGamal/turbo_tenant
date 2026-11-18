@@ -34,6 +34,7 @@ final class StoreSettingsBootstrapContributor implements BootstrapContributor
                 'image_placeholder' => $this->settingService->get(SettingKey::IMAGE_PLACEHOLDER),
                 'contact_email' => $this->settingService->get(SettingKey::CONTACT_EMAIL),
                 'contact_phone' => $this->settingService->get(SettingKey::CONTACT_PHONE),
+                'whatsapp_number' => $this->settingService->get(SettingKey::WHATSAPP_NUMBER),
                 'contact_address' => $this->settingService->get(SettingKey::CONTACT_ADDRESS),
                 'social_facebook' => $this->settingService->get(SettingKey::SOCIAL_FACEBOOK),
                 'social_instagram' => $this->settingService->get(SettingKey::SOCIAL_INSTAGRAM),

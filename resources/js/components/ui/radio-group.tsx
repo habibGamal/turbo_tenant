@@ -1,16 +1,21 @@
 import * as React from "react"
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
 import { Circle } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
 
 const RadioGroup = React.forwardRef<
   React.ElementRef<typeof RadioGroupPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root>
->(({ className, ...props }, ref) => {
+>(({ className, dir, ...props }, ref) => {
+  const { i18n } = useTranslation()
+  const resolvedDir = dir ?? (i18n.dir ? i18n.dir() : (i18n.language?.startsWith('ar') ? 'rtl' : 'ltr'))
+
   return (
     <RadioGroupPrimitive.Root
       className={cn("grid gap-2", className)}
+      dir={resolvedDir}
       {...props}
       ref={ref}
     />
@@ -26,7 +31,7 @@ const RadioGroupItem = React.forwardRef<
     <RadioGroupPrimitive.Item
       ref={ref}
       className={cn(
-        "aspect-square h-4 w-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+        "aspect-square h-4 w-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [[data-card-variant=recessed]_&]:bg-background [[data-card-variant=recessed]_&]:shadow-none dark:[[data-card-variant=recessed]_&]:bg-card",
         className
       )}
       {...props}

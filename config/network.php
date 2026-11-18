@@ -12,5 +12,5 @@ return [
     | or reserved addresses are allowed. Intended for local LAN dev only.
     |
     */
-    'allow_private_hosts' => (bool) env('NETWORK_ALLOW_PRIVATE_HOSTS', false),
+    'allow_private_hosts' => (bool) env('NETWORK_ALLOW_PRIVATE_HOSTS', env('APP_ENV') === 'local'),
 ];

@@ -57,7 +57,7 @@
         },
         {
           "file": "config/tenancy.php",
-          "line": 32,
+          "line": 34,
           "contains": "'bootstrappers'"
         },
         {
@@ -149,17 +149,17 @@
         },
         {
           "file": "resources/js/themes/default/pages/Checkout.tsx",
-          "line": 378,
+          "line": 449,
           "contains": "apiClient.get('/api/tenant/auth/user')"
         },
         {
           "file": "app/Plugins/GuestCheckout/src/Http/Rules/GuestDataRulesContributor.php",
-          "line": 41,
+          "line": 47,
           "contains": "guest_data.area_id"
         },
         {
           "file": "resources/js/plugins/order-management/api/usePlaceOrder.ts",
-          "line": 12,
+          "line": 13,
           "contains": "apiClient.post"
         },
         {
@@ -169,7 +169,7 @@
         },
         {
           "file": "app/Plugins/OrderManagement/src/Http/Requests/PlaceOrderRequest.php",
-          "line": 27,
+          "line": 28,
           "contains": "function rules"
         },
         {
@@ -189,17 +189,17 @@
         },
         {
           "file": "app/Plugins/OrderManagement/src/Services/Repositories/OrderRepository.php",
-          "line": 35,
+          "line": 37,
           "contains": "function createOrderWithItems"
         },
         {
           "file": "app/Plugins/CartEngine/src/Services/CartService.php",
-          "line": 219,
+          "line": 220,
           "contains": "function removePurchasedLines"
         },
         {
           "file": "resources/js/themes/default/pages/Checkout.tsx",
-          "line": 390,
+          "line": 461,
           "contains": "saveAddress.mutateAsync"
         }
       ]
@@ -301,12 +301,12 @@
         },
         {
           "file": "resources/js/core/router/AppRouter.tsx",
-          "line": 129,
+          "line": 138,
           "contains": "router.tracking"
         },
         {
           "file": "resources/js/plugins/meta-marketing/services/meta-pixel-tracker.ts",
-          "line": 153,
+          "line": 168,
           "contains": "fetch('/api/meta/events'"
         },
         {
@@ -439,12 +439,12 @@
       "sources": [
         {
           "file": "config/tenancy.php",
-          "line": 188,
+          "line": 190,
           "contains": "'migration_parameters'"
         },
         {
           "file": "app/Core/Plugins/Services/PluginLifecycleService.php",
-          "line": 29,
+          "line": 30,
           "contains": "function activate"
         }
       ]
@@ -508,7 +508,7 @@
       "sources": [
         {
           "file": "resources/js/core/router/AppRouter.tsx",
-          "line": 190,
+          "line": 199,
           "contains": "path=\"/orders/:id/payment/callback\""
         },
         {
@@ -543,8 +543,8 @@
     },
     {
       "section": "pages",
-      "title": "Two coupon request call sites lack the API prefix",
-      "description": "Two coupon call sites use /coupons/validate while the registered route is prefixed /api. The shared client baseURL is /. Payment status and Kashier configuration hooks now use their registered /api-prefixed paths. Coupon behavior and the Kashier request remain subject to runtime verification.",
+      "title": "Coupon and payment request call sites align with registered /api prefixes",
+      "description": "Coupon validation call sites (/api/coupons/validate), payment status, and Kashier configuration hooks use their registered /api-prefixed paths under the shared client baseURL /. Runtime checkout and Kashier gateway behavior remain subject to tenant configuration.",
       "evidence": "source-reviewed",
       "sources": [
         {
@@ -559,7 +559,7 @@
         },
         {
           "file": "resources/js/themes/default/plugins/order-management/components/CouponCodeSection.tsx",
-          "line": 51,
+          "line": 55,
           "contains": "apiClient.post"
         },
         {
@@ -569,7 +569,7 @@
         },
         {
           "file": "resources/js/plugins/payment-processing/api/usePaymentStatus.ts",
-          "line": 16,
+          "line": 18,
           "contains": "apiClient.get"
         },
         {
@@ -595,7 +595,7 @@
         },
         {
           "file": "resources/js/core/api/query-client.ts",
-          "line": 28,
+          "line": 34,
           "contains": "const bootstrap"
         },
         {
@@ -620,7 +620,7 @@
         },
         {
           "file": "resources/views/app.blade.php",
-          "line": 49,
+          "line": 57,
           "contains": "style id=\"tenant-theme\""
         },
         {
@@ -630,7 +630,7 @@
         },
         {
           "file": "app/Plugins/CartEngine/src/Bootstrap/CartEngineBootstrapContributor.php",
-          "line": 35,
+          "line": 38,
           "contains": "'cart_count' => $cartCount,"
         }
       ]
@@ -643,7 +643,7 @@
       "sources": [
         {
           "file": "resources/views/app.blade.php",
-          "line": 44,
+          "line": 52,
           "contains": "style id=\"storefront-styles\""
         },
         {
@@ -729,7 +729,7 @@
         },
         {
           "file": "resources/js/plugins/meta-marketing/services/meta-pixel-tracker.ts",
-          "line": 298,
+          "line": 327,
           "contains": "ReactPixel.fbq('track', name"
         }
       ]

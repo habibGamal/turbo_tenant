@@ -21,6 +21,7 @@
     ]
   },
   "tenant_scoped": [
-    "App\\Plugins\\GuestCheckout\\src\\Services\\GuestUserService"
+    "App\\Plugins\\GuestCheckout\\src\\Services\\GuestUserService",
+    "App\\Plugins\\GuestCheckout\\src\\Http\\Rules\\GuestDataRulesContributor"
   ]
 }

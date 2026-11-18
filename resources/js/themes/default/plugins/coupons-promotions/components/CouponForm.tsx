@@ -6,6 +6,7 @@ import { LoaderIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useValidateCoupon } from "@/plugins/coupons-promotions/api/useValidateCoupon";
 import { AppliedCoupon } from "@/plugins/coupons-promotions/types";
+import { localizeErrorMessage } from "@/lib/validationErrors";
 
 interface CouponFormProps {
     cartItems?: any[];
@@ -54,7 +55,8 @@ export default function CouponForm({
                     }
                 },
                 onError: (err: any) => {
-                    setCouponError(err?.response?.data?.message || t("failedToValidateCoupon", "Failed to validate coupon"));
+                    const rawMessage = err?.response?.data?.message;
+                    setCouponError(rawMessage ? localizeErrorMessage(rawMessage) : t("failedToValidateCoupon", "Failed to validate coupon"));
                 },
             }
         );
@@ -68,11 +70,11 @@ export default function CouponForm({
     };
 
     return (
-        <Card>
-            <CardHeader>
+        <Card variant="recessed">
+            <CardHeader className="p-4 sm:p-6">
                 <CardTitle>{t("couponCode", "Coupon Code")}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
                 <div className="space-y-4">
                     <form data-testid="coupon-form" onSubmit={handleApplyCoupon} className="flex gap-2">
                         <Input
@@ -81,11 +83,13 @@ export default function CouponForm({
                             value={couponCode}
                             onChange={(e) => setCouponCode(e.target.value)}
                             disabled={!!appliedCoupon || isPending}
+                            className="min-w-0 flex-1"
                         />
                         {appliedCoupon ? (
                             <Button
                                 data-testid="coupon-remove-button"
                                 variant="destructive"
+                                className="shrink-0 shadow-none"
                                 onClick={handleRemoveCoupon}
                                 type="button"
                             >
@@ -95,6 +99,7 @@ export default function CouponForm({
                             <Button
                                 data-testid="coupon-apply-button"
                                 variant="outline"
+                                className="shrink-0 border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card"
                                 type="submit"
                                 disabled={!couponCode.trim() || isPending}
                             >

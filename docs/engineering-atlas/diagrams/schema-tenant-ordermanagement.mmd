@@ -83,8 +83,8 @@ erDiagram
     decimal discount
     decimal total
     text note
-    foreignId user_id
-    foreignId coupon_id
+    unsignedBigInteger user_id
+    unsignedBigInteger coupon_id
     foreignId branch_id
     foreignId address_id
     string pos_status
@@ -97,8 +97,6 @@ erDiagram
   }
   n850e6885a4ad["users"]
   n850e6885a4ad ||..o{ n0c3b5ea58ff8 : "user_id"
-  n6c2342eb06df["coupons"]
-  n6c2342eb06df |o..o{ n0c3b5ea58ff8 : "coupon_id"
   nf1e3efb0f08e["branches"]
   nf1e3efb0f08e ||..o{ n0c3b5ea58ff8 : "branch_id"
   n88cdee222611["addresses"]

@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -7,6 +8,9 @@ import { LoaderIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Cart } from "@/types";
 import { useFormatMoney } from "@/lib/money";
+import { formatWeightLabel } from "@/lib/weight";
+import { useTenantSafe } from "@/core/context/TenantContext";
+import { FreeShippingProgress } from "@/themes/default/components/FreeShippingProgress";
 
 interface AppliedCoupon {
     id: number;
@@ -29,6 +33,8 @@ interface OrderSummaryProps {
     onPlaceOrder: () => void;
     orderType?: string;
     hasAddressSelected?: boolean;
+    freeShippingThreshold?: number;
+    effectiveSubtotal?: number;
 }
 
 export default function OrderSummary({
@@ -43,21 +49,34 @@ export default function OrderSummary({
     onPlaceOrder,
     orderType,
     hasAddressSelected = true,
+    freeShippingThreshold,
+    effectiveSubtotal,
 }: OrderSummaryProps) {
     const { t, i18n } = useTranslation();
+    const tenant = useTenantSafe();
 
     const formatMoney = useFormatMoney();
+
+    const resolvedThreshold =
+        freeShippingThreshold ?? Number(tenant?.settings?.free_shipping_threshold || 0);
+    const resolvedEffectiveSubtotal =
+        effectiveSubtotal ??
+        Math.max(0, (Number((cart as any)?.subtotal ?? cart?.total) || 0) - discount);
+    const isFreeShipping = Boolean(
+        appliedCoupon?.free_shipping ||
+            (resolvedThreshold > 0 && resolvedEffectiveSubtotal >= resolvedThreshold)
+    );
 
     const getText = (text: string, textAr?: string | null) => {
         return i18n.language === 'ar' && textAr ? textAr : text;
     };
 
     return (
-        <Card className="sticky top-[calc(var(--header-h,4rem)+1rem)]" data-testid="order-summary">
-            <CardHeader>
+        <Card variant="recessed" className="sticky top-[calc(var(--header-h,4rem)+1rem)]" data-testid="order-summary">
+            <CardHeader className="p-4 sm:p-6">
                 <CardTitle>{t("orderSummary")}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
                 {/* Cart Items List */}
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                     {cart.items.map((item: any) => {
@@ -66,10 +85,10 @@ export default function OrderSummary({
                         return (
                             <div
                                 key={item.id}
-                                className="flex gap-2 pb-2 border-b border-border/50 last:border-0"
+                                className="flex gap-2 pb-2 border-b border-border/70 last:border-0"
                             >
                                 {/* Item Image */}
-                                <div className="w-12 h-12 rounded-md bg-gradient-to-br from-primary/5 to-secondary/5 relative overflow-hidden shrink-0">
+                                <div className="w-12 h-12 rounded-md border border-border/80 bg-background dark:bg-card relative overflow-hidden shrink-0">
                                     <ImageWithFallback
                                         src={item.product?.image}
                                         alt={getText(item.product?.name || '', item.product?.name_ar) || t("product")}
@@ -97,14 +116,23 @@ export default function OrderSummary({
                                         </div>
                                         <div className="text-xs font-semibold text-primary shrink-0">
                                             {formatMoney(item.price)}
+                                            {!isPackage && item.product?.sell_by_weight && (
+                                                <span className="block text-[10px] font-normal text-muted-foreground text-end">
+                                                    {t("perKg")}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 mt-0.5">
                                         {!isPackage && item.product?.sell_by_weight &&
                                         item.weight_option_value ? (
                                             <span className="text-[10px] text-muted-foreground">
-                                                {item.weight_option_value.value}{" "}
-                                                {item.product?.weight_option?.unit || "kg"}
+                                                {formatWeightLabel(
+                                                    item.weight_option_value,
+                                                    item.product?.weight_option?.unit || "kg",
+                                                    i18n.language === "ar"
+                                                )}
+                                                {item.weight_multiplier > 1 && ` × ${item.weight_multiplier}`}
                                             </span>
                                         ) : (
                                             <span className="text-[10px] text-muted-foreground">
@@ -177,7 +205,7 @@ export default function OrderSummary({
                     })}
                 </div>
 
-                <Separator />
+                <Separator className="bg-border/80" />
 
                 <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
@@ -219,21 +247,40 @@ export default function OrderSummary({
                     )}
 
                     {orderType !== "web_takeaway" && (
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">
-                                {t("deliveryFee")}
-                            </span>
-                            <span className={hasAddressSelected ? "font-medium" : "text-xs text-muted-foreground italic"}>
-                                {!hasAddressSelected
-                                    ? t("selectAddress", t("selectAddressToSeeFee", "اختر العنوان"))
-                                    : deliveryFee > 0
-                                        ? formatMoney(deliveryFee)
-                                        : t("free")}
-                            </span>
-                        </div>
+                        <>
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">
+                                    {t("deliveryFee")}
+                                </span>
+                                <span
+                                    className={
+                                        isFreeShipping
+                                            ? "font-semibold text-emerald-600 dark:text-emerald-400"
+                                            : hasAddressSelected
+                                                ? "font-medium"
+                                                : "text-xs text-muted-foreground italic"
+                                    }
+                                >
+                                    {isFreeShipping
+                                        ? t("free")
+                                        : !hasAddressSelected
+                                            ? t("calculatedByGovernorate")
+                                            : deliveryFee > 0
+                                                ? formatMoney(deliveryFee)
+                                                : t("free")}
+                                </span>
+                            </div>
+
+                            {resolvedThreshold > 0 && (
+                                <FreeShippingProgress
+                                    currentAmount={resolvedEffectiveSubtotal}
+                                    threshold={resolvedThreshold}
+                                />
+                            )}
+                        </>
                     )}
 
-                    <Separator />
+                    <Separator className="bg-border/80" />
 
                     <div className="flex items-center justify-between">
                         <span className="font-semibold text-lg">{t("total")}</span>
@@ -245,7 +292,7 @@ export default function OrderSummary({
 
                 <Button
                     data-testid="place-order-button"
-                    className="w-full"
+                    className="hidden md:inline-flex w-full shadow-none"
                     size="lg"
                     onClick={onPlaceOrder}
                     disabled={isSubmitting}
@@ -261,34 +308,41 @@ export default function OrderSummary({
                 </Button>
             </CardContent>
 
-            {/* Mobile Sticky Bottom Bar: below md it sits above MobileBottomNav (4.5rem), the spacer keeps the page end visible */}
-            <div className="lg:hidden h-24" aria-hidden="true" />
-            <div className="lg:hidden fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-t border-border p-4 shadow-lg md:pb-[calc(1rem+env(safe-area-inset-bottom))]">
-                <div className="flex items-center justify-between gap-4 container mx-auto">
-                    <div className="flex flex-col">
-                        <span className="text-xs text-muted-foreground">{t("total")}</span>
-                        <span className="text-lg font-bold text-primary">
-                            {formatMoney(totalAmount)}
-                        </span>
-                    </div>
-                    <Button
-                        data-testid="mobile-place-order-button"
-                        size="lg"
-                        className="flex-1 max-w-[200px]"
-                        onClick={onPlaceOrder}
-                        disabled={isSubmitting}
+            {/* Mobile Sticky Bottom Bar: Portaled to document.body so viewport fixed positioning is immune to ancestor transforms */}
+            {typeof document !== "undefined" &&
+                createPortal(
+                    <div
+                        dir={i18n.language === "ar" ? "rtl" : "ltr"}
+                        data-testid="mobile-checkout-sticky-bar"
+                        className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 border-t border-border px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-none"
                     >
-                        {isSubmitting ? (
-                            <>
-                                <LoaderIcon className="me-2 h-4 w-4 animate-spin" />
-                                {t("placingOrder")}
-                            </>
-                        ) : (
-                            t("placeOrder")
-                        )}
-                    </Button>
-                </div>
-            </div>
+                        <div className="container mx-auto flex items-center justify-between gap-4">
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-xs text-muted-foreground leading-tight">{t("total")}</span>
+                                <span className="text-lg font-bold text-primary leading-tight truncate">
+                                    {formatMoney(totalAmount)}
+                                </span>
+                            </div>
+                            <Button
+                                data-testid="mobile-place-order-button"
+                                size="lg"
+                                className="flex-1 max-w-[200px] h-11 rounded-xl font-semibold shadow-none"
+                                onClick={onPlaceOrder}
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <LoaderIcon className="me-2 h-4 w-4 animate-spin" />
+                                        {t("placingOrder")}
+                                    </>
+                                ) : (
+                                    t("placeOrder")
+                                )}
+                            </Button>
+                        </div>
+                    </div>,
+                    document.body
+                )}
         </Card>
     );
 }

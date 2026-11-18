@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/select';
 import { useAddresses, useGovernorates, useSaveAddress, useDeleteAddress } from '../api/useLocationsDelivery';
 import { Address, AddressPayload } from '../types';
+import { useTenantSafe } from '@/core/context/TenantContext';
+import { formatPlaceLabel } from '@/lib/locationFormatters';
 
 interface DefaultLocationsDeliveryProps {
   initialAddresses?: Address[];
@@ -36,6 +38,8 @@ export default function DefaultLocationsDelivery({
   selectedAddressId,
 }: DefaultLocationsDeliveryProps) {
   const { t, i18n } = useTranslation();
+  const tenant = useTenantSafe();
+  const isSimplified = Boolean(tenant?.settings?.simplified_address_enabled);
   const isRTL = i18n.dir() === 'rtl';
 
   const { data: addressesData, isLoading: isLoadingAddresses } = useAddresses();
@@ -84,10 +88,10 @@ export default function DefaultLocationsDelivery({
     setFormData({
       area_id: address.area_id.toString(),
       phone_number: address.phone_number,
-      street: address.street,
-      building: address.building,
-      floor: address.floor,
-      apartment: address.apartment,
+      street: address.street || '',
+      building: address.building || '',
+      floor: address.floor || '',
+      apartment: address.apartment || '',
       notes: address.notes || '',
       is_default: address.is_default,
     });
@@ -178,16 +182,27 @@ export default function DefaultLocationsDelivery({
                   <MapPin className="h-5 w-5 text-muted-foreground mt-1 shrink-0" />
                   <div className="space-y-1 text-sm">
                     <p className="font-medium text-foreground">
-                      {address.street}, {address.building}
+                      {[address.street, address.building].filter(Boolean).join(', ')}
                     </p>
+                    {(address.floor || address.apartment) && (
+                      <p className="text-xs text-muted-foreground">
+                        {[
+                          address.floor ? `${t('floor', 'Floor')}: ${address.floor}` : null,
+                          address.apartment ? `${t('apartment', 'Apartment')}: ${address.apartment}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground">
-                      {t('floor', 'Floor')}: {address.floor}, {t('apartment', 'Apartment')}: {address.apartment}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {isRTL && address.area?.name_ar ? address.area.name_ar : address.area?.name},{' '}
-                      {isRTL && address.area?.governorate?.name_ar
-                        ? address.area.governorate.name_ar
-                        : address.area?.governorate?.name}
+                      {formatPlaceLabel(
+                        address.area?.governorate?.name,
+                        address.area?.governorate?.name_ar,
+                        address.area?.name,
+                        address.area?.name_ar,
+                        i18n.language,
+                        ', '
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground text-start">
                       <bdi dir="ltr">{address.phone_number}</bdi>
@@ -301,24 +316,27 @@ export default function DefaultLocationsDelivery({
             </div>
 
             <div className="space-y-2">
-              <Label>{t('street', 'Street')}</Label>
+              <Label>{isSimplified ? t('detailedAddress', 'Detailed Address') : t('street', 'Street')}</Label>
               <Input
                 value={formData.street}
                 onChange={(e) => setFormData((prev) => ({ ...prev, street: e.target.value }))}
+                placeholder={isSimplified ? t('detailedAddressPlaceholder') : undefined}
                 required
               />
               {formErrors.street && <p className="text-xs text-destructive">{formErrors.street}</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label>{t('building', 'Building')}</Label>
-              <Input
-                value={formData.building}
-                onChange={(e) => setFormData((prev) => ({ ...prev, building: e.target.value }))}
-                required
-              />
-              {formErrors.building && <p className="text-xs text-destructive">{formErrors.building}</p>}
-            </div>
+            {!isSimplified && (
+              <div className="space-y-2">
+                <Label>{t('building', 'Building')}</Label>
+                <Input
+                  value={formData.building}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, building: e.target.value }))}
+                  required
+                />
+                {formErrors.building && <p className="text-xs text-destructive">{formErrors.building}</p>}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>{t('phoneNumber', 'Phone Number')}</Label>
@@ -335,29 +353,31 @@ export default function DefaultLocationsDelivery({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t('floor', 'Floor')}</Label>
-                <Input
-                  value={formData.floor}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, floor: e.target.value }))}
-                  required
-                />
-                {formErrors.floor && <p className="text-xs text-destructive">{formErrors.floor}</p>}
-              </div>
+            {!isSimplified && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>{t('floor', 'Floor')}</Label>
+                  <Input
+                    value={formData.floor}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, floor: e.target.value }))}
+                    required
+                  />
+                  {formErrors.floor && <p className="text-xs text-destructive">{formErrors.floor}</p>}
+                </div>
 
-              <div className="space-y-2">
-                <Label>{t('apartment', 'Apartment')}</Label>
-                <Input
-                  value={formData.apartment}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, apartment: e.target.value }))}
-                  required
-                />
-                {formErrors.apartment && (
-                  <p className="text-xs text-destructive">{formErrors.apartment}</p>
-                )}
+                <div className="space-y-2">
+                  <Label>{t('apartment', 'Apartment')}</Label>
+                  <Input
+                    value={formData.apartment}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, apartment: e.target.value }))}
+                    required
+                  />
+                  {formErrors.apartment && (
+                    <p className="text-xs text-destructive">{formErrors.apartment}</p>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-2">
               <Label>{t('notes', 'Notes')}</Label>

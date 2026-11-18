@@ -17,6 +17,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { KeyRound, Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { localizeErrors, localizeErrorMessage } from "@/lib/validationErrors";
 
 interface ForgotPasswordProps {
     status?: string;
@@ -41,13 +42,9 @@ export default function ForgotPassword({ status: initialStatus }: ForgotPassword
             setStatus(res.data.message || t("passwordResetLinkSent", "Password reset link sent!"));
         } catch (err: any) {
             if (err.response?.status === 422 && err.response?.data?.errors) {
-                const apiErrors: Record<string, string> = {};
-                for (const [key, msgs] of Object.entries<any>(err.response.data.errors)) {
-                    apiErrors[key] = Array.isArray(msgs) ? msgs[0] : String(msgs);
-                }
-                setErrors(apiErrors);
+                setErrors(localizeErrors(err.response.data.errors));
             } else if (err.response?.data?.message) {
-                setErrors({ email: err.response.data.message });
+                setErrors({ email: localizeErrorMessage(err.response.data.message) });
             } else {
                 setErrors({ email: t("somethingWentWrong", "An error occurred. Please try again.") });
             }
@@ -115,7 +112,7 @@ export default function ForgotPassword({ status: initialStatus }: ForgotPassword
                                         />
                                     </div>
                                     {errors.email && (
-                                        <p className="text-sm text-destructive">
+                                        <p className="text-sm text-destructive text-start">
                                             {errors.email}
                                         </p>
                                     )}

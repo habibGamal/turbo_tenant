@@ -39,12 +39,13 @@ export default function PaymentMethodSelection({
     });
 
     return (
-        <Card>
-            <CardHeader>
+        <Card variant="recessed">
+            <CardHeader className="p-4 sm:p-6">
                 <CardTitle>{t("paymentMethod")}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
                 <RadioGroup
+                    data-testid="payment-method-selector"
                     value={value}
                     onValueChange={onChange}
                     className="space-y-3"
@@ -52,30 +53,32 @@ export default function PaymentMethodSelection({
                 >
                     {paymentMethods.map((method) => {
                         const Icon = method.icon;
+                        const isSelected = value === method.value;
                         return (
-                            <div
+                            <Label
                                 key={method.value}
-                                className="flex items-center gap-3"
+                                htmlFor={method.value}
+                                className={`flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border p-3.5 transition-colors ${
+                                    isSelected
+                                        ? "border-primary bg-background font-medium dark:bg-card"
+                                        : "border-border/90 bg-background/85 hover:border-primary/40 hover:bg-background dark:bg-card/75 dark:hover:bg-card"
+                                }`}
                             >
-                                <RadioGroupItem
-                                    value={method.value}
-                                    id={method.value}
-                                />
-                                <Label
-                                    htmlFor={method.value}
-                                    className="flex items-center justify-between flex-1 cursor-pointer"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <Icon className="w-5 h-5 text-muted-foreground" />
-                                        <span>{method.label}</span>
-                                    </div>
-                                    {method.value === "cod" && codFee !== undefined && codFee > 0 && (
-                                        <span className="text-xs font-medium text-muted-foreground">
-                                            +{formatMoney(codFee)}
-                                        </span>
-                                    )}
-                                </Label>
-                            </div>
+                                <div className="flex items-center gap-3">
+                                    <RadioGroupItem
+                                        value={method.value}
+                                        id={method.value}
+                                        data-testid={method.value === "cod" ? "payment-cod-radio" : "payment-online-radio"}
+                                    />
+                                    <Icon className="w-5 h-5 text-muted-foreground" />
+                                    <span>{method.label}</span>
+                                </div>
+                                {method.value === "cod" && codFee !== undefined && codFee > 0 && (
+                                    <span className="text-xs font-medium text-muted-foreground">
+                                        <span dir="ltr">+{formatMoney(codFee)}</span>
+                                    </span>
+                                )}
+                            </Label>
                         );
                     })}
                 </RadioGroup>

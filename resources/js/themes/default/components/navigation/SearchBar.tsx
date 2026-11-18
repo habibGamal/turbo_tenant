@@ -130,50 +130,59 @@ export function SearchBar({ className, autoFocus, onClose }: SearchBarProps) {
                         type="button"
                         onClick={handleClear}
                         aria-label={t("clearAll", "Clear")}
-                        className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                        className="absolute end-1 top-1/2 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground transition-colors"
                     >
                         <X className="h-4 w-4" />
                     </button>
                 )}
             </form>
-            {showSuggestions && suggestions.length > 0 && (
-                <Card data-testid="search-suggestions-container" className="absolute top-full inset-x-0 mt-2 z-50 shadow-lg animate-in fade-in zoom-in-95 duration-200">
-                    {suggestions.map((product) => (
-                        <CardContent
-                            key={product.id}
-                            data-testid="search-suggestion-item"
-                            className="p-2"
-                            onClick={() => {
-                                handleProductClick(product);
-                            }}
-                        >
-                            <div className="flex items-center gap-3 p-2 hover:bg-accent rounded-md cursor-pointer transition-colors">
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium truncate">
-                                        {getText(product.name, product.name_ar)}
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        <p className="text-xs text-muted-foreground">
-                                            {formatMoney(
-                                                getEffectivePrice(product),
-                                            )}
+            {showSuggestions && searchQuery.trim().length >= 2 && (
+                <Card
+                    data-testid="search-suggestions-container"
+                    className="absolute top-full inset-x-0 mt-2 z-50 bg-popover text-popover-foreground border border-border shadow-xl rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                >
+                    {suggestions.length === 0 ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground">
+                            {t("noProductsFound", "No products found")}
+                        </div>
+                    ) : (
+                        suggestions.map((product) => (
+                            <CardContent
+                                key={product.id}
+                                data-testid="search-suggestion-item"
+                                className="p-2"
+                                onClick={() => {
+                                    handleProductClick(product);
+                                }}
+                            >
+                                <div className="flex items-center gap-3 p-2 hover:bg-accent rounded-md cursor-pointer transition-colors">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium truncate">
+                                            {getText(product.name, product.name_ar)}
                                         </p>
-                                        {product.category &&
-                                            typeof product.category ===
-                                                "object" && (
-                                                <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
-                                                    {getText(
-                                                        product.category.name,
-                                                        product.category
-                                                            .name_ar,
-                                                    )}
-                                                </span>
-                                            )}
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-xs text-muted-foreground">
+                                                {formatMoney(
+                                                    getEffectivePrice(product),
+                                                )}
+                                            </p>
+                                            {product.category &&
+                                                typeof product.category ===
+                                                    "object" && (
+                                                    <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
+                                                        {getText(
+                                                            product.category.name,
+                                                            product.category
+                                                                .name_ar,
+                                                        )}
+                                                    </span>
+                                                )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </CardContent>
-                    ))}
+                            </CardContent>
+                        ))
+                    )}
                 </Card>
             )}
         </div>

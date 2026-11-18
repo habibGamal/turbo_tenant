@@ -185,10 +185,12 @@ export interface Address {
     area?: {
         id: number;
         name: string;
+        name_ar?: string;
         shipping_cost: number;
         governorate?: {
             id: number;
             name: string;
+            name_ar?: string;
         };
     };
 }
@@ -339,6 +341,10 @@ export type PageProps<
         product_show_cards: ProductShowCard[];
         cod_fee: number;
         online_payments_enabled: boolean;
+        whatsapp_number?: string | null;
+        free_shipping_threshold?: number;
+        simplified_address_enabled?: boolean;
+        min_order_amount?: number;
     };
 };
 

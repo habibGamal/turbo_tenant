@@ -101,6 +101,13 @@
       0 => 'Filament\\Widgets\\WidgetsServiceProvider',
     ),
   ),
+  'inertiajs/inertia-laravel' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Inertia\\ServiceProvider',
+    ),
+  ),
   'kirschbaum-development/eloquent-power-joins' => 
   array (
     'providers' => 
@@ -253,6 +260,13 @@
     'providers' => 
     array (
       0 => 'Stancl\\Tenancy\\TenancyServiceProvider',
+    ),
+  ),
+  'tightenco/ziggy' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
     ),
   ),
 );

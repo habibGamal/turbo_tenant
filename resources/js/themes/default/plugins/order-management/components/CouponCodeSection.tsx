@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { apiClient } from "@/core/api/client";
 import { ApiSuccess } from "@/core/api/types";
 import { CartItem } from "@/types";
+import { localizeErrorMessage } from "@/lib/validationErrors";
 
 interface AppliedCoupon {
     id: number;
@@ -21,6 +22,7 @@ interface CouponCodeSectionProps {
     cartItems?: CartItem[];
     cartTotal?: number;
     addressId: number | null;
+    guestPhone?: string | null;
     appliedCoupon: AppliedCoupon | null;
     onCouponApplied: (coupon: AppliedCoupon) => void;
     onCouponRemoved: () => void;
@@ -30,6 +32,7 @@ export default function CouponCodeSection({
     cartItems,
     cartTotal,
     addressId,
+    guestPhone,
     appliedCoupon,
     onCouponApplied,
     onCouponRemoved,
@@ -40,7 +43,8 @@ export default function CouponCodeSection({
     const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
     const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
 
-    const handleApplyCoupon = async () => {
+    const handleApplyCoupon = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!couponCode.trim()) return;
 
         setIsValidatingCoupon(true);
@@ -48,19 +52,21 @@ export default function CouponCodeSection({
         setCouponSuccess(null);
 
         try {
-            const response = await apiClient.post<ApiSuccess<{ coupon: AppliedCoupon }>>("/coupons/validate", {
+            const response = await apiClient.post<ApiSuccess<{ coupon: AppliedCoupon }>>("/api/coupons/validate", {
                 code: couponCode.trim(),
                 address_id: addressId,
+                guest_phone: guestPhone || undefined,
             });
 
             const data = response.data.data;
             if (data?.coupon) {
                 onCouponApplied(data.coupon);
-                setCouponSuccess(response.data.message || t("couponAppliedSuccessfully", "Coupon applied successfully"));
+                setCouponSuccess(t("couponAppliedSuccessfully", "Coupon applied successfully"));
             }
         } catch (error: any) {
-            if (error.response?.data?.message) {
-                setCouponError(error.response.data.message);
+            const rawMessage = error.response?.data?.message;
+            if (rawMessage) {
+                setCouponError(localizeErrorMessage(rawMessage));
             } else {
                 setCouponError(t("failedToValidateCoupon"));
             }
@@ -77,22 +83,26 @@ export default function CouponCodeSection({
     };
 
     return (
-        <Card>
-            <CardHeader>
+        <Card variant="recessed">
+            <CardHeader className="p-4 sm:p-6">
                 <CardTitle>{t("couponCode")}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
                 <div className="space-y-4">
-                    <div className="flex gap-2">
+                    <form data-testid="coupon-form" onSubmit={handleApplyCoupon} className="flex gap-2">
                         <Input
+                            data-testid="coupon-input"
                             placeholder={t("enterCouponCode")}
                             value={couponCode}
                             onChange={(e) => setCouponCode(e.target.value)}
                             disabled={!!appliedCoupon || isValidatingCoupon}
+                            className="min-w-0 flex-1"
                         />
                         {appliedCoupon ? (
                             <Button
+                                data-testid="coupon-remove-button"
                                 variant="destructive"
+                                className="shrink-0 shadow-none"
                                 onClick={handleRemoveCoupon}
                                 type="button"
                             >
@@ -100,10 +110,11 @@ export default function CouponCodeSection({
                             </Button>
                         ) : (
                             <Button
+                                data-testid="coupon-apply-button"
                                 variant="outline"
-                                onClick={handleApplyCoupon}
-                                disabled={!couponCode || isValidatingCoupon}
-                                type="button"
+                                className="shrink-0 border-border/90 bg-background shadow-none hover:bg-accent/60 dark:bg-card"
+                                disabled={!couponCode.trim() || isValidatingCoupon}
+                                type="submit"
                             >
                                 {isValidatingCoupon ? (
                                     <LoaderIcon className="h-4 w-4 animate-spin" />
@@ -112,12 +123,12 @@ export default function CouponCodeSection({
                                 )}
                             </Button>
                         )}
-                    </div>
+                    </form>
                     {couponError && (
-                        <p className="text-sm text-destructive">{couponError}</p>
+                        <p data-testid="coupon-error-message" className="text-sm text-destructive">{couponError}</p>
                     )}
                     {couponSuccess && (
-                        <p className="text-sm text-emerald-600 dark:text-emerald-400">{couponSuccess}</p>
+                        <p data-testid="coupon-discount-value" className="text-sm text-emerald-600 dark:text-emerald-400">{couponSuccess}</p>
                     )}
                 </div>
             </CardContent>

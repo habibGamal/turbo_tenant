@@ -5744,9 +5744,12 @@
       "name": "livewire.preview-file",
       "action": "Livewire\\Features\\SupportFileUploads\\FilePreviewController@handle",
       "middleware": [
-        "web"
+        "web",
+        "universal",
+        "Stancl\\Tenancy\\Middleware\\InitializeTenancyByDomain"
       ],
       "expanded_middleware": [
+        "Stancl\\Tenancy\\Middleware\\InitializeTenancyByDomain",
         "Illuminate\\Cookie\\Middleware\\EncryptCookies",
         "Illuminate\\Cookie\\Middleware\\AddQueuedCookiesToResponse",
         "Illuminate\\Session\\Middleware\\StartSession",
@@ -5772,9 +5775,11 @@
       "name": "livewire.update",
       "action": "Livewire\\Mechanisms\\HandleRequests\\HandleRequests@handleUpdate",
       "middleware": [
-        "web"
+        "web",
+        "Stancl\\Tenancy\\Middleware\\InitializeTenancyByDomain"
       ],
       "expanded_middleware": [
+        "Stancl\\Tenancy\\Middleware\\InitializeTenancyByDomain",
         "Illuminate\\Cookie\\Middleware\\EncryptCookies",
         "Illuminate\\Cookie\\Middleware\\AddQueuedCookiesToResponse",
         "Illuminate\\Session\\Middleware\\StartSession",
@@ -6372,22 +6377,6 @@
     },
     {
       "methods": [
-        "PUT"
-      ],
-      "uri": "storage/{path}",
-      "name": "storage.local.upload",
-      "action": "Closure",
-      "middleware": [],
-      "expanded_middleware": [],
-      "excluded_middleware": [],
-      "domain_bound": false,
-      "source": {
-        "file": "vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php",
-        "line": 106
-      }
-    },
-    {
-      "methods": [
         "GET",
         "HEAD"
       ],
@@ -6549,5 +6538,5 @@
       }
     }
   ],
-  "source_fingerprint": "2778940507016ade67bfe264fa6b57e03434fc408d89b203108008a0e9c1319d"
+  "source_fingerprint": "234365e4d170fbf4fd432094bf5e9b63e04d177803ec85d99bfad27665b11ee8"
 }

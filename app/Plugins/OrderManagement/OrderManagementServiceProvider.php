@@ -61,6 +61,9 @@ final class OrderManagementServiceProvider extends ServiceProvider
 
         $this->app->singleton(src\Settings\OrderSettingsSection::class);
         $this->app->tag([src\Settings\OrderSettingsSection::class], 'store-settings.sections');
+
+        $this->app->singleton(src\Bootstrap\OrderManagementBootstrapContributor::class);
+        $this->app->tag([src\Bootstrap\OrderManagementBootstrapContributor::class], 'tenant.bootstrap.contributors');
     }
 
     public function boot(): void

@@ -74,9 +74,9 @@ Edited at **إعدادات المتجر** (Store settings). Tabs come from plugi
 | --- | --- | --- | --- |
 | المظهر والألوان (Appearance) | `theme`, color/radius customizations | Storefront theme CSS | [Store settings](features/store-settings.md) |
 | بطاقات الواجهة (Storefront cards) | `product_show_cards` | Product card display | Store settings |
-| الهوية والمتجر (Identity) | `site_name`, `site_name_ar`, `site_description`, `site_logo`, `svg_logo`, `site_favicon`, `image_placeholder`, `contact_*`, `social_*` | Branding, footer, admin brand name | Store settings |
+| الهوية والمتجر (Identity) | `site_name`, `site_name_ar`, `site_description`, `site_logo`, `svg_logo`, `site_favicon`, `image_placeholder`, `contact_*`, `whatsapp_number`, `social_*` | Branding, floating WhatsApp CTA, footer, admin brand name | Store settings |
 | النظام وساعات العمل (System & hours) | `maintenance_mode`, `work_times`, `accept_orders_after_work_times`, `currency`, Google OAuth keys, SMTP `mail_*` | Ordering hours, currency, sign-in, email | Store settings, [Checkout](features/checkout-and-orders.md) |
-| Orders | `tax_rate` (%), `min_order_amount`, `allow_manual_order_status_update` | Pricing and admin status control | [Checkout](features/checkout-and-orders.md#configuration) |
+| Orders | `tax_rate` (%), `min_order_amount`, `free_shipping_threshold`, `simplified_address_enabled`, `allow_manual_order_status_update` | Pricing, automatic free shipping, simplified checkout address, admin status control | [Checkout](features/checkout-and-orders.md#configuration) |
 | Payments | `cod_fee`, `online_payments_enabled`, `active_payment_gateway` (`paymob`/`kashier`), `paymob_*`, `kashier_*` | Payment methods and gateway credentials | [Payments](features/payments.md#configuration) |
 | نظام نقاط البيع (POS) | `products_repo_link` | Master product repository for import/price sync | [POS](features/pos-integration.md#configuration) |
 | نظام نقاط البيع (POS) | `products_repo_api_key` | Master POS `WEB_API_KEY`, sent as `X-Api-Key` | [POS](features/pos-integration.md#configuration) |

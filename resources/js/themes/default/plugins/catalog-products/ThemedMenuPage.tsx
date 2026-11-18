@@ -30,6 +30,7 @@ import {
     Category,
 } from "@/plugins/catalog-products";
 import { useFormatMoney } from "@/lib/money";
+import { formatItemsCount } from "@/lib/arabicPlural";
 import { fetchCatalogProduct } from "@/plugins/catalog-products/api/useCatalogProduct";
 import { normalizeProduct } from "@/plugins/catalog-products/utils/normalizeProduct";
 import { NormalizedProduct } from "@/plugins/catalog-products/types";
@@ -556,7 +557,6 @@ export default function ThemedMenuPage() {
                                 }}
                                 min="0"
                                 step="1"
-                                className="h-9"
                                 data-testid={`${panelId}-min-price`}
                             />
                         </div>
@@ -575,7 +575,6 @@ export default function ThemedMenuPage() {
                                 }}
                                 min="0"
                                 step="1"
-                                className="h-9"
                                 data-testid={`${panelId}-max-price`}
                             />
                         </div>
@@ -604,7 +603,7 @@ export default function ThemedMenuPage() {
                             updateUrlParams({ sortBy: by, sortOrder: order });
                         }}
                     >
-                        <SelectTrigger className="w-full h-9" data-testid={`${panelId}-sort-select`}>
+                        <SelectTrigger className="w-full" data-testid={`${panelId}-sort-select`}>
                             <SelectValue placeholder={t("sortBy", "Sort by")} />
                         </SelectTrigger>
                         <SelectContent>
@@ -624,7 +623,6 @@ export default function ThemedMenuPage() {
                 <Button
                     onClick={handleApplyFilters}
                     className="flex-1 shadow-sm font-medium"
-                    size="sm"
                     data-testid={`${panelId}-apply-filters`}
                 >
                     {t("applyFilters", "Apply")}
@@ -632,7 +630,6 @@ export default function ThemedMenuPage() {
                 <Button
                     onClick={handleResetFilters}
                     variant="outline"
-                    size="sm"
                     className="hover:text-destructive hover:border-destructive/40"
                     data-testid={`${panelId}-reset-filters`}
                 >
@@ -662,7 +659,7 @@ export default function ThemedMenuPage() {
                                 {t("browseOurDeliciousMenu", "Browse our delicious menu and freshly roasted coffee selections")}
                                 {totalProducts > 0 && (
                                     <span className="font-semibold text-foreground ms-2">
-                                        ({totalProducts} {t("items", "items")})
+                                        ({formatItemsCount(totalProducts, isRTL)})
                                     </span>
                                 )}
                             </p>
@@ -681,7 +678,7 @@ export default function ThemedMenuPage() {
                                     </Button>
                                 </SheetTrigger>
                                 <SheetContent
-                                    side={isRTL ? "left" : "right"}
+                                    side={isRTL ? "right" : "left"}
                                     className="w-[85vw] sm:max-w-md overflow-y-auto"
                                     data-testid="mobile-filter-sheet"
                                 >
@@ -768,14 +765,6 @@ export default function ThemedMenuPage() {
                                             <Filter className="w-4 h-4 text-primary" />
                                             {t("filters", "Filter Products")}
                                         </h2>
-                                        {hasActiveFilters && (
-                                            <button
-                                                onClick={handleResetFilters}
-                                                className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                                            >
-                                                {t("reset", "Reset")}
-                                            </button>
-                                        )}
                                     </div>
                                 </CardHeader>
                                 <CardContent className="pt-4">

@@ -11,14 +11,14 @@ export default function OrderNotesSection({ value, onChange }: OrderNotesSection
     const { t } = useTranslation();
 
     return (
-        <Card>
-            <CardHeader>
+        <Card variant="recessed">
+            <CardHeader className="p-4 sm:p-6">
                 <CardTitle>{t("orderNotes")}</CardTitle>
                 <CardDescription>
                     {t("addOrderNotesOptional")}
                 </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
                 <Textarea
                     placeholder={t("orderNotesPlaceholder")}
                     value={value}

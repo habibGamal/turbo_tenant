@@ -27,10 +27,13 @@ import {
 } from "lucide-react";
 import { OrderShowSkeleton } from "@/components/ui/page-skeletons";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/core/context/AuthContext";
 import { Order, PageProps } from "@/types";
 import { getPaymentMethodLabel } from "@/lib/payment";
 import { useOrderDetails } from "@/plugins/order-management";
 import { useFormatMoney } from "@/lib/money";
+import { formatPlaceLabel, formatSavedAddressLines } from "@/lib/locationFormatters";
+import { formatWeightLabel } from "@/lib/weight";
 import {
     OrderStatusBadge,
     OrderTimeline,
@@ -47,9 +50,11 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
     const isRTL = i18n.language === "ar";
     const BackArrowIcon = isRTL ? ArrowRight : ArrowLeft;
     const formatMoney = useFormatMoney();
+    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
     const resolvedId = orderId || initialOrder?.id || (typeof window !== 'undefined' ? window.location.pathname.split('/').filter(Boolean).pop() : undefined);
     const { data: fetchedOrder, isLoading, error } = useOrderDetails(resolvedId, {
+        enabled: Boolean(resolvedId) && (Boolean(initialOrder) || (!isAuthLoading && isAuthenticated)),
         refetchInterval: (query) => {
             const current = query.state.data;
             if (!current || ["completed", "delivered", "cancelled"].includes(current.status)) {
@@ -61,10 +66,25 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
 
     const order = fetchedOrder || initialOrder;
 
-    if (isLoading && !order) {
+    if ((isAuthLoading && !order) || (isLoading && !order)) {
         return (
             <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5">
                 <OrderShowSkeleton />
+            </MainLayout>
+        );
+    }
+
+    if (!isAuthLoading && !isAuthenticated && !initialOrder) {
+        return (
+            <MainLayout className="bg-gradient-to-b from-background via-background/95 to-primary/5">
+                <div className="container mx-auto px-4 py-24 text-center max-w-md space-y-4">
+                    <h2 className="text-xl font-semibold">{t("ordersSignInTitle", "Sign in to view your orders")}</h2>
+                    <p className="text-sm text-muted-foreground">{t("ordersSignInDescription")}</p>
+                    <div className="flex flex-col sm:flex-row justify-center gap-3">
+                        <Button asChild><Link to={`/login?redirect=${encodeURIComponent(window.location.pathname)}`}>{t("login")}</Link></Button>
+                        <Button asChild variant="outline"><Link to="/track-order">{t("trackOrder")}</Link></Button>
+                    </div>
+                </div>
             </MainLayout>
         );
     }
@@ -169,7 +189,12 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                                 )}
                                                 {item.product?.sell_by_weight && item.weight_option_value && (
                                                     <div className="text-sm text-muted-foreground">
-                                                        <span> {item.weight_option_value.value}
+                                                        <span>
+                                                            {formatWeightLabel(
+                                                                item.weight_option_value,
+                                                                item.product?.weight_option?.unit || "kg",
+                                                                isRTL
+                                                            )}{" "}
                                                         </span>
                                                         <span>
                                                             × {formatMoney(item.unit_price)}
@@ -394,7 +419,7 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                         {t("branch")}
                                     </div>
                                     <div className="font-medium flex items-center justify-between gap-2 mt-1">
-                                        <span>{order.branch?.name || t("unknown")}</span>
+                                        <span dir="auto">{order.branch?.name || t("unknown")}</span>
                                         {((order.branch as any)?.phone || (order.branch as any)?.phone_number || (order.branch as any)?.contact_phone) && (
                                             <Button variant="outline" size="sm" asChild className="gap-2 shrink-0">
                                                 <a href={`tel:${(order.branch as any)?.phone || (order.branch as any)?.phone_number || (order.branch as any)?.contact_phone}`}>
@@ -411,16 +436,26 @@ export default function OrderShow({ order: initialOrder, orderId, auth }: OrderS
                                             <div className="text-sm text-muted-foreground">
                                                 {t("deliveryAddress")}
                                             </div>
-                                            <div className="font-medium text-sm">
-                                                {order.address?.street},{" "}
-                                                {order.address?.building}
-                                                <br />
-                                                {t("floor")}{" "}
-                                                {order.address?.floor},{" "}
-                                                {t("apt")}{" "}
-                                                {order.address?.apartment}
-                                                <br />
-                                                {order.address?.area?.name}
+                                            <div className="font-medium text-sm space-y-0.5">
+                                                <div>
+                                                    {formatSavedAddressLines(
+                                                        order.address,
+                                                        { floor: t("floor"), apt: t("apt") },
+                                                        isRTL
+                                                    )}
+                                                </div>
+                                                {order.address?.area && (
+                                                    <div>
+                                                        {formatPlaceLabel(
+                                                            order.address.area.governorate?.name,
+                                                            order.address.area.governorate?.name_ar,
+                                                            order.address.area.name,
+                                                            order.address.area.name_ar,
+                                                            i18n.language,
+                                                            ", "
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     )}

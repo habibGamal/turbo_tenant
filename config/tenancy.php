@@ -22,6 +22,7 @@ return [
         'central.turbosoftspace.com',
         'central-control.turbosoftspace.com',
         'turbospace.click',
+        'central.test',
     ],
 
     /**

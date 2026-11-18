@@ -23,7 +23,7 @@ export default function CategoryScrollBar({
     onSelectCategory,
     className,
 }: CategoryScrollBarProps) {
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
     const isRTL = i18n.language === 'ar';
     const buttonRefs = useRef<Record<string | number, HTMLButtonElement | null>>({});
 
@@ -52,7 +52,7 @@ export default function CategoryScrollBar({
 
     return (
         <nav
-            aria-label="Categories"
+            aria-label={t('categories', 'Categories')}
             data-testid="category-scroll-bar"
             className={cn('w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden', className)}
         >
@@ -73,7 +73,7 @@ export default function CategoryScrollBar({
                             data-active={isActive ? 'true' : 'false'}
                             aria-current={isActive ? 'true' : undefined}
                             className={cn(
-                                'shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm transition-all duration-200 select-none cursor-pointer',
+                                'shrink-0 inline-flex min-h-11 md:min-h-9 items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm transition-all duration-200 select-none cursor-pointer',
                                 isActive
                                     ? 'bg-primary text-primary-foreground shadow-sm font-bold scale-[1.02]'
                                     : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground font-medium'

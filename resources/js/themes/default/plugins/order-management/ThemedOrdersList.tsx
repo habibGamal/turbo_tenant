@@ -22,8 +22,10 @@ import {
 } from "lucide-react";
 import { OrdersListSkeleton } from "@/components/ui/page-skeletons";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/core/context/AuthContext";
 import { useOrders } from "@/plugins/order-management";
 import { useFormatMoney } from "@/lib/money";
+import { formatWeightLabel } from "@/lib/weight";
 import { getPaymentMethodLabel } from "@/lib/payment";
 import {
     OrderStatusBadge,
@@ -36,15 +38,47 @@ export interface ThemedOrdersListProps {
 
 export default function ThemedOrdersList({ initialPage = 1 }: ThemedOrdersListProps) {
     const { t, i18n } = useTranslation();
+    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
     return (
-        <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-12" dir={i18n.dir()}>
+        <main className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-12" dir={i18n.dir()}>
             <Head title={t("myOrders")} />
             <header className="mb-8 border-b border-border pb-6 text-start">
                 <h1 className="text-2xl font-bold tracking-tight md:text-4xl">{t("myOrders")}</h1>
             </header>
-            <OrdersListContent initialPage={initialPage} />
-        </div>
+            {isAuthLoading ? (
+                <OrdersListSkeleton />
+            ) : !isAuthenticated ? (
+                <Card className="py-12" data-testid="orders-auth-required">
+                    <CardContent className="flex flex-col items-center gap-5 text-center max-w-md mx-auto">
+                        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                            <ShoppingBag className="w-8 h-8 text-primary" />
+                        </div>
+                        <div className="space-y-2">
+                            <h2 className="text-xl font-semibold">
+                                {t("ordersSignInTitle", "Sign in to view your orders")}
+                            </h2>
+                            <p className="text-sm text-muted-foreground">
+                                {t(
+                                    "ordersSignInDescription",
+                                    "Sign in to view your order history, or track a guest order using your order number and phone."
+                                )}
+                            </p>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                            <Button asChild size="lg">
+                                <Link to="/login?redirect=/orders">{t("login")}</Link>
+                            </Button>
+                            <Button asChild variant="outline" size="lg">
+                                <Link to="/track-order">{t("trackOrder")}</Link>
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            ) : (
+                <OrdersListContent initialPage={initialPage} />
+            )}
+        </main>
     );
 }
 
@@ -266,7 +300,11 @@ function OrdersListContent({ initialPage = 1 }: ThemedOrdersListProps) {
                                                                 {item.weight_multiplier} x {item.product_name}
                                                                 {item.weight_option_value && (
                                                                     <span className="text-muted-foreground text-xs block">
-                                                                        {item.weight_option_value.label || `${parseFloat(item.quantity).toFixed(2)}`}
+                                                                        {formatWeightLabel(
+                                                                            item.weight_option_value,
+                                                                            item.product?.weight_option?.unit || "kg",
+                                                                            isRTL
+                                                                        )}
                                                                     </span>
                                                                 )}
                                                             </>

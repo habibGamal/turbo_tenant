@@ -26,6 +26,7 @@
     "App\\Plugins\\OrderManagement\\src\\Pipelines\\OrderPipelineRegistry",
     "App\\Plugins\\OrderManagement\\src\\Pipelines\\OrderValidationPipeline",
     "App\\Plugins\\OrderManagement\\src\\Pipelines\\PricingCalculationPipeline",
-    "App\\Plugins\\OrderManagement\\src\\DTOs\\OrderManagementConfig"
+    "App\\Plugins\\OrderManagement\\src\\DTOs\\OrderManagementConfig",
+    "App\\Plugins\\OrderManagement\\src\\Bootstrap\\OrderManagementBootstrapContributor"
   ]
 }

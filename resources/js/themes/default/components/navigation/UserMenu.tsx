@@ -30,8 +30,9 @@ export function UserMenu({ user }: UserMenuProps) {
         return (
             <Button
                 variant="default"
-                size="sm"
-                className="gap-2"
+                size="default"
+                className="gap-2 w-11 px-0 sm:w-auto sm:px-4"
+                aria-label={t("login")}
                 onClick={() => navigate("/login")}
             >
                 <User className="h-4 w-4" />

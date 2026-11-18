@@ -32,8 +32,10 @@ function ThemedSinglePage({ slug, isAr, className }: { slug: string; isAr: boole
     return <NotFound embedded={true} />;
   }
 
-  const title = isAr && page.title_ar ? page.title_ar : page.title;
-  const content = isAr && page.content_ar ? page.content_ar : page.content;
+  const title = isAr && page.title_ar ? page.title_ar : (page.title || page.title_ar);
+  const content = isAr && page.content_ar ? page.content_ar : (page.content || page.content_ar);
+  const isContentArabic = Boolean(content && /[\u0600-\u06FF]/.test(content));
+  const contentDir = isContentArabic ? 'rtl' : (isAr ? 'rtl' : 'ltr');
 
   return (
     <div data-testid="cms-page-container" className={`themed-cms-page ${className}`}>
@@ -49,16 +51,17 @@ function ThemedSinglePage({ slug, isAr, className }: { slug: string; isAr: boole
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-12 md:py-16">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <article className="bg-card rounded-2xl shadow-sm border p-6 md:p-10 lg:p-12">
             {content && (
               <div
+                dir={contentDir}
                 data-testid="cms-page-content"
-                className="prose prose-slate dark:prose-invert max-w-none
+                className={`prose prose-slate dark:prose-invert max-w-none
                   prose-headings:font-bold prose-headings:tracking-tight
                   prose-h2:text-3xl prose-h2:mt-8 prose-h2:mb-4
                   prose-p:text-base prose-p:leading-relaxed prose-p:mb-4
-                  prose-a:text-primary hover:prose-a:underline"
+                  prose-a:text-primary hover:prose-a:underline ${isContentArabic ? 'text-right' : ''}`}
                 dangerouslySetInnerHTML={{ __html: content }}
               />
             )}

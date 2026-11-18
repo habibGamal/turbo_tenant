@@ -22,11 +22,11 @@ export default function BranchSelection({ branches, value, onChange, error }: Br
     const isRTL = i18n.language === "ar";
 
     return (
-        <Card>
-            <CardHeader>
+        <Card variant="recessed">
+            <CardHeader className="p-4 sm:p-6">
                 <CardTitle>{t("pleaseSelectBranch")}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
                 <Select
                     value={value?.toString()}
                     onValueChange={(val) => onChange(parseInt(val))}
@@ -41,7 +41,7 @@ export default function BranchSelection({ branches, value, onChange, error }: Br
                                 key={branch.id}
                                 value={branch.id.toString()}
                             >
-                                {branch.name}
+                                <span dir="auto">{branch.name}</span>
                             </SelectItem>
                         ))}
                     </SelectContent>

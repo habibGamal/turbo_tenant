@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LoaderIcon, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Product, Review, ExtraOptionItem, ProductVariant } from "@/types";
 import { normalizeProduct } from "@/plugins/catalog-products/utils/normalizeProduct";
@@ -93,6 +94,35 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
   };
 
   const lastViewedRef = useRef<string | null>(null);
+  const optionsRef = useRef<HTMLDivElement>(null);
+  const [isInlineCtaVisible, setIsInlineCtaVisible] = useState(false);
+
+  useEffect(() => {
+    const container = optionsRef.current;
+    if (!container || typeof IntersectionObserver === "undefined") {
+      return;
+    }
+
+    const target = container.querySelector('[data-testid="product-detail-add-to-cart"]');
+    if (!target) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry) {
+          setIsInlineCtaVisible(entry.isIntersecting);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(target);
+    return () => {
+      observer.disconnect();
+    };
+  }, [product?.id, product?.is_active]);
 
   useEffect(() => {
     if (!product) return;
@@ -170,30 +200,32 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
   return (
     <MainLayout>
       <Head title={getText(product.name, product.name_ar)} />
-      <div className="min-h-screen bg-background">
-        <main className="container mx-auto px-4 py-8">
+      <div className="min-h-screen bg-background overflow-x-hidden pb-20 md:pb-0">
+        <main className="container mx-auto px-4 py-4 sm:py-8 max-w-7xl">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-            <Link to="/" className="hover:text-foreground transition-colors">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6 overflow-hidden flex-wrap">
+            <Link to="/" className="hover:text-foreground transition-colors shrink-0">
               {t("home")}
             </Link>
-            <span>/</span>
+            <span className="shrink-0">/</span>
             {product.category && (
               <>
                 <Link
                   to={`/menu?category_ids[]=${product.category.id}`}
-                  className="hover:text-foreground transition-colors"
+                  className="hover:text-foreground transition-colors shrink-0 truncate max-w-[120px] sm:max-w-none"
                 >
                   {categoryName}
                 </Link>
-                <span>/</span>
+                <span className="shrink-0">/</span>
               </>
             )}
-            <span className="text-foreground font-medium">{getText(product.name, product.name_ar)}</span>
+            <span className="text-foreground font-medium truncate max-w-[180px] sm:max-w-none">
+              {getText(product.name, product.name_ar)}
+            </span>
           </div>
 
           {/* Product Details Section */}
-          <div data-testid="product-details-container" className="grid lg:grid-cols-2 gap-8 lg:gap-12 mb-16">
+          <div data-testid="product-details-container" className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 mb-10 sm:mb-16">
             {/* Product Image */}
             <ProductImage product={product} />
 
@@ -207,7 +239,7 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
 
               <ProductInfo product={product} totalPrice={calculateTotalPrice()} />
 
-              <div className={!isProductActive ? "opacity-60 pointer-events-none" : ""}>
+              <div ref={optionsRef} className={!isProductActive ? "opacity-60 pointer-events-none" : ""}>
                 <ProductOptions
                   product={product}
                   selectedVariant={selectedVariant}
@@ -240,13 +272,6 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
           {product.combo_packages && product.combo_packages.length > 0 && (
             <ProductComboUpsell packages={product.combo_packages} />
           )}
-
-          {/* Product Extension Slot (e.g. Additional Information / Badges) */}
-          <PluginSlot
-            name="product.details.after"
-            pluginId="catalog-products"
-            context={{ productId: product.id }}
-          />
 
           {/* Tabs Section */}
           <Tabs
@@ -295,7 +320,7 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
                     <div className="flex justify-between py-2 border-b">
                       <span className="font-medium">{t("availability")}</span>
                       <Badge variant={product.is_active ? "default" : "secondary"}>
-                        {product.is_active ? t("available") : t("unavailable")}
+                        {product.is_active ? t("inStock") : t("unavailable")}
                       </Badge>
                     </div>
                   </div>
@@ -306,14 +331,14 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
 
           {/* Related Products */}
           {relatedProducts.length > 0 && (
-            <section className="mb-16">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-bold">{t("similarProducts")}</h2>
+            <section className="mb-12 sm:mb-16">
+              <div className="flex items-center justify-between mb-4 sm:mb-8">
+                <h2 className="text-xl sm:text-3xl font-bold">{t("similarProducts")}</h2>
                 <Link to="/menu">
-                  <Button variant="outline">{t("viewAll")}</Button>
+                  <Button variant="outline" size="sm" className="sm:h-10">{t("viewAll")}</Button>
                 </Link>
               </div>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                 {pushUnavailableToEnd(relatedProducts).map((relatedProduct) => (
                   <ProductCard key={relatedProduct.id} product={relatedProduct} />
                 ))}
@@ -324,13 +349,13 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
           {/* Promotional Products */}
           {promotionalProducts.length > 0 && (
             <section>
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-bold">{t("specialOffers")}</h2>
+              <div className="flex items-center justify-between mb-4 sm:mb-8">
+                <h2 className="text-xl sm:text-3xl font-bold">{t("specialOffers")}</h2>
                 <Link to="/menu">
-                  <Button variant="outline">{t("viewAll")}</Button>
+                  <Button variant="outline" size="sm" className="sm:h-10">{t("viewAll")}</Button>
                 </Link>
               </div>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                 {pushUnavailableToEnd(promotionalProducts).map((promoProduct) => (
                   <ProductCard key={promoProduct.id} product={promoProduct} />
                 ))}
@@ -339,6 +364,75 @@ export function ThemedProductShow({ productId: propProductId }: ThemedProductSho
           )}
         </main>
       </div>
+
+      {/* Mobile Sticky Add-to-Cart Bar */}
+      {isProductActive && !isInlineCtaVisible && (
+        <div
+          data-testid="product-sticky-add-to-cart-bar"
+          className="md:hidden fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom))] sm:bottom-[calc(4rem+env(safe-area-inset-bottom))] inset-x-0 z-30 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85 px-4 py-2.5 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]"
+        >
+          <div className="flex items-center justify-between gap-2.5">
+            <div className="flex flex-col shrink-0">
+              <span className="text-[11px] text-muted-foreground leading-tight">{t("total")}</span>
+              <span className="text-base font-bold text-primary leading-tight">
+                {formatMoney(calculateTotalPrice())}
+              </span>
+            </div>
+
+            {!product.sell_by_weight && (
+              <div className="flex h-11 items-center bg-muted/60 border border-border rounded-xl px-1 shrink-0">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t("decreaseQuantity", "Decrease quantity")}
+                  className="h-9 w-9 rounded-lg shadow-none"
+                  onClick={() => handleQuantityChange(-1)}
+                  disabled={quantity <= 1}
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </Button>
+                <span className="w-6 text-center text-sm font-semibold">{quantity}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t("increaseQuantity", "Increase quantity")}
+                  className="h-9 w-9 rounded-lg shadow-none"
+                  onClick={() => handleQuantityChange(1)}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
+
+            <Button
+              type="button"
+              data-testid="product-sticky-add-to-cart"
+              size="lg"
+              className="flex-1 h-11 rounded-xl gap-2 text-sm font-semibold"
+              disabled={isAddingToCart}
+              onClick={() => {
+                if (!canAddToCart) {
+                  optionsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  return;
+                }
+                handleAddToCart();
+              }}
+            >
+              <ShoppingCart className="h-4 w-4" />
+              {isAddingToCart ? (
+                <>
+                  {t("adding")}
+                  <LoaderIcon className="h-4 w-4 animate-spin" />
+                </>
+              ) : (
+                t("addToCart")
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 }

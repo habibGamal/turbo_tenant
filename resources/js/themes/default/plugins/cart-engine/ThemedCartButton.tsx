@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/plugins/cart-engine/api";
+import { useTranslation } from "react-i18next";
 
 export default function ThemedCartButton() {
+    const { t } = useTranslation();
     const { data: cart } = useCart();
     const [isBumped, setIsBumped] = useState(false);
 
@@ -25,7 +27,7 @@ export default function ThemedCartButton() {
                 variant="ghost"
                 size="icon"
                 className={`relative transition-transform duration-300 ${isBumped ? "scale-125" : "scale-100"}`}
-                aria-label="View Cart"
+                aria-label={t("viewCart", "View Cart")}
             >
                 <ShoppingCart className="h-5 w-5" />
                 {cartCount > 0 && (

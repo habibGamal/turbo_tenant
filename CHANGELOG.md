@@ -21,9 +21,13 @@ The project has no release tags; history is grouped by month from the git log on
 - Plugin contribution points (bootstrap data, settings tabs, order rules/resolvers/responses, cart line types, admin form/table/checklist extensions) and settings tabs contributed by plugins; theme presets for the storefront ([architecture](docs/architecture.md#extension-points)).
 - Commands `tenants:plugin:migrate`, `plugin:clear` and `serve:fast`.
 - Uniform JSON error envelope for `api/*` requests.
+- Per-tenant storefront conversion & shipping controls: automatic free shipping threshold (`free_shipping_threshold`) enforced in checkout pricing with progress bar in cart/checkout, simplified single-field checkout address toggle (`simplified_address_enabled`), and floating WhatsApp CTA (`whatsapp_number`) ([docs](docs/features/checkout-and-orders.md), [docs](docs/features/store-settings.md)).
+- Mobile product page sticky add-to-cart bar (`ThemedProductShow`) and compact mobile product image height (`ProductImage`).
 
 ### Changed
 - POS API key fields in the admin now say where to copy the key on the POS (الإعدادات › إدارة الفروع › مفتاح الربط (API)).
+- Plugin Marketplace (`/admin/plugins`) now uses a native Filament Table with `PluginStatsOverview` header stats, status tabs, category filter, and per-row lifecycle actions ([docs](docs/features/plugin-marketplace.md)).
+- Checkout hides the branch selector when only one active branch exists, syncs branch from the selected delivery area, hides the mobile bottom nav bar on `/checkout` so the sticky place-order bar anchors cleanly to the bottom, and displays localized deduplicated governorate/area labels with shipping fees (`locationFormatters.ts`).
 - POS calls send `X-Api-Key`, which the POS now requires on its website endpoints. Each branch has a POS API key (`branches.pos_api_key`, encrypted, new PosIntegration tenant migration), and the master POS key is the `products_repo_api_key` setting ([docs](docs/features/pos-integration.md#configuration)). The branch form gained the `admin.form.locations-delivery.branch` contribution point.
 - Coupons can target line types (e.g. packages).
 
@@ -37,6 +41,8 @@ The project has no release tags; history is grouped by month from the git log on
 - Prevent central database foreign key integrity violation (`1452`) on `tenant_plugins` during tenant creation by self-healing missing central catalog records in `PluginLifecycleService::activate`.
 - Prevent tenant dashboard 500 query exceptions (`42S02`) on new tenant accounts by gating `PendingReviewsStat` and `OrderManagement` widgets with tenant plugin activation and schema table existence checks.
 - Resolve cross-plugin circular dependency in `orders` tenant migration: decoupled `coupon_id` foreign key from `OrderManagement` and added idempotency guards (`Schema::hasTable`) to prevent `1824` / `1050` table creation crashes.
+- Storefront UX/UI, RTL/BiDi, accessibility, and checkout fixes across the default React theme and UI primitives: fixed coupon validation hitting `/coupons/validate` (`405`) instead of `/api/coupons/validate`, prevented unauthenticated `/orders` 401 errors with a guest sign-in/tracking prompt, added Meta CAPI `419` XSRF refresh retry, aligned mobile drawers/sheets and Sonner toasts with RTL direction and z-index layering above mobile bottom navigation, fixed hero contrast/dots/badge clipping, standardized `44px` mobile touch targets, localized weight/area/error/review formatting, and eliminated duplicate mobile checkout CTAs.
+- Guest payment callback **View Order** (`عرض الطلب`) and secondary links now route guests directly to signed order tracking (`/orders/track?order_number=...&token=...`) instead of `/orders/:id` ("Sign in to view your orders") ([docs](docs/features/payments.md#how-it-works)).
 
 ### Upgrade notes
 - Run `php artisan plugin:discover` and `php artisan tenants:plugin:migrate --force` so active plugins get their new tenant tables (notably POS delivery tracking and Meta tables).

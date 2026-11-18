@@ -36,6 +36,26 @@ final readonly class OrderManagementConfig
         return (float) config('app.service_rate', 0.0);
     }
 
+    public function getFreeShippingThreshold(): float
+    {
+        if (! $this->settingService) {
+            return 0.0;
+        }
+
+        $threshold = $this->settingService->get(OrderSettingKey::FREE_SHIPPING_THRESHOLD, 0.0);
+
+        return is_numeric($threshold) && (float) $threshold > 0.0 ? (float) $threshold : 0.0;
+    }
+
+    public function isSimplifiedAddressEnabled(): bool
+    {
+        if (! $this->settingService) {
+            return false;
+        }
+
+        return (bool) $this->settingService->get(OrderSettingKey::SIMPLIFIED_ADDRESS_ENABLED, false);
+    }
+
     public function acceptOrdersAfterWorkTimes(): bool
     {
         if (! $this->settingService) {

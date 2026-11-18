@@ -8,7 +8,7 @@ export interface UseOrdersParams {
     [key: string]: any;
 }
 
-export function useOrders(params?: UseOrdersParams) {
+export function useOrders(params?: UseOrdersParams, options?: { enabled?: boolean }) {
     return useQuery<PaginatedOrders>({
         queryKey: ['orders', params],
         queryFn: async () => {
@@ -18,6 +18,7 @@ export function useOrders(params?: UseOrdersParams) {
                 meta: data.meta!,
             };
         },
+        enabled: options?.enabled ?? true,
         staleTime: 1000 * 60 * 2, // 2 minutes
     });
 }

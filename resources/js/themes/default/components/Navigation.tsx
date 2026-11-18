@@ -47,6 +47,14 @@ export default function Navigation({
     const pathname = location.pathname;
     const isMenuPage = pathname === "/menu";
     const [searchOpen, setSearchOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => setIsScrolled(window.scrollY > 8);
+        handleScroll();
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     const isHomeActive = pathname === "/";
     const isMenuActive = pathname === "/menu" || pathname.startsWith("/menu/") || pathname.startsWith("/products/");
@@ -136,7 +144,14 @@ export default function Navigation({
     return (
         <>
             {/* Desktop & Tablet Header */}
-            <header ref={headerRef} data-testid="theme-header" className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <header
+                ref={headerRef}
+                data-testid="theme-header"
+                className={cn(
+                    "sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-shadow duration-200",
+                    isScrolled && "shadow-sm border-border/80"
+                )}
+            >
                 <div className="container mx-auto px-4">
                     <div className="flex h-16 items-center justify-between gap-4">
                         {/* Logo */}

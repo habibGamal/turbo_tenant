@@ -13,6 +13,7 @@ import { Package, ArrowRight, ArrowLeft } from "lucide-react";
 import { Cart as CartType } from "@/types";
 import { useTranslation } from "react-i18next";
 import { useCurrency, useFormatMoney } from "@/lib/money";
+import { FreeShippingProgress } from "@/themes/default/components/FreeShippingProgress";
 
 interface CartSummaryProps {
     cart: CartType;
@@ -28,11 +29,15 @@ export default function CartSummary({ cart, formatCurrency }: CartSummaryProps) 
     const currency = useCurrency();
 
     return (
-        <Card className="sticky top-[calc(var(--header-h,4rem)+1rem)]">
-            <CardHeader>
+        <Card variant="recessed" className="sticky top-[calc(var(--header-h,4rem)+1rem)]">
+            <CardHeader className="p-4 sm:p-6">
                 <CardTitle>{t("orderSummary")}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
+                <FreeShippingProgress
+                    currentAmount={Number((cart as any).subtotal ?? cart.total) || 0}
+                />
+
                 <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">
@@ -44,11 +49,11 @@ export default function CartSummary({ cart, formatCurrency }: CartSummaryProps) 
                     </div>
 
                     <p className="text-xs text-muted-foreground">
-                        {t("deliveryFeeCalculatedAtCheckout")}
+                        {t("calculatedByGovernorate", t("deliveryFeeCalculatedAtCheckout"))}
                     </p>
                 </div>
 
-                <Separator />
+                <Separator className="bg-border/80" />
 
                 <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-base font-semibold">
@@ -59,12 +64,12 @@ export default function CartSummary({ cart, formatCurrency }: CartSummaryProps) 
                     </div>
                 </div>
             </CardContent>
-            <CardFooter className="flex flex-col gap-3">
+            <CardFooter className="flex flex-col gap-3 px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
                 <Link to="/checkout" className="w-full">
                     <Button
                         data-testid="cart-checkout-button"
                         size="lg"
-                        className="w-full gap-2"
+                        className="w-full h-11 md:h-11 gap-2 rounded-xl shadow-none font-semibold"
                         disabled={cart.items.length === 0}
                     >
                         <Package className="h-5 w-5" />

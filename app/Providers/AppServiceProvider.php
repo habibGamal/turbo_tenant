@@ -49,6 +49,14 @@ final class AppServiceProvider extends ServiceProvider
         if (request()->isSecure() || request()->header('X-Forwarded-Proto') === 'https') {
             URL::forceScheme('https');
         }
+
+        // Override Sanctum's CSRF cookie route after all service providers boot so tenant subdomains
+        // initialize tenancy before starting the session, preventing central/tenant DB session mismatches.
+        $this->app->booted(function (): void {
+            Route::get('/sanctum/csrf-cookie', function () {
+                return response()->noContent()->header('X-CSRF-TOKEN', csrf_token());
+            })->middleware(['web', 'universal', InitializeTenancyByDomain::class])->name('sanctum.csrf-cookie');
+        });
     }
 
     /**
