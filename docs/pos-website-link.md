@@ -46,7 +46,7 @@ All requests go to `branch.link` + path, with `X-Api-Key`, a 30 s timeout, and o
 
 - `order.orderNumber`, `order.type` (delivery / takeaway), totals, payment method, notes, customer data (name, phone, Arabic address: عمارة، الدور، شقة, area and governorate in Arabic).
 - `order.idempotencyKey`: SHA-256 of tenant id, order id and order number. Identical for every send of the same order.
-- `items[]`: one line per product (`productRef`, `quantity`, `price`, `notes`). Weighted items send the weight in kg as `quantity`. Every add-on mapped to a POS item is its own line (quantity = add-on qty × item count, × weight multiplier for weighted items) with the note «إضافة على: &lt;item&gt;». Unmapped add-ons and variant / weight choices go in the item notes.
+- `items[]`: one line per product (`productRef`, `quantity`, `price`, `notes`). Weighted items send the weight in kg as `quantity`. Every add-on mapped to a POS item is its own line (quantity = add-on qty × item count, × weight multiplier for weighted items) with the note «إضافة على: &lt;item&gt;». Unmapped add-ons and weight choices go in the item notes. The chosen size (variant) is always in the notes as «النوع», even when the size has its own POS mapping, because that mapping often points at the same POS item as the base product.
 - The delivery fee is folded into the POS `service` amount.
 
 | POS answer | Website does |
