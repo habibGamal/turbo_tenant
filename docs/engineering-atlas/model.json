@@ -1,7 +1,7 @@
 {
   "contract_version": "1.0",
   "project": "turbo_tenant",
-  "revision": "fc60a60de28d242064393e216a65a13f8d2d7ce9",
+  "revision": "5ddcb122c9f5777687d364879488ae2189ba0a47",
   "scope": "current working tree; configured CLI route registration; source declarations",
   "modules": [
     {
@@ -55037,7 +55037,7 @@
         {
           "name": "resolveOrderItem",
           "line": 255,
-          "end": 346,
+          "end": 347,
           "calls": [
             {
               "name": "isProductLine",
@@ -55089,236 +55089,232 @@
             },
             {
               "name": "variantName",
-              "line": 303
-            },
-            {
-              "name": "variantName",
-              "line": 308
+              "line": 309
             },
             {
               "name": "first",
-              "line": 314
+              "line": 315
             },
             {
               "name": "first",
-              "line": 319
+              "line": 320
             },
             {
               "name": "formatNotes",
-              "line": 338
+              "line": 339
             }
           ]
         },
         {
           "name": "resolveExtraLines",
-          "line": 357,
-          "end": 391,
+          "line": 358,
+          "end": 392,
           "calls": [
             {
               "name": "isProductLine",
-              "line": 359
+              "line": 360
             },
             {
               "name": "isEmpty",
-              "line": 359
+              "line": 360
             },
             {
               "name": "loadMappingsForItems",
-              "line": 363
+              "line": 364
             },
             {
               "name": "productName",
-              "line": 367
+              "line": 368
             },
             {
               "name": "mappedExtraRef",
-              "line": 372
+              "line": 373
             }
           ]
         },
         {
           "name": "mappedExtraRef",
-          "line": 397,
-          "end": 412,
+          "line": 398,
+          "end": 413,
           "calls": [
             {
               "name": "relationLoaded",
-              "line": 403
+              "line": 404
             },
             {
               "name": "getExtraMappingType",
-              "line": 405
+              "line": 406
             },
             {
               "name": "resolveExtraMapping",
-              "line": 411
+              "line": 412
             }
           ]
         },
         {
           "name": "extraName",
-          "line": 417,
-          "end": 426,
+          "line": 418,
+          "end": 427,
           "calls": []
         },
         {
           "name": "productName",
-          "line": 428,
-          "end": 437,
+          "line": 429,
+          "end": 438,
           "calls": []
         },
         {
           "name": "variantName",
-          "line": 439,
-          "end": 448,
+          "line": 440,
+          "end": 449,
           "calls": []
         },
         {
           "name": "formatQuantity",
-          "line": 450,
-          "end": 453,
+          "line": 451,
+          "end": 454,
           "calls": []
         },
         {
           "name": "resolveCompositeOrderItem",
-          "line": 464,
-          "end": 633,
+          "line": 465,
+          "end": 634,
           "calls": [
             {
               "name": "loadLineMappingsForItems",
-              "line": 466
+              "line": 467
             },
             {
               "name": "first",
-              "line": 468
+              "line": 469
             },
             {
               "name": "first",
-              "line": 472
+              "line": 473
             },
             {
               "name": "relationLoaded",
-              "line": 478
+              "line": 479
             },
             {
               "name": "get",
-              "line": 480
+              "line": 481
             },
             {
               "name": "components",
-              "line": 480
+              "line": 481
             },
             {
               "name": "join",
-              "line": 497
+              "line": 498
             },
             {
               "name": "map",
-              "line": 497
+              "line": 498
             },
             {
               "name": "formatNotes",
-              "line": 533
+              "line": 534
             },
             {
               "name": "isEmpty",
-              "line": 539
+              "line": 540
             },
             {
               "name": "loadMappingsForItems",
-              "line": 543
+              "line": 544
             },
             {
               "name": "resolveComponentRef",
-              "line": 548
+              "line": 549
             },
             {
               "name": "warning",
-              "line": 551
+              "line": 552
             },
             {
               "name": "getExtraMappingType",
-              "line": 570
+              "line": 571
             },
             {
               "name": "resolveExtraMapping",
-              "line": 572
+              "line": 573
             },
             {
               "name": "join",
-              "line": 595
+              "line": 596
             },
             {
               "name": "map",
-              "line": 595
+              "line": 596
             },
             {
               "name": "formatNotes",
-              "line": 630
+              "line": 631
             }
           ]
         },
         {
           "name": "resolveExtraMapping",
-          "line": 635,
-          "end": 644,
+          "line": 636,
+          "end": 645,
           "calls": [
             {
               "name": "first",
-              "line": 637
+              "line": 638
             },
             {
               "name": "first",
-              "line": 640
+              "line": 641
             }
           ]
         },
         {
           "name": "getExtraMappingType",
-          "line": 646,
-          "end": 657,
+          "line": 647,
+          "end": 658,
           "calls": [
             {
               "name": "value",
-              "line": 652
+              "line": 653
             },
             {
               "name": "where",
-              "line": 652
+              "line": 653
             },
             {
               "name": "query",
-              "line": 652
+              "line": 653
             }
           ]
         },
         {
           "name": "resolveComponentRef",
-          "line": 659,
-          "end": 693,
+          "line": 660,
+          "end": 694,
           "calls": [
             {
               "name": "first",
-              "line": 665
+              "line": 666
             },
             {
               "name": "first",
-              "line": 669
+              "line": 670
             },
             {
               "name": "first",
-              "line": 680
+              "line": 681
             },
             {
               "name": "first",
-              "line": 685
+              "line": 686
             }
           ]
         },
         {
           "name": "formatNotes",
-          "line": 700,
-          "end": 712,
+          "line": 701,
+          "end": 713,
           "calls": []
         }
       ],
