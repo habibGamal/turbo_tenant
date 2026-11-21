@@ -109,6 +109,7 @@ const technicalSidebar: DefaultTheme.Sidebar = [
     text: 'Run it',
     items: [
       { text: 'Deployment', link: '/deployment' },
+      { text: 'Production server & post-pull', link: '/production-server' },
       { text: 'Queue, workers & scheduler', link: '/queue-and-workers' },
       { text: 'Operations & troubleshooting', link: '/operations' },
     ],

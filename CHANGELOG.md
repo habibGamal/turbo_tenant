@@ -6,6 +6,7 @@ The project has no release tags; history is grouped by month from the git log on
 ## [Unreleased]
 
 ### Added
+- Production web server page: nginx vhost for tenant images (host → tenant `map` for custom domains, `disable_symlinks off;` on the image locations), the 2026-11-21 image 404 incident, and a checklist to run after every `git pull` on production ([docs](docs/production-server.md)).
 - Documentation website (VitePress, `docs/`): the technical handbook in English plus a new Arabic store admin guide (`docs/ar/`, right-to-left) covering setup, catalog, sizes, add-ons, weight options, packages, branches and delivery areas, orders, POS connection, payments, coupons, content, notifications, Meta and FAQ. New technical pages: [Connecting a POS to the website](docs/pos-website-link.md) and [Queue, workers and scheduler](docs/queue-and-workers.md) ([docs](docs/docs-site.md)).
 - Developer handbook in `docs/` with a page per feature, deployment and operations guides, and this reconstructed changelog ([docs](docs/README.md)). The documentation skill can now handle any stack and includes `docs_check.py`.
 - Meta marketing plugin: Conversions API purchase and relayed browser events, Meta catalog feed (CSV/XML, Arabic override) and a diagnostics page ([docs](docs/features/meta-marketing.md)).

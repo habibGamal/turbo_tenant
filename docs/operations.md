@@ -51,6 +51,13 @@ Setup, supervision and the `DB_QUEUE_CONNECTION` pitfall: [Queue, workers and sc
 3. **Fix:** add the domain to the tenant in `/central`; remove it from central domains if it was added by mistake (code change + deploy).
 4. **Verify:** bootstrap returns that `tenant.id`.
 
+### Product or site images return 404
+
+1. **Confirm:** `curl -sk -o /dev/null -w '%{http_code}\n' https://<domain>/images/<a real path>` (a browser may show a cached copy).
+2. **Diagnose:** nginx error log shows `Too many levels of symbolic links` (symlink owner differs from `storage/` while `disable_symlinks if_not_owner` applies); `readlink public/tenant-storage` is not `../storage`; the domain is missing from the vhost's `map $host $tenant_key`.
+3. **Fix:** see [Production web server](production-server.md#incident-2026-11-21-every-tenant-image-returned-404): `chown -h` the symlinks to the storage owner, keep `disable_symlinks off;` on the image locations, recreate the symlink, or add the map line; then `nginx -t` and reload.
+4. **Verify:** every domain of the store returns `200 image/...` for the same image.
+
 ### Storefront section or API returns "Feature not available"
 
 1. **Confirm:** response is `404 {"message":"Feature not available"}`.

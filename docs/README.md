@@ -13,7 +13,7 @@ Turbo Tenant is a multi-tenant online ordering platform for restaurants. One Lar
 | Connect a store to its restaurant POS | [Connecting a POS to the website](pos-website-link.md) |
 | Call or integrate with it | [Interfaces](interfaces.md), [Configuration](configuration.md) |
 | Add code, run tests, follow conventions | [Development guide](development.md) |
-| Release it | [Deployment](deployment.md), [Queue, workers and scheduler](queue-and-workers.md) |
+| Release it | [Deployment](deployment.md), [Production web server and post-pull checklist](production-server.md), [Queue, workers and scheduler](queue-and-workers.md) |
 | Keep it running / fix incidents | [Operations and troubleshooting](operations.md) |
 | See what changed | [Changelog](../CHANGELOG.md) |
 | Know what is not yet documented or verified | [Coverage](coverage.md) |
