@@ -47,6 +47,7 @@ Without a worker: images stay unoptimized, POS orders stay `queued`, push notifi
 - Redis for cache (tag support).
 - Writable, persistent `storage/` (tenant uploads live in `storage/tenant<id>/`) and `bootstrap/cache/`.
 - `php artisan storage:link` so `public/storage` serves uploads. Tenant asset URLs come from `Storage::url()` on tenant-suffixed disks; verify that uploaded images load on a store domain after the first deploy.
+- `public/tenant-storage` must be a symlink to `../storage`, and nginx must map every store domain to its tenant id to serve images from disk. The production vhost, the 2026-11-21 image 404 incident and the checklist to run after every `git pull`: [Production web server](production-server.md).
 - Outbound HTTPS to Paymob/Kashier, Expo, Meta Graph, Google, and to every branch POS `link` (public addresses only unless `NETWORK_ALLOW_PRIVATE_HOSTS=true`).
 - Inbound HTTPS from Paymob/Kashier (webhooks) and branch POS systems (status callback).
 
@@ -67,6 +68,8 @@ php artisan optimize          # config, routes, views, events, and plugin manife
 Create the first operator account for `/central` (for example with `php artisan tinker` creating an `App\Models\User` in the central DB; do not use the `DEFAULT_USER_*` defaults in production). Then create stores from the central panel ([Store provisioning](features/tenant-provisioning.md)), point their domains at the server, and activate plugins from each store's marketplace.
 
 ## Release procedure
+
+On the current production server (CloudPanel, `git pull` in place), follow [Production web server › After every git pull](production-server.md#after-every-git-pull-on-production): it adds the file-ownership, symlink and image checks this generic procedure does not cover.
 
 1. **Preflight**
    - CI green on the commit (tests, PHPStan, Pint, atlas).
@@ -115,7 +118,8 @@ Create the first operator account for `/central` (for example with `php artisan 
 
 1. Add the domain on the tenant in `/central` (or `$tenant->domains()->create(['domain' => 'shop.example.com'])`).
 2. Point DNS at the server and issue a certificate.
-3. In the gateway dashboards, the webhook and redirect URLs are built from the request host (`https://<store domain>/api/webhooks/<gateway>`), so use the store's primary domain consistently.
+3. Add the domain to the vhost's `server_name` (spaces, no commas) and to the `map $host $tenant_key` block, then `nginx -t` and reload. Without the map line the store loads but its images are 404 ([Production web server](production-server.md#tenant-key-map-the-host-do-not-cut-the-subdomain)).
+4. In the gateway dashboards, the webhook and redirect URLs are built from the request host (`https://<store domain>/api/webhooks/<gateway>`), so use the store's primary domain consistently.
 
 ## CI/CD
 
