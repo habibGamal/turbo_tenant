@@ -299,13 +299,14 @@ final class POSProductResolver implements POSProductResolverInterface
 
             if ($variantMapping) {
                 $mainProductRef = $variantMapping->pos_item_id;
-            } else {
-                $variantName = $this->variantName($item);
-                if ($variantName) {
-                    $notesData[PosNoteLabel::TYPE->value] = $variantName;
-                }
             }
-        } elseif (($variantName = $this->variantName($item)) !== null) {
+        }
+
+        // The chosen variant always goes in the notes, even when the variant has
+        // its own POS mapping: that mapping often points at the same POS product
+        // as the base item, so without the note the cashier can't tell which
+        // variant the customer picked.
+        if (($variantName = $this->variantName($item)) !== null) {
             $notesData[PosNoteLabel::TYPE->value] = $variantName;
         }
 

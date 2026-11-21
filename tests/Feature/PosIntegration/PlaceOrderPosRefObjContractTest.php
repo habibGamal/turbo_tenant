@@ -348,7 +348,7 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
         expect($body['order']['items'])->toBe([
             [
                 'quantity' => 1.0,
-                'notes' => 'سريع',
+                'notes' => 'json::{"ملاحظات":"سريع","النوع":"Double"}',
                 'posRefObj' => [
                     [
                         'productRef' => 'VAR-P1',
@@ -368,7 +368,7 @@ describe('POST /api/web-orders/place-order posRefObj contract', function () {
             ],
             [
                 'quantity' => 1.0,
-                'notes' => '',
+                'notes' => 'json::{"النوع":"Single"}',
                 'posRefObj' => [
                     [
                         'productRef' => 'VAR-ONLY-P3',

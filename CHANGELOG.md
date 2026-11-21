@@ -32,6 +32,7 @@ The project has no release tags; history is grouped by month from the git log on
 - Coupons can target line types (e.g. packages).
 
 ### Fixed
+- POS orders: the chosen size (variant) now always reaches the POS in the item notes («النوع»), even when the size is mapped to a POS item; before, a mapped size was dropped and the cashier could not see it ([docs](docs/pos-website-link.md)).
 - Takeaway web orders can be completed: the POS status callback (and the already-received catch-up) now accepts `processing → completed` for `web_takeaway` orders. Before, the website answered 409 and the POS rolled its completion back ([docs](docs/pos-website-link.md#contract)).
 - Meta Purchase (Pixel and Conversions API): weighted lines are sent as quantity 1 (not a fractional kg quantity) at the catalog unit price, and `num_items` counts each weighted line as one unit ([docs](docs/features/meta-marketing.md)).
 - Cash-on-delivery orders are marked paid («مكتمل (مدفوع)») when they are completed, including when the POS reports the completion ([docs](docs/features/checkout-and-orders.md#flow)).

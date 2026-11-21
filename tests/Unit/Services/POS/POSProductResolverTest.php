@@ -99,6 +99,39 @@ describe('POSProductResolver', function () {
         ]);
     });
 
+    it('keeps the variant name in the notes when the variant has its own mapping', function () {
+        $branch = Branch::factory()->create();
+        $product = Product::factory()->create();
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'name' => 'Light',
+        ]);
+
+        // Common setup: the variant is mapped to the same POS product as the base item.
+        foreach ([null, $variant->id] as $variantId) {
+            ProductPosMapping::factory()->create([
+                'product_id' => $product->id,
+                'variant_id' => $variantId,
+                'pos_item_id' => 'KOFE-SPICED',
+                'branch_id' => $branch->id,
+            ]);
+        }
+
+        $order = Order::factory()->create(['branch_id' => $branch->id]);
+        $item = OrderItem::factory()->create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'variant_id' => $variant->id,
+            'variant_name_ar' => null,
+            'quantity' => 1,
+        ]);
+
+        $result = $this->resolver->resolveOrderItem($item, $branch->id);
+
+        expect($result['posRefObj'][0]['productRef'])->toBe('KOFE-SPICED')
+            ->and($result['notes'])->toBe('json::'.json_encode(['النوع' => 'Light'], JSON_UNESCAPED_UNICODE));
+    });
+
     it('falls back to base product mapping and adds variant name to notes when variant has no mapping', function () {
         $branch = Branch::factory()->create();
         $product = Product::factory()->create();
