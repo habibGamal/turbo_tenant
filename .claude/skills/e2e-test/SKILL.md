@@ -18,7 +18,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, RunCommand
 
 2. **Decoupled Theme Architecture**:
    - Test suites NEVER query raw CSS classes, Tailwind utility classes, or DOM tag hierarchies directly.
-   - All interactions must go through the typed **Theme Adapter Contract** (`tests/e2e/themes/theme.contract.ts`), implemented via standardized `data-testid` attributes documented in `docs/themes.md`.
+   - All interactions must go through the typed **Theme Adapter Contract** (`tests/e2e/themes/theme.contract.ts`), implemented via standardized `data-testid` attributes documented in `docs/dev/themes.md`.
    - Guarantees that any future theme (`minimal`, `luxury`, `modern`) passes the same test suite automatically if it implements the specification.
 
 3. **Single-Threaded Server Concurrency Rule**:
@@ -70,7 +70,7 @@ Before writing a single test line, examine the plugin across its full stack:
    - `09-cross-plugin-integrations.live.spec.ts` (Handoffs, slot interactions, downstream guards)
 
 ### Phase 2: Theme Test ID Specification & Contract Alignment
-1. **Spec Check**: Check `docs/themes.md` (`data-testid` contract section). If the plugin introduces new user interaction points:
+1. **Spec Check**: Check `docs/dev/themes.md` (`data-testid` contract section). If the plugin introduces new user interaction points:
    - Document standard `data-testid` names in the specification table.
 2. **Component Instrumentation**:
    - Add `data-testid="{identifier}"` to the plugin's React components.

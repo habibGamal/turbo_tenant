@@ -1,6 +1,6 @@
 # Domain Glossary
 
-Canonical mapping between English code names, Arabic UI words (verified from `resources/js/locales/ar/translation.json`, `app/Filament/`, and `docs/ar/`), Modern Standard Arabic meanings, and English meanings.
+Canonical mapping between English code names, Arabic UI words (verified from `resources/js/locales/ar/translation.json`, `app/Filament/`, and `docs/`), Modern Standard Arabic meanings, and English meanings.
 
 | English code name | Arabic UI word | Arabic meaning | Meaning |
 |---|---|---|---|

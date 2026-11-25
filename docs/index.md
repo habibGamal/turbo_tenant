@@ -1,53 +1,76 @@
 ---
 layout: home
+title: Turbo Tenant
+description: نظام متاجر الطلب أونلاين للمطاعم والمحلات مع لوحة إدارة عربية، وسوق إضافات، وربط مع نقطة البيع.
 
 hero:
   name: Turbo Tenant
-  text: Online ordering for restaurants, one app for many stores
-  tagline: Technical handbook for developers and operators, and an Arabic guide for store admins.
+  text: متجرك الإلكتروني للطلب أونلاين من مكان واحد
+  tagline: من إعداد المنيو والفروع ومناطق التوصيل، إلى استقبال الطلبات وإرسالها لنقطة البيع في الفرع، والدفع الإلكتروني والكوبونات والتسويق.
   image:
     src: /logo.svg
     alt: Turbo Tenant
   actions:
     - theme: brand
-      text: Technical handbook
-      link: /handbook
+      text: ابدأ من هنا
+      link: /start/
     - theme: alt
-      text: دليل المستخدم (عربي)
-      link: /ar/
+      text: دليل الاستخدام
+      link: /guide/orders
     - theme: alt
-      text: Connect a POS
-      link: /pos-website-link
-
-features:
-  - icon: 🏬
-    title: Multi-tenant by domain
-    details: Each store has its own domain and database (stancl/tenancy). The host picks the store; central and tenant data never mix.
-    link: /architecture
-    linkText: Architecture
-  - icon: 🧩
-    title: Plugin kernel
-    details: Cart, checkout, payments, coupons, POS, Meta and more are per-store plugins with dependencies, migrations and contribution points.
-    link: /features/plugin-marketplace
-    linkText: Plugin marketplace
-  - icon: 🔌
-    title: Linked to the POS
-    details: Orders go to the branch POS with an API key and an idempotency key; the POS sends status back with the integration token.
-    link: /pos-website-link
-    linkText: POS ↔ website
-  - icon: ⚙️
-    title: Queue workers
-    details: POS delivery, images, push and Meta events run on the central database queue. One misconfigured variable silently breaks it.
-    link: /queue-and-workers
-    linkText: Queue & workers
-  - icon: 💳
-    title: Payments
-    details: Paymob and Kashier with fail-closed, idempotent webhooks and an explicit payment state machine.
-    link: /features/payments
-    linkText: Online payments
-  - icon: 📣
-    title: Meta Pixel, CAPI & catalog
-    details: Browser and server purchase events with shared ids, and a CSV/XML catalog feed with an Arabic override.
-    link: /features/meta-marketing
-    linkText: Meta marketing
+      text: الإدارة
+      link: /admin/catalog
 ---
+
+<script setup>
+import { computed } from 'vue'
+import { useData } from 'vitepress'
+import { VPFeatures } from 'vitepress/theme'
+
+const { theme } = useData()
+
+const allSections = [
+  {
+    title: 'البداية',
+    details: 'نظرة عامة على ما يقدمه المتجر، أول خطوات التشغيل، وقاموس المصطلحات.',
+    link: '/start/',
+  },
+  {
+    title: 'دليل الاستخدام',
+    details: 'العمل اليومي في المتجر: متابعة الطلبات، العملاء والتقييمات، الإشعارات، تجربة العميل، والأسئلة الشائعة.',
+    link: '/guide/orders',
+  },
+  {
+    title: 'الإدارة',
+    details: 'إعداد الفئات والمنتجات والأحجام والإضافات والأوزان والباقات والفروع والتوصيل والكوبونات والإعدادات.',
+    link: '/admin/catalog',
+  },
+  {
+    title: 'التكامل',
+    details: 'ربط نقطة البيع (POS)، بوابات الدفع الإلكتروني، بكسل ميتا والكتالوج، وتسجيل الدخول بحساب جوجل.',
+    link: '/integrations/pos',
+  },
+  {
+    title: 'Developer',
+    details: 'Architecture, multi-tenancy, plugin kernel, feature catalog, API contracts, themes, and testing.',
+    link: '/dev/',
+    privateOnly: true,
+  },
+  {
+    title: 'Deployment and operations',
+    details: 'Deployment checklist, production nginx server, queue workers, scheduler, and troubleshooting.',
+    link: '/dev/ops/deployment',
+    privateOnly: true,
+  },
+]
+
+const visibleSections = computed(() =>
+  allSections.filter((section) => !theme.value.isPublic || !section.privateOnly),
+)
+</script>
+
+<VPFeatures :features="visibleSections" />
+
+<div v-if="!theme.isPublic" style="margin-top: 2rem; text-align: center;">
+  <p>للمطورين ومسؤولي الخادم: انتقل إلى <a href="/dev/">وثائق المطورين (Developer handbook)</a>.</p>
+</div>
