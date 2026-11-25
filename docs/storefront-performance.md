@@ -17,7 +17,7 @@ The user supplied a separate audit scoring 46. The before figures above are the 
 
 Changes: embed session bootstrap and active plugin query data safely in the document; share catalog/combo readers with the APIs; hydrate React Query before mounting; defer account and plugin screens including the 458 KB phone-input chunk; serve licensed Tajawal fonts locally and preload heading fonts; remove the blocking loading overlay; synchronize category/section loading; prioritize the first hero image.
 
-Validation: TypeScript/Vite build; targeted hydration, catalog/cart contract and plugin contribution PHP tests; desktop/mobile Playwright performance regressions; six route smoke checks per viewport with no page errors; engineering-atlas fixture/extractor/render tests, source freshness and 40-diagram viewer validation. Tests use the isolated test tenant; live checks were read-only.
+Validation: TypeScript/Vite build; targeted hydration, catalog/cart contract and plugin contribution PHP tests; desktop/mobile Playwright performance regressions; and six route smoke checks per viewport with no page errors. Tests use the isolated test tenant; live checks were read-only.
 
 Reproduce browser regressions:
 
@@ -56,7 +56,7 @@ Reports:
 - `C:/Users/habib/.codex/tmp/turbo-perf-mobile-delivery-final.report.html` / `.report.json`
 - `C:/Users/habib/.codex/tmp/turbo-perf-desktop-delivery-final.report.html` / `.report.json`
 
-Checks: 16 PHP tests (367 assertions), four desktop/mobile browser regressions including gzip/identity body equivalence and conditional caching, six-route smoke checks on both viewports, production build and atlas fixture/render/viewer/freshness validation. No browser page errors were observed.
+Checks: 16 PHP tests (367 assertions), four desktop/mobile browser regressions including gzip/identity body equivalence and conditional caching, six-route smoke checks on both viewports, and production build. No browser page errors were observed.
 
 ## Follow-up: eliminate the stylesheet request and reduce PHP boot time
 
@@ -76,7 +76,7 @@ Evidence:
 - `C:/Users/habib/.codex/tmp/turbo-inline-opcache-mobile.report.html` and `.report.json`
 - `C:/Users/habib/.codex/tmp/turbo-cold-loads.cjs` (actual throttled browser probe)
 
-Validation: production build; 18 PHP tests / 373 assertions; four desktop/mobile browser regressions; atlas fixture tests, rebuilt 40 rendered diagrams, viewer checks and source freshness. The opcode-cache launcher test verifies source timestamp validation remains enabled.
+Validation: production build; 18 PHP tests / 373 assertions; four desktop/mobile browser regressions. The opcode-cache launcher test verifies source timestamp validation remains enabled.
 
 ## Requested restoration of `/api/cart`
 

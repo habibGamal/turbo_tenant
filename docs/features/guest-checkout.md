@@ -4,7 +4,7 @@
 
 Lets customers order without an account by giving name and phone (plus address for delivery), and later track the order with its number and phone, or with a signed tracking link.
 
-**Status:** live · **Plugin:** `guest-checkout` ([plugin.json](../../app/Plugins/GuestCheckout/plugin.json)) · **Depends on:** order-management, locations-delivery · **Related:** [Checkout](checkout-and-orders.md), [Payments](payments.md). Original design: [GUEST_ORDERING_PLAN.md](../GUEST_ORDERING_PLAN.md) (historical)
+**Status:** live · **Plugin:** `guest-checkout` ([plugin.json](../../app/Plugins/GuestCheckout/plugin.json)) · **Depends on:** order-management, locations-delivery · **Related:** [Checkout](checkout-and-orders.md), [Payments](payments.md)
 
 ## How to use
 
@@ -22,7 +22,7 @@ Lets customers order without an account by giving name and phone (plus address f
 
 ### Store admin
 
-**العملاء والتقييمات › زوار المتجر** (Customers & reviews › Store visitors) lists guest identities and their orders.
+**العملاء والتقييمات › زوار المتجر** (Customers & reviews › Store visitors, [`GuestUserResource`](../../app/Plugins/GuestCheckout/src/Filament/Resources/GuestUsers/GuestUserResource.php)) lists guest identities and their orders (read-only list and view pages).
 
 ### Rules customers notice
 
@@ -36,6 +36,11 @@ Lets customers order without an account by giving name and phone (plus address f
 3. **Customer:** [`GuestDataCustomerResolver`](../../app/Plugins/GuestCheckout/src/Resolvers/GuestDataCustomerResolver.php) (tag `order.customer.resolvers`) finds or creates a [`GuestUser`](../../app/Plugins/GuestCheckout/src/Models/GuestUser.php) by phone + country code ([`GuestUserService`](../../app/Plugins/GuestCheckout/src/Services/GuestUserService.php)); the order gets `guest_user_id`. The guest's cart is the session cart.
 4. **After placement:** [`RememberGuestOrderSession`](../../app/Plugins/GuestCheckout/src/Listeners/RememberGuestOrderSession.php) (on `OrderCreated`) stores the order id in the session `guest_order_ids`, which lets the same browser read payment status. [`GuestTrackingResponseContributor`](../../app/Plugins/GuestCheckout/src/Http/Response/GuestTrackingResponseContributor.php) adds a tracking token to the place-order response, and [`GuestPaymentStatusResponseContributor`](../../app/Plugins/GuestCheckout/src/Http/Response/GuestPaymentStatusResponseContributor.php) adds it to `GET /api/orders/{orderId}/payment-status` (`order.payment-status.response`) so online payment callbacks link guests straight to signed order tracking.
 5. **Tracking:** [`GuestCheckoutApiController::track`](../../app/Plugins/GuestCheckout/src/Http/Controllers/Api/GuestCheckoutApiController.php) accepts `order_number` + `token` (HMAC-SHA256 with `APP_KEY`, [`GuestTrackingTokenService`](../../app/Plugins/GuestCheckout/src/Services/GuestTrackingTokenService.php)), or `order_number` + `phone` (+ `phone_country_code`). Both return 404 "Order not found" on any mismatch.
+
+### Data
+
+- `guest_users`: `name`, `email`, `phone`, `phone_country_code` (default `+20`), optional delivery fields (`street`, `building`, `floor`, `apartment`, `city`, `area_id`), indexed on `(phone, phone_country_code)` and `email`. [`GuestUserService::convertToUser`](../../app/Plugins/GuestCheckout/src/Services/GuestUserService.php) transfers a guest's orders to a registered `User` if called.
+- `orders`: `user_id` is nullable and `guest_user_id` references `guest_users` (`nullOnDelete`), with `customer_name`, `customer_phone`, and `customer_email` snapshotted on the order.
 
 ## Configuration
 

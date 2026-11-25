@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Architecture review for turbo_tenant</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+</script>
+<style>
+  .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+  .deep { background: linear-gradient(135deg, #0f172a, #1e293b); color: #e2e8f0; }
+  .ghost { opacity: .45; }
+  pre.mermaid { background: transparent; }
+</style>
+</head>
+<body class="bg-stone-50 text-slate-900 font-sans">
+<main class="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-12">
+
+<header class="space-y-3">
+  <h1 class="font-serif text-4xl">turbo_tenant: deepening opportunities</h1>
+  <p class="text-slate-500 text-sm">2026-11-25 · branch <code>refactoring</code> @ d6dbf55 · hot spots: POS, orders, payments, catalog, cart</p>
+  <div class="flex flex-wrap gap-4 text-xs text-slate-600">
+    <span class="flex items-center gap-1"><span class="inline-block w-4 h-3 border border-slate-500"></span> module</span>
+    <span class="flex items-center gap-1"><span class="inline-block w-6 border-t-2 border-dashed border-slate-500"></span> seam</span>
+    <span class="flex items-center gap-1"><span class="inline-block w-6 border-t-2 border-red-600"></span> leakage</span>
+    <span class="flex items-center gap-1"><span class="inline-block w-4 h-3 deep"></span> deep module</span>
+  </div>
+  <p class="text-xs text-slate-500">No ADRs exist (<code>docs/decisions/</code> is empty). Binding rule used: plugins never write another plugin's tables (<code>PluginBoundariesArchTest</code>, rule 3; the test only checks imports).</p>
+</header>
+
+<section id="candidates" class="space-y-10">
+
+<!-- 1 -->
+<article id="c1" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+  <h2 class="font-serif text-2xl">1. One Catalog price module for "effective price"</h2>
+  <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong</span><span class="px-2 py-0.5 rounded bg-slate-100">in-process</span></div>
+  <pre class="font-mono text-xs text-slate-600 whitespace-pre-wrap">CatalogProducts/src/Models/Product.php:136 · CartEngine/.../CartPriceCalculator.php:18 · ComboPackages/.../PackageLinePricer.php · PackagePriceEstimator.php · PackageItemResource.php · PackageItem.php · MetaMarketing/.../CatalogItemBuilder.php:169 · resources/js/lib/pricing.ts · resources/js/hooks/useProductOptions.ts</pre>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-lg border p-3"><div class="lbl text-slate-500 mb-2">Before: 8 rules</div>
+<pre class="mermaid">
+flowchart LR
+  P[(Product prices)]
+  P --> A[Cart charge: discount ?? base]
+  P --> B[Combo pricer: discount > 0]
+  P --> C[Combo estimator x2]
+  P --> D[PackageItem: base only]
+  P --> E[Meta feed: discount < base]
+  P --> F[pricing.ts display: 0 < d < base]
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class A,D,F leak
+</pre></div>
+    <div class="rounded-lg border p-3"><div class="lbl text-slate-500 mb-2">After: one module</div>
+<pre class="mermaid">
+flowchart LR
+  P[(Product prices)] --> M[Catalog price module<br/>product + variant → unit price, has_discount]
+  M --> A[Cart]
+  M --> B[Combos]
+  M --> E[Meta feed]
+  M -->|effective_price in API| F[TS display]
+  classDef deep fill:#0f172a,color:#e2e8f0;
+  class M deep
+</pre></div>
+  </div>
+  <p><b>Problem:</b> discount of <code>0</code> displays as base price but is charged as free; discount above base displays base but charges more. Line formula (extras × weight) also differs between PHP and TS.</p>
+  <p><b>Solution:</b> CatalogProducts owns one price module; every PHP caller uses it, the API sends <code>effective_price</code>/<code>has_discount</code>, TS stops recomputing.</p>
+  <ul class="list-disc pl-5 text-sm"><li>Locality: discount bug fixed once</li><li>Leverage: one module, 8 callers</li><li>One test file pins 0 / null / above-base / variant</li></ul>
+</article>
+
+<!-- 2 -->
+<article id="c2" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+  <h2 class="font-serif text-2xl">2. Checkout shows a server quote instead of re-pricing in the browser</h2>
+  <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong</span><span class="px-2 py-0.5 rounded bg-slate-100">in-process</span></div>
+  <pre class="font-mono text-xs text-slate-600 whitespace-pre-wrap">resources/js/themes/default/pages/Checkout.tsx:174-277 · OrderManagement/src/Pipelines/Pipes/Pricing/* · CouponsPromotions/.../ApplyCouponDiscountPipe.php · PaymentProcessing/.../ApplyCodFeePipe.php</pre>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-lg border p-3"><div class="lbl text-slate-500 mb-2">Before: two pricing pipelines</div>
+<pre class="mermaid">
+flowchart TB
+  subgraph Browser
+    T1[delivery fee copy] --> T2["tax = amount × 0.0"] --> T3[service = COD fee only]
+  end
+  subgraph Server
+    S1[delivery pipe] --> S2[coupon pipe] --> S3[tax pipe: TAX_RATE] --> S4[service + COD pipe]
+  end
+  T3 -. shown total ≠ charged total .- S4
+  linkStyle 5 stroke:#dc2626,stroke-width:2px;
+</pre></div>
+    <div class="rounded-lg border p-3"><div class="lbl text-slate-500 mb-2">After: one pipeline, two uses</div>
+<pre class="mermaid">
+flowchart TB
+  Q[Quote: validate + price, no save] --> PIPE[Order pricing module<br/>all plugin pipes]
+  O[Place order] --> PIPE
+  PIPE --> UI[Checkout shows quote]
+  classDef deep fill:#0f172a,color:#e2e8f0;
+  class PIPE deep
+</pre></div>
+  </div>
+  <p><b>Problem:</b> Checkout.tsx re-implements delivery, tax (hard-coded 0), and service; the moment a store sets a tax rate, shown and charged totals differ.</p>
+  <p><b>Solution:</b> a quote endpoint runs the same pipelines without saving; checkout displays it.</p>
+  <ul class="list-disc pl-5 text-sm"><li>Locality: pricing in one module</li><li>New plugin pipes appear in checkout free</li><li>Test: quote == placed order totals</li></ul>
+</article>
+
+<!-- 3 -->
+<article id="c3" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+  <h2 class="font-serif text-2xl">3. One owner for order status changes</h2>
+  <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong</span><span class="px-2 py-0.5 rounded bg-slate-100">in-process</span></div>
+  <pre class="font-mono text-xs text-slate-600 whitespace-pre-wrap">OrderManagement/.../Api/OrderStatusController.php:40-60 · PosIntegration/.../OrderPOSService.php:147-196 · OrderManagement/.../Orders/Pages/ViewOrder.php:55 · Order.php:177-196 (model hooks)</pre>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-lg border p-3"><div class="lbl text-slate-500 mb-2">Before: 3 writers</div>
+<pre class="mermaid">
+flowchart LR
+  A[Integration API<br/>checks transitions, audits] --> O[(orders.status)]
+  B[POS catch-up<br/>own forward path, audits] --> O
+  C[Admin action<br/>no check, no audit, reason dropped] --> O
+  O --> H[model hooks: COD paid, event]
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class B,C leak
+</pre></div>
+    <div class="rounded-lg border p-3"><div class="lbl text-slate-500 mb-2">After</div>
+<pre class="mermaid">
+flowchart LR
+  A[Integration API] --> M[Order status module<br/>move to X, source, reason]
+  B[POS catch-up] --> M
+  C[Admin action] --> M
+  M --> O[(orders.status + audit + event)]
+  classDef deep fill:#0f172a,color:#e2e8f0;
+  class M deep
+</pre></div>
+  </div>
+  <p><b>Problem:</b> every caller must remember transitions, audit, transaction; two of three get it wrong, and PosIntegration writes OrderManagement's tables.</p>
+  <p><b>Solution:</b> OrderManagement owns one status module that every entry point calls.</p>
+  <ul class="list-disc pl-5 text-sm"><li>Complete audit trail</li><li>Seam respected: POS stops writing orders</li><li>Transitions tested in one place</li></ul>
+</article>
+
+<!-- 4 -->
+<article id="c4" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+  <h2 class="font-serif text-2xl">4. Collapse the POS payload builder into one deep module</h2>
+  <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong</span><span class="px-2 py-0.5 rounded bg-slate-100">ports &amp; adapters (HTTP edge only)</span></div>
+  <pre class="font-mono text-xs text-slate-600 whitespace-pre-wrap">PosIntegration/src/Services/POS/Contracts/* (5 interfaces, 1 adapter each) · OrderPOSPayloadBuilder.php:37-54,104-107 · POSProductResolver.php (714 lines) · OrderPOSService.php</pre>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-lg border p-3"><div class="lbl text-slate-500 mb-2">Before: mass diagram</div>
+      <div class="flex items-end gap-6 h-48">
+        <div class="text-center"><div class="w-16 bg-amber-200 border border-amber-400" style="height:40px"></div><div class="w-16 bg-slate-300 border" style="height:120px"></div><div class="lbl mt-1">Resolver<br/>2 in contract, 9 public</div></div>
+        <div class="text-center"><div class="w-16 bg-amber-200 border border-amber-400" style="height:60px"></div><div class="w-16 bg-slate-300 border" style="height:50px"></div><div class="lbl mt-1">Builder<br/>4× method_exists</div></div>
+        <div class="text-center"><div class="w-16 bg-amber-200 border border-amber-400" style="height:30px"></div><div class="w-16 bg-slate-300 border" style="height:20px"></div><div class="lbl mt-1">Service<br/>pass-throughs</div></div>
+      </div>
+      <p class="text-xs text-red-700 mt-2">Hidden ordering rule: withMappings() → withLineMappings() before resolveOrderItem()</p>
+    </div>
+    <div class="rounded-lg border p-3"><div class="lbl text-slate-500 mb-2">After</div>
+      <div class="flex items-end gap-6 h-48">
+        <div class="text-center"><div class="w-24 bg-amber-200 border border-amber-400" style="height:18px"></div><div class="w-24 deep" style="height:160px"><div class="ghost text-[10px] p-1">mappings · items · extras · customer</div></div><div class="lbl mt-1">order → POS payload</div></div>
+        <div class="text-center"><div class="w-16 border-2 border-dashed border-slate-500 p-1 text-[10px]">seam</div><div class="lbl mt-1">POS API client<br/>HTTP / fake</div></div>
+      </div>
+    </div>
+  </div>
+  <p><b>Problem:</b> "send order to POS" crosses 11 classes; contracts are hypothetical seams and too narrow, so callers sniff methods at runtime.</p>
+  <p><b>Solution:</b> one module "order in, payload or unmapped items out" loading its own mappings; keep the only real seam at the HTTP client.</p>
+  <ul class="list-disc pl-5 text-sm"><li>Interface shrinks to one call</li><li>Ordering rule disappears</li><li>~5 container bindings deleted</li></ul>
+</article>
+
+<!-- 5 -->
+<article id="c5" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+  <h2 class="font-serif text-2xl">5. Delete unused order validator / pricing calculator wrappers</h2>
+  <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong (small)</span><span class="px-2 py-0.5 rounded bg-slate-100">in-process</span></div>
+  <pre class="font-mono text-xs text-slate-600 whitespace-pre-wrap">OrderManagement/src/Services/Pricing/OrderPricingCalculator.php · Validators/OrderValidator.php · OrderManagementServiceProvider.php:51-52 · PlaceOrderService.php:39-48 · tests/Unit/Services/Order/{OrderPricingCalculator,OrderValidator}Test.php</pre>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-lg border p-3 space-y-1"><div class="lbl text-slate-500 mb-2">Before: cross-section</div>
+      <div class="h-8 border-l-4 border-slate-400 bg-slate-50 px-2 text-xs flex items-center ghost">OrderValidator (bound, never resolved) ← 4 tests</div>
+      <div class="h-8 border-l-4 border-slate-400 bg-slate-50 px-2 text-xs flex items-center ghost">OrderPricingCalculator (bound, never resolved) ← 4 tests</div>
+      <div class="h-8 border-l-4 border-red-500 bg-red-50 px-2 text-xs flex items-center">PlaceOrderService builds same pipelines inline (only mocked tests)</div>
+      <div class="h-8 border-l-4 border-slate-400 bg-slate-50 px-2 text-xs flex items-center">Pipeline::process() → run()</div>
+    </div>
+    <div class="rounded-lg border p-3"><div class="lbl text-slate-500 mb-2">After</div>
+      <div class="h-28 deep rounded px-3 text-sm flex items-center">Validate-then-price module, used by place order (and the quote from #2); tests hit what production runs</div>
+    </div>
+  </div>
+  <p><b>Problem:</b> tests cover wrappers production never calls; the real path is only tested with mocks.</p>
+  <p><b>Solution:</b> delete them, or make PlaceOrderService actually use one validate-then-price module (pairs with #2).</p>
+  <ul class="list-disc pl-5 text-sm"><li>Deletion test: nothing spreads</li><li>Tests cover the real path</li></ul>
+</article>
+
+<!-- 6 -->
+<article id="c6" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+  <h2 class="font-serif text-2xl">6. POS delivery state owned only by PosIntegration</h2>
+  <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800">Worth exploring</span><span class="px-2 py-0.5 rounded bg-slate-100">in-process</span></div>
+  <pre class="font-mono text-xs text-slate-600 whitespace-pre-wrap">orders.pos_status / pos_failure_reason · OrderManagement/src/Enums/OrderPosStatus.php · PosIntegration/src/Models/OrderPosDelivery.php · OrderDeliveryDispatcher/Tracker/Review · ListOrders.php:58 · OrderInfolist.php:51</pre>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-lg border p-3"><div class="lbl text-slate-500 mb-2">Before: two stores, hand-synced</div>
+<pre class="mermaid">
+flowchart LR
+  D[Dispatcher / Tracker / Review<br/>~11 sync sites] --> X[(order_pos_deliveries.status)]
+  D --> Y[(orders.pos_status)]
+  Y --> L[Order list + infolist]
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class Y leak
+</pre></div>
+    <div class="rounded-lg border p-3"><div class="lbl text-slate-500 mb-2">After</div>
+<pre class="mermaid">
+flowchart LR
+  D[POS delivery module] --> X[(order_pos_deliveries)]
+  D -. table/infolist contribution .-> L[Order list + infolist]
+  classDef deep fill:#0f172a,color:#e2e8f0;
+  class D deep
+</pre></div>
+  </div>
+  <p><b>Problem:</b> a POS-only concept lives on OrderManagement's model; <code>READY</code> is never assigned, so two listener branches look dead.</p>
+  <p><b>Solution:</b> single owner; PosIntegration contributes the column, filter and badge through existing contribution tags.</p>
+  <ul class="list-disc pl-5 text-sm"><li>Sync code deleted</li><li>OrderManagement stops knowing POS</li></ul>
+</article>
+
+<!-- 7 -->
+<article id="c7" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+  <h2 class="font-serif text-2xl">7. Payment gateway adapter owns its webhook; one payment-status owner</h2>
+  <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800">Worth exploring</span><span class="px-2 py-0.5 rounded bg-slate-100">ports &amp; adapters (2 gateways = real seam)</span></div>
+  <pre class="font-mono text-xs text-slate-600 whitespace-pre-wrap">PaymentProcessing/.../KashierWebhookController.php · PaymobWebhookController.php · PaymentStateMachine.php:68-104 · OrderManagement/src/Contracts/OrderPaymentRecorder.php · Order.php:181-188</pre>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-lg border p-3"><div class="lbl text-slate-500 mb-2">Before</div>
+<pre class="mermaid">
+flowchart LR
+  K[Kashier controller] --> S[State machine]
+  P[Paymob controller<br/>near copy] --> S
+  S --> R["recorder.record(array) = update()"]
+  H[Order hook: COD paid] --> O[(orders.payment_status)]
+  R --> O
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class H,R leak
+</pre></div>
+    <div class="rounded-lg border p-3"><div class="lbl text-slate-500 mb-2">After</div>
+<pre class="mermaid">
+flowchart LR
+  W[One webhook controller] -. gateway adapter extracts signature .-> G[Kashier / Paymob adapters]
+  W --> M[Order payment module<br/>mark paid / failed / refunded]
+  C[COD delivered] --> M
+  classDef deep fill:#0f172a,color:#e2e8f0;
+  class M deep
+</pre></div>
+  </div>
+  <p><b>Problem:</b> signature location leaks out of the adapter into two copied controllers; payment status has two owners and COD skips the payment-completed event.</p>
+  <p><b>Solution:</b> adapter extracts its own signature; OrderManagement exposes an intention-named payment module that owns every transition.</p>
+  <ul class="list-disc pl-5 text-sm"><li>Third gateway = adapter only</li><li>All payment transitions in one test</li></ul>
+</article>
+
+</section>
+
+<section id="top-recommendation" class="rounded-2xl deep p-8 space-y-3">
+  <div class="lbl text-slate-400">Top recommendation</div>
+  <h2 class="font-serif text-3xl"><a href="#c1" class="underline">1. One Catalog price module</a>, then <a href="#c2" class="underline">2. checkout quote</a></h2>
+  <p class="text-slate-300">Both are live correctness bugs, not just structure: a zero discount is charged as free, and checkout will show a different total from the one charged as soon as a store sets a tax rate. Fixing them gives every later candidate a single pricing module to lean on.</p>
+</section>
+
+</main>
+</body>
+</html>

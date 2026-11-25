@@ -11,14 +11,13 @@ Turbo Tenant is a multi-tenant online ordering platform for restaurants. One Lar
 | Understand how it is built | [Architecture](architecture.md), [Data model](data-model.md) |
 | Find or change a feature | [Feature catalog](features/README.md) |
 | Connect a store to its restaurant POS | [Connecting a POS to the website](pos-website-link.md) |
-| Call or integrate with it | [Interfaces](interfaces.md), [Configuration](configuration.md) |
-| Add code, run tests, follow conventions | [Development guide](development.md) |
+| Call or integrate with it | [Interfaces](interfaces.md), [Configuration](configuration.md), [Security](security.md) |
+| Integrate Google login, Paymob, Kashier, or Meta | [Google login](integrations/google-login.md), [Paymob](integrations/paymob.md), [Kashier](integrations/kashier.md), [Meta Pixel & CAPI](integrations/meta-pixel.md) |
+| Add code, run tests, build themes, follow conventions | [Development guide](development.md), [Themes & test IDs](themes.md) |
 | Release it | [Deployment](deployment.md), [Production web server and post-pull checklist](production-server.md), [Queue, workers and scheduler](queue-and-workers.md) |
 | Keep it running / fix incidents | [Operations and troubleshooting](operations.md) |
 | See what changed | [Changelog](../CHANGELOG.md) |
-| Know what is not yet documented or verified | [Coverage](coverage.md) |
 | Teach a store admin to run their store (Arabic) | [دليل المستخدم](ar/index.md) |
-| Build or edit this documentation site | [Docs site](docs-site.md) |
 
 ## Reading paths
 
@@ -49,10 +48,6 @@ A request's host selects the store; the store's database, cache tag and files be
 
 ## More references
 
-- Browse all of this as a website ([site home](index.md)): [Docs site](docs-site.md) (`cd docs && npm install && npm run dev`).
-- [Generated architecture explorer](engineering-atlas/index.html): offline inventory of classes, routes, schema declarations and SPA routes with diagrams.
-- Design notes and plans (may describe earlier or planned states): [SaaS lifecycle engine](architecture/saas-lifecycle-engine.md), [plugin configuration pattern](architecture/plugin-configuration-pattern.md), [guest ordering plan](GUEST_ORDERING_PLAN.md), [Kashier gateway](kashier-payment-gateway.md), [Meta Pixel and CAPI plan](META_PIXEL_AND_CAPI_PLAN.md), [custom pages guide](CUSTOM_PAGES_GUIDE.md), [storefront performance](storefront-performance.md), [theme test ids](THEME_TEST_IDS_SPEC.md), [POS delivery monitor design](order-pos-delivery-monitor.md).
-- POS API contract: [CREATE_ORDER_API_DOC.md](../CREATE_ORDER_API_DOC.md).
-
----
-Reviewed against `d064a36` plus uncommitted working-tree changes on 2026-11-06. See [coverage](coverage.md) for what was verified and what was not.
+- Browse all of this as a website ([site home](index.md)): `cd docs && npm install && npm run dev` ([Development guide › Documentation](development.md#documentation)).
+- Design notes: [SaaS lifecycle engine](architecture/saas-lifecycle-engine.md), [plugin configuration pattern](architecture/plugin-configuration-pattern.md), [storefront performance](storefront-performance.md), [POS delivery monitor design](order-pos-delivery-monitor.md).
+- POS API contract (owned by POS repo): [POS website integration](https://github.com/habibGamal/ai_rewrite_turbo_restaurant/blob/master/docs/dev/website-integration.md).

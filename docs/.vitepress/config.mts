@@ -1,6 +1,6 @@
 import { defineConfig, type DefaultTheme } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
-import { cpSync, existsSync, statSync } from 'node:fs'
+import { existsSync, statSync } from 'node:fs'
 import { dirname, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -10,8 +10,7 @@ const sourceBranch = 'refactoring'
 
 /**
  * The handbook links straight to source files (../../app/...), which the
- * docs site does not serve. Point those links at GitHub so they keep working,
- * and open the generated architecture explorer (plain HTML) outside the SPA router.
+ * docs site does not serve. Point those links at GitHub so they keep working.
  */
 function sourceLinks(md: any) {
   const defaultRender =
@@ -25,12 +24,8 @@ function sourceLinks(md: any) {
       const [target, hash = ''] = href.split('#')
       const absolute = resolve(dirname(env.path), decodeURI(target))
       const inDocs = absolute === docsRoot || absolute.startsWith(docsRoot + sep)
-      const rel = relative(docsRoot, absolute).split(sep).join('/')
 
-      if (inDocs && rel.startsWith('engineering-atlas/') && rel.endsWith('.html')) {
-        token.attrSet('href', '/' + rel)
-        token.attrSet('target', '_blank')
-      } else if (!inDocs || !(target.endsWith('.md') || target === '' || isDocsDir(absolute))) {
+      if (!inDocs || !(target.endsWith('.md') || target === '' || isDocsDir(absolute))) {
         const repoPath = relative(resolve(docsRoot, '..'), absolute).split(sep).join('/')
         token.attrSet('href', `${repoUrl}/blob/${sourceBranch}/${repoPath}${hash ? '#' + hash : ''}`)
         token.attrSet('target', '_blank')
@@ -103,6 +98,11 @@ const technicalSidebar: DefaultTheme.Sidebar = [
     items: [
       { text: 'Interfaces (HTTP, events)', link: '/interfaces' },
       { text: 'Configuration', link: '/configuration' },
+      { text: 'Security controls', link: '/security' },
+      { text: 'Google login', link: '/integrations/google-login' },
+      { text: 'Paymob gateway', link: '/integrations/paymob' },
+      { text: 'Kashier gateway', link: '/integrations/kashier' },
+      { text: 'Meta Pixel & CAPI', link: '/integrations/meta-pixel' },
     ],
   },
   {
@@ -118,20 +118,8 @@ const technicalSidebar: DefaultTheme.Sidebar = [
     text: 'Develop',
     items: [
       { text: 'Development guide', link: '/development' },
-      { text: 'Documentation coverage', link: '/coverage' },
-      { text: 'Docs site', link: '/docs-site' },
-    ],
-  },
-  {
-    text: 'Design notes & plans',
-    collapsed: true,
-    items: [
-      { text: 'Kashier gateway', link: '/kashier-payment-gateway' },
-      { text: 'Meta Pixel & CAPI plan', link: '/META_PIXEL_AND_CAPI_PLAN' },
-      { text: 'Guest ordering plan', link: '/GUEST_ORDERING_PLAN' },
-      { text: 'Custom pages guide', link: '/CUSTOM_PAGES_GUIDE' },
+      { text: 'Themes & test IDs', link: '/themes' },
       { text: 'Storefront performance', link: '/storefront-performance' },
-      { text: 'Theme test ids', link: '/THEME_TEST_IDS_SPEC' },
     ],
   },
 ]
@@ -191,13 +179,11 @@ export default withMermaid(
     description: 'Multi-tenant online ordering for restaurants: technical handbook and store admin guide',
     cleanUrls: true,
     lastUpdated: true,
-    srcExclude: ['node_modules/**', 'engineering-atlas/**', 'README.md.bak'],
+    srcExclude: ['node_modules/**', 'README.md.bak'],
     rewrites: {
       'README.md': 'handbook.md',
       'features/README.md': 'features/index.md',
     },
-    // Links to ../CHANGELOG.md etc. are rewritten to GitHub by sourceLinks().
-    ignoreDeadLinks: [/engineering-atlas/],
     head: [
       ['link', { rel: 'icon', href: '/logo.svg', type: 'image/svg+xml' }],
       ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
@@ -292,11 +278,6 @@ export default withMermaid(
       // Inline PostCSS config so Vite does not load the application's postcss.config.js (Tailwind) from the repo root.
       css: { postcss: {} },
       build: { chunkSizeWarningLimit: 4000 }, // mermaid is large
-    },
-    buildEnd(site) {
-      // Ship the generated architecture explorer next to the site.
-      const atlas = resolve(docsRoot, 'engineering-atlas')
-      if (existsSync(atlas)) cpSync(atlas, resolve(site.outDir, 'engineering-atlas'), { recursive: true })
     },
   }),
 )

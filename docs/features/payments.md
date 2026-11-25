@@ -4,7 +4,7 @@
 
 Lets customers pay by card or mobile wallet through **Paymob** or **Kashier**, and adds a cash-on-delivery fee option. Payment is confirmed only by the gateway's server-to-server webhook; the browser return page just reads the stored result.
 
-**Status:** live · **Plugin:** `payment-processing` ([plugin.json](../../app/Plugins/PaymentProcessing/plugin.json)) · **Depends on:** order-management, store-settings · **Related:** [Checkout](checkout-and-orders.md), [POS integration](pos-integration.md), [Meta marketing](meta-marketing.md). Background: [kashier-payment-gateway.md](../kashier-payment-gateway.md) (design notes)
+**Status:** live · **Plugin:** `payment-processing` ([plugin.json](../../app/Plugins/PaymentProcessing/plugin.json)) · **Depends on:** order-management, store-settings · **Related:** [Checkout](checkout-and-orders.md), [POS integration](pos-integration.md), [Meta marketing](meta-marketing.md), [Paymob integration](../integrations/paymob.md), [Kashier integration](../integrations/kashier.md)
 
 ## How to use
 
@@ -94,7 +94,7 @@ See [Data model › Payment status](../data-model.md#payment-status).
 | `kashier_merchant_id`, `kashier_api_key`, `kashier_secret_key`, `kashier_mode`, `kashier_currency`, `kashier_allowed_methods` | Kashier credentials | `test`, `EGP`, `card` |
 | `cod_fee` | Cash-on-delivery fee | 0 |
 
-**Rollout:** configure credentials and the webhook URL in the gateway before enabling online payments. Use sandbox/test mode first; the opt-in sandbox E2E needs a public HTTPS callback ([instructions](../../tests/e2e/plugins/order-management/README.md)). These settings are stored unencrypted in the tenant `settings` table.
+**Rollout:** configure credentials and the webhook URL in the gateway before enabling online payments. Use sandbox/test mode first; the opt-in sandbox E2E needs a public HTTPS callback ([instructions](../development.md#paymob-sandbox-e2e)). These settings are stored unencrypted in the tenant `settings` table.
 
 ## Testing
 

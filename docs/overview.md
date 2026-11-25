@@ -25,6 +25,13 @@ Each capability is a plugin that a store can activate. See the [feature catalog]
 - **Ordering:** [Cart](features/cart.md), [Checkout and orders](features/checkout-and-orders.md), [Delivery areas and branches](features/locations-delivery.md), [Guest checkout](features/guest-checkout.md), [Online payments](features/payments.md), [Coupons](features/coupons.md), [POS integration](features/pos-integration.md)
 - **Engagement:** [Favorites](features/favorites.md), [Product reviews](features/product-reviews.md), [Hero banners](features/hero-banners.md), [CMS pages](features/cms-pages.md), [Push notifications](features/push-notifications.md), [Meta marketing](features/meta-marketing.md)
 
+## Tech stack
+
+- **Backend:** PHP 8.3+, Laravel 12, `stancl/tenancy` (database-per-tenant), Filament 4 (`/admin` and `/central`), Laravel Sanctum 4 (SPA session cookies), Laravel Socialite 5 (Google OAuth), Spatie Image 3 (WebP variants), Expo push notifications, MySQL (production/local) and SQLite (tests).
+- **Frontend:** React 18, TypeScript 5, Vite 6, React Router 6, TanStack React Query 5, Tailwind CSS 4, Radix UI / Shadcn UI, Lucide icons, `i18next` / `react-i18next`.
+- **Tooling:** Pest 4 (including browser tests), Playwright (live E2E), Larastan / PHPStan level 5, Laravel Pint, Rector.
+- **Modular plugins (18 under `app/Plugins/`):** `store-settings` (core), `media-optimizer` (core), `catalog-products`, `cart-engine`, `order-management`, `locations-delivery`, `guest-checkout`, `payment-processing`, `coupons-promotions`, `combo-packages`, `pos-integration`, `push-notifications`, `meta-marketing`, `product-reviews`, `customer-favorites`, `hero-banners`, `cms-pages`, `sample-greeting`.
+
 ## Key business rules
 
 - **Isolation:** every store has its own database (`tenant{id}`), its own storage folder, cache tag and queue context ([config/tenancy.php](../config/tenancy.php)). Customer accounts are per store.

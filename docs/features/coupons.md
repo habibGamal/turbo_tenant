@@ -69,7 +69,39 @@ sequenceDiagram
 
 ### Data
 
-[`Coupon`](../../app/Plugins/CouponsPromotions/src/Models/Coupon.php): `code`, `type`, `value`, `expiry_date`, `is_active`, `max_usage`, `usage_count`, `total_consumed`, `conditions` JSON (`min_order_total`, `max_order_total`, `applicable_to`, `shipping`, `usage_restrictions`, `valid_days`, `valid_hours`), merged with defaults on read.
+[`Coupon`](../../app/Plugins/CouponsPromotions/src/Models/Coupon.php): `code`, `name`, `description`, `type` (`percentage` or `fixed`), `value`, `expiry_date`, `is_active`, `max_usage`, `usage_count`, `total_consumed`, and `conditions` JSON (merged with defaults on read):
+
+```json
+{
+  "min_order_total": 100.0,
+  "max_order_total": 500.0,
+  "applicable_to": {
+    "type": "all|products|categories|line_types",
+    "line_type": "package",
+    "ids": [1, 2],
+    "product_ids": [1, 2, 3],
+    "category_ids": [1, 2]
+  },
+  "shipping": {
+    "free_shipping": true,
+    "free_shipping_threshold": 200.0,
+    "applicable_governorates": [1, 2],
+    "applicable_areas": [1, 2]
+  },
+  "usage_restrictions": {
+    "first_order_only": false,
+    "user_specific": false,
+    "user_ids": []
+  },
+  "valid_days": [0, 1, 2, 3, 4, 5, 6],
+  "valid_hours": {
+    "start": "09:00",
+    "end": "23:00"
+  }
+}
+```
+
+`valid_days` uses `0` = Sunday through `6` = Saturday (`null` allows all days). `applicable_to.type = line_types` uses `line_type` (default `package`) and `ids` (empty matches all items of that line type).
 
 ## Configuration
 

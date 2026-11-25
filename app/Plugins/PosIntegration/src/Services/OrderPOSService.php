@@ -77,7 +77,7 @@ class OrderPOSService
         // 1. Retrieve active shift ID if not already assigned
         $order->shift_id = $order->shift_id ?: $this->getShiftId($branch);
 
-        // 2. Build the order payload conforming to CREATE_ORDER_API_DOC.md
+        // 2. Build the order payload conforming to docs/pos-website-link.md (links to POS-owned contract)
         $payload = $this->payloadBuilder->build($order);
 
         // 3. Send order to POS

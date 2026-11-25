@@ -4,7 +4,7 @@
 
 Customers register and sign in per store with email/password or Google, reset their password by email, and manage their profile and password. Accounts are stored in the store's own database, so each store has separate customers. Store admins are customers with `is_admin` set.
 
-**Status:** live (host feature, always available) · **Code:** [routes/tenant.php](../../routes/tenant.php), [routes/auth.php](../../routes/auth.php), [app/Http/Controllers](../../app/Http/Controllers) · **Related:** [Cart](cart.md) (cart merge on login), [Push notifications](push-notifications.md) (device token), [Locations](locations-delivery.md) (address book)
+**Status:** live (host feature, always available) · **Code:** [routes/tenant.php](../../routes/tenant.php), [routes/auth.php](../../routes/auth.php), [app/Http/Controllers](../../app/Http/Controllers) · **Related:** [Google login](../integrations/google-login.md), [Cart](cart.md) (cart merge on login), [Push notifications](push-notifications.md) (device token), [Locations](locations-delivery.md) (address book)
 
 ## How to use
 
@@ -47,7 +47,7 @@ Data: tenant `users` (`name`, `email`, `password`, `google_id`, `avatar`, `email
 ## Testing
 
 - Automated: [AuthApiTest](../../tests/Feature/Api/AuthApiTest.php), [tests/Feature/Auth](../../tests/Feature/Auth), [GoogleNativeLoginSecurityTest](../../tests/Feature/Security/GoogleNativeLoginSecurityTest.php), [LoginLoggingTest](../../tests/Feature/Security/LoginLoggingTest.php), [ProfileTest](../../tests/Feature/ProfileTest.php), [UserResourceTest](../../tests/Feature/Filament/Resources/UserResourceTest.php).
-- Browser: [tests/e2e/plugins/auth](../../tests/e2e/plugins/auth) via `npm run test:e2e:auth` (rules in [tests/e2e/auth/README.md](../../tests/e2e/auth/README.md)).
+- Browser: [tests/e2e/plugins/auth](../../tests/e2e/plugins/auth) via `npm run test:e2e:auth` (rules in [Development guide](../development.md#live-account-browser-tests)).
 
 ## Troubleshooting
 

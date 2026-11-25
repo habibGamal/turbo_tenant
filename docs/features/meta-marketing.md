@@ -4,7 +4,7 @@
 
 Connects a store to Meta (Facebook/Instagram) advertising: the browser Pixel, server-side Conversions API (CAPI) events including purchases, and a product catalog feed for Commerce Manager. Browser and server events share event ids so Meta deduplicates them.
 
-**Status:** live · **Plugin:** `meta-marketing` ([plugin.json](../../app/Plugins/MetaMarketing/plugin.json)) · **Depends on:** order-management, catalog-products, store-settings · **Related:** [Checkout](checkout-and-orders.md), [Payments](payments.md), [Catalog](catalog.md). Design plan: [META_PIXEL_AND_CAPI_PLAN.md](../META_PIXEL_AND_CAPI_PLAN.md)
+**Status:** live · **Plugin:** `meta-marketing` ([plugin.json](../../app/Plugins/MetaMarketing/plugin.json)) · **Depends on:** order-management, catalog-products, store-settings · **Related:** [Checkout](checkout-and-orders.md), [Payments](payments.md), [Catalog](catalog.md), [Meta Pixel, CAPI, and Catalog](../integrations/meta-pixel.md)
 
 ## How to use
 

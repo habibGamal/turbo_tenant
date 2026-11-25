@@ -57,7 +57,7 @@ The central panel's tenant form stores `admin_name`, `admin_email` and a bcrypt 
 | --- | --- | --- |
 | `users` | Customers and store admins (`is_admin`), Google id, `expo_token` | host, [`User`](../app/Models/User.php) |
 | `addresses` | Customer address book linked to an area | [locations-delivery](features/locations-delivery.md) |
-| `guest_users` | Guest checkout identities keyed by phone + country code | [guest-checkout](features/guest-checkout.md) |
+| `guest_users` | Guest checkout identities keyed by `(phone, phone_country_code)` (indexed) and `email` (indexed) | [guest-checkout](features/guest-checkout.md) |
 | `settings` | Key/value store settings (`key`, `value`, `type`) incl. gateway and SMTP credentials | [store-settings](features/store-settings.md) |
 | `notifications`, `user_notifications`, `bulk_notifications` | In-app notification inbox, push campaign records | [push-notifications](features/push-notifications.md) |
 | `sessions`, `password_reset_tokens`, `cache`, `jobs`, `failed_jobs` | Framework tables inside the tenant DB | host |
@@ -93,7 +93,7 @@ erDiagram
   }
 ```
 
-Tables: `categories`, `products`, `product_variants` (`price`, `is_available`), `extra_options` (selection rules), `extra_option_items` (`price`), `weight_options`, `weight_option_values` (`value`), `sections`, `section_products` ([catalog](features/catalog.md)); `packages`, `package_groups`, `package_items`, `package_availabilities`, `package_branch` ([combo packages](features/combo-packages.md); the legacy `package_product` pivot is dropped by a 2025-11 migration); `reviews` ([reviews](features/product-reviews.md)); `product_pos_mappings`, `pos_line_mappings` ([POS](features/pos-integration.md)).
+Tables: `categories`, `products`, `product_variants` (`price`, `is_available`), `extra_options` (selection rules), `extra_option_items` (`price`), `weight_options`, `weight_option_values` (`value`), `sections`, `section_products` ([catalog](features/catalog.md)); `packages`, `package_groups`, `package_items`, `package_availabilities`, `package_branch` ([combo packages](features/combo-packages.md); the legacy `package_product` pivot is dropped by a 2025-11 migration); `reviews` ([reviews](features/product-reviews.md)); `product_pos_mappings` (unique per `product_id, variant_id, branch_id`), `pos_line_mappings` ([POS](features/pos-integration.md)).
 
 ### Locations
 

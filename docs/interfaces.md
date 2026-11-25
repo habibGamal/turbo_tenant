@@ -11,7 +11,7 @@ All storefront and integration endpoints are served on a **store domain** (tenan
 | Central panel `/central` | Platform operators | Filament login (central `users`) | [CentralPanelProvider](../app/Providers/Filament/CentralPanelProvider.php) |
 | Payment webhooks | Paymob, Kashier | Gateway HMAC | [PaymentProcessing routes](../app/Plugins/PaymentProcessing/routes/tenant.php) |
 | POS status callback | Branch POS | `Authorization: Bearer <integration token>` | [OrderManagement routes](../app/Plugins/OrderManagement/routes/tenant.php) |
-| Outbound POS API | Turbo Tenant → branch POS | none sent by client | [`POSApiClient`](../app/Plugins/PosIntegration/src/Services/POS/POSApiClient.php), [CREATE_ORDER_API_DOC.md](../CREATE_ORDER_API_DOC.md) |
+| Outbound POS API | Turbo Tenant → branch POS | `X-Api-Key` (`branch.pos_api_key`) | [`POSApiClient`](../app/Plugins/PosIntegration/src/Services/POS/POSApiClient.php), [POS website integration](pos-website-link.md) |
 | Meta catalog feed | Meta Commerce Manager | Secret token in URL | [MetaMarketing routes](../app/Plugins/MetaMarketing/routes/tenant.php) |
 | Artisan CLI | Developers, operators | Shell access | [app/Console/Commands](../app/Console/Commands) |
 

@@ -142,7 +142,7 @@ The API client ([client.ts](../resources/js/core/api/client.ts)) uses same-origi
 | Settings | Key/value `settings` table per tenant, edited in the Store Settings page whose tabs are contributed by plugins (`store-settings.sections`) | [Store settings](features/store-settings.md) |
 | Notifications / email | Expo push channel; Laravel mail with per-store SMTP | [Push notifications](features/push-notifications.md) |
 | Outbound HTTP safety | POS URLs pass [`PublicEndpointGuard`](../app/Support/Network) which blocks private/loopback hosts unless `NETWORK_ALLOW_PRIVATE_HOSTS=true` | [config/network.php](../config/network.php) |
-| Localization | Admin panel in Arabic; storefront i18next with `en`/`ar` and RTL switching | [resources/js/locales](../resources/js/locales), [I18N_SETUP.md](../resources/js/I18N_SETUP.md) |
+| Localization | Admin panel in Arabic; storefront i18next with `en`/`ar` and RTL switching | [resources/js/locales](../resources/js/locales), [Development guide › i18n](development.md#storefront-localization-i18n) |
 | Logging | Laravel log stack; `pail` in development | [config/logging.php](../config/logging.php) |
 
 ## Extension points
@@ -167,11 +167,7 @@ Order validation and pricing are pipelines that plugins extend in `bootForTenant
 
 **Frontend.** Plugins register default components for named slots ([slot-registry.ts](../resources/js/core/slots/slot-registry.ts) `registerPluginDefault`), themes override them (`registerThemeOverride`), and pages render [`PluginSlot`](../resources/js/core/slots/PluginSlot.tsx). Themes are registered in [themes/registry.ts](../resources/js/themes/registry.ts); the active theme name comes from the tenant's `theme` attribute in the bootstrap payload.
 
-See [Development guide](development.md#adding-a-feature) for a walkthrough, and [docs/architecture/plugin-configuration-pattern.md](architecture/plugin-configuration-pattern.md) for the plugin settings pattern.
-
-## Generated architecture explorer
-
-[engineering-atlas/index.html](engineering-atlas/index.html) is an offline, generated inventory of classes, migration-declared schema, registered routes, SPA routes and request call sites with diagrams. It is rebuilt with the Laravel/React atlas adapter (see [Development guide](development.md#documentation)).
+See [Development guide](development.md#adding-a-feature) for a walkthrough, [Themes](themes.md) for storefront themes and `data-testid` contracts, and [docs/architecture/plugin-configuration-pattern.md](architecture/plugin-configuration-pattern.md) for the plugin settings pattern.
 
 ## Architectural decisions
 

@@ -4,7 +4,7 @@
 
 Sends online orders to the branch's point-of-sale system, tracks every delivery attempt, receives order status updates back from the POS, and lets admins import products and sync prices from a master POS product repository.
 
-**Status:** live (add-on) · **Plugin:** `pos-integration` ([plugin.json](../../app/Plugins/PosIntegration/plugin.json)) · **Depends on:** order-management, catalog-products, locations-delivery, store-settings · **Related:** [Checkout](checkout-and-orders.md), [Locations](locations-delivery.md) (branch `link`), [Payments](payments.md). POS API contract: [CREATE_ORDER_API_DOC.md](../../CREATE_ORDER_API_DOC.md). Detailed delivery design: [order-pos-delivery-monitor.md](../order-pos-delivery-monitor.md). End-to-end setup of both sides (keys, token, status mapping): [Connecting a POS to the website](../pos-website-link.md). Store admin guide in Arabic: [الربط مع نقطة البيع](../ar/pos.md)
+**Status:** live (add-on) · **Plugin:** `pos-integration` ([plugin.json](../../app/Plugins/PosIntegration/plugin.json)) · **Depends on:** order-management, catalog-products, locations-delivery, store-settings · **Related:** [Checkout](checkout-and-orders.md), [Locations](locations-delivery.md) (branch `link`), [Payments](payments.md). POS API contract: [POS website integration contract](https://github.com/habibGamal/ai_rewrite_turbo_restaurant/blob/master/docs/dev/website-integration.md). Detailed delivery design: [order-pos-delivery-monitor.md](../order-pos-delivery-monitor.md). End-to-end setup of both sides (keys, token, status mapping): [Connecting a POS to the website](../pos-website-link.md). Store admin guide in Arabic: [الربط مع نقطة البيع](../ar/pos.md)
 
 ## How to use
 

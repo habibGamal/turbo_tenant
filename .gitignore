@@ -33,3 +33,14 @@ database/tenanttest_*
 /docs/node_modules
 /docs/.vitepress/cache
 /docs/.vitepress/dist
+
+# Workspace prototypes & local agent scratch dirs
+.workspace/prototypes/*
+!.workspace/prototypes/README.md
+**/.plan/
+**/.plans/
+**/.superpowers/
+**/.remember/
+**/docs/superpowers/
+playwright-report/
+test-results/

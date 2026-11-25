@@ -1,8 +1,0 @@
-flowchart LR
-  B["HTTP request"]
-  B --> n5c8fe2bbe88e["POST /api/customer-favorites"]
-  n5c8fe2bbe88e -->|"customer-favorites"| n66daab9a1384["CustomerFavoritesApiController@store"]
-  B --> n9865bbb547e4["GET|HEAD /api/customer-favorites"]
-  n9865bbb547e4 -->|"customer-favorites"| n85a1abc62453["CustomerFavoritesApiController@index"]
-  B --> n656ac8e0634e["POST /api/customer-favorites/sync"]
-  n656ac8e0634e -->|"customer-favorites"| n4562109f24a8["CustomerFavoritesApiController@sync"]

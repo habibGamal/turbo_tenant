@@ -4,7 +4,7 @@
 
 Static content pages such as About, Terms, Privacy or Delivery FAQ, written by the store admin in a rich-text editor in English and Arabic and shown at `/pages/<slug>`.
 
-**Status:** live · **Plugin:** `cms-pages` ([plugin.json](../../app/Plugins/CmsPages/plugin.json)) · **Depends on:** store-settings · **Related:** [Store settings](store-settings.md). Older guide: [CUSTOM_PAGES_GUIDE.md](../CUSTOM_PAGES_GUIDE.md) (describes an earlier implementation)
+**Status:** live · **Plugin:** `cms-pages` ([plugin.json](../../app/Plugins/CmsPages/plugin.json)) · **Depends on:** store-settings · **Related:** [Store settings](store-settings.md)
 
 ## How to use
 
@@ -20,11 +20,15 @@ Open `/pages/<slug>`; the page shows the content in the current language.
 
 1. `GET /api/cms-pages` lists active pages; `GET /api/cms-pages/{slug}` returns one active page ([`CmsPagesApiController`](../../app/Plugins/CmsPages/src/Http/Controllers/Api/CmsPagesApiController.php), [`Page`](../../app/Plugins/CmsPages/src/Models/Page.php)).
 2. The storefront renders the HTML with `dangerouslySetInnerHTML` ([DefaultCmsPages.tsx](../../resources/js/plugins/cms-pages/components/DefaultCmsPages.tsx), themed override [ThemedCmsPages.tsx](../../resources/js/themes/default/plugins/cms-pages/ThemedCmsPages.tsx)). The content is trusted admin input and is not sanitized on the client.
-3. Admin: [`PageResource`](../../app/Plugins/CmsPages/src/Filament/Resources/Pages/PageResource.php) with [`PageForm`](../../app/Plugins/CmsPages/src/Filament/Resources/Pages/Schemas/PageForm.php) (Filament `RichEditor`).
+3. Admin: [`PageResource`](../../app/Plugins/CmsPages/src/Filament/Resources/Pages/PageResource.php) provides list, create, view, and edit pages. [`PageForm`](../../app/Plugins/CmsPages/src/Filament/Resources/Pages/Schemas/PageForm.php) has English and Arabic tabs (`title`/`content` required, `title_ar`/`content_ar` optional), auto-generates `slug` from `title` on blur during creation, and enforces unique slugs. `PagesTable` searches by `title` and `slug`.
+
+### Data
+
+`pages`: `title`, `title_ar`, `slug` (unique), `content`, `content_ar`, `is_active` (default `true`).
 
 ## Configuration
 
-No settings. [`PageSeeder`](../../database/seeders/PageSeeder.php) has sample pages.
+No settings. [`PageSeeder`](../../database/seeders/PageSeeder.php) idempotently seeds standard pages (About Us, Privacy Policy, Return Policy, Replacement Policy, Delivery Policy, Shipping Policy, Terms of Service, Contact Us) using `firstOrCreate(['slug' => ...])`. `DatabaseSeeder` does not run it automatically; run `php artisan tenants:seed --class=PageSeeder` when needed.
 
 ## Testing
 

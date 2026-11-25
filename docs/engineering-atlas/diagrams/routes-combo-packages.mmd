@@ -1,6 +1,0 @@
-flowchart LR
-  B["HTTP request"]
-  B --> n49238d868ece["GET|HEAD /api/packages"]
-  n49238d868ece -->|"combo-packages"| n82dbe00ee076["PackageApiController@index"]
-  B --> nb48f138c3f88["GET|HEAD /api/packages/{id}"]
-  nb48f138c3f88 -->|"combo-packages"| n9d1272a5a5dd["PackageApiController@show"]

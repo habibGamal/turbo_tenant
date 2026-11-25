@@ -90,7 +90,7 @@ Other admin tools:
 
 ## Configuration
 
-No store settings. Activate after catalog-products, cart-engine, order-management and locations-delivery.
+No store settings. Activate after catalog-products, cart-engine, order-management and locations-delivery. [`PackageSeeder`](../../database/seeders/PackageSeeder.php) provides sample packages for local seeding.
 
 New tenant migrations:
 - this plugin: `2026_11_05_000001`, `2026_11_05_000002`, `2026_11_06_000003`, `2026_11_06_000007`, `2026_11_07_000001`

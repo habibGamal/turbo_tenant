@@ -31,43 +31,32 @@ The POS also needs the website address: POS setting **رابط الموقع** (�
 
 ## Contract
 
-### Website → POS
+The POS repository owns the canonical POS API request/response contract: [POS website integration contract](https://github.com/habibGamal/ai_rewrite_turbo_restaurant/blob/master/docs/dev/website-integration.md).
 
-All requests go to `branch.link` + path, with `X-Api-Key`, a 30 s timeout, and only to public addresses (unless `NETWORK_ALLOW_PRIVATE_HOSTS=true`).
+### Website → POS (outbound)
 
-| Call | Response used |
+[`POSApiClient`](../app/Plugins/PosIntegration/src/Services/POS/POSApiClient.php) calls `branch.link` + path with `X-Api-Key` (`branch.pos_api_key`), `Accept: application/json`, a 3 s connect timeout, and a 30 s request timeout, with `allow_redirects => false` and `verify => false` (self-signed branch certs). [`PublicEndpointGuard`](../app/Support/Network/PublicEndpointGuard.php) rejects private/loopback/reserved hosts unless `NETWORK_ALLOW_PRIVATE_HOSTS=true`.
+
+| Call | Website behavior |
 | --- | --- |
-| `GET /api/can-accept-order` | `{can_accept}`. `false` defers the delivery (counts as an attempt, not a failure) |
-| `GET /api/get-shift-id` | `{shift_id}`, stored on the order |
-| `POST /api/web-orders/place-order` | see below |
-| Master POS: `GET /api/all-products-refs-master`, `/api/all-products-prices-master`, `/api/get-products-master`, `/api/get-products-prices-master`, `/api/get-products-master-by-refs` | product import and price sync (5 s timeout) |
+| `GET /api/can-accept-order` | `false` defers the delivery (counted as an attempt, not a failure) |
+| `GET /api/get-shift-id` | Stores `shift_id` on the order when not already set |
+| `POST /api/web-orders/place-order` | Retries via `SendOrderToPosJob` (`pos-database` queue, 5 tries, 3 s backoff, 60 s timeout); see responses below |
+| Master POS (`products_repo_link` + `products_repo_api_key`) | [`HttpPosMasterClient`](../app/Plugins/PosIntegration/src/Services/POS/HttpPosMasterClient.php) fetches products and prices (5 s timeout) |
 
-**Place order** payload ([`OrderPOSPayloadBuilder`](../app/Plugins/PosIntegration/src/Services/POS/OrderPOSPayloadBuilder.php)), in short:
-
-- `order.orderNumber`, `order.type` (delivery / takeaway), totals, payment method, notes, customer data (name, phone, Arabic address: عمارة، الدور، شقة, area and governorate in Arabic).
-- `order.idempotencyKey`: SHA-256 of tenant id, order id and order number. Identical for every send of the same order.
-- `items[]`: one line per product (`productRef`, `quantity`, `price`, `notes`). Weighted items send the weight in kg as `quantity`. Every add-on mapped to a POS item is its own line (quantity = add-on qty × item count, × weight multiplier for weighted items) with the note «إضافة على: &lt;item&gt;». Unmapped add-ons and weight choices go in the item notes. The chosen size (variant) is always in the notes as «النوع», even when the size has its own POS mapping, because that mapping often points at the same POS item as the base product.
-- The delivery fee is folded into the POS `service` amount.
+[`OrderPOSPayloadBuilder`](../app/Plugins/PosIntegration/src/Services/POS/OrderPOSPayloadBuilder.php) sends `order.idempotencyKey` (SHA-256 of tenant ID, order ID, and order number), Arabic customer address and item notes (`PosNoteLabel`, including variant names as «النوع»), weighted items in kg, and mapped add-ons/combo components. Delivery fees go in `order.service`.
 
 | POS answer | Website does |
 | --- | --- |
 | 200 created | `pos_status = sent` |
-| 200 `already_received: true`, `order{id, order_number, status, total}` | Treats it as sent (a retry of an order the POS already saved) and moves the website status forward to the POS status, never backwards |
-| 409 `conflict: true`, `mismatches`, `existing_order` | Another order already uses this number in the POS. Delivery **fails without retry**, and the admin sees which fields differ (key, phone, total, items) |
-| 400 / 422 | Delivery fails with the message |
-| timeout / 5xx after the POST was sent | `needs_verification`: the admin calls the branch and records whether it arrived. Never replayed automatically |
+| 200 `already_received: true` | Marks sent and advances the website order status to match the POS status (never backwards) |
+| 409 `conflict: true` | Marks delivery `failed` without retry and records `mismatches` |
+| 400 / 422 | Marks delivery `failed` with the error message |
+| timeout / 5xx after POST | Sets `needs_verification`; an admin checks with the branch before retrying (never auto-replayed) |
 
-### POS → website
+### POS → website (inbound)
 
-`POST https://<store domain>/api/order-status` with `Authorization: Bearer <integration token>` and body `{orderNumber, status}`. Limited to 60 requests/minute. Every change is logged in `order_status_events` with `source=integration`.
-
-| POS status | Website status | Arabic label |
-| --- | --- | --- |
-| `pending` | pending | قيد الانتظار |
-| `processing` (POS accepted) | processing | قيد التحضير |
-| `out_for_delivery` | out_for_delivery | خارج للتوصيل |
-| `completed` | completed | مكتمل (تم التوصيل) |
-| `cancelled` (POS rejected) | cancelled | ملغي |
+`POST https://<store domain>/api/order-status` with `Authorization: Bearer <integration token>` (`VerifyIntegrationToken`, `throttle:60,1`, CSRF-exempt) updates order status and writes `order_status_events` with `source=integration`.
 
 Allowed transitions ([`OrderStatusTransitions`](../app/Plugins/OrderManagement/src/Services/OrderStatusTransitions.php)):
 
@@ -82,17 +71,9 @@ stateDiagram-v2
   out_for_delivery --> completed
 ```
 
-Any other jump answers `409` with `from_status` / `to_status`. When the POS's status call fails, the POS rolls its own status change back, so the two sides stay in step. `processing → completed` is allowed only for takeaway orders (`web_takeaway`), because the POS completes them without an out-for-delivery step; delivery orders must pass through `out_for_delivery`.
+Any other transition returns `409` with `from_status` / `to_status` (`401` on missing/invalid token, `404` if order not found, `422` on invalid body). `processing → completed` is allowed only for `web_takeaway` orders.
 
-| Response | Meaning |
-| --- | --- |
-| 200 | Status updated |
-| 401 | Token missing, wrong or rotated |
-| 404 | No order with that number in this store |
-| 409 | Transition not allowed |
-| 422 | Invalid body |
-
-**Cash orders become paid on completion.** When a cash-on-delivery order reaches `completed` by any path (POS callback, admin action, or the already-received catch-up), its payment status becomes «مكتمل (مدفوع)». Online payments are untouched. *(Pending in PR #7 on `refactoring`; until it merges, cash orders stay "pending payment" after completion.)*
+**Cash orders become paid on completion.** When a cash-on-delivery order reaches `completed` by any path (POS callback, admin action, or the already-received catch-up), its payment status becomes «مكتمل (مدفوع)». Online payments are untouched.
 
 ## Troubleshooting
 
