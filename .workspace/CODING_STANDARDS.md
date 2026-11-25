@@ -28,7 +28,7 @@ Enforced by `tests/Feature/Architecture/PluginBoundariesArchTest.php`:
 ## React, TypeScript, and Styling
 
 - **Type checking and build (`package.json`, `tsconfig.json`):** `npm run build` runs `tsc && vite build`. TypeScript runs with `"strict": true` over `resources/js/**/*.{ts,tsx,d.ts}`, with `@/*` mapped to `./resources/js/*`. Shared frontend types live under `resources/js/types/`.
-- **Theme decoupling:** plugin slots register default components in `resources/js/plugins/<id>/`; themes override slots in `resources/js/themes/<theme>/plugins/<id>/`. Avoid hardcoding UI selectors in Playwright tests; expose `data-testid` attributes documented in `docs/themes.md` and read them via `tests/e2e/themes/`.
+- **Theme decoupling:** plugin slots register default components in `resources/js/plugins/<id>/`; themes override slots in `resources/js/themes/<theme>/plugins/<id>/`. Avoid hardcoding UI selectors in Playwright tests; expose `data-testid` attributes documented in `docs/dev/themes.md` and read them via `tests/e2e/themes/`.
 - **Localization (`resources/js/i18n.ts`):** `ar` is default/fallback (`en` secondary); HTML `dir` and `lang` switch dynamically. Store all storefront copy in both `resources/js/locales/ar/translation.json` and `resources/js/locales/en/translation.json`, read with `useTranslation()` (`t('key')`), and never write hardcoded language ternaries (`lang === 'ar' ? ... : ...`) inside components.
 - **Formatting and styling:** use Tailwind `rtl:`/`ltr:` variants and logical spacing (`ms-`, `me-`, `ps-`, `pe-`), include `dark:` variants, build mobile-first layouts, and format money through `useFormatMoney()` / `formatMoney()` in `resources/js/lib/money.ts` (`EGP` default when store currency is unset).
 

@@ -75,11 +75,14 @@ if [ "${#forbidden_paths[@]}" -gt 0 ]; then
   errors=1
 fi
 
-# 3. Check Arabic docs (docs/ar/**/*.md) for Egyptian dialect words (whole-word only)
+# 3. Check all Arabic docs (docs/**/*.md except docs/dev/** and docs/node_modules/) for Egyptian dialect words (whole-word only)
 ar_files=()
 for path in "${all_files[@]}"; do
   case "$path" in
-    docs/ar/*.md)
+    docs/node_modules/*|docs/dev/*)
+      continue
+      ;;
+    docs/*.md)
       if [ -f "$path" ]; then
         ar_files+=("$path")
       fi
@@ -118,12 +121,13 @@ if [ "$errors" -ne 0 ]; then
   exit 1
 fi
 
-# 4. Optional VitePress build
+# 4. Optional VitePress build (both full and public-only)
 if [ "$run_build" -eq 1 ]; then
   (
     cd "$repo_root/docs"
     npm ci
     npx vitepress build
+    DOCS_PUBLIC=1 npx vitepress build
   )
 fi
 

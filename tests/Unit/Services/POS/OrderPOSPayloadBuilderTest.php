@@ -98,7 +98,7 @@ describe('OrderPOSPayloadBuilder', function () {
 
         $payload = $this->builder->build($order);
 
-        // Verify root structure from docs/pos-website-link.md (links to POS-owned contract)
+        // Verify root structure from docs/dev/pos-website-link.md (links to POS-owned contract)
         expect($payload)->toHaveKeys(['user', 'order'])
             ->and($payload['user']['name'])->toBe('Ahmed Mostafa')
             ->and($payload['user']['phone'])->toBe('01012345678')

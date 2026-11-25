@@ -9,7 +9,7 @@ use App\Plugins\OrderManagement\src\Models\Order;
 interface OrderPOSPayloadBuilderInterface
 {
     /**
-     * Build the order payload for the POS system conforming to docs/pos-website-link.md.
+     * Build the order payload for the POS system conforming to docs/dev/pos-website-link.md.
      *
      * @return array{
      *     user: array{name: string, phone: string, area: string, address: string},

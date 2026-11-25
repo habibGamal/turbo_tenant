@@ -38,13 +38,13 @@
   - Keep shared TypeScript interfaces in `resources/js/types/` (`tsconfig.json` `@/*` -> `resources/js/*`).
   - Storefront strings go through `useTranslation()` and keys in both `resources/js/locales/ar/translation.json` and `resources/js/locales/en/translation.json` (never inline bilingual ternaries).
   - Support RTL/LTR via Tailwind `rtl:`/`ltr:` and logical spacing (`ms-`, `me-`, `ps-`, `pe-`), include `dark:` variants, design mobile-first, and format prices via `useFormatMoney()` / `formatMoney()` (`resources/js/lib/money.ts`).
-  - Add `data-testid` attributes (see `docs/themes.md`) and update `tests/e2e/themes/` contracts when adding storefront interaction points.
+  - Add `data-testid` attributes (see `docs/dev/themes.md`) and update `tests/e2e/themes/` contracts when adding storefront interaction points.
 - **Testing:** Pest uses SQLite in-memory/per-process tenant files (`phpunit.xml`, `tests/TestCase.php`). Never mock HTTP/UI state inside `tests/e2e/`; follow `.claude/skills/e2e-test/SKILL.md`.
 - **Do not hand-edit:** `bootstrap/cache/*.php`, `public/build`, `vendor/`, `node_modules/`.
 
 ## Documentation
 
-- `docs/` (VitePress) is the single source of truth: English developer handbook under `docs/` (features in `docs/features/`, integrations in `docs/integrations/`) and Arabic store admin guide under `docs/ar/`.
+- `docs/` (VitePress) is the single source of truth: Arabic store admin guide at `/` (`start/`, `guide/`, `admin/`, `integrations/`) and English developer handbook under `docs/dev/` (with `docs/dev/ops/`). Follow `docs/dev/style-guide.md`.
 - Any PR that changes behaviour, settings, an API, or deployment must update the matching `docs/` page in the same PR and add a line to `CHANGELOG.md`.
 - Only these `.md` locations are allowed: `docs/**` (excluding `docs/node_modules`), `.workspace/**`, `README.md`, `CHANGELOG.md`, `AGENTS.md`, `CLAUDE.md`, and `.claude/**`.
 - Run `bash scripts/docs-check.sh` (or `bash scripts/docs-check.sh --build` for the full VitePress build) before pushing.
