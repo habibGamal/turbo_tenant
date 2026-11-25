@@ -1,9 +1,0 @@
-{
-  "name": "engineering-atlas-renderer",
-  "private": true,
-  "description": "Optional isolated renderer dependencies; install outside the application dependency tree.",
-  "dependencies": {
-    "mermaid": "11.12.2",
-    "playwright": "1.55.0"
-  }
-}

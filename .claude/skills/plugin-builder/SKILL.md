@@ -1,0 +1,364 @@
+---
+name: plugin-builder
+description: Standalone plugin creation and scaffolding framework for Turbo Tenant Microkernel. Guides creating full-stack plugins across all 6 dimensions (logic, external integrations, tenant migrations, storage, Filament panels, and React slots).
+allowed-tools: Read, Write, Edit, Glob, Grep
+---
+
+# Plugin Builder Skill
+
+> Comprehensive framework and scaffolding engine for creating modular plugins within the **Turbo Tenant Microkernel Architecture**.
+
+---
+
+## 1. Architectural Philosophy
+
+Every feature in Turbo Tenant is a self-contained plugin living in `app/Plugins/{StudlyName}/`.
+A plugin is an atomic slice of functionality that can span up to **6 architectural dimensions**:
+
+| Dimension | Implementation Standard |
+| :--- | :--- |
+| **1. Internal Logic** | Services in `src/Services/`, event listeners, pipeline pipes, and domain jobs. |
+| **2. External Integrations** | API clients, webhook controllers registered via the plugin's ServiceProvider. |
+| **3. Database Tables** | Migrations inside `database/migrations/tenant/`, executed strictly in tenant DB context. |
+| **4. Storage Data** | Isolated directory in `storage/tenant{id}/plugins/{plugin-id}/`. |
+| **5. Filament Panels** | Plugin class implementing `Filament\Contracts\Plugin` in `src/Filament/`. |
+| **6. Frontend (React)** | Headless TanStack Query hooks (`api/`) & default fallback component (`components/`) in `resources/js/plugins/{plugin-slug}/`, registered to `<PluginSlot />` with optional theme overrides in `resources/js/themes/{theme}/plugins/{plugin-slug}/`. Zero Inertia coupling. |
+
+---
+
+## 2. Standard Plugin Architecture (Backend + Frontend)
+
+### Backend: `app/Plugins/{StudlyName}/`
+```
+app/Plugins/{StudlyName}/
+├── plugin.json                                # Required: Manifest & dependencies
+├── {StudlyName}ServiceProvider.php           # Required: Laravel ServiceProvider
+├── {StudlyName}Plugin.php                    # Required: Tenant lifecycle hooks
+├── database/
+│   └── migrations/
+│       └── tenant/                           # Optional: Tenant-isolated migrations
+├── routes/
+│   └── tenant.php                            # Scoped REST API routes (/api/...)
+├── src/
+│   ├── DTOs/
+│   │   └── {StudlyName}Config.php           # Required: Typed Config DTO (Pattern 1)
+│   ├── Services/                             # Domain business logic
+│   ├── Models/                               # Eloquent models
+│   ├── Listeners/                            # Event listeners
+│   ├── Http/
+│   │   └── Controllers/
+│   │       └── Api/                          # REST API controllers returning JsonResponse
+│   └── Filament/
+│       ├── {StudlyName}FilamentPlugin.php   # Implements Filament\Contracts\Plugin
+│       ├── Resources/                        # Filament Resources
+│       └── Pages/                            # Filament Settings / Custom Pages
+```
+
+### Frontend Domain Module: `resources/js/plugins/{plugin-slug}/`
+```
+resources/js/plugins/{plugin-slug}/
+├── api/                                      # Headless TanStack Query hooks & API client calls
+│   └── use{Feature}.ts
+├── components/                               # Neutral default fallback components
+│   └── Default{Component}.tsx
+├── types/                                    # TypeScript interfaces for entities & API responses
+│   └── index.ts
+└── index.ts                                  # Registers default fallback into <PluginSlot /> via registerPluginDefault()
+```
+
+### Optional Theme Override: `resources/js/themes/{theme}/plugins/{plugin-slug}/`
+```
+resources/js/themes/{theme}/plugins/{plugin-slug}/
+├── Themed{Component}.tsx                     # Theme's custom presentation (Embla, Grid, Luxury styling)
+└── index.ts                                  # Calls registerThemeOverride('{theme}', '{slot}', ThemedComponent)
+```
+
+---
+
+## 3. Mandatory File Specifications
+
+### 3.1 The Manifest (`plugin.json`)
+
+Must exist in the plugin root:
+
+```json
+{
+  "id": "sample-feature",
+  "name": "Sample Feature Name",
+  "version": "1.0.0",
+  "category": "addon",
+  "description": "Clear explanation of what this plugin provides.",
+  "author": "Turbo Tenant Team",
+  "is_core": false,
+  "dependencies": [
+    "catalog-products"
+  ],
+  "providers": [
+    "App\\Plugins\\SampleFeature\\SampleFeatureServiceProvider"
+  ],
+  "filament": "App\\Plugins\\SampleFeature\\src\\Filament\\SampleFeatureFilamentPlugin"
+}
+```
+
+#### Valid Categories:
+`foundation`, `commerce`, `marketing`, `communication`, `storefront`, `addon`.
+
+---
+
+### 3.2 The Tenant Plugin Class (`{StudlyName}Plugin.php`)
+
+Must extend `App\Core\Plugins\AbstractTenantPlugin`:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Plugins\SampleFeature;
+
+use App\Core\Plugins\AbstractTenantPlugin;
+use App\Models\Tenant;
+use App\Plugins\OrderManagement\src\Pipelines\OrderPipelineRegistry;
+use App\Plugins\SampleFeature\src\Pipelines\Pipes\SamplePricingPipe;
+
+final class SampleFeaturePlugin extends AbstractTenantPlugin
+{
+    /**
+     * Boot runtime hooks for this active tenant.
+     * 
+     * ⚠️ STRICT ARCHITECTURAL RULE:
+     * Pipeline pipes (OrderPipelineRegistry), tenant-scoped middleware,
+     * and tenant-scoped event hooks MUST be registered here, NOT in the ServiceProvider.
+     * This guarantees tenant isolation and honors tenant feature entitlements.
+     */
+    public function bootForTenant(Tenant $tenant): void
+    {
+        if (app()->bound(OrderPipelineRegistry::class)) {
+            app(OrderPipelineRegistry::class)->registerPricingPipe(SamplePricingPipe::class, 250);
+        }
+    }
+
+    public function onActivate(Tenant $tenant): void
+    {
+        // Run seeders, default settings, or initial API handshakes
+    }
+
+    public function onDeactivate(Tenant $tenant): void
+    {
+        // Cleanup cache or notify external services
+    }
+
+    public function onUninstall(Tenant $tenant): void
+    {
+        // Pre-purge cleanup before migrations are rolled back
+    }
+}
+```
+
+---
+
+### 3.3 The Service Provider (`{StudlyName}ServiceProvider.php`)
+
+Registers dependency injection bindings, DTOs, and global framework relationships:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Plugins\SampleFeature;
+
+use Illuminate\Support\ServiceProvider;
+
+final class SampleFeatureServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        // Container bindings: Composition root, Config DTO (Pattern 1), domain services
+    }
+
+    public function boot(): void
+    {
+        // Global routes, observers, or dynamic relationships (resolveRelationUsing)
+        // ❌ NEVER register pipeline pipes here! ServiceProvider is global and leaks across tenants.
+    }
+}
+```
+
+---
+
+### 3.4 The Configuration Standard (Pattern 1: Typed Config DTO + Composition Root)
+
+**Strict Architecture Rule:** Domain services (API clients, calculators, handlers) must **NEVER** inject `SettingService` directly. Doing so couples domain logic to database schemas and magic strings.
+
+Instead, all configuration follows **Pattern 1**:
+
+1. **The Plugin defines its local Config DTO (`src/DTOs/{StudlyName}Config.php`):**
+```php
+namespace App\Plugins\SampleFeature\src\DTOs;
+
+final readonly class SampleFeatureConfig
+{
+    public function __construct(
+        public string $apiBaseUrl,
+        public ?string $apiToken = null,
+        public bool $autoSync = false,
+        public int $timeoutSeconds = 30
+    ) {}
+}
+```
+
+2. **The ServiceProvider acts as the Composition Root:**
+The ServiceProvider is the **only** class that bridges storage to domain:
+```php
+namespace App\Plugins\SampleFeature;
+
+use App\Plugins\SampleFeature\src\DTOs\SampleFeatureConfig;
+use App\Plugins\SampleFeature\src\Services\SampleService;
+use App\Plugins\StoreSettings\src\Services\SettingService;
+use Illuminate\Support\ServiceProvider;
+
+final class SampleFeatureServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        // 1. Build the typed config DTO
+        $this->app->singleton(SampleFeatureConfig::class, function ($app) {
+            $settings = $app->make(SettingService::class);
+
+            return new SampleFeatureConfig(
+                apiBaseUrl: (string) $settings->get('sample-feature.api_url', 'https://api.example.com'),
+                apiToken: $settings->get('sample-feature.api_token'),
+                autoSync: (bool) $settings->get('sample-feature.auto_sync', false)
+            );
+        });
+
+        // 2. Inject clean DTO into domain service
+        $this->app->singleton(SampleService::class, function ($app) {
+            return new SampleService($app->make(SampleFeatureConfig::class));
+        });
+    }
+}
+```
+
+3. **Domain Services depend purely on the Config DTO (0% database coupling):**
+```php
+namespace App\Plugins\SampleFeature\src\Services;
+
+use App\Plugins\SampleFeature\src\DTOs\SampleFeatureConfig;
+
+final class SampleService
+{
+    public function __construct(
+        private readonly SampleFeatureConfig $config
+    ) {}
+
+    public function execute(): void
+    {
+        $url = $this->config->apiBaseUrl; // 100% type-safe, zero magic strings
+    }
+}
+```
+
+---
+
+### 3.5 The Filament Plugin (`{StudlyName}FilamentPlugin.php`)
+
+If the plugin adds navigation, resources, or pages to the Admin Panel:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Plugins\SampleFeature\src\Filament;
+
+use Filament\Contracts\Plugin;
+use Filament\Panel;
+
+final class SampleFeatureFilamentPlugin implements Plugin
+{
+    public static function make(): static
+    {
+        return app(static::class);
+    }
+
+    public function getId(): string
+    {
+        return 'sample-feature';
+    }
+
+    public function register(Panel $panel): void
+    {
+        $panel
+            ->resources([
+                // SampleResource::class,
+            ])
+            ->pages([
+                // SampleSettingsPage::class,
+            ]);
+    }
+
+    public function boot(Panel $panel): void
+    {
+        //
+    }
+}
+```
+
+---
+
+## 4. Scaffolding Automation
+
+To instantly scaffold a complete, compliant plugin directory, run:
+
+```bash
+python .claude/skills/plugin-builder/scripts/scaffold_plugin.py <plugin-slug> [options]
+```
+
+### Options:
+* `--category`: Category (`foundation`, `commerce`, `marketing`, `addon`, `storefront`). Default: `addon`.
+* `--name`: Human-readable display name (e.g. `"Customer Loyalty"`).
+* `--with-filament`: Scaffold Filament plugin class and resource folder.
+* `--with-migrations`: Scaffold `database/migrations/tenant/` directory with a starter migration.
+* `--with-frontend`: Scaffold `resources/js/` component slot stub.
+* `--deps`: Comma-separated list of required plugin IDs (e.g. `--deps "catalog-products,order-management"`).
+
+---
+
+## 5. Plugin Creation Workflow (Step-by-Step)
+
+When asked to create or extract a new plugin:
+
+1. **Classify Dependencies:** Identify which foundation plugins this plugin requires.
+2. **Scaffold Structure:** Run `scaffold_plugin.py` or create files following the template.
+3. **Move / Implement Logic:**
+   - Place models in `src/Models/` with correct namespace `App\Plugins\{Name}\src\Models`.
+   - Place services in `src/Services/`.
+   - Place tenant migrations in `database/migrations/tenant/`.
+4. **Connect Hooks:**
+   - If listening to global events: register listener or observer in `ServiceProvider`.
+   - If establishing dynamic Eloquent relationships: use `resolveRelationUsing()` in `ServiceProvider::boot()`.
+   - If intercepting pricing/validation pipeline: **register pipe strictly in `{StudlyName}Plugin::bootForTenant()`**. NEVER in the ServiceProvider.
+5. **Discover & Verify:**
+   ```bash
+   php artisan plugin:discover
+   ```
+6. **Test Tenant Activation:**
+   ```bash
+   php artisan tenant:plugin:activate <tenant_id> <plugin_id>
+   ```
+
+---
+
+## 6. Strict Rules & Anti-Patterns
+
+- ❌ **NEVER return `Inertia::render()` from plugin controllers.** Storefront plugin interactions must be exposed via clean, typed REST APIs (`src/Http/Controllers/Api/`) returning `JsonResponse`.
+- ❌ **NEVER hardcode theme-specific CSS or markup inside plugin default components.** Default components in `resources/js/plugins/{slug}/components/` are neutral fallbacks. Themes own presentation via `resources/js/themes/{theme}/plugins/{slug}/`.
+- ❌ **NEVER register pipeline pipes in `ServiceProvider::boot()`.** Pipeline pipes must be registered strictly in `*Plugin::bootForTenant()` to prevent leaking across tenants and ensure that pipes only execute when the tenant has the plugin active.
+- ❌ **NEVER inject `SettingService` directly into domain services.** All domain logic must depend solely on its local `{StudlyName}Config` DTO (Pattern 1).
+- ❌ **NEVER modify Core Kernel files** when creating a plugin. Core files must remain agnostic.
+- ❌ **NEVER put migrations in central `database/migrations`** unless the plugin modifies central multi-tenant schemas.
+- ❌ **NEVER hardcode Filament resources in `AdminPanelProvider.php`**. All resources must be registered through the plugin's `FilamentPlugin` class.
+- ✅ **ALWAYS ensure tenant migrations are idempotent** using `Schema::hasTable()` guards where legacy tables might exist.
+- ✅ **ALWAYS use `*Plugin::bootForTenant()`** for all runtime pipeline pipes, tenant middleware, and tenant-scoped lifecycle hooks.
