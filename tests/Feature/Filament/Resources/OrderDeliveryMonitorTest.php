@@ -169,5 +169,58 @@ it('renders without POS tables when the addon is inactive', function () {
         // Restore the isolated test tenant schema for other tests in this process.
         $migration = require base_path('app/Plugins/PosIntegration/database/migrations/tenant/2026_11_05_000001_create_order_pos_deliveries.php');
         $migration->up();
+        $longRetryMigration = require base_path('app/Plugins/PosIntegration/database/migrations/tenant/2026_11_26_000001_add_long_retry_to_order_pos_deliveries.php');
+        $longRetryMigration->up();
     }
+});
+
+it('displays delayed retry round progress, next retry time, and immediate resend action while waiting for a long retry', function () {
+    $delivery = app(OrderDeliveryDispatcher::class)->enqueue($this->order);
+    $nextRetryAt = now()->addHours(2);
+    $delivery->update([
+        'status' => OrderPosStatus::RETRY_WAIT,
+        'long_retry_round' => 2,
+        'unreachable_since' => now()->subHours(1),
+        'next_retry_at' => $nextRetryAt,
+        'last_error' => 'الفرع لا يقبل الطلبات حالياً.',
+    ]);
+    $this->order->update([
+        'pos_status' => OrderPosStatus::RETRY_WAIT,
+        'pos_failure_reason' => 'الفرع لا يقبل الطلبات حالياً.',
+    ]);
+
+    livewire(ViewOrder::class, ['record' => $this->order->id])
+        ->assertSee('إعادة المحاولة المؤجلة 2 من 5')
+        ->assertSee($nextRetryAt->format('Y-m-d H:i:s'))
+        ->assertActionVisible('resend_to_pos')
+        ->assertSee('إعادة الإرسال الآن')
+        ->callAction('resend_to_pos')
+        ->assertHasNoActionErrors()
+        ->assertSee('في قائمة الإرسال');
+
+    expect($delivery->fresh()->long_retry_round)->toBe(0)
+        ->and($delivery->fresh()->unreachable_since)->toBeNull();
+    Bus::assertDispatchedTimes(SendOrderToPosJob::class, 2);
+});
+
+it('hides immediate resend while sending and does not treat scheduled long-retry wait as overdue', function () {
+    $delivery = app(OrderDeliveryDispatcher::class)->enqueue($this->order);
+    $delivery->update([
+        'status' => OrderPosStatus::RETRY_WAIT,
+        'long_retry_round' => 1,
+        'unreachable_since' => now(),
+        'next_retry_at' => now()->addHour(),
+    ]);
+    $this->order->update(['pos_status' => OrderPosStatus::RETRY_WAIT]);
+
+    livewire(App\Plugins\OrderManagement\src\Filament\Resources\Orders\Pages\ListOrders::class)
+        ->filterTable('pos_overdue')
+        ->assertCanNotSeeTableRecords([$this->order]);
+
+    $delivery->update(['status' => OrderPosStatus::SENDING, 'last_attempt_at' => now()]);
+    $this->order->update(['pos_status' => OrderPosStatus::SENDING]);
+
+    livewire(ViewOrder::class, ['record' => $this->order->id])
+        ->assertActionHidden('send_to_pos')
+        ->assertActionHidden('resend_to_pos');
 });

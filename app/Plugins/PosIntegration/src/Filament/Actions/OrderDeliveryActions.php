@@ -8,6 +8,7 @@ use App\Core\Plugins\Services\PluginManager;
 use App\Models\User;
 use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\PosIntegration\src\Models\OrderPosDelivery;
 use App\Plugins\PosIntegration\src\Services\OrderDeliveryDispatcher;
 use App\Plugins\PosIntegration\src\Services\OrderDeliveryEligibility;
 use App\Plugins\PosIntegration\src\Services\OrderDeliveryReview;
@@ -32,17 +33,32 @@ final class OrderDeliveryActions
     public static function send(bool $retry = false): Action
     {
         return Action::make($retry ? 'resend_to_pos' : 'send_to_pos')
-            ->label($retry ? 'إعادة الإرسال لنقطة البيع' : 'إرسال لنقطة البيع')
+            ->label(fn (?Order $record = null): string => $retry
+                ? ($record?->pos_status === OrderPosStatus::RETRY_WAIT ? 'إعادة الإرسال الآن' : 'إعادة الإرسال لنقطة البيع')
+                : 'إرسال لنقطة البيع')
             ->icon('heroicon-o-arrow-path')
             ->color($retry ? 'warning' : 'primary')
             ->authorize(fn (): bool => self::authorized())
-            ->visible(fn (Order $record): bool => self::authorized() && ($retry
-                ? $record->pos_status === OrderPosStatus::FAILED
-                : in_array($record->pos_status, [null, OrderPosStatus::NOT_READY, OrderPosStatus::PENDING, OrderPosStatus::READY], true)))
+            ->visible(function (Order $record) use ($retry): bool {
+                if (! self::authorized()) {
+                    return false;
+                }
+
+                if (! $retry) {
+                    return in_array($record->pos_status, [null, OrderPosStatus::NOT_READY, OrderPosStatus::PENDING, OrderPosStatus::READY], true);
+                }
+
+                $delivery = $record->posDelivery;
+
+                return $record->pos_status === OrderPosStatus::FAILED
+                    || ($record->pos_status === OrderPosStatus::RETRY_WAIT && $delivery instanceof OrderPosDelivery && $delivery->long_retry_round > 0);
+            })
             ->disabled(fn (Order $record): bool => app(OrderDeliveryEligibility::class)->blockingReason($record) !== null)
             ->tooltip(fn (Order $record): ?string => app(OrderDeliveryEligibility::class)->blockingReason($record))
             ->requiresConfirmation()
-            ->modalHeading($retry ? 'إعادة الإرسال لنقطة البيع' : 'إرسال لنقطة البيع')
+            ->modalHeading(fn (?Order $record = null): string => $retry
+                ? ($record?->pos_status === OrderPosStatus::RETRY_WAIT ? 'إعادة الإرسال الآن' : 'إعادة الإرسال لنقطة البيع')
+                : 'إرسال لنقطة البيع')
             ->modalDescription('سيتم إدراج الطلب في قائمة الإرسال. تأكد من عدم استلام الفرع له مسبقاً؛ يظهر تأكيد الإرسال بعد قبول نقطة البيع.')
             ->modalSubmitActionLabel('إدراج في قائمة الإرسال')
             ->action(function (Order $record, $livewire): void {

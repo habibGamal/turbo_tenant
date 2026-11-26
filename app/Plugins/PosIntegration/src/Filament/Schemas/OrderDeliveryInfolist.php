@@ -7,7 +7,9 @@ namespace App\Plugins\PosIntegration\src\Filament\Schemas;
 use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\PosIntegration\src\Filament\Actions\OrderDeliveryActions;
+use App\Plugins\PosIntegration\src\Models\OrderPosDelivery;
 use App\Plugins\PosIntegration\src\Services\OrderDeliveryEligibility;
+use App\Plugins\PosIntegration\src\Support\PosRetrySchedule;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 
@@ -41,12 +43,28 @@ final class OrderDeliveryInfolist
                     ->state(fn (Order $record) => $record->posDelivery?->failures_count)->placeholder('غير متاح'),
                 TextEntry::make('delivery_progress')->label('محاولات دورة الإرسال الحالية')
                     ->state(fn (Order $record): ?string => $record->posDelivery ? $record->posDelivery->run_attempts_count.' / 5' : null)->placeholder('غير متاح'),
+                TextEntry::make('delivery_long_retry_round')->label('جولة إعادة المحاولة المؤجلة')
+                    ->state(function (Order $record): ?string {
+                        $delivery = $record->posDelivery;
+
+                        return $delivery instanceof OrderPosDelivery && $delivery->long_retry_round > 0
+                            ? 'إعادة المحاولة المؤجلة '.$delivery->long_retry_round.' من '.PosRetrySchedule::maxRounds()
+                            : null;
+                    })
+                    ->visible(function (Order $record): bool {
+                        $delivery = $record->posDelivery;
+
+                        return $delivery instanceof OrderPosDelivery && $delivery->long_retry_round > 0;
+                    }),
                 TextEntry::make('delivery_queued_at')->label('وقت الإدراج في القائمة')
                     ->state(fn (Order $record) => $record->posDelivery?->queued_at)->dateTime('Y-m-d H:i:s')->placeholder('—'),
                 TextEntry::make('delivery_last_attempt')->label('آخر محاولة')
                     ->state(fn (Order $record) => $record->posDelivery?->last_attempt_at)->dateTime('Y-m-d H:i:s')->placeholder('لم تبدأ محاولة مسجلة'),
                 TextEntry::make('delivery_next_retry')->label('المحاولة التالية متوقعة بعد')
                     ->state(fn (Order $record) => $record->posDelivery?->next_retry_at)->dateTime('Y-m-d H:i:s')->placeholder('—'),
+                TextEntry::make('delivery_unreachable_since')->label('تعذر الوصول منذ')
+                    ->state(fn (Order $record) => $record->posDelivery?->unreachable_since)->dateTime('Y-m-d H:i:s')
+                    ->visible(fn (Order $record): bool => $record->posDelivery?->unreachable_since !== null),
                 TextEntry::make('delivery_sent_at')->label('وقت تأكيد الاستلام')
                     ->state(fn (Order $record) => $record->posDelivery?->sent_at)->dateTime('Y-m-d H:i:s')->placeholder('لم يؤكد بعد'),
                 TextEntry::make('delivery_requester')->label('مصدر دورة الإرسال')

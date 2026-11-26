@@ -10,6 +10,26 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int $order_id
+ * @property string $generation
+ * @property OrderPosStatus $status
+ * @property string $trigger
+ * @property int|null $requested_by
+ * @property string|null $requested_by_name
+ * @property bool $history_complete
+ * @property int $attempts_count
+ * @property int $failures_count
+ * @property int $run_attempts_count
+ * @property int $long_retry_round
+ * @property \Carbon\CarbonImmutable|null $queued_at
+ * @property \Carbon\CarbonImmutable|null $last_attempt_at
+ * @property \Carbon\CarbonImmutable|null $next_retry_at
+ * @property \Carbon\CarbonImmutable|null $unreachable_since
+ * @property \Carbon\CarbonImmutable|null $sent_at
+ * @property string|null $last_error
+ */
 final class OrderPosDelivery extends Model
 {
     protected $connection = 'tenant';
@@ -46,9 +66,11 @@ final class OrderPosDelivery extends Model
             'attempts_count' => 'integer',
             'failures_count' => 'integer',
             'run_attempts_count' => 'integer',
+            'long_retry_round' => 'integer',
             'queued_at' => 'immutable_datetime',
             'last_attempt_at' => 'immutable_datetime',
             'next_retry_at' => 'immutable_datetime',
+            'unreachable_since' => 'immutable_datetime',
             'sent_at' => 'immutable_datetime',
         ];
     }

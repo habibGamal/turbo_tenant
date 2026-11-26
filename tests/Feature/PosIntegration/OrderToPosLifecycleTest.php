@@ -356,7 +356,7 @@ describe('SendOrderToPosJob Lifecycle', function () {
             ->and($fresh->pos_failure_reason)->toBe('The order.type field must be one of: web_delivery, web_takeaway.');
     });
 
-    it('requires verification without replaying after losing the place-order response', function () {
+    it('waits for retry after losing the place-order response so idempotent replay can proceed', function () {
         $order = PosOrderFixture::createDocExampleOrder();
 
         Http::fake([
@@ -371,9 +371,9 @@ describe('SendOrderToPosJob Lifecycle', function () {
         app()->call([$job, 'handle']);
 
         $fresh = $order->fresh();
-        expect($fresh->pos_status)->toBe(OrderPosStatus::NEEDS_VERIFICATION)
-            ->and($fresh->pos_failure_reason)->toContain('تحقق من استلام الفرع');
-        $job->assertNotReleased();
+        expect($fresh->pos_status)->toBe(OrderPosStatus::RETRY_WAIT)
+            ->and($fresh->pos_failure_reason)->toBe('لا يمكن التواصل مع الفرع في الوقت الحالي');
+        $job->assertReleased(delay: 3);
     });
 
     it('waits for retry without posting when can-accept-order returns HTTP 500', function () {

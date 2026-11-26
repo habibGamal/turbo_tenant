@@ -9,6 +9,8 @@ use App\Plugins\OrderManagement\src\Models\Order;
 use App\Plugins\PosIntegration\src\Exceptions\PosDeliveryBlocked;
 use App\Plugins\PosIntegration\src\Models\OrderPosDelivery;
 use App\Plugins\PosIntegration\src\Models\OrderPosDeliveryAttempt;
+use App\Plugins\PosIntegration\src\Support\PosRetrySchedule;
+use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -75,31 +77,99 @@ final class OrderDeliveryTracker
         }, requireCurrent: true);
     }
 
-    public function finish(OrderPosDeliveryAttempt $attempt, OrderPosStatus $status, string $outcome, ?string $error = null): void
-    {
-        $this->withCurrent($attempt->delivery_id, $attempt->generation, function (OrderPosDelivery $delivery) use ($attempt, $status, $outcome, $error): void {
+    public function finish(
+        OrderPosDeliveryAttempt $attempt,
+        OrderPosStatus $status,
+        string $outcome,
+        ?string $error = null,
+        ?DateTimeInterface $nextRetryAt = null,
+    ): void {
+        $this->withCurrent($attempt->delivery_id, $attempt->generation, function (OrderPosDelivery $delivery) use ($attempt, $status, $outcome, $error, $nextRetryAt): void {
             $current = $attempt->fresh();
             if ($current->finished_at !== null || $delivery->status !== OrderPosStatus::SENDING) {
                 return;
             }
 
+            $now = now()->toImmutable();
             $current->update([
                 'outcome' => $outcome,
                 'error' => $error,
-                'finished_at' => now(),
-                'duration_ms' => max(0, (int) $current->started_at->diffInMilliseconds(now())),
+                'finished_at' => $now,
+                'duration_ms' => max(0, (int) $current->started_at->diffInMilliseconds($now)),
             ]);
-            $delivery->update([
+
+            $deliveryData = [
                 'status' => $status,
                 'failures_count' => $delivery->failures_count + (in_array($outcome, ['failed', 'uncertain'], true) ? 1 : 0),
                 'last_error' => $error ?? $delivery->last_error,
-                'next_retry_at' => $status === OrderPosStatus::RETRY_WAIT ? now()->addSeconds(3) : null,
-                'sent_at' => $status === OrderPosStatus::SENT ? now() : null,
-            ]);
+                'next_retry_at' => $status === OrderPosStatus::RETRY_WAIT ? ($nextRetryAt ?? $now->addSeconds(3)) : null,
+                'sent_at' => $status === OrderPosStatus::SENT ? $now : null,
+            ];
+            if ($status === OrderPosStatus::SENT) {
+                $deliveryData['long_retry_round'] = 0;
+                $deliveryData['unreachable_since'] = null;
+            }
+
+            $delivery->update($deliveryData);
             Order::on('tenant')->whereKey($delivery->order_id)->update([
                 'pos_status' => $status,
                 'pos_failure_reason' => $status === OrderPosStatus::SENT ? null : $error,
             ]);
+        });
+    }
+
+    public function scheduleNextRound(OrderPosDeliveryAttempt $attempt, string $outcome, string $reason): void
+    {
+        $this->withCurrent($attempt->delivery_id, $attempt->generation, function (OrderPosDelivery $delivery) use ($attempt, $outcome, $reason): void {
+            $current = $attempt->fresh();
+            if ($current->finished_at !== null || $delivery->status !== OrderPosStatus::SENDING) {
+                return;
+            }
+
+            $now = now()->toImmutable();
+            $failureIncrement = in_array($outcome, ['failed', 'uncertain'], true) ? 1 : 0;
+
+            $current->update([
+                'outcome' => $outcome,
+                'error' => $reason,
+                'finished_at' => $now,
+                'duration_ms' => max(0, (int) $current->started_at->diffInMilliseconds($now)),
+            ]);
+
+            $delay = PosRetrySchedule::delayForNextRound((int) $delivery->long_retry_round);
+            if ($delay === null) {
+                $delivery->update([
+                    'status' => OrderPosStatus::FAILED,
+                    'failures_count' => $delivery->failures_count + $failureIncrement,
+                    'last_error' => PosRetrySchedule::EXHAUSTED_REASON,
+                    'next_retry_at' => null,
+                    'sent_at' => null,
+                ]);
+                Order::on('tenant')->whereKey($delivery->order_id)->update([
+                    'pos_status' => OrderPosStatus::FAILED,
+                    'pos_failure_reason' => PosRetrySchedule::EXHAUSTED_REASON,
+                ]);
+
+                return;
+            }
+
+            $delivery->update([
+                'status' => OrderPosStatus::RETRY_WAIT,
+                'failures_count' => $delivery->failures_count + $failureIncrement,
+                'run_attempts_count' => 0,
+                'long_retry_round' => (int) $delivery->long_retry_round + 1,
+                'unreachable_since' => $delivery->unreachable_since ?? $now,
+                'last_error' => $reason,
+                'next_retry_at' => $now->addSeconds($delay),
+                'sent_at' => null,
+            ]);
+            Order::on('tenant')->whereKey($delivery->order_id)->update([
+                'pos_status' => OrderPosStatus::RETRY_WAIT,
+                'pos_failure_reason' => $reason,
+            ]);
+
+            $order = Order::on('tenant')->findOrFail($delivery->order_id);
+            app(OrderDeliveryDispatcher::class)->dispatchJob($order, $delivery->refresh(), $delay);
         });
     }
 

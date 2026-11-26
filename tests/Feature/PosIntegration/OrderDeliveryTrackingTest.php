@@ -16,7 +16,6 @@ use App\Plugins\PosIntegration\src\Services\OrderDeliveryReview;
 use App\Plugins\PosIntegration\src\Services\OrderDeliveryTracker;
 use App\Plugins\PosIntegration\src\Services\OrderPOSService;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\OrderPOSPayloadBuilderInterface;
-use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
@@ -112,7 +111,7 @@ it('persists successful delivery and refuses to send the same job again', functi
     Http::assertSentCount(2);
 });
 
-it('records branch deferrals separately from failures and stops after the fifth attempt', function () {
+it('records branch deferrals separately from failures and schedules a long retry after the fifth attempt', function () {
     $job = queuedDeliveryJob();
     Http::fake(['*/api/can-accept-order' => Http::response(['can_accept' => false])]);
     $job->handle(app(OrderPOSService::class));
@@ -125,10 +124,12 @@ it('records branch deferrals separately from failures and stops after the fifth 
         $job->handle(app(OrderPOSService::class));
     }
 
-    expect(OrderPosDelivery::first()->status)->toBe(OrderPosStatus::FAILED)
-        ->and(OrderPosDelivery::first()->attempts_count)->toBe(5)
-        ->and(OrderPosDelivery::first()->failures_count)->toBe(0)
-        ->and(OrderPosDelivery::first()->next_retry_at)->toBeNull();
+    $delivery = OrderPosDelivery::first();
+    expect($delivery->status)->toBe(OrderPosStatus::RETRY_WAIT)
+        ->and($delivery->long_retry_round)->toBe(1)
+        ->and($delivery->attempts_count)->toBe(5)
+        ->and($delivery->failures_count)->toBe(0)
+        ->and($delivery->next_retry_at)->not->toBeNull();
     Http::assertSentCount(5);
 });
 
@@ -155,11 +156,11 @@ it('counts transient failures and retains their history after a successful retry
         ->and($delivery->attempts()->oldest('id')->first()->outcome)->toBe('failed');
 });
 
-it('requires verification after losing the POST response and records the admin decision', function () {
+it('requires verification after an unexpected error post-submit and records the admin decision', function () {
     $job = queuedDeliveryJob();
     Http::fake([
         '*/api/can-accept-order' => Http::response(['can_accept' => true]),
-        '*/api/web-orders/place-order' => fn () => throw new ConnectionException('timeout'),
+        '*/api/web-orders/place-order' => fn () => throw new TypeError('unexpected failure after submit'),
     ]);
     $job->handle(app(OrderPOSService::class));
     $job->assertNotReleased();
