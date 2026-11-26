@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Plugins\PosIntegration\src\Services\POS;
 
 use App\Plugins\LocationsDelivery\src\Models\Branch;
+use App\Plugins\PosIntegration\src\Exceptions\PosBranchUnreachable;
 use App\Plugins\PosIntegration\src\Exceptions\PosDeliveryOutcomeUnknown;
 use App\Plugins\PosIntegration\src\Services\POS\Contracts\POSApiClientInterface;
+use App\Support\Network\InvalidEndpointException;
 use App\Support\Network\PublicEndpointGuard;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
@@ -37,11 +39,18 @@ final class POSApiClient implements POSApiClientInterface
      */
     public function getShiftId(Branch $branch): int
     {
-        $response = $this->request($branch, 'get', '/api/get-shift-id', self::SHIFT_ID_FAILURE);
+        try {
+            $response = $this->request($branch, 'get', '/api/get-shift-id', self::SHIFT_ID_FAILURE);
+        } catch (InvalidEndpointException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new PosBranchUnreachable($e->getMessage(), (int) $e->getCode(), $e);
+        }
+
         $data = $response->json();
 
         if (! $response->successful() || ! is_array($data) || empty($data['shift_id'])) {
-            throw new Exception(self::SHIFT_ID_FAILURE);
+            throw new PosBranchUnreachable(self::SHIFT_ID_FAILURE);
         }
 
         return (int) $data['shift_id'];
@@ -54,10 +63,16 @@ final class POSApiClient implements POSApiClientInterface
      */
     public function canAcceptOrder(Branch $branch): bool
     {
-        $response = $this->request($branch, 'get', '/api/can-accept-order', self::CAN_ACCEPT_FAILURE);
+        try {
+            $response = $this->request($branch, 'get', '/api/can-accept-order', self::CAN_ACCEPT_FAILURE);
+        } catch (InvalidEndpointException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new PosBranchUnreachable($e->getMessage(), (int) $e->getCode(), $e);
+        }
 
         if (! $response->successful()) {
-            throw new Exception(self::CAN_ACCEPT_FAILURE);
+            throw new PosBranchUnreachable(self::CAN_ACCEPT_FAILURE);
         }
 
         $data = $response->json();

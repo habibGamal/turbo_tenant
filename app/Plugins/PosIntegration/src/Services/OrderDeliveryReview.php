@@ -72,6 +72,8 @@ final class OrderDeliveryReview
                 // Fence delayed jobs and callbacks from the previous delivery generation.
                 'generation' => (string) Str::uuid(),
                 'status' => $status,
+                'long_retry_round' => 0,
+                'unreachable_since' => null,
                 'next_retry_at' => null,
                 'sent_at' => $received ? now() : null,
                 'last_error' => $reason ?? $delivery->last_error,

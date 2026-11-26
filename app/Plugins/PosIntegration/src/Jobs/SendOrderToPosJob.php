@@ -6,11 +6,14 @@ namespace App\Plugins\PosIntegration\src\Jobs;
 
 use App\Plugins\OrderManagement\src\Enums\OrderPosStatus;
 use App\Plugins\OrderManagement\src\Models\Order;
+use App\Plugins\PosIntegration\src\Exceptions\PosBranchUnreachable;
 use App\Plugins\PosIntegration\src\Exceptions\PosDeliveryBlocked;
 use App\Plugins\PosIntegration\src\Exceptions\PosDeliveryOutcomeUnknown;
+use App\Plugins\PosIntegration\src\Models\OrderPosDeliveryAttempt;
 use App\Plugins\PosIntegration\src\Services\OrderDeliveryEligibility;
 use App\Plugins\PosIntegration\src\Services\OrderDeliveryTracker;
 use App\Plugins\PosIntegration\src\Services\OrderPOSService;
+use App\Support\Network\InvalidEndpointException;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -74,12 +77,16 @@ final class SendOrderToPosJob implements ShouldQueue
                 return;
             }
 
-            if (! $orderPOSService->canAcceptOrder($this->order->branch)) {
-                $retry = $this->canRetry();
-                $tracker->finish($attempt, $retry ? OrderPosStatus::RETRY_WAIT : OrderPosStatus::FAILED, 'deferred', 'الفرع لا يقبل الطلبات حالياً.');
-                if ($retry) {
-                    $this->release(3);
-                }
+            try {
+                $canAccept = $orderPOSService->canAcceptOrder($this->order->branch);
+            } catch (InvalidEndpointException|PosBranchUnreachable $e) {
+                throw $e;
+            } catch (Throwable $e) {
+                throw new PosBranchUnreachable($e->getMessage(), (int) $e->getCode(), $e);
+            }
+
+            if (! $canAccept) {
+                $this->handleUnreachable($tracker, $attempt, 'deferred', 'الفرع لا يقبل الطلبات حالياً.', releaseInsteadOfThrow: true);
 
                 return;
             }
@@ -98,8 +105,23 @@ final class SendOrderToPosJob implements ShouldQueue
         } catch (PosDeliveryBlocked $e) {
             $tracker->finish($attempt, OrderPosStatus::FAILED, 'failed', $this->safeReason($e->getMessage()));
         } catch (PosDeliveryOutcomeUnknown $e) {
-            // Never replay a POST whose result cannot be confirmed.
-            $tracker->finish($attempt, OrderPosStatus::NEEDS_VERIFICATION, 'uncertain', $this->safeReason($e->getMessage()).' تحقق من استلام الفرع قبل إعادة المحاولة.');
+            if ($this->isSyncConnection()) {
+                $tracker->finish($attempt, OrderPosStatus::NEEDS_VERIFICATION, 'uncertain', $this->safeReason($e->getMessage()).' تحقق من استلام الفرع قبل إعادة المحاولة.');
+
+                return;
+            }
+
+            $this->handleUnreachable($tracker, $attempt, 'failed', $this->safeReason($e->getMessage()), releaseInsteadOfThrow: true);
+        } catch (PosBranchUnreachable $e) {
+            $reason = $e->getPrevious() === null || get_class($e->getPrevious()) === Exception::class
+                ? $this->safeReason($e->getMessage())
+                : 'حدث خطأ أثناء معالجة الإرسال. راجع سجل النظام لمعرفة التفاصيل.';
+
+            if ($this->handleUnreachable($tracker, $attempt, 'failed', $reason)) {
+                return;
+            }
+
+            throw $e->getPrevious() ?? $e;
         } catch (Throwable $e) {
             if ($attempt->fresh()->submitted_at !== null && get_class($e) !== Exception::class && ! $e instanceof InvalidArgumentException) {
                 $tracker->finish($attempt, OrderPosStatus::NEEDS_VERIFICATION, 'uncertain', 'حدث خطأ بعد بدء الإرسال. تحقق من استلام الفرع قبل إعادة المحاولة.');
@@ -122,9 +144,43 @@ final class SendOrderToPosJob implements ShouldQueue
         }
     }
 
+    private function handleUnreachable(
+        OrderDeliveryTracker $tracker,
+        OrderPosDeliveryAttempt $attempt,
+        string $outcome,
+        string $reason,
+        bool $releaseInsteadOfThrow = false,
+    ): bool {
+        if ($this->isSyncConnection()) {
+            $tracker->finish($attempt, OrderPosStatus::FAILED, $outcome, $reason);
+
+            return $releaseInsteadOfThrow;
+        }
+
+        if ($this->canRetry()) {
+            $tracker->finish($attempt, OrderPosStatus::RETRY_WAIT, $outcome, $reason, now()->toImmutable()->addSeconds(3));
+            if ($releaseInsteadOfThrow) {
+                $this->release(3);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        $tracker->scheduleNextRound($attempt, $outcome, $reason);
+
+        return true;
+    }
+
+    private function isSyncConnection(): bool
+    {
+        return $this->job !== null && $this->job->getConnectionName() === 'sync';
+    }
+
     private function canRetry(): bool
     {
-        return $this->attempts() < $this->tries && ($this->job === null || $this->job->getConnectionName() !== 'sync');
+        return $this->attempts() < $this->tries && ! $this->isSyncConnection();
     }
 
     private function inExpectedTenant(): bool

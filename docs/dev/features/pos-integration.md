@@ -49,19 +49,25 @@ sequenceDiagram
   J->>P: POST /api/web-orders/place-order (payload)
   alt accepted
     J->>J: pos_status = sent
-  else rejected / retries exhausted
+  else unreachable after quick round (canAccept=false / getShiftId / connection error / 5xx)
+    J->>J: retry_wait -> dispatch delayed SendOrderToPosJob (1h, 2h, 4h, 8h, 9h)
+  else rejected / 24h exhausted
     J->>J: failed (reason recorded)
-  else transport loss / 5xx after POST
+  else other error after POST
     J->>J: needs_verification (no auto replay)
   end
   P->>O: POST /api/order-status (Bearer token) -> status transitions
 ```
 
 1. **Triggers:** [`SendOrderToPosListener`](../../../app/Plugins/PosIntegration/src/Listeners/SendOrderToPosListener.php) on `OrderFinalized` (cash orders), `OrderPaymentCompleted` (paid online orders), and `OrderCreated`/`OrderStatusUpdated` when `pos_status` is `ready`.
-2. **Dispatch:** [`OrderDeliveryDispatcher`](../../../app/Plugins/PosIntegration/src/Services/OrderDeliveryDispatcher.php) locks the order, checks eligibility, rotates a delivery *generation* and dispatches after the tenant transaction commits. All automatic and manual paths go through it; orders already queued/sending/retry-wait/sent/uncertain are not queued again.
-3. **Job:** [`SendOrderToPosJob`](../../../app/Plugins/PosIntegration/src/Jobs/SendOrderToPosJob.php): 5 tries, 3 s backoff, 60 s timeout, on the `pos-database` connection pinned to the central DB ([config/queue.php](../../../config/queue.php)). It checks tenant identity, claims the generation under lock, records the attempt ([`OrderDeliveryTracker`](../../../app/Plugins/PosIntegration/src/Services/OrderDeliveryTracker.php)), re-checks eligibility, then calls [`OrderPOSService`](../../../app/Plugins/PosIntegration/src/Services/OrderPOSService.php).
+2. **Dispatch:** [`OrderDeliveryDispatcher`](../../../app/Plugins/PosIntegration/src/Services/OrderDeliveryDispatcher.php) locks the order, checks eligibility, rotates a delivery *generation* and dispatches after the tenant transaction commits via `dispatchJob()`. All automatic and manual paths go through it; orders already queued/sending/sent/uncertain are not queued again. Manual resend is also allowed while waiting in a delayed long-retry `retry_wait` (`long_retry_round > 0`), which rotates the generation so the old delayed job no-ops.
+3. **Job:** [`SendOrderToPosJob`](../../../app/Plugins/PosIntegration/src/Jobs/SendOrderToPosJob.php): 5 tries per round, 3 s backoff, 60 s timeout, on the `pos-database` connection pinned to the central DB ([config/queue.php](../../../config/queue.php)). It checks tenant identity, claims the generation under lock, records the attempt ([`OrderDeliveryTracker`](../../../app/Plugins/PosIntegration/src/Services/OrderDeliveryTracker.php)), re-checks eligibility, then calls [`OrderPOSService`](../../../app/Plugins/PosIntegration/src/Services/OrderPOSService.php).
 4. **POS calls:** [`POSApiClient`](../../../app/Plugins/PosIntegration/src/Services/POS/POSApiClient.php) builds URLs from `branch.link` + `/api/can-accept-order`, `/api/get-shift-id`, `/api/web-orders/place-order` and sends `branch.pos_api_key` as `X-Api-Key` (the master client sends `products_repo_api_key` the same way), after [`PublicEndpointGuard`](../../../app/Support/Network) rejects private addresses (unless `NETWORK_ALLOW_PRIVATE_HOSTS`). HTTP timeout 30 s per request. Payload: [`OrderPOSPayloadBuilder`](../../../app/Plugins/PosIntegration/src/Services/POS/OrderPOSPayloadBuilder.php) with item ids from [`POSProductResolver`](../../../app/Plugins/PosIntegration/src/Services/POS/POSProductResolver.php) (`product_pos_mappings`, `pos_line_mappings`) and customer data from [`POSCustomerDataFormatter`](../../../app/Plugins/PosIntegration/src/Services/POS/POSCustomerDataFormatter.php); responses interpreted by [`POSErrorResponseHandler`](../../../app/Plugins/PosIntegration/src/Services/POS/POSErrorResponseHandler.php).
-5. **Outcomes:** branch cannot accept → deferral (counted as an attempt, not a failure); missing product mapping → recorded failure without exception; exception with retries left → `retry_wait`; terminal → `failed`; uncertain submission (transport loss during POST, POS 5xx, worker died after POST) → `needs_verification`, never replayed automatically because the POS contract does not guarantee deduplication by `orderNumber`.
+5. **Outcomes & 24-hour retry schedule:**
+   - **Within a round:** up to 5 attempts, 3 s apart. Branch `canAcceptOrder = false` records a deferral (`deferred`, not counted as a failure).
+   - **Unreachable branch:** `canAcceptOrder` returns `false` or throws, `getShiftId` fails, or `sendOrder` hits a connection error / POS 5xx (`PosDeliveryOutcomeUnknown`, safe to replay using the stable `idempotencyKey`). When the 5th attempt of a round ends unreachable (and the queue connection is not `sync`), [`OrderDeliveryTracker`](../../../app/Plugins/PosIntegration/src/Services/OrderDeliveryTracker.php) schedules a new `SendOrderToPosJob` for the same generation with the next delay from [`PosRetrySchedule`](../../../app/Plugins/PosIntegration/src/Support/PosRetrySchedule.php): **`[3600, 7200, 14400, 28800, 32400]`** seconds (1 h, 2 h, 4 h, 8 h, 9 h — 24 h cumulative), setting `status = retry_wait`, incrementing `long_retry_round` (1..5), setting `unreachable_since`, and storing `next_retry_at`. The finishing job returns normally so `failed()` is not invoked. When the 5th delayed round finishes unreachable, the delivery becomes `failed` with «تعذر الوصول إلى الفرع لمدة 24 ساعة. تأكد من تشغيل نقطة البيع ثم أعد الإرسال يدوياً.». On `SENT` or a new generation, `long_retry_round` and `unreachable_since` reset.
+   - **Never long-retried:** eligibility failures (e.g. cancelled order — re-checked at the start of every round), `PosDeliveryBlocked`, missing products / 409 conflict (`success = false`), and 4xx POS rejections (`400`/`422`). The `sync` queue connection does not schedule quick or long retries.
+   - **Uncertain outcome:** unexpected non-`PosDeliveryOutcomeUnknown` errors after submission starts, or worker death/timeout after submission (`submitted_at !== null`), go to `needs_verification` without automatic replay.
 6. **Line mapping:** each product line goes out with its main POS ref only (`quantity` = the item quantity, which is the weight in kg for items sold by weight). Every add-on mapped as `pos_item` follows as its own line: `quantity` = add-on quantity x item count (x `weight_multiplier` for weighted items, matching `CartPriceCalculator`), with only the note «إضافة على: &lt;item name&gt;» (Arabic product name first). Add-ons of type `notes` or without a mapping stay in the item notes. Note values prefer Arabic names (`extra_name_ar`, `variant_name_ar`, then the catalog `name_ar`), and the address uses Arabic labels (عمارة، الدور، شقة) and the area/governorate `name_ar`.
 7. **Idempotency:** the payload carries `order.idempotencyKey`, a SHA-256 of tenant key, order id and order number, identical for every send of the order. A POS that already saved the order (same key, customer phone, total and items) answers 200 with `already_received: true` and its `order.status`; [`OrderPOSService`](../../../app/Plugins/PosIntegration/src/Services/OrderPOSService.php) records it as sent and moves the site order forward to that status through allowed transitions (never backwards), logging `order_status_events` with source `integration`. A POS that holds a *different* order under the number answers 409 `conflict: true` with `mismatches`; the delivery fails without retry and shows the mismatched fields.
 8. **Review:** [`OrderDeliveryReview`](../../../app/Plugins/PosIntegration/src/Services/OrderDeliveryReview.php) records admin verification; "received" marks sent, "not received" starts a new generation.
@@ -82,8 +88,9 @@ stateDiagram-v2
   sending --> sent : POS accepted
   sending --> retry_wait : error, retries left
   retry_wait --> sending
-  sending --> failed : rejected or retries exhausted
-  sending --> needs_verification : outcome unknown
+  retry_wait --> queued : admin «إعادة الإرسال الآن» (long retry)
+  sending --> failed : rejected or 24h exhausted
+  sending --> needs_verification : unexpected error after POST
   needs_verification --> sent : branch confirms receipt
   needs_verification --> queued : branch confirms not received (new generation)
   failed --> queued : admin resend
@@ -93,7 +100,7 @@ stateDiagram-v2
 
 | Entity | Notes |
 | --- | --- |
-| [`OrderPosDelivery`](../../../app/Plugins/PosIntegration/src/Models/OrderPosDelivery.php), [`OrderPosDeliveryAttempt`](../../../app/Plugins/PosIntegration/src/Models/OrderPosDeliveryAttempt.php) | Current delivery cycle and every attempt/verification |
+| [`OrderPosDelivery`](../../../app/Plugins/PosIntegration/src/Models/OrderPosDelivery.php), [`OrderPosDeliveryAttempt`](../../../app/Plugins/PosIntegration/src/Models/OrderPosDeliveryAttempt.php) | Current delivery cycle (`long_retry_round`, `unreachable_since`, `next_retry_at`) and every attempt/verification |
 | [`ProductPosMapping`](../../../app/Plugins/PosIntegration/src/Models/ProductPosMapping.php), [`PosLineMapping`](../../../app/Plugins/PosIntegration/src/Models/PosLineMapping.php) | Local product/variant/add-on/package → POS item per branch |
 | `orders.pos_status`, `pos_failure_reason`, `shift_id` | On the order |
 
@@ -122,7 +129,7 @@ stateDiagram-v2
 | Symptom | Likely cause | Check | Fix |
 | --- | --- | --- | --- |
 | Orders stay `queued` | No worker on the central `jobs` table | `jobs` rows with queue `default`; worker process | Start `queue:work` |
-| `retry_wait` repeatedly | POS unreachable or erroring | Latest error in delivery panel; log entries with `endpoint` | Fix POS/network; it retries up to 5 times |
+| `retry_wait` repeatedly | POS unreachable or erroring | `long_retry_round` (1..5), `next_retry_at`, latest error in delivery panel | Wait for scheduled 24h retry (1h, 2h, 4h, 8h, 9h) or fix POS/network and click **إعادة الإرسال الآن** |
 | `failed` with missing product | Item not mapped for that branch | Failure reason | Map the product/variant/add-on, then resend |
 | `needs_verification` | Uncertain outcome after POST | Attempts table | Call the branch; record the result. Do not resend before confirming |
 | Overdue warning (> 5 min) | Worker killed mid-send or queue stalled | Worker logs | Verify with branch, then record result |

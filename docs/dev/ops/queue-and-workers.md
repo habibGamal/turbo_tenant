@@ -29,6 +29,8 @@ DB_QUEUE_RETRY_AFTER=90          # must be longer than the 60 s POS job timeout
 
 The `pos-database` connection ([config/queue.php](../../../config/queue.php)) pins the central connection on its own, so POS deliveries work even when `DB_QUEUE_CONNECTION` is missing. The other jobs do not.
 
+Delayed POS retries over 24 hours (`1h, 2h, 4h, 8h, 9h` in [`PosRetrySchedule`](../../../app/Plugins/PosIntegration/src/Support/PosRetrySchedule.php)) rely solely on the queue worker: when a round finishes unreachable, [`SendOrderToPosJob`](../../../app/Plugins/PosIntegration/src/Jobs/SendOrderToPosJob.php) dispatches a new delayed job via `pos-database` / `database`, which stores the future execution timestamp in the central `jobs.available_at` column. No Laravel scheduler (`schedule:run`) entry is needed or changed for delayed POS retries.
+
 **How to spot it:** `SELECT queue, COUNT(*) FROM jobs GROUP BY queue;` on the central DB stays empty while images stay unoptimized; a tenant database has rows in its own `jobs` table.
 
 **How to fix:** set `DB_QUEUE_CONNECTION`, run `php artisan optimize:clear && php artisan optimize && php artisan queue:restart`. Jobs already stuck in tenant `jobs` tables are not moved; re-trigger them (re-upload images, use the order's «إرسال لنقطة البيع» action).
